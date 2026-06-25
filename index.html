@@ -726,6 +726,11 @@ function confirmarLimpiarDatos(){
   // Marcar todas las órdenes actuales como tumbas para que ninguna sincronización las resucite.
   for (var i=0; i<_ordenes.length; i++) { addTumba(_ordenes[i].id); }
 
+  // Las que vinieron de un Formulario de Google también deben registrarse como
+  // borradas permanentemente en el servidor — si no, el siguiente sincronizado
+  // las recrearía leyendo de nuevo las filas originales de los formularios.
+  var tsFormularios = _ordenes.filter(function(o){ return o._ts; }).map(function(o){ return o._ts; });
+
   _ordenes = [];
   saveLocal();
   updateOverview();
@@ -739,6 +744,12 @@ function confirmarLimpiarDatos(){
       setSyncUI('error', false);
       showToast('Eliminado localmente — se sincronizará al recuperar conexión.');
     }
+  });
+
+  tsFormularios.forEach(function(ts){
+    setTimeout(function(){
+      gasCall({method:'POST', body:{action:'registrarBorrado', ts: ts}}, function(){});
+    }, 0);
   });
 
   // Refrescar la vista actual
@@ -1178,6 +1189,7 @@ function buildTable(data,cid,deletable){
 function eliminar(id){
   if(!confirm('¿Eliminar esta orden?'))return;
   addTumba(id); // marca como eliminada ANTES de tocar el servidor — sobrevive a syncs en curso
+  var ordenBorrada = _ordenes.filter(function(o){return o.id===id;})[0];
   _ordenes=_ordenes.filter(function(o){return o.id!==id;});
   saveLocal(); renderOrdenes(); updateOverview();
   pushToGAS(function(success){
@@ -1190,6 +1202,14 @@ function eliminar(id){
       setSyncUI('error', false);
     }
   });
+  // Si esta orden vino de un Formulario de Google (tiene _ts), avisamos al
+  // servidor que jamás debe volver a importarla — sin esto, el siguiente
+  // sincronizado la recrearía leyendo otra vez la fila original del formulario.
+  if (ordenBorrada && ordenBorrada._ts) {
+    setTimeout(function(){
+      gasCall({method:'POST', body:{action:'registrarBorrado', ts: ordenBorrada._ts}}, function(){});
+    }, 0);
+  }
 }
 function irATracking(id){
   go('tracking');

@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nugudú Láser Store — CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --navy:#2D2460;--navy2:#3d3280;--navy-pale:#eeedfe;
+  --gold:#F5A623;--gold-pale:#fef6e4;
+  --green:#2e7d52;--green-pale:#e8f5ee;
+  --amber:#854F0B;--amber-pale:#faeeda;
+  --coral:#993C1D;--coral-pale:#faece7;
+  --blue:#185FA5;--blue-pale:#e6f1fb;
+  --purple:#6d28d9;--teal:#0d7377;
+  --bg:#f4f3fa;--surface:#fff;--surface2:#f0eff8;
+  --border:rgba(45,36,96,0.11);--bmd:rgba(45,36,96,0.2);
+  --text:#18152e;--muted:#6b6585;--hint:#b0abc8;
+  --r:10px;--rs:7px;
+  --sh:0 1px 3px rgba(45,36,96,.07),0 4px 14px rgba(45,36,96,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--navy);display:flex;flex-direction:column;z-index:200;overflow-y:auto}
+.sb-logo{padding:1rem 1.1rem .85rem;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+.sb-icon{width:34px;height:34px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--navy)}
+.sb-name{font-size:14px;font-weight:700;color:#fff}.sb-sub{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.9px}
+.sb-sec{padding:.15rem 1rem;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.25);margin:.7rem 0 .1rem}
+.nav{display:flex;align-items:center;gap:9px;padding:8px 1rem;cursor:pointer;color:rgba(255,255,255,.5);font-size:13px;transition:all .13s;border-left:3px solid transparent}
+.nav:hover{color:rgba(255,255,255,.82);background:rgba(255,255,255,.05)}
+.nav.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:var(--gold);font-weight:500}
+.nav i{width:16px;text-align:center;font-size:13px}
+.nbadge{margin-left:auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px}
+.nb-do{background:var(--gold);color:var(--navy)}.nb-care{background:#2e7d52;color:#fff}.nb-rep{background:#0d7377;color:#fff}
+.sb-pdf{padding:.5rem .85rem .2rem}
+.sb-foot{padding:.7rem 1rem .85rem;border-top:1px solid rgba(255,255,255,.07);margin-top:auto;font-size:10px;color:rgba(255,255,255,.25)}
+.main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:.7rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-ttl{font-size:15px;font-weight:600}.topbar-sub{font-size:11.5px;color:var(--muted)}
+.content{padding:1.75rem;flex:1}
+.panel{display:none}.panel.active{display:block}
+.ph{margin-bottom:1.4rem}.ph h2{font-size:18px;font-weight:700}.ph p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.ph-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:1.4rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh)}
+.card-ttl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:5px;text-transform:uppercase;letter-spacing:.5px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.4rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.4rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.4rem}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;position:relative;overflow:hidden;box-shadow:var(--sh)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.do::before{background:var(--green)}.sc.care::before{background:var(--gold)}
+.sc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-bottom:8px}
+.sc.do .sc-badge{background:var(--green-pale);color:var(--green)}.sc.care .sc-badge{background:var(--gold-pale);color:var(--amber)}
+.sc-num{font-size:30px;font-weight:700;line-height:1;margin-bottom:3px}
+.sc.do .sc-num{color:var(--green)}.sc.care .sc-num{color:var(--amber)}
+.sc-lbl{font-size:12px;color:var(--muted)}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:.9rem 1.1rem}
+.mc .ml{font-size:11px;color:var(--muted);margin-bottom:3px}.mc .mv{font-size:24px;font-weight:700}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11.5px;font-weight:500;color:var(--muted)}
+.fg input,.fg select{border:1px solid var(--bmd);border-radius:var(--rs);padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);outline:none;transition:border-color .13s;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(45,36,96,.08)}
+.fg .hint{font-size:11px;color:var(--hint)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.1rem}
+.sku-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;min-height:26px}
+.sku-tag{display:inline-flex;align-items:center;gap:5px;background:var(--navy-pale);color:var(--navy);padding:3px 9px;border-radius:20px;font-size:12px;font-weight:500}
+.sku-tag button{background:none;border:none;cursor:pointer;color:var(--navy);font-size:13px;padding:0;opacity:.55}
+.total-box{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:9px 14px}
+.total-box span{font-size:13px;color:var(--muted)}
+.total-box strong{font-size:20px;font-weight:700;color:var(--navy);margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;border-radius:var(--rs);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .13s;border:1px solid transparent;text-decoration:none}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy2)}
+.btn-gold{background:var(--gold);color:var(--navy);font-weight:700}.btn-gold:hover{opacity:.88}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{opacity:.88}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{opacity:.88}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--bmd)}.btn-outline:hover{background:var(--bg)}
+.btn-wa{background:#25D366;color:#fff;border:1px solid #25D366}.btn-wa:hover{opacity:.85}
+.btn-sm{padding:6px 12px;font-size:12px}.btn-xs{padding:4px 9px;font-size:11px;gap:4px}
+.alert{display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--rs);font-size:13px;margin-bottom:1.1rem;border:1px solid}
+.alert.ok{background:var(--green-pale);color:var(--green);border-color:#a8d5b5}
+.alert.err{background:#fcebeb;color:#a32d2d;border-color:#f7c1c1}
+.status{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.status::before{content:'';width:5px;height:5px;border-radius:50%}
+.s0{background:#e6f1fb;color:#185FA5}.s0::before{background:#185FA5}
+.s1{background:#eeedfe;color:#534AB7}.s1::before{background:#534AB7}
+.s2{background:#faeeda;color:#854F0B}.s2::before{background:#854F0B}
+.s3{background:#faece7;color:#993C1D}.s3::before{background:#993C1D}
+.s4{background:#e8f5ee;color:#2e7d52}.s4::before{background:#2e7d52}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:7px 11px;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);border-bottom:1px solid var(--border)}
+tbody td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:hover{background:#faf9fd}
+tbody tr:last-child td{border-bottom:none}
+.mono{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.zona-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--hint);padding:4px 7px;border-radius:5px;transition:all .13s}
+.del-btn:hover{color:#a32d2d;background:#fcebeb}
+.filter-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.4rem;padding:1rem 1.1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.tsearch{display:flex;gap:10px;margin-bottom:1.4rem}
+.tsearch input{flex:1;border:1px solid var(--bmd);border-radius:var(--rs);padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
+.tsearch input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(45,36,96,.08)}
+.tl{display:flex;margin:1.25rem 0;position:relative}
+.tl::before{content:'';position:absolute;top:20px;left:20px;right:20px;height:2px;background:var(--border);z-index:0}
+.ts{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.ts .dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid var(--border);background:var(--surface)}
+.ts .lbl{font-size:10px;color:var(--muted);margin-top:7px;text-align:center;max-width:65px;line-height:1.3}
+.ts.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.ts.cur .dot{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 0 0 4px rgba(45,36,96,.18)}
+.ts.done .lbl{color:var(--green);font-weight:500}.ts.cur .lbl{color:var(--navy);font-weight:600}
+.ss-opt{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);transition:all .13s;display:inline-flex;align-items:center;gap:5px}
+.ss-opt:hover{border-color:var(--navy);color:var(--navy)}.ss-opt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+.canal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;text-align:center;position:relative;overflow:hidden;box-shadow:var(--sh)}
+.canal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.cc-wa::before{background:#25D366}.cc-ig::before{background:#E1306C}.cc-tt::before{background:#111}.cc-fv::before{background:var(--navy)}
+.canal-icon{font-size:26px;margin-bottom:.5rem}
+.cc-wa .canal-icon{color:#25D366}.cc-ig .canal-icon{color:#E1306C}.cc-tt .canal-icon{color:#333}.cc-fv .canal-icon{color:var(--navy)}
+.canal-lbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.canal-num{font-size:28px;font-weight:700}.canal-pct{font-size:12px;color:var(--muted);margin-top:2px}
+.sku-rank{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sku-rank.r1{background:var(--gold);color:var(--navy)}.sku-rank.r2{background:var(--hint)}.sku-rank.r3{background:var(--amber-pale);color:var(--amber)}
+.inv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh);cursor:pointer;transition:all .13s}
+.inv-card:hover{border-color:var(--navy);transform:translateY(-2px)}
+.inv-hdr{background:var(--navy);padding:1.75rem 2.25rem;color:#fff}
+.inv-body{padding:1.75rem 2.25rem}
+.inv-parties{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.inv-pt{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:.4rem}
+.inv-pv{font-size:13px;line-height:1.65}
+.inv-tbl{width:100%;border-collapse:collapse;margin-bottom:1.25rem;font-size:13px}
+.inv-tbl thead th{background:var(--bg);padding:7px 12px;text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border)}
+.inv-tbl tbody td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.inv-tbl tbody tr:last-child td{border-bottom:none}
+.inv-totals{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.itr{display:flex;gap:2rem;font-size:13px}.itr .l{color:var(--muted);min-width:110px;text-align:right}.itr .v{min-width:80px;text-align:right}
+.itr.grand{font-size:16px;font-weight:700;color:var(--navy);border-top:2px solid var(--navy);padding-top:7px;margin-top:3px}
+.inv-fnote{border-top:1px solid var(--border);margin-top:1.25rem;padding-top:.85rem;font-size:12px;color:var(--muted);text-align:center}
+.inv-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:1.25rem}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
+.empty i{font-size:32px;display:block;margin-bottom:.75rem;opacity:.3}
+.empty p{font-size:13px}
+.chart-full{margin-bottom:1.4rem}
+@media(max-width:768px){
+  .sidebar{width:100%;height:58px;flex-direction:row;top:auto;bottom:0;overflow:visible;padding:0}
+  .sb-logo,.sb-sec,.sb-pdf,.sb-foot{display:none}
+  .nav{flex-direction:column;gap:2px;padding:7px 4px;font-size:9px;border-left:none;border-top:3px solid transparent;flex:1;justify-content:center;text-align:center}
+  .nav i{width:auto;font-size:17px;margin-bottom:1px}
+  .nav.active{border-left:none;border-top-color:var(--gold)}.nbadge{display:none}
+  .main{margin-left:0;padding-bottom:58px}
+  .topbar{padding:.65rem 1rem}.content{padding:1rem}
+  .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
+  .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
+}
+.sd{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sd.green{background:#2e7d52}.sd.yellow{background:var(--gold)}.sd.red{background:#a32d2d}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bmd);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sb-logo"><div class="sb-icon">NG</div><div><div class="sb-name">Nugudú</div><div class="sb-sub">Láser Store · CRM</div></div></div>
+  <div class="sb-sec">Registro</div>
+  <div class="nav active" onclick="go('overview')" id="nav-overview"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
+  <div class="nav" onclick="go('nueva')" id="nav-nueva"><i class="fa-solid fa-circle-plus"></i> Nueva Venta <span class="nbadge nb-do">DO</span></div>
+  <div class="nav" onclick="go('ordenes')" id="nav-ordenes"><i class="fa-solid fa-list-check"></i> Órdenes</div>
+  <div class="nav" onclick="go('tracking')" id="nav-tracking"><i class="fa-solid fa-truck-fast"></i> Tracking <span class="nbadge nb-care">CARE</span></div>
+  <div class="nav" onclick="go('repartidor')" id="nav-repartidor"><i class="fa-solid fa-motorcycle"></i> Repartidor <span class="nbadge nb-rep">ENTREGA</span></div>
+  <div class="sb-sec">Formularios</div>
+  <div class="nav" onclick="go('fvendedor')" id="nav-fvendedor"><i class="fa-solid fa-share-nodes"></i> Form. Vendedores</div>
+  <div class="nav" onclick="go('frepartidor')" id="nav-frepartidor"><i class="fa-solid fa-share-nodes"></i> Form. Repartidor</div>
+  <div class="sb-sec">Análisis</div>
+  <div class="nav" onclick="go('clientes')" id="nav-clientes"><i class="fa-solid fa-users"></i> Clientes</div>
+  <div class="nav" onclick="go('inventario')" id="nav-inventario"><i class="fa-solid fa-boxes-stacked"></i> Inventario</div>
+  <div class="nav" onclick="go('analytics')" id="nav-analytics"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
+  <div class="nav" onclick="go('reportes')" id="nav-reportes"><i class="fa-solid fa-calendar-days"></i> Reportes</div>
+  <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
+  <div class="sb-pdf"><button class="btn btn-gold" style="width:100%;justify-content:center" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button></div>
+  <div class="sb-foot">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <span class="sd yellow" id="sync-dot"></span>
+      <span style="font-size:10px;color:rgba(255,255,255,.4)" id="sync-lbl">Iniciando…</span>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,.2)">v10.0 · Nugudú Láser Store</div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div><div class="topbar-ttl" id="tb-title">Dashboard</div><div class="topbar-sub" id="tb-sub">DO · CARE · sincronizado</div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--hint);background:var(--surface2);padding:5px 10px;border-radius:6px;border:1px solid var(--border)"><i class="fa-regular fa-calendar" style="margin-right:4px"></i><span id="fecha-hoy"></span></span>
+      <button class="btn btn-outline btn-sm" onclick="syncFromGAS(false)"><i class="fa-solid fa-rotate"></i> Sincronizar</button>
+      <button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-download"></i> PDF</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="sync-bar" style="display:none;padding:8px 14px;border-radius:var(--rs);font-size:12.5px;margin-bottom:1rem;border:1px solid #f5d88a"></div>
+    <div id="toast" style="display:none;position:fixed;bottom:80px;right:20px;background:var(--green);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:999"></div>
+
+    <!-- OVERVIEW -->
+    <div id="panel-overview" class="panel active">
+      <div class="ph"><h2>Dashboard</h2><p>Resumen en tiempo real · DO (conversión) y CARE (fidelización)</p></div>
+      <div class="g2" style="margin-bottom:1.4rem">
+        <div class="sc do"><div class="sc-badge"><i class="fa-solid fa-bolt"></i> DO · Conversión</div><div class="sc-num" id="cnt-do">0</div><div class="sc-lbl">Órdenes registradas</div></div>
+        <div class="sc care"><div class="sc-badge"><i class="fa-solid fa-heart"></i> CARE · Fidelización</div><div class="sc-num" id="cnt-care">0</div><div class="sc-lbl">Pedidos entregados</div></div>
+      </div>
+      <div class="g4">
+        <div class="mc"><div class="ml">Pendientes</div><div class="mv" id="m-pend" style="color:var(--blue)">0</div></div>
+        <div class="mc"><div class="ml">En proceso</div><div class="mv" id="m-proc" style="color:var(--purple)">0</div></div>
+        <div class="mc"><div class="ml">En tránsito</div><div class="mv" id="m-trans" style="color:var(--coral)">0</div></div>
+        <div class="mc"><div class="ml">Tasa entrega</div><div class="mv" id="m-tasa" style="color:var(--green)">0%</div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="card-ttl"><i class="fa-solid fa-chart-donut" style="color:var(--navy)"></i> Estado de pedidos</div><div style="position:relative;height:220px"><canvas id="chartEstado"></canvas></div></div>
+        <div class="card"><div class="card-ttl"><i class="fa-solid fa-map-pin" style="color:var(--navy)"></i> Ventas por zona</div><div style="position:relative;height:220px"><canvas id="chartZona"></canvas></div></div>
+      </div>
+      <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-line" style="color:var(--navy)"></i> Evolución de ventas</div><div style="position:relative;height:210px"><canvas id="chartTiempo"></canvas></div></div>
+    </div>
+
+    <!-- NUEVA VENTA -->
+    <div id="panel-nueva" class="panel">
+      <div class="ph"><h2>Nueva venta — DO</h2><p>La venta se guarda localmente y el formulario se limpia automáticamente.</p></div>
+      <div id="alrt-ok" class="alert ok"><i class="fa-solid fa-circle-check"></i> ¡Venta registrada correctamente!</div>
+      <div id="alrt-err" class="alert err"><i class="fa-solid fa-triangle-exclamation"></i> <span id="err-txt">Completa los campos obligatorios.</span></div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="fg">
+            <label>Nº de orden <span style="font-size:10px;background:var(--green-pale);color:var(--green);padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600">AUTO</span></label>
+            <div style="display:flex;gap:6px"><input id="f-orden" type="text" readonly style="background:var(--surface2);font-family:'DM Mono',monospace;font-weight:500;color:var(--navy);flex:1;cursor:default"><button type="button" class="btn btn-outline btn-sm" onclick="genOrden()"><i class="fa-solid fa-rotate"></i></button></div>
+          </div>
+          <div class="fg">
+            <label>Fecha de entrega estimada <span style="font-size:10px;background:var(--gold-pale);color:var(--amber);padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600">EDITABLE</span></label>
+            <div style="display:flex;gap:6px"><input id="f-fecha-entrega" type="date"><button type="button" class="btn btn-outline btn-sm" onclick="recalcFechaEntrega()" title="Recalcular: 3 días hábiles desde hoy"><i class="fa-solid fa-calendar-check"></i></button></div>
+            <span class="hint">3 días hábiles (lun-sáb) desde hoy. Ajústala si agrupas el lote.</span>
+          </div>
+          <div class="fg"><label>Código de vendedor *</label><input id="f-vendedor" type="text" placeholder="Ej. VND-01"></div>
+          <div class="fg" style="position:relative"><label>Nombre del cliente *</label><input id="f-nombre" type="text" placeholder="Ej. María García" oninput="onClienteInput()" onfocus="onClienteInput()"><div id="cliente-sugs" style="display:none;position:absolute;z-index:20;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:var(--rs);box-shadow:0 4px 14px rgba(0,0,0,.12);margin-top:4px;overflow:hidden"></div></div>
+          <div class="fg" style="position:relative"><label>Contacto / WhatsApp *</label><input id="f-contacto" type="text" placeholder="+503 7000-0000" oninput="onClienteInput()" onfocus="onClienteInput()"></div>
+          <div class="fg full">
+            <label>Dirección de entrega *</label>
+            <input id="f-direccion" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDireccionInput()">
+            <div id="map-wrap" style="display:none;margin-top:8px">
+              <div style="position:relative;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
+                <iframe id="map-frame" width="100%" height="220" style="border:0;display:block" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <a id="map-abrir" href="#" target="_blank" style="position:absolute;top:8px;left:8px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.15)"><i class="fa-solid fa-up-right-from-square" style="margin-right:5px"></i>Abrir en Maps</a>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+                <span class="hint" id="map-status">Ubicación aproximada según la dirección escrita.</span>
+                <button type="button" class="btn btn-outline btn-xs" onclick="quitarMapa()"><i class="fa-solid fa-xmark"></i> Quitar mapa</button>
+              </div>
+            </div>
+          </div>
+          <div class="fg full">
+            <label>Códigos de producto — SKU *</label>
+            <div style="display:flex;gap:6px"><input id="sku-input" type="text" placeholder="Escribe el SKU y presiona Agregar…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addSKU();}"><button type="button" class="btn btn-primary btn-sm" onclick="addSKU()"><i class="fa-solid fa-plus"></i> Agregar</button></div>
+            <div class="sku-tags" id="sku-tags"><span style="font-size:12px;color:var(--hint)">Sin productos</span></div>
+          </div>
+          <div class="fg"><label>Cantidad *</label><input id="f-cantidad" type="number" min="1" step="1" value="1" oninput="calcTotal()"></div>
+          <div class="fg"><label>Precio unitario ($) *</label><input id="f-precio" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcTotal()"></div>
+          <div class="fg full"><label>Total de la orden</label><div class="total-box"><span id="total-formula">1 × $0.00 =</span><strong id="total-val">$0.00</strong></div></div>
+          <div class="fg full">
+            <label>Estado del pedido</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <label style="flex:1;min-width:240px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500">
+                <input type="checkbox" id="f-pendiente-pago" onchange="onPendienteChange()" style="width:16px;height:16px;cursor:pointer">
+                <span>⏳ Marcar como pendiente de pago</span>
+              </label>
+              <label style="flex:1;min-width:240px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f3f0fb;border:1px solid #d9d0f0;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500">
+                <input type="checkbox" id="f-consumo-interno" onchange="onConsumoInternoChange()" style="width:16px;height:16px;cursor:pointer">
+                <span>🎁 Consumo interno / Patrocinio (no se cobra)</span>
+              </label>
+            </div>
+            <span class="hint">Déjalo sin marcar si ya recibiste el comprobante · el patrocinio se cuenta aparte, no afecta tus ingresos reales.</span>
+          </div>
+          <div class="fg"><label>Método de pago</label><select id="f-pago"><option value="Transferencia">Transferencia bancaria</option><option value="Efectivo">Efectivo contra entrega</option><option value="Tarjeta">Tarjeta</option></select></div>
+          <div class="fg">
+            <label>Zona de envío *</label>
+            <select id="f-zona" onchange="onZonaChange()">
+              <option value="">Seleccionar zona…</option>
+              <option>Antiguo Cuscatlán</option>
+              <option>Colonia Escalón</option>
+              <option>Merliot</option>
+              <option>Santa Tecla</option>
+              <option value="__especial__">Zona especial (fuera de cobertura)</option>
+            </select>
+            <div id="zona-especial-wrap" style="display:none;margin-top:6px">
+              <div style="display:flex;gap:6px">
+                <input id="f-zona-especial" type="text" placeholder="Se sugiere según la dirección — edítalo si hace falta">
+                <button type="button" class="btn btn-outline btn-sm" onclick="sugerirZonaEspecial()" title="Sugerir de nuevo desde el mapa"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+              </div>
+              <span class="hint" id="zona-especial-hint">Escribe primero la dirección para que el sistema sugiera el lugar.</span>
+            </div>
+          </div>
+          <div class="fg"><label>Etapa del pedido</label><select id="f-estado"><option value="0">Nueva orden</option><option value="1">En proceso</option><option value="2">En empaque</option><option value="3">Paquete en tránsito</option><option value="4">Entregado</option></select></div>
+          <div class="fg"><label>Canal de venta *</label><select id="f-canal"><option value="">Seleccionar canal…</option><option value="WhatsApp">WhatsApp</option><option value="Instagram">Instagram</option><option value="TikTok">TikTok</option><option value="Fuerza de ventas">Fuerza de ventas</option></select></div>
+          <div class="fg full"><label>Notas adicionales</label><input id="f-notas" type="text" placeholder="Instrucciones especiales, horario, referencias…"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="guardar()" style="min-width:170px"><i class="fa-solid fa-floppy-disk"></i> Ingresar venta</button>
+          <button class="btn btn-outline" onclick="limpiar()"><i class="fa-solid fa-eraser"></i> Limpiar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÓRDENES -->
+    <div id="panel-ordenes" class="panel">
+      <div class="ph-row">
+        <div><h2>Órdenes</h2><p>Pedidos activos · las entregadas se trasladan a Reportes · 🚚 para ir al tracking de esa orden</p></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-primary btn-sm" onclick="go('nueva')"><i class="fa-solid fa-plus"></i> Nueva</button></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.1rem">
+        <div class="fg" style="min-width:160px"><label>Buscar</label><input id="o-buscar" type="text" placeholder="Orden, nombre, contacto…" oninput="renderOrdenes()"></div>
+        <div class="fg"><label>Estado</label><select id="o-estado" onchange="renderOrdenes()"><option value="">Todos</option><option value="0">Nueva orden</option><option value="1">En proceso</option><option value="2">En empaque</option><option value="3">Paquete en tránsito</option><option value="4">Entregado</option></select></div>
+        <div class="fg"><label>Zona</label><select id="o-zona" onchange="renderOrdenes()"><option value="">Todas</option><option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option></select></div>
+        <button class="btn btn-outline btn-sm" onclick="resetOrd()"><i class="fa-solid fa-rotate-left"></i></button>
+      </div>
+      <div class="card"><div class="tw" id="tbl-ordenes"><div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin órdenes aún.</p></div></div></div>
+    </div>
+
+    <!-- TRACKING -->
+    <div id="panel-tracking" class="panel">
+      <div class="ph"><h2>Tracking · CARE</h2><p>Busca un pedido, actualiza su estado y notifica al cliente.</p></div>
+      <div class="tsearch"><input id="track-q" type="text" placeholder="Nº de orden, nombre o contacto…" oninput="buscarTrack()"><button class="btn btn-primary" onclick="buscarTrack()"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button></div>
+      <div id="track-list"></div><div id="track-detail" style="display:none"></div>
+    </div>
+
+    <!-- REPARTIDOR -->
+    <div id="panel-repartidor" class="panel">
+      <div id="rep-login-wrap">
+        <div style="max-width:400px;margin:2rem auto;text-align:center">
+          <div class="card" style="padding:2rem">
+            <div style="width:52px;height:52px;background:var(--teal);border-radius:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:22px;color:#fff"><i class="fa-solid fa-motorcycle"></i></div>
+            <h3 style="font-size:20px;font-weight:700;margin-bottom:.5rem">Acceso Repartidor</h3>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:1.5rem">Ingresa tu código para ver y reportar tus entregas.</p>
+            <div class="fg" style="margin-bottom:1rem"><label>Código de repartidor</label><input id="rep-codigo" type="text" placeholder="Ej. REP-01" style="text-align:center;font-size:16px;font-family:'DM Mono',monospace" onkeydown="if(event.key==='Enter')loginRep()"></div>
+            <button class="btn btn-teal" style="width:100%;justify-content:center" onclick="loginRep()"><i class="fa-solid fa-arrow-right-to-bracket"></i> Ingresar</button>
+            <div id="rep-err" class="alert err" style="margin-top:1rem"></div>
+          </div>
+        </div>
+      </div>
+      <div id="rep-dash-wrap" style="display:none">
+        <div class="ph-row"><div><h2>Ruta del día — <span id="rep-nombre" style="color:var(--teal)"></span></h2><p id="rep-fecha" style="font-size:12.5px;color:var(--muted);margin-top:2px"></p></div><div style="display:flex;gap:8px"><button class="btn btn-teal btn-sm" onclick="imprimirListaDia()"><i class="fa-solid fa-list-check"></i> Lista del día</button><button class="btn btn-outline btn-sm" onclick="logoutRep()"><i class="fa-solid fa-right-from-bracket"></i> Salir</button></div></div>
+        <div class="g3">
+          <div class="mc"><div class="ml">Asignados</div><div class="mv" id="rs-asig" style="color:var(--navy)">0</div></div>
+          <div class="mc"><div class="ml">Entregados hoy</div><div class="mv" id="rs-ent" style="color:var(--green)">0</div></div>
+          <div class="mc"><div class="ml">Pendientes</div><div class="mv" id="rs-pend" style="color:var(--amber)">0</div></div>
+        </div>
+        <div id="rep-route-list"></div>
+      </div>
+    </div>
+
+    <!-- FORM VENDEDORES -->
+    <div id="panel-fvendedor" class="panel">
+      <div class="ph"><h2>Formulario de Vendedores</h2><p>Comparte este link con tus vendedores para registrar ventas desde cualquier dispositivo.</p></div>
+      <div class="card" style="margin-bottom:1.4rem">
+        <div class="card-ttl"><i class="fa-solid fa-link" style="color:var(--navy)"></i> Link del formulario</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
+          <input type="text" id="lv" value="https://docs.google.com/forms/d/e/1FAIpQLScEJNemaD1MALXOvdWfdzPZc9Jm2FjsGjy8ObUyy3Dm9i3WjQ/viewform" readonly style="flex:1;border:1px solid var(--bmd);border-radius:var(--rs);padding:9px 12px;font-size:12px;font-family:'DM Mono',monospace;background:var(--surface2);color:var(--navy)">
+          <button class="btn btn-primary btn-sm" onclick="cpLink('lv')"><i class="fa-solid fa-copy"></i> Copiar</button>
+          <a class="btn btn-wa btn-sm" href="https://wa.me/?text=https://docs.google.com/forms/d/e/1FAIpQLScEJNemaD1MALXOvdWfdzPZc9Jm2FjsGjy8ObUyy3Dm9i3WjQ/viewform" target="_blank"><i class="fa-brands fa-whatsapp"></i> Compartir</a>
+        </div>
+        <a class="btn btn-green" href="https://docs.google.com/forms/d/e/1FAIpQLScEJNemaD1MALXOvdWfdzPZc9Jm2FjsGjy8ObUyy3Dm9i3WjQ/viewform" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir formulario</a>
+      </div>
+      <div class="card">
+        <div class="card-ttl"><i class="fa-solid fa-circle-info" style="color:var(--navy)"></i> Instrucciones para vendedores</div>
+        <div style="font-size:13px;color:var(--muted);line-height:2">
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>Abre el link desde tu celular o computadora</div>
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>Llena todos los campos de la venta y presiona <strong>Enviar</strong></div>
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>La venta queda registrada en Google Sheets automáticamente</div>
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>El administrador la importa al dashboard con un clic</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM REPARTIDOR -->
+    <div id="panel-frepartidor" class="panel">
+      <div class="ph"><h2>Formulario de Repartidor</h2><p>Comparte este link con tu repartidor para reportar entregas desde cualquier dispositivo.</p></div>
+      <div class="card" style="margin-bottom:1.4rem">
+        <div class="card-ttl"><i class="fa-solid fa-link" style="color:var(--navy)"></i> Link del formulario</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
+          <input type="text" id="lr" value="https://docs.google.com/forms/d/e/1FAIpQLSdbFZeswAEr2oxxhU_QOfsMUlVNm3IRj9mpc7LM4jZgbSUJBQ/viewform" readonly style="flex:1;border:1px solid var(--bmd);border-radius:var(--rs);padding:9px 12px;font-size:12px;font-family:'DM Mono',monospace;background:var(--surface2);color:var(--navy)">
+          <button class="btn btn-primary btn-sm" onclick="cpLink('lr')"><i class="fa-solid fa-copy"></i> Copiar</button>
+          <a class="btn btn-wa btn-sm" href="https://wa.me/?text=https://docs.google.com/forms/d/e/1FAIpQLSdbFZeswAEr2oxxhU_QOfsMUlVNm3IRj9mpc7LM4jZgbSUJBQ/viewform" target="_blank"><i class="fa-brands fa-whatsapp"></i> Compartir</a>
+        </div>
+        <a class="btn btn-teal" href="https://docs.google.com/forms/d/e/1FAIpQLSdbFZeswAEr2oxxhU_QOfsMUlVNm3IRj9mpc7LM4jZgbSUJBQ/viewform" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir formulario</a>
+      </div>
+      <div class="card">
+        <div class="card-ttl"><i class="fa-solid fa-circle-info" style="color:var(--navy)"></i> Instrucciones para el repartidor</div>
+        <div style="font-size:13px;color:var(--muted);line-height:2">
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>Abre el link al momento de realizar cada entrega</div>
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>Ingresa tu código, el Nº de orden y el estado</div>
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>Presiona <strong>Enviar</strong> — el reporte queda registrado</div>
+          <div><i class="fa-solid fa-circle-check" style="color:var(--green);margin-right:6px"></i>El administrador actualiza el tracking desde el Dashboard</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div id="panel-clientes" class="panel">
+      <div class="ph-row">
+        <div><h2>Clientes</h2><p>Ranking por compras reales — calculado desde el historial de órdenes</p></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportarClientesCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button><button class="btn btn-outline btn-sm" onclick="exportarClientesPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-outline btn-sm" onclick="renderClientes()"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>
+      </div>
+      <div class="g3">
+        <div class="mc"><div class="ml">Clientes distintos</div><div class="mv" id="cli-total" style="color:var(--navy)">0</div></div>
+        <div class="mc"><div class="ml">Cliente con más compras</div><div class="mv" id="cli-top" style="color:var(--green);font-size:16px">–</div></div>
+        <div class="mc"><div class="ml">Promedio gastado por cliente</div><div class="mv" id="cli-prom" style="color:var(--amber)">$0.00</div></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:1.1rem;flex-wrap:wrap">
+        <div class="fg" style="min-width:200px"><label>Buscar cliente</label><input id="cli-buscar" type="text" placeholder="Nombre o teléfono…" oninput="renderClientes()"></div>
+        <div class="fg"><label>Ordenar por</label><select id="cli-orden" onchange="renderClientes()"><option value="masCompra">El que más compra</option><option value="menosCompra">El que menos compra</option><option value="masPedidos">Más pedidos</option><option value="reciente">Compra más reciente</option></select></div>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('cli-buscar').value='';renderClientes()"><i class="fa-solid fa-rotate-left"></i></button>
+      </div>
+      <div class="card"><div class="tw" id="tbl-clientes"><div class="empty"><i class="fa-solid fa-users"></i><p>Registra ventas para ver el listado de clientes.</p></div></div></div>
+    </div>
+
+    <div id="panel-inventario" class="panel">
+      <div class="ph-row">
+        <div><h2>Inventario</h2><p>Unidades vendidas por SKU · calculado desde las órdenes registradas</p></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-outline btn-sm" onclick="renderInventario()"><i class="fa-solid fa-rotate"></i> Actualizar</button><button class="btn btn-outline btn-sm" onclick="confirmarLimpiarDatos()" style="color:#a32d2d;border-color:#f7c1c1"><i class="fa-solid fa-trash-can"></i> Limpiar datos</button><button class="btn btn-primary btn-sm" onclick="irANuevoProducto()"><i class="fa-solid fa-plus"></i> Nuevo producto</button></div>
+      </div>
+      <div class="g3">
+        <div class="mc"><div class="ml">SKUs distintos</div><div class="mv" id="inv-skus" style="color:var(--navy)">0</div></div>
+        <div class="mc"><div class="ml">Unidades totales vendidas</div><div class="mv" id="inv-units" style="color:var(--green)">0</div></div>
+        <div class="mc"><div class="ml">Ingresos totales</div><div class="mv" id="inv-rev" style="color:var(--amber)">$0.00</div></div>
+      </div>
+      <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Unidades vendidas por producto</div><div style="position:relative;height:260px"><canvas id="chartInv"></canvas></div></div>
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:1.1rem;flex-wrap:wrap">
+        <div class="fg" style="min-width:180px"><label>Buscar SKU</label><input id="inv-buscar" type="text" placeholder="Ej. LAZ-001…" oninput="renderInventario()"></div>
+        <div class="fg"><label>Ordenar por</label><select id="inv-orden" onchange="renderInventario()"><option value="unidades">Más vendido</option><option value="ingresos">Más ingresos</option><option value="sku">SKU (A-Z)</option></select></div>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('inv-buscar').value='';renderInventario()"><i class="fa-solid fa-rotate-left"></i></button>
+      </div>
+      <div class="card"><div class="tw" id="tbl-inventario"><div class="empty"><i class="fa-solid fa-boxes-stacked"></i><p>Registra ventas para ver el inventario.</p></div></div></div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="panel-analytics" class="panel">
+      <div class="ph-row">
+        <div><h2>Analytics</h2><p>Productos más vendidos y canales de venta</p></div>
+        <button class="btn btn-outline btn-sm" onclick="confirmarLimpiarDatos()" style="color:#a32d2d;border-color:#f7c1c1"><i class="fa-solid fa-trash-can"></i> Limpiar datos</button>
+      </div>
+      <div class="card" style="margin-bottom:1.4rem">
+        <div class="card-ttl"><i class="fa-solid fa-trophy" style="color:var(--gold)"></i> Productos más vendidos</div>
+        <div class="g2" style="margin-bottom:1rem"><div id="top-sku-a"></div><div id="top-sku-b"></div></div>
+        <div style="position:relative;height:220px"><canvas id="chartSKU"></canvas></div>
+      </div>
+      <div style="margin-bottom:.75rem"><div style="font-size:15px;font-weight:600;margin-bottom:2px">Canal de venta</div><div style="font-size:12.5px;color:var(--muted)">Dónde se generan más ventas</div></div>
+      <div class="g4">
+        <div class="canal-card cc-wa"><div class="canal-icon"><i class="fa-brands fa-whatsapp"></i></div><div class="canal-lbl">WhatsApp</div><div class="canal-num" id="cn-wa">0</div><div class="canal-pct" id="cp-wa">0%</div></div>
+        <div class="canal-card cc-ig"><div class="canal-icon"><i class="fa-brands fa-instagram"></i></div><div class="canal-lbl">Instagram</div><div class="canal-num" id="cn-ig">0</div><div class="canal-pct" id="cp-ig">0%</div></div>
+        <div class="canal-card cc-tt"><div class="canal-icon"><i class="fa-brands fa-tiktok"></i></div><div class="canal-lbl">TikTok</div><div class="canal-num" id="cn-tt">0</div><div class="canal-pct" id="cp-tt">0%</div></div>
+        <div class="canal-card cc-fv"><div class="canal-icon"><i class="fa-solid fa-person-walking-arrow-right"></i></div><div class="canal-lbl">Fuerza de ventas</div><div class="canal-num" id="cn-fv">0</div><div class="canal-pct" id="cp-fv">0%</div></div>
+      </div>
+      <div class="card"><div class="card-ttl"><i class="fa-solid fa-chart-pie" style="color:var(--navy)"></i> Distribución por canal</div><div style="position:relative;height:240px"><canvas id="chartCanal"></canvas></div></div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="panel-reportes" class="panel">
+      <div class="ph-row">
+        <div><h2>Reportes</h2><p>Filtra por rango de fechas y exporta.</p></div>
+        <button class="btn btn-outline btn-sm" onclick="confirmarLimpiarDatos()" style="color:#a32d2d;border-color:#f7c1c1"><i class="fa-solid fa-trash-can"></i> Limpiar datos</button>
+      </div>
+      <div class="filter-bar">
+        <div class="fg"><label>Desde</label><input id="r-desde" type="date"></div>
+        <div class="fg"><label>Hasta</label><input id="r-hasta" type="date"></div>
+        <div class="fg"><label>Zona</label><select id="r-zona"><option value="">Todas</option><option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option></select></div>
+        <div class="fg"><label>Estado</label><select id="r-estado"><option value="">Todos</option><option value="0">Nueva orden</option><option value="1">En proceso</option><option value="2">En empaque</option><option value="3">Paquete en tránsito</option><option value="4">Entregado</option></select></div>
+        <div class="fg"><label>Canal</label><select id="r-canal"><option value="">Todos</option><option>WhatsApp</option><option>Instagram</option><option>TikTok</option><option>Fuerza de ventas</option></select></div>
+        <div class="fg"><label>Vendedor</label><input id="r-vend" type="text" placeholder="Código…" style="width:100px"></div>
+        <button class="btn btn-primary btn-sm" onclick="filtrarReporte()"><i class="fa-solid fa-filter"></i> Filtrar</button>
+        <button class="btn btn-outline btn-sm" onclick="resetReporte()"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="btn btn-gold btn-sm" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+      </div>
+      <div class="g4">
+        <div class="mc"><div class="ml">Total órdenes</div><div class="mv" id="rm-tot" style="color:var(--navy)">–</div></div>
+        <div class="mc"><div class="ml">Entregadas</div><div class="mv" id="rm-ent" style="color:var(--green)">–</div></div>
+        <div class="mc"><div class="ml">Tasa conversión</div><div class="mv" id="rm-conv" style="color:var(--navy2)">–</div></div>
+        <div class="mc"><div class="ml">Ingresos totales</div><div class="mv" id="rm-rev" style="color:var(--amber)">–</div></div>
+      </div>
+      <div class="g2">
+        <div class="mc" style="background:#f3f0fb;border-color:#d9d0f0"><div class="ml">🎁 Pedidos patrocinio / consumo interno</div><div class="mv" id="rm-pat-n" style="color:#6d28d9">–</div></div>
+        <div class="mc" style="background:#f3f0fb;border-color:#d9d0f0"><div class="ml">🎁 Valor patrocinado (no cuenta como ingreso)</div><div class="mv" id="rm-pat-rev" style="color:#6d28d9">–</div></div>
+      </div>
+      <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-column" style="color:var(--navy)"></i> Ventas por fecha</div><div style="position:relative;height:240px"><canvas id="chartReporte"></canvas></div></div>
+      <div class="card">
+        <div class="card-ttl" style="justify-content:space-between"><span><i class="fa-solid fa-table" style="color:var(--navy)"></i> Base de datos filtrada</span><button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-download"></i> Exportar</button></div>
+        <div class="tw" id="tbl-reporte"><div class="empty"><i class="fa-solid fa-filter"></i><p>Aplica un filtro para ver resultados.</p></div></div>
+      </div>
+    </div>
+
+    <!-- REGISTRO DE VENTA -->
+    <div id="panel-registroventa" class="panel">
+      <div class="ph-row">
+        <div><h2>Registro de venta</h2><p>Genera y comparte con tus clientes por WhatsApp o correo.</p></div>
+        <button class="btn btn-outline btn-sm" onclick="confirmarLimpiarDatos()" style="color:#a32d2d;border-color:#f7c1c1"><i class="fa-solid fa-trash-can"></i> Limpiar datos</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:1.4rem"><input id="inv-q" type="text" style="flex:1;border:1px solid var(--bmd);border-radius:var(--rs);padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none" placeholder="Buscar por Nº orden o nombre…" oninput="renderInvList()"><button class="btn btn-outline" onclick="document.getElementById('inv-q').value='';renderInvList()"><i class="fa-solid fa-rotate-left"></i></button></div>
+      <div id="inv-list-wrap"></div>
+      <div id="inv-detail-wrap" style="display:none">
+        <button class="btn btn-outline btn-sm" onclick="cerrarInv()" style="margin-bottom:1.25rem"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+        <div class="inv-prev" id="inv-prev-content" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)"></div>
+        <div class="inv-actions" id="inv-actions"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var ESTADOS = ['Nueva orden','En proceso','En empaque','Paquete en tránsito','Entregado'];
+var SCLS    = ['s0','s1','s2','s3','s4'];
+var EICONS  = ['📋','⚙️','📦','🚚','✅'];
+var ZONAS   = ['Antiguo Cuscatlán','Colonia Escalón','Merliot','Santa Tecla'];
+var ZCOLORS = ['#378ADD','#534AB7','#3B6D11','#854F0B'];
+var ECOLORS = ['#378ADD','#534AB7','#EF9F27','#D85A30','#2e7d52'];
+var CANALES = ['WhatsApp','Instagram','TikTok','Fuerza de ventas'];
+var CCOLORS = ['#25D366','#E1306C','#111111','#2D2460'];
+var PANELS  = {
+  overview:     ['Dashboard','DO · CARE · tiempo real'],
+  nueva:        ['Nueva Venta · DO','Registro de conversión'],
+  ordenes:      ['Órdenes','Base de datos completa'],
+  tracking:     ['Tracking · CARE','Actualiza y notifica el estado de pedidos'],
+  repartidor:   ['Repartidor','Entregas del día'],
+  fvendedor:    ['Formulario Vendedores','Comparte con tu equipo de ventas'],
+  frepartidor:  ['Formulario Repartidor','Comparte con tu repartidor'],
+  clientes:     ['Clientes','Ranking de clientes por compras'],
+  inventario:   ['Inventario','Productos vendidos por SKU'],
+  analytics:    ['Analytics','Productos más vendidos y canales'],
+  reportes:     ['Reportes','Análisis por rango de fechas'],
+  registroventa:['Registro de venta','Genera y comparte con tus clientes']
+};
+var KEY  = 'ngd_crm_v10';
+var GAS  = 'https://script.google.com/macros/s/AKfycbxXSFbECrtrRPohWOfmU3ZShV5DUEhC2xIlFGWEPL4ur60qpvzYRi7FT1neL1qoFT_m/exec';
+var _syncing = false;
+var CH   = {};
+var skus = [];
+var _ordenes    = [];
+var _repCodigo  = null;
+var _reporteData= null;
+var _clientesData = null;
+
+// STORAGE — local first, GAS sync in background
+function getOrd(){ return _ordenes; }
+
+function saveLocal(){
+  localStorage.setItem(KEY, JSON.stringify(_ordenes));
+}
+
+function loadLocal(){
+  try{ var r=localStorage.getItem(KEY); if(r)_ordenes=JSON.parse(r); }catch(e){ _ordenes=[]; }
+}
+
+// ── GAS API calls ──────────────────────────
+function gasCall(opts, cb) {
+  var xhr = new XMLHttpRequest();
+  if (opts.method === 'POST') {
+    xhr.open('POST', GAS, true);
+    xhr.setRequestHeader('Content-Type', 'text/plain');
+    xhr.onload = function(){
+      try{ cb(null, JSON.parse(xhr.responseText)); }catch(e){ cb(e); }
+    };
+    xhr.onerror = function(){ cb(new Error('Network error')); };
+    xhr.send(JSON.stringify(opts.body));
+  } else {
+    var url = GAS + (opts.params ? '?' + opts.params : '');
+    xhr.open('GET', url, true);
+    xhr.onload = function(){
+      try{ cb(null, JSON.parse(xhr.responseText)); }catch(e){ cb(e); }
+    };
+    xhr.onerror = function(){ cb(new Error('Network error')); };
+    xhr.send();
+  }
+}
+
+// Tumbas: IDs eliminados localmente que aún no se confirman borrados en el servidor.
+// Evita que una orden eliminada "regrese" si la sincronización automática
+// corre antes de que el borrado termine de guardarse en Google Sheets.
+var TOMB_KEY = 'ngd_tumbas_v10';
+function getTumbas(){ try{ return JSON.parse(localStorage.getItem(TOMB_KEY)||'[]'); }catch(e){ return []; } }
+function addTumba(id){
+  var t = getTumbas();
+  if (t.indexOf(id) < 0) t.push(id);
+  localStorage.setItem(TOMB_KEY, JSON.stringify(t));
+}
+function clearTumba(id){
+  var t = getTumbas().filter(function(x){ return x !== id; });
+  localStorage.setItem(TOMB_KEY, JSON.stringify(t));
+}
+function aplicarTumbas(lista){
+  var t = getTumbas();
+  if (!t.length) return lista;
+  return lista.filter(function(o){ return t.indexOf(o.id) < 0; });
+}
+
+function syncFromGAS(silent) {
+  if (_syncing) return;
+  _syncing = true;
+  setSyncUI('syncing', silent);
+  gasCall({method:'GET', params:'action=sync'}, function(err, res){
+    _syncing = false;
+    if (err || !res || !res.ok) {
+      setSyncUI('error', silent);
+      return;
+    }
+    if (res.ordenes) {
+      // Filtrar cualquier orden que el usuario eliminó localmente pero
+      // que el servidor todavía no confirmó como borrada.
+      _ordenes = aplicarTumbas(res.ordenes);
+      saveLocal();
+      updateOverview();
+      var active = document.querySelector('.panel.active');
+      if (active) {
+        if (active.id === 'panel-ordenes')    renderOrdenes();
+        if (active.id === 'panel-analytics')  renderAnalytics();
+        if (active.id === 'panel-inventario') renderInventario();
+        if (active.id === 'panel-overview')   renderOvCharts();
+        if (active.id === 'panel-reportes')   filtrarReporte();
+      }
+    }
+    setSyncUI('ok', silent);
+    if (res.nuevasVentas > 0 || res.entregasActualizadas > 0) {
+      showToast(res.nuevasVentas + ' venta(s) nueva(s) · ' + res.entregasActualizadas + ' entrega(s) actualizada(s)');
+    }
+  });
+}
+
+function pushToGAS(onDone) {
+  gasCall({method:'POST', body:{action:'save', data:_ordenes}}, function(err, res){
+    if (err || !res || !res.ok) { if(onDone) onDone(false); return; }
+    if (onDone) onDone(true);
+  });
+}
+
+function updateGASField(id, fields) {
+  // Fire and forget — instant UI, background sync
+  gasCall({method:'POST', body:{action:'update', id:String(id), fields:fields}}, function(){});
+}
+
+function setSyncUI(state, silent) {
+  var dot  = document.getElementById('sync-dot');
+  var lbl  = document.getElementById('sync-lbl');
+  var bar  = document.getElementById('sync-bar');
+  if (!dot || !lbl) return;
+  if (state === 'syncing') {
+    dot.className = 'sd yellow'; lbl.textContent = 'Sincronizando…';
+    if (!silent && bar) { bar.textContent = '🔄 Sincronizando con Google Sheets…'; bar.style.display='block'; bar.style.background='var(--gold-pale)'; bar.style.color='#633806'; }
+  } else if (state === 'ok') {
+    dot.className = 'sd green'; lbl.textContent = 'Sincronizado ✓';
+    if (bar) bar.style.display='none';
+  } else {
+    dot.className = 'sd red'; lbl.textContent = 'Sin conexión · local';
+    if (bar) bar.style.display='none';
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = '✅ ' + msg;
+  t.style.display = 'block';
+  setTimeout(function(){ t.style.display='none'; }, 4000);
+}
+
+// INIT
+window.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-SV',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  var hoy = new Date().toISOString().slice(0,10);
+  var mes = new Date(); mes.setDate(1);
+  document.getElementById('r-hasta').value = hoy;
+  document.getElementById('r-desde').value = mes.toISOString().slice(0,10);
+  loadLocal();
+  genOrden();
+  updateOverview();
+  setTimeout(renderOvCharts, 120);
+  // Start sync: immediate + every 30s
+  syncFromGAS(true);
+  setInterval(function(){ syncFromGAS(true); }, 30000);
+});
+
+// NAVIGATION
+function go(name){
+  var panels = document.querySelectorAll('.panel');
+  for(var i=0;i<panels.length;i++) panels[i].classList.remove('active');
+  var navs = document.querySelectorAll('.nav');
+  for(var i=0;i<navs.length;i++) navs[i].classList.remove('active');
+  var p = document.getElementById('panel-'+name);
+  var n = document.getElementById('nav-'+name);
+  if(p) p.classList.add('active');
+  if(n) n.classList.add('active');
+  if(PANELS[name]){
+    document.getElementById('tb-title').textContent = PANELS[name][0];
+    document.getElementById('tb-sub').textContent   = PANELS[name][1];
+  }
+  if(name==='overview')  { updateOverview(); setTimeout(renderOvCharts,80); }
+  if(name==='ordenes')   { renderOrdenes(); }
+  if(name==='analytics') { renderAnalytics(); }
+  if(name==='inventario'){ renderInventario(); }
+  if(name==='clientes'){ renderClientes(); }
+  if(name==='registroventa'){ cerrarInv(); renderInvList(); }
+  if(name==='tracking')  { document.getElementById('track-list').innerHTML=''; document.getElementById('track-detail').style.display='none'; document.getElementById('track-q').value=''; }
+  if(name==='repartidor' && _repCodigo){ renderRepDash(); }
+}
+
+// Lleva a "Nueva Venta" con el foco listo en el campo de SKU,
+// para dar de alta un producto nuevo directamente desde Inventario.
+function irANuevoProducto(){
+  go('nueva');
+  setTimeout(function(){
+    var input = document.getElementById('sku-input');
+    if (input) { input.focus(); input.scrollIntoView({behavior:'smooth', block:'center'}); }
+  }, 80);
+}
+
+// Borra TODAS las órdenes locales y en Google Sheets, con doble confirmación.
+function confirmarLimpiarDatos(){
+  if (!confirm('¿Seguro que deseas eliminar TODAS las órdenes registradas?\n\nEsta acción borra el historial completo de Analytics, Reportes, Inventario y Registro de venta. No se puede deshacer.')) return;
+  if (!confirm('Confirmación final: se eliminarán '+_ordenes.length+' orden(es) de forma permanente, incluyendo lo guardado en Google Sheets.\n\n¿Continuar?')) return;
+
+  // Marcar todas las órdenes actuales como tumbas para que ninguna sincronización las resucite.
+  for (var i=0; i<_ordenes.length; i++) { addTumba(_ordenes[i].id); }
+
+  _ordenes = [];
+  saveLocal();
+  updateOverview();
+
+  pushToGAS(function(success){
+    if (success) {
+      localStorage.setItem(TOMB_KEY, '[]'); // confirmado en el servidor, ya no hacen falta las tumbas
+      setSyncUI('ok', false);
+      showToast('Todos los datos fueron eliminados.');
+    } else {
+      setSyncUI('error', false);
+      showToast('Eliminado localmente — se sincronizará al recuperar conexión.');
+    }
+  });
+
+  // Refrescar la vista actual
+  var active = document.querySelector('.panel.active');
+  if (active) {
+    if (active.id === 'panel-ordenes')     renderOrdenes();
+    if (active.id === 'panel-analytics')   renderAnalytics();
+    if (active.id === 'panel-inventario')  renderInventario();
+    if (active.id === 'panel-reportes')    filtrarReporte();
+    if (active.id === 'panel-registroventa') renderInvList();
+    if (active.id === 'panel-overview')    renderOvCharts();
+  }
+}
+
+// HELPERS
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function vf(id){ return (document.getElementById(id).value||'').trim(); }
+function dc(id){ if(CH[id]){ CH[id].destroy(); delete CH[id]; } }
+
+// ORDER NUMBER
+function genOrden(){
+  var d=new Date();
+  document.getElementById('f-orden').value='ORD-'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000);
+  recalcFechaEntrega();
+}
+
+// FECHA DE ENTREGA — 3 días hábiles (lunes a sábado, domingo no cuenta)
+function sumarDiasHabiles(fechaBase, diasHabiles){
+  var f = new Date(fechaBase);
+  var contados = 0;
+  while (contados < diasHabiles) {
+    f.setDate(f.getDate() + 1);
+    if (f.getDay() !== 0) { contados++; } // 0 = domingo, se salta
+  }
+  return f;
+}
+function recalcFechaEntrega(){
+  var fEnt = document.getElementById('f-fecha-entrega');
+  if (!fEnt) return;
+  var fecha = sumarDiasHabiles(new Date(), 3);
+  fEnt.value = fecha.toISOString().slice(0,10);
+}
+function formatoFechaCorta(iso){
+  if (!iso) return '';
+  var partes = iso.slice(0,10).split('-');
+  var dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  var d = new Date(parseInt(partes[0]), parseInt(partes[1])-1, parseInt(partes[2]));
+  return dias[d.getDay()] + ' ' + partes[2] + '/' + partes[1];
+}
+
+// Construye la etiqueta visual de "Pendiente de pago".
+// Pasadas 12 horas cambia a color de alerta — pero nunca se borra ni cambia nada solo.
+function badgePendientePago(o){
+  if (!o.pendientePago) return '';
+  var horas = 0;
+  if (o.pendienteDesde) { horas = (Date.now() - new Date(o.pendienteDesde).getTime()) / 36e5; }
+  var vencido = horas >= 12;
+  var bg = vencido ? '#fde2e2' : 'var(--gold-pale)';
+  var fg = vencido ? '#a32d2d' : 'var(--amber)';
+  var txt = vencido ? '⏳ Pendiente de pago · +12h' : '⏳ Pendiente de pago';
+  return '<div style="margin-top:4px"><span style="display:inline-block;font-size:11px;font-weight:600;background:'+bg+';color:'+fg+';padding:2px 8px;border-radius:10px">'+txt+'</span></div>';
+}
+// Etiqueta para pedidos de consumo interno/patrocinio — no se cobra,
+// se cuenta aparte en Reportes e Inventario, nunca como ingreso real.
+function badgeConsumoInterno(o){
+  if (!o.consumoInterno) return '';
+  return '<div style="margin-top:4px"><span style="display:inline-block;font-size:11px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 8px;border-radius:10px">🎁 Consumo interno</span></div>';
+}
+// Marca una orden como pagada — quita la etiqueta y registra la confirmación.
+function confirmarPago(id){
+  var idx=-1;
+  for(var i=0;i<_ordenes.length;i++){ if(_ordenes[i].id===id){idx=i;break;} }
+  if(idx<0) return;
+  _ordenes[idx].pendientePago = false;
+  _ordenes[idx].pendienteDesde = null;
+  saveLocal(); updateOverview();
+  setTimeout(function(){ updateGASField(id, {pendientePago:false, pendienteDesde:null}); }, 0);
+  showToast('Pago confirmado ✓');
+  var active = document.querySelector('.panel.active');
+  if (active && active.id === 'panel-ordenes') renderOrdenes();
+  if (active && active.id === 'panel-tracking') { var det=document.getElementById('track-detail'); if(det.style.display==='block') abrirTrack(id); }
+}
+
+// MAPA — se integra automáticamente al escribir la dirección.
+// Usa el endpoint público de Google Maps sin clave (output=embed),
+// igual al de cualquier "Compartir ubicación" desde la app de Maps.
+var _mapTimer = null;
+function onDireccionInput(){
+  clearTimeout(_mapTimer);
+  var texto = (document.getElementById('f-direccion').value || '').trim();
+  if (texto.length < 5) {
+    document.getElementById('map-wrap').style.display = 'none';
+    return;
+  }
+  _mapTimer = setTimeout(function(){
+    actualizarMapa(texto);
+    // Si está activa la zona especial, refresca también la sugerencia de lugar.
+    if (document.getElementById('f-zona').value === '__especial__') {
+      sugerirZonaEspecial();
+    }
+  }, 700); // espera a que termine de escribir
+}
+function actualizarMapa(direccionTexto){
+  var query  = encodeURIComponent(direccionTexto + ', El Salvador');
+  var frame  = document.getElementById('map-frame');
+  var abrir  = document.getElementById('map-abrir');
+  var wrap   = document.getElementById('map-wrap');
+  var status = document.getElementById('map-status');
+  if (!frame) return;
+  frame.src = 'https://maps.google.com/maps?q=' + query + '&output=embed';
+  abrir.href = 'https://www.google.com/maps/search/?api=1&query=' + query;
+  status.textContent = 'Ubicación aproximada según la dirección escrita.';
+  wrap.style.display = 'block';
+}
+function quitarMapa(){
+  document.getElementById('map-wrap').style.display = 'none';
+  document.getElementById('map-frame').src = '';
+}
+// Construye el link de Google Maps para guardarlo con la orden (compartir con repartidor).
+function linkMapaDesdeDireccion(direccionTexto, zona){
+  if (!direccionTexto) return '';
+  var query = encodeURIComponent(direccionTexto + (zona ? ', ' + zona : '') + ', El Salvador');
+  return 'https://www.google.com/maps/search/?api=1&query=' + query;
+}
+
+// CLIENTES RECURRENTES — el dashboard ya es una base de datos de órdenes;
+// aprovechamos ese historial para reconocer clientes sin necesitar una
+// tabla nueva. Se identifica al cliente por su teléfono (normalizado).
+function normalizarTel(tel){
+  return (tel || '').replace(/\D/g,'');
+}
+// Busca coincidencias por teléfono o nombre en el historial de órdenes.
+function buscarCliente(query){
+  query = (query || '').trim().toLowerCase();
+  if (query.length < 3) return [];
+  var telQuery = normalizarTel(query);
+  var vistos = {}; // dedupe por teléfono — nos quedamos con la ocurrencia más reciente
+  var resultados = [];
+  _ordenes.forEach(function(o){
+    var tel = normalizarTel(o.contacto);
+    var coincideNombre = o.nombre && o.nombre.toLowerCase().indexOf(query) >= 0;
+    var coincideTel = telQuery.length >= 4 && tel.indexOf(telQuery) >= 0;
+    if (!coincideNombre && !coincideTel) return;
+    if (vistos[tel]) return; // ya tenemos la versión más reciente de este cliente
+    vistos[tel] = true;
+    resultados.push(o);
+  });
+  return resultados.slice(0, 5);
+}
+// Devuelve las direcciones distintas que un cliente (por teléfono) ha usado antes.
+function direccionesDeCliente(contacto){
+  var tel = normalizarTel(contacto);
+  if (!tel) return [];
+  var vistas = {};
+  var lista = [];
+  _ordenes.forEach(function(o){
+    if (normalizarTel(o.contacto) !== tel) return;
+    var key = (o.direccion||'').trim().toLowerCase() + '|' + (o.zona||'').trim().toLowerCase();
+    if (vistas[key]) return;
+    vistas[key] = true;
+    lista.push({ direccion:o.direccion, zona:o.zona, mapaLink:o.mapaLink, fecha:o.fecha });
+  });
+  // Más reciente primero
+  lista.sort(function(a,b){ return new Date(b.fecha) - new Date(a.fecha); });
+  return lista;
+}
+
+// UI de sugerencias — aparece bajo Nombre/Contacto mientras se escribe.
+// Flujo en dos pasos: 1) elegir cliente  2) elegir cuál de sus direcciones usar
+// (o escribir una nueva si ninguna aplica para este pedido).
+var _clienteSugsCache = [];
+var _direccionesCache = [];
+var _zonasFijas = ['Antiguo Cuscatlán','Colonia Escalón','Merliot','Santa Tecla'];
+function onClienteInput(){
+  var nombreVal = vf('f-nombre');
+  var contactoVal = vf('f-contacto');
+  var q = (contactoVal && normalizarTel(contactoVal).length >= 4) ? contactoVal : nombreVal;
+  var box = document.getElementById('cliente-sugs');
+  var resultados = buscarCliente(q);
+  if (!resultados.length) { box.style.display='none'; box.innerHTML=''; return; }
+  _clienteSugsCache = resultados;
+  box.innerHTML = resultados.map(function(o, i){
+    var nPed = _ordenes.filter(function(x){ return normalizarTel(x.contacto)===normalizarTel(o.contacto); }).length;
+    return '<div onmousedown="mostrarDireccionesCliente('+i+')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'#fff\'"><div style="font-weight:600">'+esc(o.nombre)+'</div><div style="color:var(--muted);font-size:12px">'+esc(o.contacto)+' · '+nPed+' pedido(s) anterior(es)</div></div>';
+  }).join('');
+  box.style.display='block';
+}
+// Paso 2: una vez elegido el cliente, muestra TODAS sus direcciones guardadas
+// para que se elija cuál usar — nunca se autocompleta una al azar.
+function mostrarDireccionesCliente(i){
+  var o = _clienteSugsCache[i];
+  if (!o) return;
+  var box = document.getElementById('cliente-sugs');
+  var dirs = direccionesDeCliente(o.contacto);
+  _direccionesCache = dirs;
+  var opciones = dirs.map(function(d, j){
+    return '<div onmousedown="elegirDireccionCliente('+i+','+j+')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'#fff\'"><div style="font-weight:500">'+esc(d.direccion||'')+'</div><div style="color:var(--muted);font-size:12px">'+esc(d.zona||'')+'</div></div>';
+  }).join('');
+  box.innerHTML =
+    '<div style="padding:8px 12px;background:var(--surface2);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">'+esc(o.nombre)+' — elige la dirección</div>' +
+    opciones +
+    '<div onmousedown="elegirNuevaDireccion('+i+')" style="padding:9px 12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--teal)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'#fff\'"><i class="fa-solid fa-plus"></i> Usar una dirección nueva</div>' +
+    '<div onmousedown="onClienteInput()" style="padding:7px 12px;cursor:pointer;font-size:12px;color:var(--muted);border-top:1px solid var(--border)"><i class="fa-solid fa-arrow-left"></i> Volver a la lista de clientes</div>';
+  box.style.display='block';
+}
+function elegirDireccionCliente(i, j){
+  var o = _clienteSugsCache[i];
+  var d = _direccionesCache[j];
+  if (!o || !d) return;
+  document.getElementById('f-nombre').value = o.nombre;
+  document.getElementById('f-contacto').value = o.contacto;
+  document.getElementById('cliente-sugs').style.display='none';
+  document.getElementById('f-direccion').value = d.direccion || '';
+  if (_zonasFijas.indexOf(d.zona) >= 0) {
+    document.getElementById('f-zona').value = d.zona;
+    document.getElementById('zona-especial-wrap').style.display='none';
+  } else if (d.zona) {
+    document.getElementById('f-zona').value = '__especial__';
+    document.getElementById('zona-especial-wrap').style.display='block';
+    document.getElementById('f-zona-especial').value = d.zona;
+  }
+  if (d.direccion) actualizarMapa(d.direccion);
+  showToast('Cliente conocido — dirección seleccionada ✓');
+}
+// El cliente quiere recibir en un lugar distinto a los que ya tiene guardados.
+// Solo rellena nombre/contacto y deja la dirección lista para escribirla — esa
+// dirección nueva queda automáticamente en su historial al guardar la orden.
+function elegirNuevaDireccion(i){
+  var o = _clienteSugsCache[i];
+  if (!o) return;
+  document.getElementById('f-nombre').value = o.nombre;
+  document.getElementById('f-contacto').value = o.contacto;
+  document.getElementById('cliente-sugs').style.display='none';
+  document.getElementById('f-direccion').value = '';
+  document.getElementById('f-zona').value = '';
+  document.getElementById('zona-especial-wrap').style.display='none';
+  quitarMapa();
+  document.getElementById('f-direccion').focus();
+  showToast('Cliente conocido — escribe la nueva dirección');
+}
+// Cierra el cuadro de sugerencias si se hace clic afuera.
+document.addEventListener('click', function(e){
+  var box = document.getElementById('cliente-sugs');
+  if (box && e.target.id !== 'f-nombre' && e.target.id !== 'f-contacto') {
+    box.style.display = 'none';
+  }
+});
+
+// ZONA ESPECIAL — fuera de las 4 zonas de cobertura habitual.
+// Sugiere el nombre del lugar (colonia/distrito/ciudad) buscando la
+// dirección escrita en Nominatim (OpenStreetMap), gratis y sin clave.
+function onZonaChange(){
+  var sel  = document.getElementById('f-zona').value;
+  var wrap = document.getElementById('zona-especial-wrap');
+  if (sel === '__especial__') {
+    wrap.style.display = 'block';
+    sugerirZonaEspecial();
+  } else {
+    wrap.style.display = 'none';
+    document.getElementById('f-zona-especial').value = '';
+  }
+}
+var _zonaReqId = 0;
+function sugerirZonaEspecial(){
+  var direccion = (document.getElementById('f-direccion').value || '').trim();
+  var hint = document.getElementById('zona-especial-hint');
+  var input = document.getElementById('f-zona-especial');
+  if (!direccion) {
+    hint.textContent = 'Escribe primero la dirección para que el sistema sugiera el lugar.';
+    return;
+  }
+  var thisReq = ++_zonaReqId; // evita que una respuesta vieja sobreescriba una búsqueda más nueva
+  hint.textContent = 'Buscando lugar sugerido…';
+  var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sv&q=' + encodeURIComponent(direccion + ', El Salvador');
+  fetch(url, { headers: { 'Accept-Language': 'es' } })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (thisReq !== _zonaReqId) return; // llegó tarde, ya hay una búsqueda más reciente
+      if (!data || !data.length) {
+        hint.textContent = 'No se encontró un lugar sugerido — escríbelo manualmente.';
+        return;
+      }
+      var lugar = extraerNombreLugar(data[0]);
+      if (lugar && !input.value.trim()) { input.value = lugar; }
+      hint.textContent = lugar ? 'Sugerido automáticamente — puedes editarlo si hace falta.' : 'No se pudo determinar el lugar — escríbelo manualmente.';
+    })
+    .catch(function(){
+      if (thisReq !== _zonaReqId) return;
+      hint.textContent = 'No se pudo buscar el lugar — escríbelo manualmente.';
+    });
+}
+// Extrae un nombre de lugar corto y útil desde la respuesta de Nominatim.
+function extraerNombreLugar(resultado){
+  if (!resultado || !resultado.display_name) return '';
+  // display_name viene como "Calle, Colonia, Ciudad, Departamento, El Salvador"
+  var partes = resultado.display_name.split(',').map(function(p){ return p.trim(); });
+  // Se descarta el primer segmento (suele ser la calle/número) y "El Salvador" al final.
+  partes = partes.filter(function(p){ return p && p !== 'El Salvador'; });
+  if (partes.length > 1) partes.shift();
+  return partes.slice(0, 2).join(', ');
+}
+
+// SKU
+function addSKU(){
+  var inp=document.getElementById('sku-input');
+  var code=inp.value.trim().toUpperCase();
+  if(!code||skus.indexOf(code)>=0){ inp.value=''; return; }
+  skus.push(code); renderSKUs(); inp.value=''; inp.focus();
+}
+function removeSKU(c){ skus=skus.filter(function(s){return s!==c;}); renderSKUs(); }
+function renderSKUs(){
+  var el=document.getElementById('sku-tags');
+  if(!skus.length){ el.innerHTML='<span style="font-size:12px;color:var(--hint)">Sin productos</span>'; return; }
+  el.innerHTML=skus.map(function(c){ return '<span class="sku-tag">'+c+' <button onclick="removeSKU(\''+c+'\')">×</button></span>'; }).join('');
+}
+
+// TOTAL CALC
+function calcTotal(){
+  var q=parseFloat(document.getElementById('f-cantidad').value)||0;
+  var p=parseFloat(document.getElementById('f-precio').value)||0;
+  document.getElementById('total-formula').textContent=q+' × $'+p.toFixed(2)+' =';
+  document.getElementById('total-val').textContent='$'+(q*p).toFixed(2);
+}
+
+// Pendiente de pago = "va a pagar pero todavía no". Consumo interno = "nunca se cobra".
+// Son situaciones distintas — marcar una desmarca la otra automáticamente.
+function onPendienteChange(){
+  if (document.getElementById('f-pendiente-pago').checked) {
+    document.getElementById('f-consumo-interno').checked = false;
+  }
+}
+function onConsumoInternoChange(){
+  if (document.getElementById('f-consumo-interno').checked) {
+    document.getElementById('f-pendiente-pago').checked = false;
+  }
+}
+
+// SAVE ORDER
+function guardar(){
+  var orden=vf('f-orden'), nombre=vf('f-nombre'), contacto=vf('f-contacto');
+  var dir=vf('f-direccion'), zonaSel=vf('f-zona'), vend=vf('f-vendedor'), canal=vf('f-canal');
+  var zona = zonaSel === '__especial__' ? vf('f-zona-especial') : zonaSel;
+  var precio=parseFloat(vf('f-precio'));
+  var ok=document.getElementById('alrt-ok'), er=document.getElementById('alrt-err');
+  ok.style.display='none'; er.style.display='none';
+  if(!nombre||!contacto||!dir||!zona||!vend){ showErr('Completa todos los campos obligatorios (*).'); return; }
+  if(!precio||isNaN(precio)){ showErr('Ingresa un precio unitario válido.'); return; }
+  if(!canal){ showErr('Selecciona el canal de venta.'); return; }
+  if(getOrd().filter(function(o){return o.orden===orden;}).length){ showErr('Nº de orden duplicado — presiona 🔄 para regenerar.'); return; }
+  var cantidad=parseInt(vf('f-cantidad'))||1;
+  var fechaEntrega=vf('f-fecha-entrega');
+  var mapaLink=linkMapaDesdeDireccion(dir, zona);
+  var pendientePago = document.getElementById('f-pendiente-pago').checked;
+  var consumoInterno = document.getElementById('f-consumo-interno').checked;
+  _ordenes.unshift({
+    id:Date.now(), orden:orden, nombre:nombre, contacto:contacto, direccion:dir,
+    zona:zona, vendedor:vend, precio:precio, cantidad:cantidad, total:cantidad*precio, canal:canal,
+    pago:vf('f-pago'), productos:skus.slice(), estado:vf('f-estado'), notas:vf('f-notas'),
+    fecha:new Date().toISOString(), fechaEntrega:fechaEntrega, mapaLink:mapaLink,
+    pendientePago: pendientePago, pendienteDesde: pendientePago ? new Date().toISOString() : null,
+    consumoInterno: consumoInterno,
+    historial:[{estado:vf('f-estado'),fecha:new Date().toISOString()}]
+  });
+  saveLocal();
+  ok.style.display='flex'; setTimeout(function(){ ok.style.display='none'; },4000);
+  limpiar(); updateOverview();
+  // Push to GAS immediately
+  pushToGAS(function(success){
+    if (success) setSyncUI('ok', false);
+    else setSyncUI('error', false);
+  });
+}
+function showErr(msg){ document.getElementById('err-txt').textContent=msg; var e=document.getElementById('alrt-err'); e.style.display='flex'; setTimeout(function(){e.style.display='none';},4000); }
+function limpiar(){
+  ['f-nombre','f-contacto','f-direccion','f-vendedor','f-notas','f-zona-especial'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('f-cantidad').value='1'; document.getElementById('f-precio').value='';
+  document.getElementById('f-zona').value=''; document.getElementById('f-estado').value='0';
+  document.getElementById('zona-especial-wrap').style.display='none';
+  document.getElementById('f-pago').value='Transferencia'; document.getElementById('f-canal').value='';
+  document.getElementById('f-pendiente-pago').checked=false;
+  document.getElementById('f-consumo-interno').checked=false;
+  skus=[]; renderSKUs(); document.getElementById('sku-input').value='';
+  document.getElementById('total-formula').textContent='1 × $0.00 =';
+  document.getElementById('total-val').textContent='$0.00'; genOrden();
+  quitarMapa();
+}
+
+// OVERVIEW
+function updateOverview(){
+  var o=getOrd(); var ent=o.filter(function(x){return parseInt(x.estado)===4;}).length;
+  document.getElementById('cnt-do').textContent=o.length;
+  document.getElementById('cnt-care').textContent=ent;
+  document.getElementById('m-pend').textContent=o.filter(function(x){return parseInt(x.estado)===0;}).length;
+  document.getElementById('m-proc').textContent=o.filter(function(x){return parseInt(x.estado)===1||parseInt(x.estado)===2;}).length;
+  document.getElementById('m-trans').textContent=o.filter(function(x){return parseInt(x.estado)===3;}).length;
+  document.getElementById('m-tasa').textContent=(o.length?Math.round(ent/o.length*100):0)+'%';
+}
+function renderOvCharts(){
+  var o=getOrd();
+  dc('chartEstado');
+  CH.chartEstado=new Chart(document.getElementById('chartEstado'),{type:'doughnut',data:{labels:ESTADOS,datasets:[{data:ESTADOS.map(function(_,i){return o.filter(function(x){return parseInt(x.estado)===i;}).length;}),backgroundColor:ECOLORS,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:10,padding:10}}}}});
+  dc('chartZona');
+  CH.chartZona=new Chart(document.getElementById('chartZona'),{type:'bar',data:{labels:ZONAS.map(function(z){return z.length>13?z.slice(0,13)+'…':z;}),datasets:[{label:'Ventas',data:ZONAS.map(function(z){return o.filter(function(x){return x.zona===z;}).length;}),backgroundColor:ZCOLORS,borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+  dc('chartTiempo');
+  var bd={};
+  o.forEach(function(x){ var d=x.fecha?x.fecha.slice(0,10):'?'; bd[d]=(bd[d]||0)+1; });
+  var tl=Object.keys(bd).sort();
+  CH.chartTiempo=new Chart(document.getElementById('chartTiempo'),{type:'line',data:{labels:tl,datasets:[{label:'Ventas',data:tl.map(function(l){return bd[l];}),borderColor:'#2D2460',backgroundColor:'rgba(45,36,96,0.07)',fill:true,tension:0.45,pointRadius:4,pointBackgroundColor:'#2D2460',pointBorderColor:'#fff',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}});
+}
+
+// ORDENES TABLE
+function renderOrdenes(){
+  var q=(document.getElementById('o-buscar').value||'').toLowerCase();
+  var est=document.getElementById('o-estado').value, zona=document.getElementById('o-zona').value;
+  var d=getOrd();
+  // Las órdenes Entregadas (estado 4) se "evacuan" a Reportes y no aparecen
+  // aquí salvo que el usuario las busque explícitamente por estado o texto.
+  if(est===''){ d=d.filter(function(o){ return parseInt(o.estado)!==4; }); }
+  if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto).toLowerCase().indexOf(q)>=0;});
+  if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
+  if(zona) d=d.filter(function(o){return o.zona===zona;});
+  buildTable(d,'tbl-ordenes',true);
+}
+function resetOrd(){ document.getElementById('o-buscar').value=''; document.getElementById('o-estado').value=''; document.getElementById('o-zona').value=''; renderOrdenes(); }
+function buildTable(data,cid,deletable){
+  var c=document.getElementById(cid);
+  if(!data.length){ c.innerHTML='<div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin resultados.</p></div>'; return; }
+  c.innerHTML='<table><thead><tr><th>Nº Orden</th><th>Fecha</th><th>Entrega est.</th><th>Cliente</th><th>Contacto</th><th>Zona</th><th>Canal</th><th>Cant.</th><th>P.Unit</th><th>Total</th><th>SKU</th><th>Estado</th>'+(deletable?'<th style="text-align:center">Track</th><th></th>':'')+'</tr></thead><tbody>'+data.map(function(o){
+    var tot=((o.precio||0)*(o.cantidad||1)).toFixed(2);
+    var fe=o.fechaEntrega?'<span style="font-weight:500;color:var(--teal)">'+formatoFechaCorta(o.fechaEntrega)+'</span>':'<span style="color:var(--hint)">–</span>';
+    var pendBadge = badgePendientePago(o);
+    var ciBadge = badgeConsumoInterno(o);
+    var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px;color:var(--muted)">'+(o.productos||[]).join(', ')+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+  }).join('')+'</tbody></table>';
+}
+function eliminar(id){
+  if(!confirm('¿Eliminar esta orden?'))return;
+  addTumba(id); // marca como eliminada ANTES de tocar el servidor — sobrevive a syncs en curso
+  _ordenes=_ordenes.filter(function(o){return o.id!==id;});
+  saveLocal(); renderOrdenes(); updateOverview();
+  pushToGAS(function(success){
+    if (success) {
+      clearTumba(id); // confirmado en el servidor, ya no hace falta la tumba
+      setSyncUI('ok', false);
+    } else {
+      // Si falla, dejamos la tumba: la próxima sync seguirá ocultando la orden
+      // y un próximo intento de guardar la volverá a enviar.
+      setSyncUI('error', false);
+    }
+  });
+}
+function irATracking(id){
+  go('tracking');
+  setTimeout(function(){
+    var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
+    document.getElementById('track-q').value=o.orden; buscarTrack(); setTimeout(function(){abrirTrack(id);},80);
+  },60);
+}
+
+// TRACKING
+function buscarTrack(){
+  var q=(document.getElementById('track-q').value||'').toLowerCase().trim();
+  var list=document.getElementById('track-list');
+  document.getElementById('track-detail').style.display='none';
+  if(!q){ list.innerHTML=''; return; }
+  var res=getOrd().filter(function(o){return (o.orden+o.nombre+o.contacto).toLowerCase().indexOf(q)>=0;});
+  if(!res.length){ list.innerHTML='<div class="empty"><i class="fa-solid fa-magnifying-glass"></i><p>Sin resultados para "'+esc(q)+'"</p></div>'; return; }
+  list.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem">'+res.map(function(o){
+    return '<div class="card" style="cursor:pointer" onclick="abrirTrack('+o.id+')"><div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap"><div><div class="mono">'+esc(o.orden)+'</div><div style="font-weight:500;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · '+esc(o.zona)+'</div></div><div style="display:flex;align-items:center;gap:10px"><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span><i class="fa-solid fa-chevron-right" style="color:var(--hint);font-size:12px"></i></div></div></div>';
+  }).join('')+'</div>';
+}
+// Construye el mensaje de WhatsApp/copiar según el estado.
+// Si el estado es "En empaque" (índice 2), incluye la fecha de entrega estimada.
+function construirMensajeWA(o, est){
+  var base = 'Hola '+o.nombre+', tu pedido '+o.orden+' de Nugudú Láser Store está en: '+ESTADOS[est]+'.';
+  if (est === 2 && o.fechaEntrega) {
+    base += ' Fecha estimada de entrega: '+formatoFechaCorta(o.fechaEntrega)+'.';
+  }
+  return base + ' Gracias por tu compra.';
+}
+
+function abrirTrack(id){
+  var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
+  var est=parseInt(o.estado)||0;
+  document.getElementById('track-list').innerHTML='<button class="btn btn-outline btn-sm" onclick="volverTrack()" style="margin-bottom:1rem"><i class="fa-solid fa-arrow-left"></i> Volver</button>';
+  var det=document.getElementById('track-detail'); det.style.display='block';
+  var steps=ESTADOS.map(function(label,i){
+    var cls=i<est?'done':i===est?'cur':'';
+    var dot=cls==='done'?'<i class="fa-solid fa-check"></i>':cls==='cur'?EICONS[i]:'<span style="color:var(--hint);font-size:12px">'+(i+1)+'</span>';
+    return '<div class="ts '+cls+'"><div class="dot">'+dot+'</div><div class="lbl">'+label+'</div></div>';
+  }).join('');
+  var waNum=o.contacto.replace(/\D/g,'');
+  var waMsg=encodeURIComponent(construirMensajeWA(o, est));
+  var fechaVal = o.fechaEntrega || '';
+  var mapaUrl = o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona);
+  var pendBlock = o.pendientePago ? '<div style="margin-top:8px">'+badgePendientePago(o)+' <button class="btn btn-outline btn-xs" onclick="confirmarPago('+id+')" style="margin-left:6px;color:var(--green);border-color:#bfe2cc"><i class="fa-solid fa-check"></i> Confirmar pago</button></div>' : '';
+  var ciBlock = badgeConsumoInterno(o);
+  det.innerHTML='<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1rem"><div><div class="mono" style="font-size:15px">'+esc(o.orden)+'</div><div style="font-weight:600;font-size:15px;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · <span class="zona-pill">'+esc(o.zona)+'</span></div><div style="font-size:12px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>'+esc(o.direccion||'')+' <a href="'+mapaUrl+'" target="_blank" style="color:var(--navy);font-weight:600;margin-left:6px">Ver mapa</a></div>'+pendBlock+ciBlock+'</div><span class="status '+SCLS[est]+'" style="font-size:13px;padding:5px 13px">'+ESTADOS[est]+'</span></div><div class="tl">'+steps+'</div><div style="margin-top:1.25rem;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.5rem">Actualizar estado</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="estado-opts">'+ESTADOS.map(function(label,i){return '<button class="ss-opt '+(i===est?'sel':'')+'" onclick="actualizarEstado('+id+','+i+',this)">'+EICONS[i]+' '+label+'</button>';}).join('')+'</div><div style="margin-top:1.1rem;padding:.85rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs)"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:6px"><i class="fa-solid fa-calendar-check" style="margin-right:5px;color:var(--teal)"></i>Fecha de entrega estimada</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="track-fecha-entrega" value="'+fechaVal+'" style="border:1px solid var(--bmd);border-radius:var(--rs);padding:7px 10px;font-size:13px;font-family:\'DM Sans\',sans-serif"><button class="btn btn-teal btn-sm" onclick="guardarFechaEntrega('+id+')"><i class="fa-solid fa-floppy-disk"></i> Guardar fecha</button><span class="hint">Se incluye en el WhatsApp cuando el pedido está "En empaque".</span></div></div><div style="display:flex;gap:8px;margin-top:1.25rem;flex-wrap:wrap"><a class="btn btn-wa" href="https://wa.me/'+waNum+'?text='+waMsg+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar</a><button class="btn btn-outline" onclick="cpMsg('+id+')"><i class="fa-solid fa-copy"></i> Copiar mensaje</button><a class="btn btn-outline" href="'+mapaUrl+'" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Abrir en Maps</a><button class="btn btn-outline" onclick="imprimirFichaQR('+id+')"><i class="fa-solid fa-print"></i> Imprimir ficha</button></div></div>';
+}
+
+function guardarFechaEntrega(id){
+  var input = document.getElementById('track-fecha-entrega');
+  if (!input) return;
+  var nuevaFecha = input.value;
+  var idx=-1;
+  for(var i=0;i<_ordenes.length;i++){ if(_ordenes[i].id===id){idx=i;break;} }
+  if(idx<0) return;
+  _ordenes[idx].fechaEntrega = nuevaFecha;
+  saveLocal();
+  // Refrescar el link de WhatsApp con la fecha nueva, sin recargar todo el panel
+  var est = parseInt(_ordenes[idx].estado)||0;
+  var waBtn = document.querySelector('#track-detail .btn-wa');
+  if (waBtn) {
+    var waMsg = encodeURIComponent(construirMensajeWA(_ordenes[idx], est));
+    waBtn.href = 'https://wa.me/'+_ordenes[idx].contacto.replace(/\D/g,'')+'?text='+waMsg;
+  }
+  setTimeout(function(){ updateGASField(id, {fechaEntrega: nuevaFecha}); }, 0);
+  showToast('Fecha de entrega actualizada ✓');
+}
+
+function volverTrack(){ document.getElementById('track-detail').style.display='none'; buscarTrack(); }
+
+function actualizarEstado(id,nvo,el){
+  // ── PASO 1: UI instantánea — sin esperar nada ──
+  var opts=document.getElementById('estado-opts');
+  if(opts){ var bs=opts.querySelectorAll('.ss-opt'); for(var i=0;i<bs.length;i++) bs[i].classList.remove('sel'); }
+  el.classList.add('sel');
+  // Actualizar badge de estado visualmente
+  var badge = document.querySelector('#track-detail .status');
+  if(badge){ badge.className='status '+SCLS[nvo]; badge.textContent=ESTADOS[nvo]; }
+  // Actualizar timeline visualmente
+  var steps = document.querySelectorAll('#track-detail .ts');
+  for(var s=0;s<steps.length;s++){
+    steps[s].classList.remove('done','cur');
+    if(s<nvo) steps[s].classList.add('done');
+    else if(s===nvo) steps[s].classList.add('cur');
+  }
+  // Actualizar link de WhatsApp con el nuevo estado (incluye fecha si pasa a "En empaque")
+  var waBtn = document.querySelector('#track-detail .btn-wa');
+  var o = null;
+  for(var i=0;i<_ordenes.length;i++){ if(_ordenes[i].id===id){o=_ordenes[i];break;} }
+  if(waBtn && o){
+    var waNum = o.contacto.replace(/\D/g,'');
+    var waMsg = encodeURIComponent(construirMensajeWA(o, nvo));
+    waBtn.href = 'https://wa.me/'+waNum+'?text='+waMsg;
+  }
+
+  // ── PASO 2: guardar en memoria local ──
+  var idx=-1;
+  for(var i=0;i<_ordenes.length;i++){ if(_ordenes[i].id===id){idx=i;break;} }
+  if(idx<0) return;
+  _ordenes[idx].estado=String(nvo);
+  if(!_ordenes[idx].historial)_ordenes[idx].historial=[];
+  _ordenes[idx].historial.push({estado:String(nvo),fecha:new Date().toISOString()});
+  saveLocal();
+  updateOverview();
+
+  // ── PASO 3: sync GAS en background — completamente desacoplado de la UI ──
+  var ordCopy = {id:id, estado:String(nvo), historial:_ordenes[idx].historial};
+  setTimeout(function(){
+    updateGASField(ordCopy.id, {estado:ordCopy.estado, historial:ordCopy.historial});
+  }, 0);
+}
+
+function cpMsg(id){
+  var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
+  var est=parseInt(o.estado)||0;
+  var msg=construirMensajeWA(o, est);
+  navigator.clipboard.writeText(msg).then(function(){alert('Copiado ✓');}).catch(function(){alert(msg);});
+}
+
+// REPARTIDOR
+function loginRep(){
+  var cod=(document.getElementById('rep-codigo').value||'').trim().toUpperCase();
+  if(!cod){ var e=document.getElementById('rep-err'); e.textContent='Ingresa tu código.'; e.style.display='flex'; setTimeout(function(){e.style.display='none';},3000); return; }
+  _repCodigo=cod;
+  document.getElementById('rep-login-wrap').style.display='none';
+  document.getElementById('rep-dash-wrap').style.display='block';
+  document.getElementById('rep-nombre').textContent=cod;
+  document.getElementById('rep-fecha').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  renderRepDash();
+}
+function logoutRep(){ _repCodigo=null; document.getElementById('rep-login-wrap').style.display='block'; document.getElementById('rep-dash-wrap').style.display='none'; document.getElementById('rep-codigo').value=''; }
+function renderRepDash(){
+  if(!_repCodigo)return;
+  var hoy=new Date().toISOString().slice(0,10);
+  var ords=getOrd().filter(function(o){return parseInt(o.estado)===3||parseInt(o.estado)===4;});
+  var entHoy=ords.filter(function(o){return parseInt(o.estado)===4&&(o.historial||[]).some(function(h){return parseInt(h.estado)===4&&h.fecha&&h.fecha.slice(0,10)===hoy;});});
+  var pend=ords.filter(function(o){return parseInt(o.estado)===3;});
+  document.getElementById('rs-asig').textContent=ords.length;
+  document.getElementById('rs-ent').textContent=entHoy.length;
+  document.getElementById('rs-pend').textContent=pend.length;
+  var list=document.getElementById('rep-route-list');
+  if(!ords.length){list.innerHTML='<div class="empty"><i class="fa-solid fa-box-open"></i><p>No hay pedidos asignados ahora.</p></div>';return;}
+  list.innerHTML=ords.map(function(o){
+    var yaEnt=parseInt(o.estado)===4;
+    var waLink='https://wa.me/'+o.contacto.replace(/\D/g,'')+'?text='+encodeURIComponent('Hola '+o.nombre+', soy el repartidor de Nugudú, estoy en camino con tu pedido '+o.orden+'.');
+    var mapLink=o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona);
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;margin-bottom:10px;box-shadow:var(--sh)"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem"><div><div style="font-family:\'DM Mono\',monospace;font-size:13px">'+esc(o.orden)+'</div><div style="font-weight:600;font-size:15px;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>'+esc(o.direccion||'')+' · '+esc(o.zona)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-brands fa-whatsapp" style="color:#25D366;margin-right:4px"></i>'+esc(o.contacto)+'</div></div><span class="status '+SCLS[parseInt(o.estado)]+'">'+ESTADOS[parseInt(o.estado)]+'</span></div>'+(o.notas?'<div style="font-size:12px;background:var(--gold-pale);border:1px solid #f5d88a;border-radius:6px;padding:6px 10px;margin-top:.5rem">'+esc(o.notas)+'</div>':'')+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">'+(!yaEnt?'<button class="btn btn-green btn-sm" onclick="repEntregar('+o.id+')"><i class="fa-solid fa-circle-check"></i> Marcar entregado</button>':'<span style="font-size:13px;color:var(--green);font-weight:500"><i class="fa-solid fa-circle-check"></i> Entregado</span>')+'<a class="btn btn-wa btn-sm" href="'+waLink+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Avisar</a><a class="btn btn-outline btn-sm" href="'+mapLink+'" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Mapa</a><button class="btn btn-outline btn-sm" onclick="imprimirFichaQR('+o.id+')"><i class="fa-solid fa-print"></i> Imprimir ficha</button></div></div>';
+  }).join('');
+}
+
+// Genera y abre una ficha imprimible con código QR — el QR contiene
+// directamente el link de Google Maps capturado en Nueva Venta, así
+// el repartidor solo escanea con la cámara y abre la ruta.
+// Si el cliente tiene más de una dirección distinta guardada, pregunta
+// cuál usar para el QR antes de imprimir. Si solo tiene una (o ninguna
+// además de la de esta orden), imprime directo sin preguntar nada.
+// Lista imprimible con TODAS las entregas del día del repartidor —
+// soluciona que al escanear el QR de una ficha individual y entrar a
+// Google Maps, se pierde de vista el número de orden y el nombre del
+// cliente. Esta lista queda aparte, para consultar antes de llenar
+// el formulario de entrega después de cada parada.
+function imprimirListaDia(){
+  if (!_repCodigo) return;
+  var ords = getOrd().filter(function(o){ return parseInt(o.estado)===3 || parseInt(o.estado)===4; });
+  if (!ords.length) { alert('No hay pedidos asignados para mostrar.'); return; }
+  var hoy = new Date().toLocaleDateString('es-SV', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  var filas = ords.map(function(o, i){
+    var entregado = parseInt(o.estado) === 4;
+    var dirCorta = (o.direccion || '') + (o.zona ? ' · ' + o.zona : '');
+    return '<tr class="'+(entregado?'fila-ent':'')+'">' +
+      '<td class="chk">' + (entregado ? '<span class="check">✓</span>' : '<span class="box"></span>') + '</td>' +
+      '<td class="num">' + (i+1) + '</td>' +
+      '<td class="orden">' + esc(o.orden) + '</td>' +
+      '<td class="nombre">' + esc(o.nombre) + '</td>' +
+      '<td class="dir">' + esc(dirCorta) + '</td>' +
+      '<td class="tel">' + esc(o.contacto || '') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var win = window.open('', '_blank', 'width=720,height=800');
+  if (!win) { alert('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes para este sitio.'); return; }
+
+  win.document.write(
+    '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Lista del día — Nugudú</title>' +
+    '<style>' +
+    '*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}' +
+    'body{padding:22px;color:#18152e}' +
+    '.brand{font-size:14px;font-weight:700;letter-spacing:.5px;color:#2D2460;text-transform:uppercase}' +
+    '.ttl{font-size:20px;font-weight:700;margin-top:4px}' +
+    '.sub{font-size:12px;color:#6b6585;margin-bottom:16px;text-transform:capitalize}' +
+    'table{width:100%;border-collapse:collapse;font-size:12.5px}' +
+    'th{background:#2D2460;color:#fff;text-align:left;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.3px}' +
+    'td{padding:8px 8px;border-bottom:1px solid #e4e1ee;vertical-align:top}' +
+    'td.chk{width:26px;text-align:center}' +
+    'td.num{width:24px;color:#9b96b0;font-weight:600}' +
+    'td.orden{font-family:monospace;font-weight:600;white-space:nowrap}' +
+    'td.nombre{font-weight:600}' +
+    '.box{display:inline-block;width:14px;height:14px;border:2px solid #2D2460;border-radius:3px}' +
+    '.check{display:inline-block;width:14px;height:14px;border-radius:3px;background:#2e7d52;color:#fff;font-size:11px;font-weight:700;line-height:14px}' +
+    'tr.fila-ent td{color:#9b96b0}' +
+    'tr.fila-ent td.orden,tr.fila-ent td.nombre{text-decoration:line-through}' +
+    '.foot{margin-top:16px;font-size:11px;color:#9b96b0;text-align:center}' +
+    '@media print{body{padding:0}}' +
+    '</style></head><body>' +
+    '<div class="brand">Nugudú Láser Store</div>' +
+    '<div class="ttl">Lista de entregas del día</div>' +
+    '<div class="sub">' + hoy + '</div>' +
+    '<table><thead><tr><th></th><th>#</th><th>N° Orden</th><th>Cliente</th><th>Dirección / Zona</th><th>Contacto</th></tr></thead><tbody>' + filas + '</tbody></table>' +
+    '<div class="foot">Marca cada casilla al entregar — usa esta lista para llenar el formulario de repartidor.</div>' +
+    '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>' +
+    '</body></html>'
+  );
+  win.document.close();
+}
+
+function imprimirFichaQR(id){
+  var o = getOrd().filter(function(x){ return x.id === id; })[0];
+  if (!o) return;
+  var dirs = direccionesDeCliente(o.contacto);
+  // Direcciones distintas a la de esta orden (para no ofrecer "elegir" la misma que ya tiene)
+  var actual = (o.direccion||'').trim().toLowerCase();
+  var alternas = dirs.filter(function(d){ return (d.direccion||'').trim().toLowerCase() !== actual; });
+  if (alternas.length === 0) {
+    abrirVentanaFicha(o, o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona));
+    return;
+  }
+  mostrarModalDireccion(o, dirs);
+}
+
+function mostrarModalDireccion(o, dirs){
+  var overlay = document.getElementById('modal-direccion-overlay');
+  var opciones = [{ direccion:o.direccion, zona:o.zona, mapaLink:o.mapaLink || linkMapaDesdeDireccion(o.direccion,o.zona), esActual:true }]
+    .concat(dirs.filter(function(d){ return (d.direccion||'').trim().toLowerCase() !== (o.direccion||'').trim().toLowerCase(); }));
+  var html = '<div style="background:#fff;border-radius:var(--r);max-width:420px;width:90%;padding:1.4rem;box-shadow:0 12px 40px rgba(0,0,0,.25)">' +
+    '<h3 style="font-size:16px;margin-bottom:4px">¿Qué dirección usar para el QR?</h3>' +
+    '<p style="font-size:13px;color:var(--muted);margin-bottom:14px">Este cliente tiene más de una dirección guardada.</p>' +
+    opciones.map(function(d, i){
+      return '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;cursor:pointer">' +
+        '<input type="radio" name="dir-opt" value="'+i+'" '+(i===0?'checked':'')+' style="margin-top:3px">' +
+        '<span style="font-size:13px"><b>'+esc(d.direccion||'')+'</b><br><span style="color:var(--muted)">'+esc(d.zona||'')+(d.esActual?' · dirección de esta orden':'')+'</span></span>' +
+        '</label>';
+    }).join('') +
+    '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">' +
+    '<button class="btn btn-outline btn-sm" onclick="cerrarModalDireccion()">Cancelar</button>' +
+    '<button class="btn btn-primary btn-sm" onclick="confirmarDireccionImpresion('+o.id+')"><i class="fa-solid fa-print"></i> Imprimir</button>' +
+    '</div></div>';
+  overlay.innerHTML = html;
+  overlay.style.display = 'flex';
+  window._modalOpciones = opciones;
+}
+function cerrarModalDireccion(){
+  document.getElementById('modal-direccion-overlay').style.display = 'none';
+}
+function confirmarDireccionImpresion(id){
+  var o = getOrd().filter(function(x){ return x.id === id; })[0];
+  if (!o) return;
+  var sel = document.querySelector('input[name="dir-opt"]:checked');
+  var idx = sel ? parseInt(sel.value) : 0;
+  var elegida = window._modalOpciones[idx];
+  cerrarModalDireccion();
+  abrirVentanaFicha(o, elegida.mapaLink || linkMapaDesdeDireccion(elegida.direccion, elegida.zona));
+}
+
+function abrirVentanaFicha(o, mapLink){
+  var qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(mapLink);
+  var fechaTxt = o.fechaEntrega ? formatoFechaCorta(o.fechaEntrega) : '';
+
+  var win = window.open('', '_blank', 'width=480,height=720');
+  if (!win) { alert('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes para este sitio.'); return; }
+
+  win.document.write(
+    '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Ficha de entrega — ' + esc(o.orden) + '</title>' +
+    '<style>' +
+    '*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}' +
+    'body{padding:24px;color:#18152e}' +
+    '.brand{font-size:13px;font-weight:700;letter-spacing:.5px;color:#2D2460;text-transform:uppercase;margin-bottom:8px}' +
+    '.orden-box{background:#2D2460;border-radius:10px;padding:14px 16px;margin-bottom:16px}' +
+    '.orden-box .lbl{font-size:11px;font-weight:600;letter-spacing:.6px;color:#b0a8e0;text-transform:uppercase;margin-bottom:2px}' +
+    '.orden-box .num{font-family:monospace;font-size:34px;font-weight:700;color:#fff;letter-spacing:1px;line-height:1.1;word-break:break-all}' +
+    '.nombre{font-size:20px;font-weight:700;margin-bottom:10px}' +
+    '.fila{display:flex;gap:8px;font-size:14px;margin-bottom:6px;align-items:flex-start}' +
+    '.fila b{min-width:78px;flex-shrink:0}' +
+    '.qrbox{display:flex;flex-direction:column;align-items:center;margin:20px 0;padding:16px;border:1px dashed #b0abc8;border-radius:10px}' +
+    '.qrbox img{width:220px;height:220px}' +
+    '.qrbox span{font-size:12px;color:#6b6585;margin-top:8px;text-align:center}' +
+    '.notas{background:#fef6e4;border:1px solid #f5d88a;border-radius:6px;padding:8px 10px;font-size:13px;margin-top:10px}' +
+    '.fecha{display:inline-block;margin-top:10px;font-size:13px;background:#e8f5ee;color:#2e7d52;padding:4px 10px;border-radius:20px;font-weight:600}' +
+    '@media print{body{padding:0}}' +
+    '</style></head><body>' +
+    '<div class="brand">Nugudú Láser Store</div>' +
+    '<div class="orden-box"><div class="lbl">N° de orden</div><div class="num">' + esc(o.orden) + '</div></div>' +
+    '<div class="nombre">' + esc(o.nombre) + '</div>' +
+    '<div class="fila"><b>Dirección:</b><span>' + esc(o.direccion || '') + '</span></div>' +
+    '<div class="fila"><b>Zona:</b><span>' + esc(o.zona || '') + '</span></div>' +
+    '<div class="fila"><b>Contacto:</b><span>' + esc(o.contacto || '') + '</span></div>' +
+    (fechaTxt ? '<div class="fecha">Entrega estimada: ' + fechaTxt + '</div>' : '') +
+    (o.notas ? '<div class="notas"><b>Notas:</b> ' + esc(o.notas) + '</div>' : '') +
+    '<div class="qrbox"><img src="' + qrSrc + '" alt="QR de ubicación"><span>Escanea con la cámara del celular<br>para abrir la ruta en Google Maps</span></div>' +
+    '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>' +
+    '</body></html>'
+  );
+  win.document.close();
+}
+
+function repEntregar(id){
+  if(!confirm('¿Confirmar entrega?'))return;
+  var idx=-1;
+  for(var i=0;i<_ordenes.length;i++){if(_ordenes[i].id===id){idx=i;break;}}
+  if(idx<0)return;
+  _ordenes[idx].estado='4';
+  if(!_ordenes[idx].historial)_ordenes[idx].historial=[];
+  var h={estado:'4',fecha:new Date().toISOString(),rep:_repCodigo};
+  _ordenes[idx].historial.push(h);
+  saveLocal(); updateOverview(); renderRepDash();
+  updateGASField(id, {estado:'4', historial:_ordenes[idx].historial});
+}
+
+// INVENTARIO
+// CLIENTES — agrupa el historial de órdenes por teléfono para ver
+// quién compra más, quién menos, y exportar el ranking.
+function calcularClientes(){
+  var map = {};
+  _ordenes.forEach(function(o){
+    var tel = normalizarTel(o.contacto);
+    if (!tel) return;
+    if (!map[tel]) {
+      map[tel] = { tel:tel, nombre:o.nombre, contacto:o.contacto, pedidos:0, totalComprado:0, totalPatrocinado:0, ultimaCompra:o.fecha };
+    }
+    var c = map[tel];
+    c.pedidos += 1;
+    var monto = (parseFloat(o.precio)||0) * (parseInt(o.cantidad)||1);
+    if (o.consumoInterno) { c.totalPatrocinado += monto; } else { c.totalComprado += monto; }
+    // Se queda con el nombre/contacto y dirección de la orden más reciente de este cliente.
+    if (new Date(o.fecha) > new Date(c.ultimaCompra)) {
+      c.ultimaCompra = o.fecha; c.nombre = o.nombre; c.contacto = o.contacto;
+    }
+  });
+  return Object.keys(map).map(function(k){ return map[k]; });
+}
+function renderClientes(){
+  var buscar = (document.getElementById('cli-buscar').value || '').trim().toLowerCase();
+  var orden = document.getElementById('cli-orden').value;
+  var clientes = calcularClientes();
+  if (buscar) {
+    clientes = clientes.filter(function(c){
+      return (c.nombre||'').toLowerCase().indexOf(buscar)>=0 || normalizarTel(c.contacto).indexOf(normalizarTel(buscar))>=0;
+    });
+  }
+  if (orden==='masCompra') clientes.sort(function(a,b){ return b.totalComprado - a.totalComprado; });
+  else if (orden==='menosCompra') clientes.sort(function(a,b){ return a.totalComprado - b.totalComprado; });
+  else if (orden==='masPedidos') clientes.sort(function(a,b){ return b.pedidos - a.pedidos; });
+  else if (orden==='reciente') clientes.sort(function(a,b){ return new Date(b.ultimaCompra) - new Date(a.ultimaCompra); });
+
+  var todos = calcularClientes();
+  document.getElementById('cli-total').textContent = todos.length;
+  var top = todos.slice().sort(function(a,b){ return b.totalComprado - a.totalComprado; })[0];
+  document.getElementById('cli-top').textContent = top ? (top.nombre + ' · $' + top.totalComprado.toFixed(2)) : '–';
+  var sumaTotal = todos.reduce(function(s,c){ return s + c.totalComprado; }, 0);
+  document.getElementById('cli-prom').textContent = '$' + (todos.length ? (sumaTotal/todos.length) : 0).toFixed(2);
+
+  _clientesData = clientes; // usado por exportación CSV/PDF
+  var tbl = document.getElementById('tbl-clientes');
+  if (!clientes.length) { tbl.innerHTML = '<div class="empty"><i class="fa-solid fa-users"></i><p>Sin resultados.</p></div>'; return; }
+  tbl.innerHTML = '<table><thead><tr><th>#</th><th>Cliente</th><th>Contacto</th><th style="text-align:center">Pedidos</th><th style="text-align:right">Total comprado</th><th style="text-align:right">Patrocinado</th><th>Última compra</th></tr></thead><tbody>' +
+    clientes.map(function(c, i){
+      return '<tr><td style="font-weight:700;color:var(--navy)">'+(i+1)+'</td><td style="font-weight:500">'+esc(c.nombre)+'</td><td style="font-size:12px">'+esc(c.contacto)+'</td><td style="text-align:center;font-weight:600">'+c.pedidos+'</td><td style="text-align:right;font-weight:600;color:var(--green)">$'+c.totalComprado.toFixed(2)+'</td><td style="text-align:right;font-size:12px;color:'+(c.totalPatrocinado>0?'#6d28d9':'var(--hint)')+'">'+(c.totalPatrocinado>0?'$'+c.totalPatrocinado.toFixed(2):'–')+'</td><td style="font-size:12px;color:var(--muted)">'+(c.ultimaCompra?c.ultimaCompra.slice(0,10):'')+'</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+function exportarClientesCSV(){
+  var clientes = _clientesData || calcularClientes();
+  var filas = [['#','Cliente','Contacto','Pedidos','Total comprado','Patrocinado','Última compra']];
+  clientes.forEach(function(c, i){
+    filas.push([i+1, c.nombre, c.contacto, c.pedidos, c.totalComprado.toFixed(2), c.totalPatrocinado.toFixed(2), (c.ultimaCompra||'').slice(0,10)]);
+  });
+  var csv = filas.map(function(fila){
+    return fila.map(function(v){
+      v = String(v);
+      if (v.indexOf(',')>=0 || v.indexOf('"')>=0) { v = '"'+v.replace(/"/g,'""')+'"'; }
+      return v;
+    }).join(',');
+  }).join('\n');
+  var blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8;' }); // BOM para que Excel respete acentos
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'nugudú_clientes_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function exportarClientesPDF(){
+  var clientes = _clientesData || calcularClientes();
+  var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var W=297,gm=13;
+  doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Láser Store — Ranking de clientes',gm,9.5);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
+  var totalComp = clientes.reduce(function(s,c){return s+c.totalComprado;},0);
+  doc.setTextColor(50);doc.setFontSize(9);doc.text('Clientes: '+clientes.length+'   Total comprado: $'+totalComp.toFixed(2),gm,22);
+  var y=30;
+  var cols=['#','Cliente','Contacto','Pedidos','Total comprado','Patrocinado','Última compra'];
+  var cw=[10,55,38,22,38,32,32];
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255);
+  doc.setFillColor(45,36,96);doc.rect(gm,y,W-gm*2,6,'F');
+  var x=gm+1.5;cols.forEach(function(h,i){doc.text(h,x,y+4.3);x+=cw[i];});y+=6;
+  doc.setFont('helvetica','normal');doc.setTextColor(35);
+  clientes.forEach(function(c,idx){
+    if(y>193){doc.addPage('landscape');y=14;}
+    doc.setFillColor(idx%2===0?246:255,idx%2===0?245:255,idx%2===0?252:255);doc.rect(gm,y,W-gm*2,6,'F');
+    x=gm+1.5;
+    var cells=[String(idx+1), (c.nombre||'').slice(0,28), (c.contacto||'').slice(0,18), String(c.pedidos), '$'+c.totalComprado.toFixed(2), c.totalPatrocinado>0?('$'+c.totalPatrocinado.toFixed(2)):'–', (c.ultimaCompra||'').slice(0,10)];
+    cells.forEach(function(v,i){doc.text(String(v),x,y+4.2);x+=cw[i];});
+    y+=6;
+  });
+  doc.save('nugudú_clientes_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+
+function renderInventario(){
+  var ordenes=getOrd();
+  var buscar=(document.getElementById('inv-buscar')||{value:''}).value.trim().toLowerCase();
+  var orden=((document.getElementById('inv-orden')||{value:'unidades'}).value);
+  var skuMap={};
+  ordenes.forEach(function(o){
+    var prods=o.productos||[];
+    var cant=parseInt(o.cantidad)||1;
+    var precio=parseFloat(o.precio)||0;
+    var esIngreso = !o.consumoInterno; // los patrocinios no cuentan como ingreso aquí
+    if(!prods.length)prods=['SIN-SKU'];
+    prods.forEach(function(sku){
+      if(!skuMap[sku])skuMap[sku]={sku:sku,unidades:0,ordenes:0,ingresos:0};
+      skuMap[sku].unidades+=cant; skuMap[sku].ordenes+=1;
+      if (esIngreso) skuMap[sku].ingresos+=cant*precio;
+    });
+  });
+  var items=Object.keys(skuMap).map(function(k){return skuMap[k];});
+  if(buscar)items=items.filter(function(i){return i.sku.toLowerCase().indexOf(buscar)>=0;});
+  if(orden==='unidades')items.sort(function(a,b){return b.unidades-a.unidades;});
+  else if(orden==='ingresos')items.sort(function(a,b){return b.ingresos-a.ingresos;});
+  else items.sort(function(a,b){return a.sku.localeCompare(b.sku);});
+  var totalRev=ordenes.filter(function(o){return !o.consumoInterno;}).reduce(function(s,o){return s+(parseFloat(o.precio)||0)*(parseInt(o.cantidad)||1);},0);
+  document.getElementById('inv-skus').textContent=items.length;
+  document.getElementById('inv-units').textContent=items.reduce(function(s,i){return s+i.unidades;},0);
+  document.getElementById('inv-rev').textContent='$'+totalRev.toFixed(2);
+  var top=items.slice(0,10);
+  dc('chartInv');
+  if(top.length){
+    var colors=['#2D2460','#534AB7','#2e7d52','#F5A623','#185FA5','#854F0B','#993C1D','#0d7377','#6d28d9','#25D366'];
+    CH.chartInv=new Chart(document.getElementById('chartInv'),{type:'bar',data:{labels:top.map(function(i){return i.sku;}),datasets:[{label:'Unidades',data:top.map(function(i){return i.unidades;}),backgroundColor:top.map(function(_,idx){return colors[idx%colors.length];}),borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+  }
+  var tbl=document.getElementById('tbl-inventario');
+  if(!items.length){tbl.innerHTML='<div class="empty"><i class="fa-solid fa-boxes-stacked"></i><p>Sin resultados.</p></div>';return;}
+  tbl.innerHTML='<table><thead><tr><th>#</th><th>SKU</th><th style="text-align:center">Órdenes</th><th style="text-align:center">Unidades</th><th style="text-align:right">Ingresos</th><th style="min-width:120px">Volumen</th></tr></thead><tbody>'+items.map(function(item,idx){
+    var pct=Math.round(item.unidades/(items[0].unidades||1)*100);
+    var color=idx===0?'var(--gold)':idx===1?'var(--hint)':idx===2?'var(--amber)':'var(--navy)';
+    return '<tr><td style="font-weight:700;color:'+color+'">'+(idx+1)+'</td><td><span style="font-family:\'DM Mono\',monospace;font-weight:500;color:var(--navy)">'+esc(item.sku)+'</span></td><td style="text-align:center">'+item.ordenes+'</td><td style="text-align:center;font-weight:700;font-size:15px">'+item.unidades+'</td><td style="text-align:right;font-weight:600;color:var(--green)">$'+item.ingresos.toFixed(2)+'</td><td><div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+color+';border-radius:4px"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">'+pct+'%</div></td></tr>';
+  }).join('')+'</tbody></table>';
+}
+
+// ANALYTICS
+function renderAnalytics(){
+  var o=getOrd(); var total=o.length||1;
+  var cnts={'WhatsApp':0,'Instagram':0,'TikTok':0,'Fuerza de ventas':0};
+  o.forEach(function(x){if(cnts[x.canal]!==undefined)cnts[x.canal]++;});
+  document.getElementById('cn-wa').textContent=cnts['WhatsApp']; document.getElementById('cp-wa').textContent=Math.round(cnts['WhatsApp']/total*100)+'%';
+  document.getElementById('cn-ig').textContent=cnts['Instagram']; document.getElementById('cp-ig').textContent=Math.round(cnts['Instagram']/total*100)+'%';
+  document.getElementById('cn-tt').textContent=cnts['TikTok']; document.getElementById('cp-tt').textContent=Math.round(cnts['TikTok']/total*100)+'%';
+  document.getElementById('cn-fv').textContent=cnts['Fuerza de ventas']; document.getElementById('cp-fv').textContent=Math.round(cnts['Fuerza de ventas']/total*100)+'%';
+  dc('chartCanal');
+  CH.chartCanal=new Chart(document.getElementById('chartCanal'),{type:'doughnut',data:{labels:CANALES,datasets:[{data:CANALES.map(function(c){return cnts[c];}),backgroundColor:CCOLORS,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:12},boxWidth:12,padding:12}}}}});
+  var skuCnt={};
+  o.forEach(function(x){(x.productos||[]).forEach(function(s){skuCnt[s]=(skuCnt[s]||0)+(parseInt(x.cantidad)||1);});});
+  var sorted=Object.keys(skuCnt).map(function(k){return[k,skuCnt[k]];}).sort(function(a,b){return b[1]-a[1];});
+  var top=sorted.slice(0,8); var maxCnt=top.length?top[0][1]:1;
+  var half=Math.ceil(top.length/2);
+  var rH=function(items,offset){return items.map(function(item,i){var r=offset+i;var rCls=r===0?'r1':r===1?'r2':r===2?'r3':'';return '<div style="display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border)"><div class="sku-rank '+rCls+'">'+(r+1)+'</div><div style="flex:1"><div style="font-family:\'DM Mono\',monospace;font-size:12px;font-weight:500;color:var(--navy)">'+esc(item[0])+'</div><div style="font-size:12px;color:var(--muted)">'+item[1]+' unid.</div></div><div style="width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:'+Math.round(item[1]/maxCnt*100)+'%;height:100%;background:var(--navy);border-radius:3px"></div></div></div>';}).join('');};
+  document.getElementById('top-sku-a').innerHTML=top.length?rH(top.slice(0,half),0):'<div class="empty"><i class="fa-solid fa-box-open"></i><p>Sin datos.</p></div>';
+  document.getElementById('top-sku-b').innerHTML=top.length>half?rH(top.slice(half),half):'';
+  dc('chartSKU');
+  if(top.length)CH.chartSKU=new Chart(document.getElementById('chartSKU'),{type:'bar',data:{labels:top.map(function(c){return c[0];}),datasets:[{label:'Unidades',data:top.map(function(c){return c[1];}),backgroundColor:'#2D2460',borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+}
+
+// REPORTES
+function filtrarReporte(){
+  var desde=document.getElementById('r-desde').value, hasta=document.getElementById('r-hasta').value;
+  var zona=document.getElementById('r-zona').value, est=document.getElementById('r-estado').value;
+  var canal=document.getElementById('r-canal').value, vend=document.getElementById('r-vend').value.toLowerCase();
+  var d=getOrd();
+  if(desde)d=d.filter(function(o){return o.fecha>=desde;});
+  if(hasta)d=d.filter(function(o){return o.fecha.slice(0,10)<=hasta;});
+  if(zona)d=d.filter(function(o){return o.zona===zona;});
+  if(est!=='')d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
+  if(canal)d=d.filter(function(o){return o.canal===canal;});
+  if(vend)d=d.filter(function(o){return (o.vendedor||'').toLowerCase().indexOf(vend)>=0;});
+  var ent=d.filter(function(o){return parseInt(o.estado)===4;}).length;
+  var dPagado = d.filter(function(o){ return !o.consumoInterno; });
+  var dPatrocinio = d.filter(function(o){ return o.consumoInterno; });
+  var rev=dPagado.reduce(function(s,o){return s+(o.precio||0)*(o.cantidad||1);},0);
+  var revPat=dPatrocinio.reduce(function(s,o){return s+(o.precio||0)*(o.cantidad||1);},0);
+  document.getElementById('rm-tot').textContent=d.length;
+  document.getElementById('rm-ent').textContent=ent;
+  document.getElementById('rm-conv').textContent=(d.length?Math.round(ent/d.length*100):0)+'%';
+  document.getElementById('rm-rev').textContent='$'+rev.toFixed(2);
+  document.getElementById('rm-pat-n').textContent=dPatrocinio.length;
+  document.getElementById('rm-pat-rev').textContent='$'+revPat.toFixed(2);
+  dc('chartReporte');
+  var bd={};d.forEach(function(o){var dd=o.fecha?o.fecha.slice(0,10):'?';bd[dd]=(bd[dd]||0)+1;});
+  var lb=Object.keys(bd).sort();
+  CH.chartReporte=new Chart(document.getElementById('chartReporte'),{type:'bar',data:{labels:lb,datasets:[{label:'Órdenes',data:lb.map(function(l){return bd[l];}),backgroundColor:'#2D2460',borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{autoSkip:false,maxRotation:45,font:{size:10}},grid:{display:false}}}}});
+  buildTable(d,'tbl-reporte',false);
+  _reporteData=d;
+}
+function resetReporte(){
+  ['r-zona','r-estado','r-canal','r-vend'].forEach(function(id){document.getElementById(id).value='';});
+  var h=new Date().toISOString().slice(0,10); var m=new Date(); m.setDate(1);
+  document.getElementById('r-hasta').value=h; document.getElementById('r-desde').value=m.toISOString().slice(0,10);
+  filtrarReporte();
+}
+
+// REGISTRO DE VENTA
+function renderInvList(){
+  var q=(document.getElementById('inv-q').value||'').toLowerCase();
+  var wrap=document.getElementById('inv-list-wrap');
+  document.getElementById('inv-detail-wrap').style.display='none'; wrap.style.display='block';
+  var d=getOrd(); if(q)d=d.filter(function(o){return (o.orden+o.nombre+o.contacto).toLowerCase().indexOf(q)>=0;});
+  if(!d.length){wrap.innerHTML='<div class="empty"><i class="fa-regular fa-file-lines"></i><p>No hay órdenes.</p></div>';return;}
+  wrap.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-bottom:1.4rem">'+d.map(function(o){
+    var tot=((o.precio||0)*(o.cantidad||1)).toFixed(2);
+    var ciTag = o.consumoInterno ? '<span style="display:inline-block;font-size:10px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 7px;border-radius:9px;margin-left:6px">🎁 Patrocinio</span>' : '';
+    return '<div class="inv-card" onclick="abrirInv('+o.id+')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--navy);font-weight:500">'+esc(o.orden)+ciTag+'</span><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span></div><div style="font-weight:600;font-size:14px;margin:4px 0 2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · '+esc(o.zona)+'</div><div style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</div><div style="font-size:20px;font-weight:700;color:'+(o.consumoInterno?'#6d28d9':'var(--green)')+';margin-top:8px">$'+tot+(o.consumoInterno?' <span style="font-size:11px;font-weight:500">(sin costo)</span>':'')+'</div></div>';
+  }).join('')+'</div>';
+}
+function abrirInv(id){
+  var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
+  document.getElementById('inv-list-wrap').style.display='none';
+  document.getElementById('inv-detail-wrap').style.display='block';
+  var total=((o.precio||0)*(o.cantidad||1)).toFixed(2);
+  var invNum='RV-'+String(o.id).slice(-6);
+  var fe=new Date().toLocaleDateString('es-SV',{year:'numeric',month:'long',day:'numeric'});
+  var ciTag = o.consumoInterno ? '<span style="display:inline-block;font-size:11px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;padding:3px 10px;border-radius:11px;margin-left:10px;vertical-align:middle">🎁 PATROCINIO / CONSUMO INTERNO</span>' : '';
+  var totalLineLabel = o.consumoInterno ? 'TOTAL (sin costo — patrocinio)' : 'TOTAL';
+  document.getElementById('inv-prev-content').innerHTML='<div class="inv-hdr"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem"><div><div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Nugudú'+ciTag+'</div><div style="font-size:11px;opacity:.5;letter-spacing:.8px;margin-top:1px">LÁSER STORE</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:700;letter-spacing:1px;color:var(--gold)">'+invNum+'</div><div style="font-size:10px;opacity:.5;margin-top:3px;letter-spacing:.5px">REGISTRO DE VENTA</div></div></div><div style="display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap"><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Fecha</div><div style="font-size:13px">'+fe+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Orden</div><div style="font-size:13px;font-family:\'DM Mono\',monospace">'+esc(o.orden)+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Pago</div><div style="font-size:13px">'+(o.consumoInterno?'Sin costo':esc(o.pago||'Transferencia'))+'</div></div></div></div><div class="inv-body"><div class="inv-parties"><div><div class="inv-pt">Emitido por</div><div class="inv-pv"><strong>Nugudú Láser Store</strong><br>El Salvador<br>Vendedor: '+esc(o.vendedor)+'</div></div><div><div class="inv-pt">Registrado a</div><div class="inv-pv"><strong>'+esc(o.nombre)+'</strong><br>'+esc(o.contacto)+'<br>'+esc(o.direccion||'')+'</div></div><div><div class="inv-pt">Envío</div><div class="inv-pv"><strong>'+esc(o.zona)+'</strong><br>'+(o.notas?esc(o.notas):'Sin notas')+'</div></div></div><table class="inv-tbl"><thead><tr><th>SKU(s)</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">P.Unit</th><th style="text-align:right">Total</th></tr></thead><tbody><tr><td style="font-family:\'DM Mono\',monospace;font-size:12px">'+(o.productos||[]).join(', ')+'</td><td>Producto(s) Nugudú Láser Store</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:700">$'+total+'</td></tr></tbody></table><div class="inv-totals"><div class="itr"><span class="l">Subtotal</span><span class="v">$'+total+'</span></div><div class="itr"><span class="l">Envío</span><span class="v" style="color:var(--green)">Incluido</span></div><div class="itr grand"><span class="l">'+totalLineLabel+'</span><span class="v" style="'+(o.consumoInterno?'color:#6d28d9':'')+'">$'+total+'</span></div></div><div class="inv-fnote">'+(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso 🎁':'¡Gracias por tu compra en Nugudú Láser Store! 💛')+'</div></div>';
+  var waNum=o.contacto.replace(/\D/g,'');
+  var waMsg = o.consumoInterno
+    ? encodeURIComponent('Hola '+o.nombre+', registro de patrocinio/consumo interno de Nugudú:\nRegistro '+invNum+' | Orden: '+o.orden+'\nSKU: '+(o.productos||[]).join(', ')+' x '+(o.cantidad||1)+'\nValor patrocinado: $'+total+' (sin costo)\nZona: '+o.zona+'\nGracias.')
+    : encodeURIComponent('Hola '+o.nombre+', tu registro de venta de Nugudú:\nRegistro '+invNum+' | Orden: '+o.orden+'\nSKU: '+(o.productos||[]).join(', ')+' x '+(o.cantidad||1)+'\nPrecio unitario: $'+(o.precio||0).toFixed(2)+' | TOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+' | Zona: '+o.zona+'\nGracias por tu compra.');
+  var eSubj=encodeURIComponent((o.consumoInterno?'Registro de patrocinio ':'Registro de venta ')+invNum+' — Nugudú Láser Store');
+  var eBody = o.consumoInterno
+    ? encodeURIComponent('Hola '+o.nombre+',\n\nRegistro: '+invNum+'\nOrden: '+o.orden+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+'\nValor patrocinado: $'+total+' (sin costo)\nZona: '+o.zona+'\n\nGracias.')
+    : encodeURIComponent('Hola '+o.nombre+',\n\nRegistro: '+invNum+'\nOrden: '+o.orden+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+'\nPrecio unit.: $'+(o.precio||0).toFixed(2)+'\nTOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+'\nZona: '+o.zona+'\n\nGracias por tu compra.');
+  document.getElementById('inv-actions').innerHTML='<a class="btn btn-wa" href="https://wa.me/'+waNum+'?text='+waMsg+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Enviar por WhatsApp</a><a class="btn btn-email" style="background:#EA4335;color:#fff;border:1px solid #EA4335" href="mailto:'+(o.contacto.indexOf('@')>=0?o.contacto:'')+'?subject='+eSubj+'&body='+eBody+'"><i class="fa-solid fa-envelope"></i> Enviar por correo</a><button class="btn btn-primary" onclick="pdfInv('+o.id+')"><i class="fa-solid fa-print"></i> Guardar PDF</button><button class="btn btn-outline" onclick="cpInv('+o.id+')"><i class="fa-solid fa-copy"></i> Copiar texto</button>';
+}
+function cerrarInv(){ document.getElementById('inv-detail-wrap').style.display='none'; document.getElementById('inv-list-wrap').style.display='block'; }
+function pdfInv(id){
+  var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
+  var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var W=210,gm=18,total=((o.precio||0)*(o.cantidad||1)),invNum='RV-'+String(o.id).slice(-6);
+  var fe=new Date().toLocaleDateString('es-SV',{year:'numeric',month:'long',day:'numeric'});
+  doc.setFillColor(45,36,96);doc.rect(0,0,W,46,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(255);doc.text('Nugudú',gm,19);
+  if (o.consumoInterno) { doc.setFontSize(9);doc.setTextColor(245,166,35);doc.text('PATROCINIO / CONSUMO INTERNO',gm+38,19); }
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,175,210);doc.text('LÁSER STORE',gm,25);
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(245,166,35);doc.text(invNum,W-gm,19,{align:'right'});
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,175,210);doc.text('REGISTRO DE VENTA',W-gm,25,{align:'right'});
+  doc.setFontSize(8);doc.text('Fecha: '+fe,gm,36);doc.text('Orden: '+o.orden,gm+65,36);doc.text('Pago: '+(o.consumoInterno?'Sin costo':(o.pago||'Transferencia')),gm+130,36);
+  var y=58;doc.setFillColor(244,243,250);doc.rect(gm,y-5,W-gm*2,30,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(107,101,133);
+  doc.text('EMITIDO POR',gm+3,y);doc.text('REGISTRADO A',W/2+2,y);doc.text('ENVÍO',W*0.72+2,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(24,21,46);
+  doc.text('Nugudú Láser Store',gm+3,y+7);doc.text('El Salvador',gm+3,y+13);doc.text('Vendedor: '+o.vendedor,gm+3,y+19);
+  doc.text(o.nombre,W/2+2,y+7);doc.text(o.contacto.slice(0,22),W/2+2,y+13);doc.text((o.direccion||'').slice(0,22),W/2+2,y+19);
+  doc.text(o.zona,W*0.72+2,y+7);doc.text((o.notas||'Sin notas').slice(0,20),W*0.72+2,y+13);
+  y+=38;doc.setFillColor(45,36,96);doc.rect(gm,y,W-gm*2,7,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(255);
+  doc.text('SKU(s)',gm+2,y+5);doc.text('Descripción',gm+38,y+5);doc.text('Cant.',gm+102,y+5);doc.text('P.Unit',gm+118,y+5);doc.text('Total',W-gm-2,y+5,{align:'right'});
+  y+=7;doc.setFillColor(248,248,252);doc.rect(gm,y,W-gm*2,9,'F');
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(24,21,46);
+  doc.text(((o.productos||[]).join(',')|| '-').slice(0,22),gm+2,y+6);doc.text('Producto(s) Nugudú Láser Store',gm+38,y+6);
+  doc.text(String(o.cantidad||1),gm+104,y+6);doc.text('$'+(o.precio||0).toFixed(2),gm+118,y+6);
+  doc.setFont('helvetica','bold');doc.text('$'+total.toFixed(2),W-gm-2,y+6,{align:'right'});
+  y+=16;doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(107,101,133);
+  doc.text('Subtotal:',W-gm-42,y,{align:'right'});doc.setTextColor(24,21,46);doc.text('$'+total.toFixed(2),W-gm,y,{align:'right'});y+=7;
+  doc.setTextColor(107,101,133);doc.text('Envío:',W-gm-42,y,{align:'right'});doc.setTextColor(46,125,82);doc.text('Incluido',W-gm,y,{align:'right'});y+=3;
+  doc.setDrawColor(45,36,96);doc.setLineWidth(0.5);doc.line(W-gm-58,y,W-gm,y);y+=6;
+  doc.setFont('helvetica','bold');doc.setFontSize(12);
+  if (o.consumoInterno) { doc.setTextColor(109,40,217); doc.text('TOTAL (sin costo):',W-gm-50,y,{align:'right'}); }
+  else { doc.setTextColor(45,36,96); doc.text('TOTAL:',W-gm-42,y,{align:'right'}); }
+  doc.text('$'+total.toFixed(2),W-gm,y,{align:'right'});y+=14;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(160,155,186);
+  doc.text(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso':'Gracias por tu compra en Nugudú Láser Store',W/2,y,{align:'center'});
+  doc.save('registro_venta_'+invNum+'.pdf');
+}
+function cpInv(id){
+  var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
+  var total=((o.precio||0)*(o.cantidad||1)).toFixed(2), invNum='RV-'+String(o.id).slice(-6);
+  var txt='REGISTRO DE VENTA — NUGUDÚ LÁSER STORE\nN° '+invNum+' | Orden: '+o.orden+'\nFecha: '+new Date().toLocaleDateString('es-SV')+'\nCliente: '+o.nombre+' | '+o.contacto+'\nDirección: '+(o.direccion||'')+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+' | P.Unit: $'+(o.precio||0).toFixed(2)+'\nTOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+' · Zona: '+o.zona+'\n¡Gracias por tu compra! 💛';
+  navigator.clipboard.writeText(txt).then(function(){alert('Copiado ✓');}).catch(function(){alert(txt);});
+}
+
+// FORM HELPERS
+function cpLink(id){
+  var el=document.getElementById(id); if(!el)return;
+  navigator.clipboard.writeText(el.value).then(function(){alert('Link copiado ✓');}).catch(function(){el.select();document.execCommand('copy');alert('Link copiado ✓');});
+}
+
+// PDF GENERAL
+function exportPDF(){
+  var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var W=297,gm=13;
+  doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Láser Store — Reporte CRM',gm,9.5);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
+  var o=getOrd(); var ent=o.filter(function(x){return parseInt(x.estado)===4;}).length;
+  var rev=o.reduce(function(s,x){return s+(x.precio||0)*(x.cantidad||1);},0);
+  doc.setTextColor(50);doc.setFontSize(9);doc.text('Órdenes: '+o.length+'   Entregadas: '+ent+'   Tasa: '+(o.length?Math.round(ent/o.length*100):0)+'%   Ingresos: $'+rev.toFixed(2),gm,22);
+  var y=30;
+  var cols=['Nº Orden','Fecha','Cliente','Contacto','Zona','Canal','Cant','P.Unit','Total','SKU','Estado'];
+  var cw=[26,20,36,28,28,20,10,14,14,42,22];
+  doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(255);
+  doc.setFillColor(45,36,96);doc.rect(gm,y,W-gm*2,6,'F');
+  var x=gm+1.5;cols.forEach(function(h,i){doc.text(h,x,y+4.3);x+=cw[i];});y+=6;
+  var data=_reporteData||o;
+  doc.setFont('helvetica','normal');doc.setTextColor(35);
+  data.forEach(function(row,idx){
+    if(y>193){doc.addPage('landscape');y=14;}
+    doc.setFillColor(idx%2===0?246:255,idx%2===0?245:255,idx%2===0?252:255);doc.rect(gm,y,W-gm*2,6,'F');
+    x=gm+1.5; var tot=(row.precio||0)*(row.cantidad||1);
+    var cells=[row.orden,(row.fecha||'').slice(0,10),(row.nombre||'').slice(0,16),(row.contacto||'').slice(0,14),(row.zona||'').slice(0,13),row.canal||'–',String(row.cantidad||1),'$'+(row.precio||0).toFixed(2),'$'+tot.toFixed(2),((row.productos||[]).join(','))||'–',ESTADOS[parseInt(row.estado)||0]];
+    cells.forEach(function(v,i){doc.text(String(v).slice(0,Math.floor(cw[i]/2)),x,y+4.2);x+=cw[i];});y+=6;
+  });
+  doc.save('nugudú_reporte_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+</script>
+<div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>
+</body>
+</html>

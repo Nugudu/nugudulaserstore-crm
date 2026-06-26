@@ -151,7 +151,7 @@ tbody tr:last-child td{border-bottom:none}
   .nav i{width:auto;font-size:17px;margin-bottom:1px}
   .nav.active{border-left:none;border-top-color:var(--gold)}.nbadge{display:none}
   .main{margin-left:0;padding-bottom:58px}
-  .topbar{padding:.65rem 1rem}.content{padding:1rem}
+  .topbar{padding:.65rem 1rem;flex-wrap:wrap;row-gap:8px}.content{padding:1rem}
   .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
   .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
 }
@@ -226,10 +226,11 @@ tbody tr:last-child td{border-bottom:none}
 <div class="main">
   <div class="topbar">
     <div><div class="topbar-ttl" id="tb-title">Dashboard</div><div class="topbar-sub" id="tb-sub">DO · CARE · sincronizado</div></div>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end" id="topbar-actions">
       <span style="font-size:12px;color:var(--hint);background:var(--surface2);padding:5px 10px;border-radius:6px;border:1px solid var(--border)"><i class="fa-regular fa-calendar" style="margin-right:4px"></i><span id="fecha-hoy"></span></span>
       <button class="btn btn-outline btn-sm" onclick="syncFromGAS(false)"><i class="fa-solid fa-rotate"></i> Sincronizar</button>
       <button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-download"></i> PDF</button>
+      <button class="btn btn-outline btn-sm" onclick="cerrarSesionGate()" title="Cambiar usuario"><i class="fa-solid fa-right-left"></i> Cambiar usuario</button>
     </div>
   </div>
   <div class="content">
@@ -609,6 +610,7 @@ var NAV_POR_ROL = {
   vendedora:  ['nueva'],
   repartidor: ['repartidor']
 };
+var GATE_SESSION_KEY = 'ngd_gate_sesion';
 function concederAcceso(rol, nombre){
   document.getElementById('access-gate').style.display = 'none';
   document.getElementById('app-shell').style.display = 'block';
@@ -626,6 +628,11 @@ function concederAcceso(rol, nombre){
 
   document.getElementById('gate-usuario-actual').textContent = nombre ? nombre : '';
 
+  // Guarda la sesión SOLO para esta pestaña/ventana (sessionStorage) — un refresco
+  // de página no cierra sesión, pero abrir el link en una pestaña nueva o después
+  // de cerrar el navegador sí vuelve a pedir el código, como se definió.
+  try { sessionStorage.setItem(GATE_SESSION_KEY, JSON.stringify({rol:rol, nombre:nombre})); } catch(e){}
+
   // Lleva directo a la única pestaña relevante para roles restringidos.
   if (rol === 'vendedora') go('nueva');
   if (rol === 'repartidor') go('repartidor');
@@ -637,6 +644,18 @@ function cerrarSesionGate(){
   // Restaura el sidebar completo para la próxima persona que entre.
   document.querySelectorAll('.sidebar .nav, .sidebar .sb-sec').forEach(function(el){ el.style.display = ''; });
   document.querySelector('.sb-pdf').style.display = '';
+  try { sessionStorage.removeItem(GATE_SESSION_KEY); } catch(e){}
+}
+// Al cargar la página, si ya hay una sesión activa en esta pestaña, entra directo
+// sin volver a pedir el código — pero si se abre en una pestaña/ventana nueva,
+// sessionStorage está vacío y sí pedirá el código de nuevo.
+function restaurarSesionGate(){
+  try {
+    var raw = sessionStorage.getItem(GATE_SESSION_KEY);
+    if (!raw) return;
+    var s = JSON.parse(raw);
+    if (s && s.rol) concederAcceso(s.rol, s.nombre);
+  } catch(e){}
 }
 
 var ESTADOS = ['Nueva orden','En proceso','En empaque','Paquete en tránsito','Entregado'];
@@ -807,6 +826,7 @@ window.addEventListener('DOMContentLoaded', function(){
   // Start sync: immediate + every 30s
   syncFromGAS(true);
   setInterval(function(){ syncFromGAS(true); }, 30000);
+  restaurarSesionGate();
 });
 
 // NAVIGATION

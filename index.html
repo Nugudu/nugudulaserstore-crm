@@ -145,9 +145,9 @@ tbody tr:last-child td{border-bottom:none}
 .empty p{font-size:13px}
 .chart-full{margin-bottom:1.4rem}
 @media(max-width:768px){
-  .sidebar{width:100%;height:58px;flex-direction:row;top:auto;bottom:0;overflow:visible;padding:0}
+  .sidebar{width:100%;height:58px;flex-direction:row;top:auto;bottom:0;overflow-x:auto;overflow-y:hidden;padding:0;-webkit-overflow-scrolling:touch}
   .sb-logo,.sb-sec,.sb-pdf,.sb-foot{display:none}
-  .nav{flex-direction:column;gap:2px;padding:7px 4px;font-size:9px;border-left:none;border-top:3px solid transparent;flex:1;justify-content:center;text-align:center}
+  .nav{flex-direction:column;gap:2px;padding:7px 6px;font-size:9px;border-left:none;border-top:3px solid transparent;flex:0 0 70px;justify-content:center;text-align:center;white-space:nowrap}
   .nav i{width:auto;font-size:17px;margin-bottom:1px}
   .nav.active{border-left:none;border-top-color:var(--gold)}.nbadge{display:none}
   .main{margin-left:0;padding-bottom:58px}
@@ -164,6 +164,34 @@ tbody tr:last-child td{border-bottom:none}
 </head>
 <body>
 
+<!-- ACCESO POR ROL — capa simple de filtrado de vista, no es seguridad de servidor -->
+<div id="access-gate" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:1rem">
+  <div style="max-width:420px;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;box-shadow:var(--sh)">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div class="sb-icon" style="width:48px;height:48px;font-size:18px;margin:0 auto .75rem;display:flex;align-items:center;justify-content:center;background:var(--navy);color:#fff;border-radius:12px;font-weight:700">NG</div>
+      <h2 style="font-size:19px">Nugudú Láser Store</h2>
+      <p style="font-size:13px;color:var(--muted);margin-top:2px">Elige tu rol para continuar</p>
+    </div>
+
+    <div id="gate-roles" style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-outline" style="justify-content:flex-start;padding:12px 14px" onclick="mostrarLoginRol('admin')"><i class="fa-solid fa-user-shield" style="margin-right:8px;color:var(--navy)"></i> Administradora</button>
+      <button class="btn btn-outline" style="justify-content:flex-start;padding:12px 14px" onclick="mostrarLoginRol('vendedora')"><i class="fa-solid fa-cart-shopping" style="margin-right:8px;color:var(--teal)"></i> Vendedora</button>
+      <button class="btn btn-outline" style="justify-content:flex-start;padding:12px 14px" onclick="mostrarLoginRol('repartidor')"><i class="fa-solid fa-motorcycle" style="margin-right:8px;color:var(--amber)"></i> Repartidor</button>
+    </div>
+
+    <div id="gate-login" style="display:none">
+      <button class="btn btn-outline btn-sm" onclick="volverRoles()" style="margin-bottom:1rem"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+      <div class="fg" style="margin-bottom:1rem">
+        <label id="gate-login-label">Código de acceso</label>
+        <input id="gate-codigo" type="text" placeholder="Ingresa tu código" style="text-align:center;font-size:16px;font-family:'DM Mono',monospace" onkeydown="if(event.key==='Enter')validarAcceso()">
+      </div>
+      <button class="btn btn-teal" style="width:100%;justify-content:center" onclick="validarAcceso()"><i class="fa-solid fa-arrow-right-to-bracket"></i> Ingresar</button>
+      <div id="gate-err" class="alert err" style="margin-top:1rem"></div>
+    </div>
+  </div>
+</div>
+
+<div id="app-shell" style="display:none">
 <nav class="sidebar">
   <div class="sb-logo"><div class="sb-icon">NG</div><div><div class="sb-name">Nugudú</div><div class="sb-sub">Láser Store · CRM</div></div></div>
   <div class="sb-sec">Registro</div>
@@ -187,7 +215,11 @@ tbody tr:last-child td{border-bottom:none}
       <span class="sd yellow" id="sync-dot"></span>
       <span style="font-size:10px;color:rgba(255,255,255,.4)" id="sync-lbl">Iniciando…</span>
     </div>
-    <div style="font-size:10px;color:rgba(255,255,255,.2)">v10.0 · Nugudú Láser Store</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+      <span style="font-size:10px;color:rgba(255,255,255,.4)" id="gate-usuario-actual"></span>
+      <span style="font-size:10px;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:underline" onclick="cerrarSesionGate()">Cambiar usuario</span>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:4px">v10.0 · Nugudú Láser Store</div>
   </div>
 </nav>
 
@@ -512,8 +544,101 @@ tbody tr:last-child td{border-bottom:none}
 
   </div>
 </div>
+</div>
 
 <script>
+// ═══════════════════════════════════════════════
+// ACCESO POR ROL — filtro de vista en el cliente, no es autenticación de servidor.
+// Sirve para que cada persona solo vea lo que le corresponde por accidente,
+// no como protección contra alguien decidido a saltárselo técnicamente.
+// ═══════════════════════════════════════════════
+
+// Código único de la administradora — CÁMBIALO antes de compartir el link.
+var ADMIN_CODE = 'N4';
+
+// Códigos individuales de vendedoras — agrega/quita líneas según tu equipo.
+// Formato: 'CODIGO': 'Nombre a mostrar'
+var VENDEDORAS = {
+  'N1': 'Vendedora 1',
+  'N2': 'Vendedora 2'
+};
+
+var _gateRol = null; // 'admin' | 'vendedora' | 'repartidor'
+
+function mostrarLoginRol(rol){
+  _gateRol = rol;
+  if (rol === 'repartidor') {
+    // El repartidor ya tiene su propio sistema de código DENTRO del panel
+    // (sin cambios) — aquí solo le damos acceso a esa sección, nada más.
+    concederAcceso('repartidor', null);
+    return;
+  }
+  document.getElementById('gate-roles').style.display = 'none';
+  document.getElementById('gate-login').style.display = 'block';
+  document.getElementById('gate-login-label').textContent =
+    rol === 'admin' ? 'Código de administradora' : 'Código de vendedora';
+  document.getElementById('gate-codigo').value = '';
+  document.getElementById('gate-codigo').focus();
+}
+function volverRoles(){
+  document.getElementById('gate-roles').style.display = 'flex';
+  document.getElementById('gate-login').style.display = 'none';
+  document.getElementById('gate-err').style.display = 'none';
+}
+function gateError(msg){
+  var e = document.getElementById('gate-err');
+  e.textContent = msg; e.style.display = 'flex';
+  setTimeout(function(){ e.style.display = 'none'; }, 3000);
+}
+function validarAcceso(){
+  var cod = (document.getElementById('gate-codigo').value || '').trim().toUpperCase();
+  if (!cod) { gateError('Ingresa tu código.'); return; }
+
+  if (_gateRol === 'admin') {
+    if (cod !== ADMIN_CODE) { gateError('Código incorrecto.'); return; }
+    concederAcceso('admin', 'Administradora');
+  } else if (_gateRol === 'vendedora') {
+    var nombre = VENDEDORAS[cod];
+    if (!nombre) { gateError('Código incorrecto.'); return; }
+    concederAcceso('vendedora', nombre);
+  }
+}
+// Conjuntos de pestañas visibles por rol — todo lo que no esté aquí se oculta.
+var NAV_POR_ROL = {
+  admin:      null, // null = ve todo, sin restricción
+  vendedora:  ['nueva'],
+  repartidor: ['repartidor']
+};
+function concederAcceso(rol, nombre){
+  document.getElementById('access-gate').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+
+  var permitidos = NAV_POR_ROL[rol];
+  if (permitidos) {
+    // Oculta todas las secciones del sidebar y los separadores de sección
+    document.querySelectorAll('.sidebar .nav').forEach(function(el){
+      var key = el.id.replace('nav-', '');
+      el.style.display = permitidos.indexOf(key) >= 0 ? '' : 'none';
+    });
+    document.querySelectorAll('.sidebar .sb-sec').forEach(function(el){ el.style.display = 'none'; });
+    document.querySelector('.sb-pdf').style.display = 'none';
+  }
+
+  document.getElementById('gate-usuario-actual').textContent = nombre ? nombre : '';
+
+  // Lleva directo a la única pestaña relevante para roles restringidos.
+  if (rol === 'vendedora') go('nueva');
+  if (rol === 'repartidor') go('repartidor');
+}
+function cerrarSesionGate(){
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('access-gate').style.display = 'flex';
+  volverRoles();
+  // Restaura el sidebar completo para la próxima persona que entre.
+  document.querySelectorAll('.sidebar .nav, .sidebar .sb-sec').forEach(function(el){ el.style.display = ''; });
+  document.querySelector('.sb-pdf').style.display = '';
+}
+
 var ESTADOS = ['Nueva orden','En proceso','En empaque','Paquete en tránsito','Entregado'];
 var SCLS    = ['s0','s1','s2','s3','s4'];
 var EICONS  = ['📋','⚙️','📦','🚚','✅'];

@@ -385,6 +385,13 @@ tbody tr:last-child td{border-bottom:none}
           <div class="mc"><div class="ml">Entregados hoy</div><div class="mv" id="rs-ent" style="color:var(--green)">0</div></div>
           <div class="mc"><div class="ml">Pendientes</div><div class="mv" id="rs-pend" style="color:var(--amber)">0</div></div>
         </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem">
+          <div style="flex:1;position:relative">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--hint);pointer-events:none"></i>
+            <input id="rep-buscar" type="text" placeholder="Buscar por N° orden, nombre o dirección…" oninput="renderRepDash()" style="padding-left:36px;width:100%">
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('rep-buscar').value='';renderRepDash()" title="Limpiar búsqueda"><i class="fa-solid fa-xmark"></i></button>
+        </div>
         <div id="rep-route-list"></div>
       </div>
     </div>
@@ -1497,9 +1504,19 @@ function renderRepDash(){
   document.getElementById('rs-asig').textContent=ords.length;
   document.getElementById('rs-ent').textContent=entHoy.length;
   document.getElementById('rs-pend').textContent=pend.length;
+  // Aplica el buscador — filtra las tarjetas visibles sin afectar los contadores
+  var q=(document.getElementById('rep-buscar').value||'').trim().toLowerCase();
+  var ordsVis = q ? ords.filter(function(o){
+    return (o.orden||'').toLowerCase().indexOf(q)>=0 ||
+           (o.nombre||'').toLowerCase().indexOf(q)>=0 ||
+           (o.direccion||'').toLowerCase().indexOf(q)>=0;
+  }) : ords;
   var list=document.getElementById('rep-route-list');
-  if(!ords.length){list.innerHTML='<div class="empty"><i class="fa-solid fa-box-open"></i><p>No hay pedidos asignados ahora.</p></div>';return;}
-  list.innerHTML=ords.map(function(o){
+  if(!ordsVis.length){
+    list.innerHTML='<div class="empty"><i class="fa-solid fa-magnifying-glass"></i><p>'+(q?'Sin resultados para "'+esc(q)+'"':'No hay pedidos asignados ahora.')+'</p></div>';
+    return;
+  }
+  list.innerHTML=ordsVis.map(function(o){
     var yaEnt=parseInt(o.estado)===4;
     var waLink='https://wa.me/'+o.contacto.replace(/\D/g,'')+'?text='+encodeURIComponent('Hola '+o.nombre+', soy el repartidor de Nugudú, estoy en camino con tu pedido '+o.orden+'.');
     var mapLink=o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona);

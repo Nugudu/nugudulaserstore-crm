@@ -380,17 +380,11 @@ tbody tr:last-child td{border-bottom:none}
       </div>
       <div id="rep-dash-wrap" style="display:none">
         <div class="ph-row"><div><h2>Ruta del día — <span id="rep-nombre" style="color:var(--teal)"></span></h2><p id="rep-fecha" style="font-size:12.5px;color:var(--muted);margin-top:2px"></p></div><div style="display:flex;gap:8px"><button class="btn btn-teal btn-sm" onclick="imprimirListaDia()"><i class="fa-solid fa-list-check"></i> Lista del día</button><button class="btn btn-outline btn-sm" onclick="logoutRep()"><i class="fa-solid fa-right-from-bracket"></i> Salir</button></div></div>
+        <div class="tsearch" style="margin-bottom:1.2rem"><input id="rep-buscar" type="text" placeholder="Nº de orden, nombre o dirección…" oninput="renderRepDash()"><button class="btn btn-primary" onclick="renderRepDash()"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button></div>
         <div class="g3">
           <div class="mc"><div class="ml">Asignados</div><div class="mv" id="rs-asig" style="color:var(--navy)">0</div></div>
           <div class="mc"><div class="ml">Entregados hoy</div><div class="mv" id="rs-ent" style="color:var(--green)">0</div></div>
           <div class="mc"><div class="ml">Pendientes</div><div class="mv" id="rs-pend" style="color:var(--amber)">0</div></div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem">
-          <div style="flex:1;position:relative">
-            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--hint);pointer-events:none"></i>
-            <input id="rep-buscar" type="text" placeholder="Buscar por N° orden, nombre o dirección…" oninput="renderRepDash()" style="padding-left:36px;width:100%">
-          </div>
-          <button class="btn btn-outline btn-sm" onclick="document.getElementById('rep-buscar').value='';renderRepDash()" title="Limpiar búsqueda"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="rep-route-list"></div>
       </div>

@@ -160,6 +160,11 @@ tbody tr:last-child td{border-bottom:none}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bmd);border-radius:3px}
+/* Switches de producción en tabla de Órdenes */
+.prod-switch{display:inline-flex;align-items:center;border-radius:20px;overflow:hidden;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;margin-top:4px;user-select:none}
+.prod-opt{padding:3px 9px;transition:background .15s,color .15s;background:var(--surface2);color:var(--hint)}
+.prod-opt.activo-prod{background:#f97316;color:#fff}
+.prod-opt.activo-listo{background:#22c55e;color:#fff}
 </style>
 </head>
 <body>
@@ -176,6 +181,7 @@ tbody tr:last-child td{border-bottom:none}
     <div id="gate-roles" style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-outline" style="justify-content:flex-start;padding:12px 14px" onclick="mostrarLoginRol('admin')"><i class="fa-solid fa-user-shield" style="margin-right:8px;color:var(--navy)"></i> Administradora</button>
       <button class="btn btn-outline" style="justify-content:flex-start;padding:12px 14px" onclick="mostrarLoginRol('vendedora')"><i class="fa-solid fa-cart-shopping" style="margin-right:8px;color:var(--teal)"></i> Vendedora</button>
+      <button class="btn btn-outline" style="justify-content:flex-start;padding:12px 14px" onclick="mostrarLoginRol('produccion')"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:8px;color:var(--amber)"></i> Producción</button>
       <button class="btn btn-outline" style="justify-content:flex-start;padding:12px 14px" onclick="mostrarLoginRol('repartidor')"><i class="fa-solid fa-motorcycle" style="margin-right:8px;color:var(--amber)"></i> Repartidor</button>
     </div>
 
@@ -565,20 +571,21 @@ var VENDEDORAS = {
   'N2': 'Vendedora 2'
 };
 
-var _gateRol = null; // 'admin' | 'vendedora' | 'repartidor'
+var PRODUCCION_CODE = 'P1';
+
+var _gateRol = null; // 'admin' | 'vendedora' | 'produccion' | 'repartidor'
 
 function mostrarLoginRol(rol){
   _gateRol = rol;
   if (rol === 'repartidor') {
-    // El repartidor ya tiene su propio sistema de código DENTRO del panel
-    // (sin cambios) — aquí solo le damos acceso a esa sección, nada más.
     concederAcceso('repartidor', null);
     return;
   }
   document.getElementById('gate-roles').style.display = 'none';
   document.getElementById('gate-login').style.display = 'block';
   document.getElementById('gate-login-label').textContent =
-    rol === 'admin' ? 'Código de administradora' : 'Código de vendedora';
+    rol === 'admin' ? 'Código de administradora' :
+    rol === 'produccion' ? 'Código de producción' : 'Código de vendedora';
   document.getElementById('gate-codigo').value = '';
   document.getElementById('gate-codigo').focus();
 }
@@ -603,12 +610,16 @@ function validarAcceso(){
     var nombre = VENDEDORAS[cod];
     if (!nombre) { gateError('Código incorrecto.'); return; }
     concederAcceso('vendedora', nombre);
+  } else if (_gateRol === 'produccion') {
+    if (cod !== PRODUCCION_CODE) { gateError('Código incorrecto.'); return; }
+    concederAcceso('produccion', 'Producción');
   }
 }
 // Conjuntos de pestañas visibles por rol — todo lo que no esté aquí se oculta.
 var NAV_POR_ROL = {
   admin:      null, // null = ve todo, sin restricción
   vendedora:  ['nueva'],
+  produccion: ['ordenes'],
   repartidor: ['repartidor']
 };
 var GATE_SESSION_KEY = 'ngd_gate_sesion';
@@ -636,6 +647,7 @@ function concederAcceso(rol, nombre){
 
   // Lleva directo a la única pestaña relevante para roles restringidos.
   if (rol === 'vendedora') go('nueva');
+  if (rol === 'produccion') go('ordenes');
   if (rol === 'repartidor') go('repartidor');
 }
 function cerrarSesionGate(){
@@ -963,6 +975,29 @@ function badgePendientePago(o){
 function badgeConsumoInterno(o){
   if (!o.consumoInterno) return '';
   return '<div style="margin-top:4px"><span style="display:inline-block;font-size:11px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 8px;border-radius:10px">🎁 Consumo interno</span></div>';
+}
+
+// Switch de producción — dos botones tipo pastilla: naranja "En producción" y verde "Listo".
+// Estado guardado en o.prodEstado: null | 'produccion' | 'listo'
+function renderProdSwitch(o){
+  var est = o.prodEstado || null;
+  var clsProd = est === 'produccion' ? 'prod-opt activo-prod' : 'prod-opt';
+  var clsListo = est === 'listo' ? 'prod-opt activo-listo' : 'prod-opt';
+  return '<div class="prod-switch">' +
+    '<span class="'+clsProd+'" onclick="toggleProd('+o.id+',\'produccion\')" title="En producción">⚙️ Prod.</span>' +
+    '<span class="'+clsListo+'" onclick="toggleProd('+o.id+',\'listo\')" title="Listo para empacar">✅ Listo</span>' +
+  '</div>';
+}
+function toggleProd(id, nuevoEst){
+  var idx = -1;
+  for (var i = 0; i < _ordenes.length; i++) { if (_ordenes[i].id === id) { idx = i; break; } }
+  if (idx < 0) return;
+  // Si ya tiene ese estado, lo quita (toggle off); si no, lo activa.
+  _ordenes[idx].prodEstado = (_ordenes[idx].prodEstado === nuevoEst) ? null : nuevoEst;
+  saveLocal();
+  renderOrdenes();
+  // Sync silencioso al servidor en background
+  setTimeout(function(){ updateGASField(id, {prodEstado: _ordenes[idx].prodEstado}); }, 0);
 }
 // Marca una orden como pagada — quita la etiqueta y registra la confirmación.
 function confirmarPago(id){
@@ -1328,8 +1363,9 @@ function buildTable(data,cid,deletable){
     var fe=o.fechaEntrega?'<span style="font-weight:500;color:var(--teal)">'+formatoFechaCorta(o.fechaEntrega)+'</span>':'<span style="color:var(--hint)">–</span>';
     var pendBadge = badgePendientePago(o);
     var ciBadge = badgeConsumoInterno(o);
+    var prodSwitch = renderProdSwitch(o);
     var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px;color:var(--muted)">'+(o.productos||[]).join(', ')+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px;color:var(--muted)">'+(o.productos||[]).join(', ')+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){

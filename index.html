@@ -285,12 +285,12 @@ tbody tr:last-child td{border-bottom:none}
           <div class="fg full">
             <label>Dirección de entrega *</label>
             <input id="f-direccion" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDireccionInput()">
-            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-              <span style="font-size:11px;color:var(--hint);flex-shrink:0">o bien</span>
-              <input id="f-gps" type="text" placeholder="Pega el link de ubicación GPS · ej. https://maps.google.com/?q=13.667,-89.247" style="font-size:12px" oninput="onGPSInput()">
-              <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('f-gps').value='';quitarMapaGPS()" title="Limpiar GPS"><i class="fa-solid fa-xmark"></i></button>
+            <label style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;margin-top:10px;display:block">O pega coordenadas / enlace de Google Maps</label>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <input id="f-gps" type="text" placeholder="Ej. 13.682673,-89.144279  o  https://maps.google.com/?q=13.682673,-89.144279" style="flex:1;font-size:13px" oninput="onGPSInput()">
+              <button type="button" class="btn btn-outline btn-sm" onclick="aplicarGPS(document.getElementById('f-gps').value.trim())" style="white-space:nowrap"><i class="fa-solid fa-location-dot" style="color:#e74c3c"></i> Fijar</button>
             </div>
-            <span class="hint">Usa uno de los dos — dirección de texto o link GPS del cliente.</span>
+            <span class="hint">Acepta: coordenadas (lat,lng), enlace de Google Maps o enlace compartido desde el teléfono</span>
             <div id="map-wrap" style="display:none;margin-top:8px">
               <div style="position:relative;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
                 <iframe id="map-frame" width="100%" height="220" style="border:0;display:block" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -1072,17 +1072,22 @@ function onGPSInput(){
   _gpsDebounce = setTimeout(function(){ aplicarGPS(link); }, 500);
 }
 function aplicarGPS(link){
+  if (!link) return;
   var coords = extraerCoordenadas(link);
+  // También acepta coordenadas directas: "13.682673,-89.144279"
+  if (!coords) {
+    var raw = link.match(/^\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*$/);
+    if (raw) coords = { lat: raw[1], lng: raw[2] };
+  }
   var frame  = document.getElementById('map-frame');
   var abrir  = document.getElementById('map-abrir');
   var wrap   = document.getElementById('map-wrap');
   var status = document.getElementById('map-status');
   if (!coords) {
-    // Link acortado (maps.app.goo.gl) o formato no reconocido
-    status.textContent = 'Formato no reconocido — prueba con el link completo (maps.google.com/?q=lat,lng).';
+    status.textContent = 'Formato no reconocido — usa coordenadas (13.68,-89.24) o link completo de Google Maps.';
     wrap.style.display = 'block';
     frame.src = '';
-    abrir.href = link; // al menos abre el link original en Maps
+    abrir.href = link;
     return;
   }
   var q = coords.lat + ',' + coords.lng;
@@ -1090,7 +1095,6 @@ function aplicarGPS(link){
   abrir.href = 'https://www.google.com/maps?q=' + q;
   status.textContent = 'Ubicación desde coordenadas GPS.';
   wrap.style.display = 'block';
-  // Guarda el link directo para el repartidor (QR y ficha)
   window._mapaLinkGPS = 'https://www.google.com/maps?q=' + q;
 }
 function quitarMapaGPS(){

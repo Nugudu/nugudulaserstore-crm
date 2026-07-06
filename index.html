@@ -285,6 +285,12 @@ tbody tr:last-child td{border-bottom:none}
           <div class="fg full">
             <label>Dirección de entrega *</label>
             <input id="f-direccion" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDireccionInput()">
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+              <span style="font-size:11px;color:var(--hint);flex-shrink:0">o bien</span>
+              <input id="f-gps" type="text" placeholder="Pega el link de ubicación GPS · ej. https://maps.google.com/?q=13.667,-89.247" style="font-size:12px" oninput="onGPSInput()">
+              <button type="button" class="btn btn-outline btn-xs" onclick="document.getElementById('f-gps').value='';quitarMapaGPS()" title="Limpiar GPS"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <span class="hint">Usa uno de los dos — dirección de texto o link GPS del cliente.</span>
             <div id="map-wrap" style="display:none;margin-top:8px">
               <div style="position:relative;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
                 <iframe id="map-frame" width="100%" height="220" style="border:0;display:block" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -1045,9 +1051,58 @@ function actualizarMapa(direccionTexto){
   status.textContent = 'Ubicación aproximada según la dirección escrita.';
   wrap.style.display = 'block';
 }
+
+// Extrae coordenadas lat,lng de cualquier formato de link de Google Maps:
+// https://maps.google.com/?q=13.667,-89.247
+// https://www.google.com/maps?q=13.667,-89.247
+// https://maps.app.goo.gl/... (links acortados — no se pueden resolver sin API, se informa)
+function extraerCoordenadas(link){
+  var m = link.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (m) return { lat: m[1], lng: m[2] };
+  // Algunos links de maps.google.com usan /@lat,lng,zoom
+  m = link.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (m) return { lat: m[1], lng: m[2] };
+  return null;
+}
+var _gpsDebounce = null;
+function onGPSInput(){
+  clearTimeout(_gpsDebounce);
+  var link = (document.getElementById('f-gps').value || '').trim();
+  if (!link) { return; }
+  _gpsDebounce = setTimeout(function(){ aplicarGPS(link); }, 500);
+}
+function aplicarGPS(link){
+  var coords = extraerCoordenadas(link);
+  var frame  = document.getElementById('map-frame');
+  var abrir  = document.getElementById('map-abrir');
+  var wrap   = document.getElementById('map-wrap');
+  var status = document.getElementById('map-status');
+  if (!coords) {
+    // Link acortado (maps.app.goo.gl) o formato no reconocido
+    status.textContent = 'Formato no reconocido — prueba con el link completo (maps.google.com/?q=lat,lng).';
+    wrap.style.display = 'block';
+    frame.src = '';
+    abrir.href = link; // al menos abre el link original en Maps
+    return;
+  }
+  var q = coords.lat + ',' + coords.lng;
+  frame.src = 'https://maps.google.com/maps?q=' + q + '&output=embed';
+  abrir.href = 'https://www.google.com/maps?q=' + q;
+  status.textContent = 'Ubicación desde coordenadas GPS.';
+  wrap.style.display = 'block';
+  // Guarda el link directo para el repartidor (QR y ficha)
+  window._mapaLinkGPS = 'https://www.google.com/maps?q=' + q;
+}
+function quitarMapaGPS(){
+  window._mapaLinkGPS = null;
+  // Si tampoco hay dirección de texto, quita el mapa completo
+  if (!(document.getElementById('f-direccion').value || '').trim()) quitarMapa();
+}
+
 function quitarMapa(){
   document.getElementById('map-wrap').style.display = 'none';
   document.getElementById('map-frame').src = '';
+  window._mapaLinkGPS = null;
 }
 // Construye el link de Google Maps para guardarlo con la orden (compartir con repartidor).
 function linkMapaDesdeDireccion(direccionTexto, zona){
@@ -1282,7 +1337,8 @@ function guardar(){
   if(getOrd().filter(function(o){return o.orden===orden;}).length){ showErr('Nº de orden duplicado — presiona 🔄 para regenerar.'); return; }
   var cantidad=parseInt(vf('f-cantidad'))||1;
   var fechaEntrega=vf('f-fecha-entrega');
-  var mapaLink=linkMapaDesdeDireccion(dir, zona);
+  // Si el usuario pegó un link GPS, ese tiene prioridad sobre el derivado de la dirección de texto.
+  var mapaLink = window._mapaLinkGPS || linkMapaDesdeDireccion(dir, zona);
   var pendientePago = document.getElementById('f-pendiente-pago').checked;
   var consumoInterno = document.getElementById('f-consumo-interno').checked;
   _ordenes.unshift({
@@ -1305,7 +1361,7 @@ function guardar(){
 }
 function showErr(msg){ document.getElementById('err-txt').textContent=msg; var e=document.getElementById('alrt-err'); e.style.display='flex'; setTimeout(function(){e.style.display='none';},4000); }
 function limpiar(){
-  ['f-nombre','f-contacto','f-direccion','f-vendedor','f-notas','f-zona-especial'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['f-nombre','f-contacto','f-direccion','f-vendedor','f-notas','f-zona-especial','f-gps'].forEach(function(id){ document.getElementById(id).value=''; });
   document.getElementById('f-cantidad').value='1'; document.getElementById('f-precio').value='';
   document.getElementById('f-zona').value=''; document.getElementById('f-estado').value='0';
   document.getElementById('zona-especial-wrap').style.display='none';

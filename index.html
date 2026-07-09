@@ -1082,24 +1082,30 @@ function aplicarGPS(link){
   if (!link) return;
   var status = document.getElementById('map-status');
   var wrap   = document.getElementById('map-wrap');
-  // Intenta extracción client-side primero (formatos completos conocidos)
+  // 1. Extracción directa client-side (formatos completos conocidos)
   var coords = extraerCoordenadas(link);
-  if (coords) { mostrarCoordsMapa(coords, link); return; }
-  // Si es un link acortado, lo resuelve vía Google Apps Script
-  if (esLinkAcortado(link) || link.indexOf('http') === 0) {
-    wrap.style.display = 'block';
-    status.textContent = '🔄 Resolviendo enlace…';
+  if (coords) { mostrarCoordsMapa(coords); return; }
+  // 2. Links acortados o URLs http: los resuelve GAS
+  if (link.indexOf('http') === 0) {
+    // Si es maps.app.goo.gl — avisa de inmediato con instrucción clara mientras intenta GAS
+    if (esLinkAcortado(link)) {
+      wrap.style.display = 'block';
+      status.textContent = '🔄 Resolviendo enlace acortado… (puede tardar 2-3 seg)';
+      document.getElementById('map-abrir').href = link;
+    } else {
+      wrap.style.display = 'block';
+      status.textContent = '🔄 Resolviendo enlace…';
+    }
     document.getElementById('map-frame').src = '';
     gasCall({method:'POST', body:{action:'resolverLink', url:link}}, function(err, res){
       if (!err && res && res.ok && res.lat && res.lng) {
-        mostrarCoordsMapa({lat:res.lat, lng:res.lng}, link);
-      } else if (!err && res && res.redirectUrl) {
-        // Intentar extraer del redirect URL que devolvió GAS
-        var c2 = extraerCoordenadas(res.redirectUrl);
-        if (c2) { mostrarCoordsMapa(c2, res.redirectUrl); }
-        else { status.textContent = 'No se pudieron extraer las coordenadas. Abre el link y copia el link completo desde la barra de direcciones.'; }
+        mostrarCoordsMapa({lat:res.lat, lng:res.lng});
       } else {
-        status.textContent = 'No se pudo resolver el enlace. Intenta con el link completo o con coordenadas directas (13.68,-89.24).';
+        // GAS no pudo resolver — da instrucción práctica al usuario
+        status.innerHTML =
+          '⚠️ No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, ' +
+          'copia la URL completa de la barra de direcciones del navegador y pégala aquí. ' +
+          '<a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>';
         document.getElementById('map-abrir').href = link;
       }
     });
@@ -1108,15 +1114,33 @@ function aplicarGPS(link){
   status.textContent = 'Formato no reconocido — pega coordenadas (13.68,-89.24), un link de Google Maps, Waze o WhatsApp.';
   wrap.style.display = 'block';
   document.getElementById('map-frame').src = '';
-  document.getElementById('map-abrir').href = link;
 }
-function mostrarCoordsMapa(coords, linkOriginal){
+function mostrarCoordsMapa(coords){
   var q = coords.lat + ',' + coords.lng;
   document.getElementById('map-frame').src = 'https://maps.google.com/maps?q=' + q + '&output=embed';
   document.getElementById('map-abrir').href = 'https://www.google.com/maps?q=' + q;
-  document.getElementById('map-status').textContent = 'Ubicación GPS fijada correctamente.';
+  document.getElementById('map-status').textContent = '📍 ' + coords.lat + ', ' + coords.lng + ' — Ubicación GPS fijada.';
   document.getElementById('map-wrap').style.display = 'block';
   window._mapaLinkGPS = 'https://www.google.com/maps?q=' + q;
+  // Auto-llenar el campo de dirección con las coordenadas si está vacío,
+  // y luego intentar reverse geocoding con Nominatim para obtener una dirección legible.
+  var campoDir = document.getElementById('f-direccion');
+  if (!(campoDir.value || '').trim()) {
+    campoDir.value = coords.lat + ', ' + coords.lng;
+    // Reverse geocode silencioso — si funciona, reemplaza las coordenadas por la dirección real
+    var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + coords.lat + '&lon=' + coords.lng + '&accept-language=es';
+    fetch(url, {headers:{'Accept-Language':'es'}})
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data && data.display_name) {
+          // Usa solo las primeras 2-3 partes (calle, colonia, ciudad) — no el país completo
+          var partes = data.display_name.split(',').map(function(p){ return p.trim(); });
+          partes = partes.filter(function(p){ return p && p !== 'El Salvador'; });
+          campoDir.value = partes.slice(0, 3).join(', ');
+        }
+      })
+      .catch(function(){ /* si falla, deja las coordenadas — no es crítico */ });
+  }
 }
 function quitarMapaGPS(){
   window._mapaLinkGPS = null;

@@ -1056,53 +1056,72 @@ function actualizarMapa(direccionTexto){
 // https://maps.google.com/?q=13.667,-89.247
 // https://www.google.com/maps?q=13.667,-89.247
 // https://maps.app.goo.gl/... (links acortados — no se pueden resolver sin API, se informa)
+// Extrae coordenadas de cualquier formato conocido directamente en el cliente.
 function extraerCoordenadas(link){
-  var m = link.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (m) return { lat: m[1], lng: m[2] };
-  // Algunos links de maps.google.com usan /@lat,lng,zoom
-  m = link.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (m) return { lat: m[1], lng: m[2] };
+  var m;
+  m = link.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);  if (m) return {lat:m[1],lng:m[2]};
+  m = link.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);        if (m) return {lat:m[1],lng:m[2]};
+  m = link.match(/[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);  if (m) return {lat:m[1],lng:m[2]}; // Waze
+  m = link.match(/[?&]mlat=(-?\d+\.?\d*).*[?&]mlon=(-?\d+\.?\d*)/); if (m) return {lat:m[1],lng:m[2]};
+  // Coordenadas sueltas: "13.682673,-89.144279"
+  m = link.match(/^\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*$/); if (m) return {lat:m[1],lng:m[2]};
   return null;
+}
+// Detecta si el link necesita resolución server-side (links acortados / no estándar).
+function esLinkAcortado(link){
+  return /maps\.app\.goo\.gl|goo\.gl\/maps|bit\.ly|tinyurl|ow\.ly/i.test(link);
 }
 var _gpsDebounce = null;
 function onGPSInput(){
   clearTimeout(_gpsDebounce);
   var link = (document.getElementById('f-gps').value || '').trim();
-  if (!link) { return; }
-  _gpsDebounce = setTimeout(function(){ aplicarGPS(link); }, 500);
+  if (!link) return;
+  _gpsDebounce = setTimeout(function(){ aplicarGPS(link); }, 600);
 }
 function aplicarGPS(link){
   if (!link) return;
-  var coords = extraerCoordenadas(link);
-  // También acepta coordenadas directas: "13.682673,-89.144279"
-  if (!coords) {
-    var raw = link.match(/^\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*$/);
-    if (raw) coords = { lat: raw[1], lng: raw[2] };
-  }
-  var frame  = document.getElementById('map-frame');
-  var abrir  = document.getElementById('map-abrir');
-  var wrap   = document.getElementById('map-wrap');
   var status = document.getElementById('map-status');
-  if (!coords) {
-    status.textContent = 'Formato no reconocido — usa coordenadas (13.68,-89.24) o link completo de Google Maps.';
+  var wrap   = document.getElementById('map-wrap');
+  // Intenta extracción client-side primero (formatos completos conocidos)
+  var coords = extraerCoordenadas(link);
+  if (coords) { mostrarCoordsMapa(coords, link); return; }
+  // Si es un link acortado, lo resuelve vía Google Apps Script
+  if (esLinkAcortado(link) || link.indexOf('http') === 0) {
     wrap.style.display = 'block';
-    frame.src = '';
-    abrir.href = link;
+    status.textContent = '🔄 Resolviendo enlace…';
+    document.getElementById('map-frame').src = '';
+    gasCall({method:'POST', body:{action:'resolverLink', url:link}}, function(err, res){
+      if (!err && res && res.ok && res.lat && res.lng) {
+        mostrarCoordsMapa({lat:res.lat, lng:res.lng}, link);
+      } else if (!err && res && res.redirectUrl) {
+        // Intentar extraer del redirect URL que devolvió GAS
+        var c2 = extraerCoordenadas(res.redirectUrl);
+        if (c2) { mostrarCoordsMapa(c2, res.redirectUrl); }
+        else { status.textContent = 'No se pudieron extraer las coordenadas. Abre el link y copia el link completo desde la barra de direcciones.'; }
+      } else {
+        status.textContent = 'No se pudo resolver el enlace. Intenta con el link completo o con coordenadas directas (13.68,-89.24).';
+        document.getElementById('map-abrir').href = link;
+      }
+    });
     return;
   }
-  var q = coords.lat + ',' + coords.lng;
-  frame.src = 'https://maps.google.com/maps?q=' + q + '&output=embed';
-  abrir.href = 'https://www.google.com/maps?q=' + q;
-  status.textContent = 'Ubicación desde coordenadas GPS.';
+  status.textContent = 'Formato no reconocido — pega coordenadas (13.68,-89.24), un link de Google Maps, Waze o WhatsApp.';
   wrap.style.display = 'block';
+  document.getElementById('map-frame').src = '';
+  document.getElementById('map-abrir').href = link;
+}
+function mostrarCoordsMapa(coords, linkOriginal){
+  var q = coords.lat + ',' + coords.lng;
+  document.getElementById('map-frame').src = 'https://maps.google.com/maps?q=' + q + '&output=embed';
+  document.getElementById('map-abrir').href = 'https://www.google.com/maps?q=' + q;
+  document.getElementById('map-status').textContent = 'Ubicación GPS fijada correctamente.';
+  document.getElementById('map-wrap').style.display = 'block';
   window._mapaLinkGPS = 'https://www.google.com/maps?q=' + q;
 }
 function quitarMapaGPS(){
   window._mapaLinkGPS = null;
-  // Si tampoco hay dirección de texto, quita el mapa completo
   if (!(document.getElementById('f-direccion').value || '').trim()) quitarMapa();
 }
-
 function quitarMapa(){
   document.getElementById('map-wrap').style.display = 'none';
   document.getElementById('map-frame').src = '';

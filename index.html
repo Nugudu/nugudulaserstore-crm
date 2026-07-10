@@ -51,6 +51,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.4rem}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.4rem}
 .sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;position:relative;overflow:hidden;box-shadow:var(--sh)}
+.sc.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
+.sc.clickable:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,36,96,.13)}
+.sc.clickable:active{transform:translateY(0)}
+.sc-arrow{position:absolute;top:10px;right:12px;font-size:18px;color:var(--hint);font-weight:300;line-height:1}
+.sc-tap{font-size:10px;color:var(--hint);margin-top:2px;letter-spacing:.2px}
 .sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .sc.do::before{background:var(--green)}.sc.care::before{background:var(--gold)}
 .sc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-bottom:8px}
@@ -247,14 +252,14 @@ tbody tr:last-child td{border-bottom:none}
     <div id="panel-overview" class="panel active">
       <div class="ph"><h2>Dashboard</h2><p>Resumen en tiempo real · DO (conversión) y CARE (fidelización)</p></div>
       <div class="g2" style="margin-bottom:1.4rem">
-        <div class="sc do"><div class="sc-badge"><i class="fa-solid fa-bolt"></i> DO · Conversión</div><div class="sc-num" id="cnt-do">0</div><div class="sc-lbl">Órdenes registradas</div></div>
-        <div class="sc care"><div class="sc-badge"><i class="fa-solid fa-heart"></i> CARE · Fidelización</div><div class="sc-num" id="cnt-care">0</div><div class="sc-lbl">Pedidos entregados</div></div>
+        <div class="sc do clickable" onclick="go('nueva')" title="Ir a Nueva Venta"><span class="sc-arrow">›</span><div class="sc-badge"><i class="fa-solid fa-bolt"></i> DO · Conversión</div><div class="sc-num" id="cnt-do">0</div><div class="sc-lbl">Órdenes registradas</div><div class="sc-tap">Toca para ver</div></div>
+        <div class="sc care clickable" onclick="go('ordenes')" title="Ir a Órdenes"><span class="sc-arrow">›</span><div class="sc-badge"><i class="fa-solid fa-heart"></i> CARE · Fidelización</div><div class="sc-num" id="cnt-care">0</div><div class="sc-lbl">Pedidos entregados</div><div class="sc-tap">Toca para ver</div></div>
       </div>
       <div class="g4">
-        <div class="mc"><div class="ml">Pendientes</div><div class="mv" id="m-pend" style="color:var(--blue)">0</div></div>
-        <div class="mc"><div class="ml">En proceso</div><div class="mv" id="m-proc" style="color:var(--purple)">0</div></div>
-        <div class="mc"><div class="ml">En tránsito</div><div class="mv" id="m-trans" style="color:var(--coral)">0</div></div>
-        <div class="mc"><div class="ml">Tasa entrega</div><div class="mv" id="m-tasa" style="color:var(--green)">0%</div></div>
+        <div class="mc clickable" style="cursor:pointer;transition:transform .12s" onclick="go('ordenes')" title="Ver pendientes"><div class="ml">Pendientes</div><div class="mv" id="m-pend" style="color:var(--blue)">0</div><div class="sc-tap" style="font-size:10px;color:var(--hint);margin-top:2px">Toca para ver</div></div>
+        <div class="mc clickable" style="cursor:pointer;transition:transform .12s" onclick="go('tracking')" title="Ver en proceso"><div class="ml">En proceso</div><div class="mv" id="m-proc" style="color:var(--purple)">0</div><div class="sc-tap" style="font-size:10px;color:var(--hint);margin-top:2px">Toca para ver</div></div>
+        <div class="mc clickable" style="cursor:pointer;transition:transform .12s" onclick="go('repartidor')" title="Ver en tránsito"><div class="ml">En tránsito</div><div class="mv" id="m-trans" style="color:var(--coral)">0</div><div class="sc-tap" style="font-size:10px;color:var(--hint);margin-top:2px">Toca para ver</div></div>
+        <div class="mc clickable" style="cursor:pointer;transition:transform .12s" onclick="go('reportes')" title="Ver reportes"><div class="ml">Tasa entrega</div><div class="mv" id="m-tasa" style="color:var(--green)">0%</div><div class="sc-tap" style="font-size:10px;color:var(--hint);margin-top:2px">Toca para ver</div></div>
       </div>
       <div class="g2">
         <div class="card"><div class="card-ttl"><i class="fa-solid fa-chart-donut" style="color:var(--navy)"></i> Estado de pedidos</div><div style="position:relative;height:220px"><canvas id="chartEstado"></canvas></div></div>

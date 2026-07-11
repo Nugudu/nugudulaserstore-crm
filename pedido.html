@@ -103,6 +103,33 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .btn-wa{width:100%;padding:15px;background:#25D366;color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;text-decoration:none}
 .btn-outline-teal{width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--teal);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px}
 .err-box{background:#fcebeb;color:#a32d2d;border:1px solid #f7c1c1;border-radius:var(--rs);padding:11px 13px;font-size:13px;margin-bottom:12px;display:none}
+/* PANTALLA CLIENTE — mis pedidos + opciones */
+.cli-greeting{text-align:center;padding:16px 0 10px}
+.cli-ico{font-size:36px;margin-bottom:6px}
+.cli-greeting h2{font-size:18px;font-weight:700;color:var(--navy)}
+.cli-greeting p{font-size:13px;color:var(--muted);margin-top:3px}
+.orden-track{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(45,36,96,.06)}
+.ot-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.ot-num{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--navy)}
+.ot-fecha{font-size:11px;color:var(--hint)}
+.ot-prod{font-size:13px;font-weight:600;margin-bottom:10px}
+.ot-prod span{font-size:11px;color:var(--muted);font-weight:400;margin-left:4px}
+.ot-progress{display:flex;align-items:flex-start;gap:0;margin:6px 0}
+.ot-step{display:flex;flex-direction:column;align-items:center;flex:1;gap:3px}
+.ot-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--hint);flex-shrink:0}
+.ot-dot.done{background:var(--teal);border-color:var(--teal);color:#fff}
+.ot-dot.act{background:var(--navy);border-color:var(--navy);color:#fff}
+.ot-slbl{font-size:9px;color:var(--hint);text-align:center;line-height:1.2;max-width:46px}
+.ot-slbl.act{color:var(--navy);font-weight:700}
+.ot-line{height:2px;flex:1;background:var(--border);margin-bottom:16px}
+.ot-line.done{background:var(--teal)}
+.ot-footer{margin-top:6px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.ot-entrega{font-size:12px;color:var(--green);font-weight:600}
+.ot-pend{font-size:10px;font-weight:600;background:#fef6e4;color:var(--amber);padding:2px 8px;border-radius:10px}
+.btn-accion-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.btn-accion{padding:13px 8px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border:none;transition:opacity .15s;text-align:center}
+.btn-accion.primary{background:var(--navy);color:#fff}
+.btn-accion.outline{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 /* ÉXITO */
 .success-wrap{text-align:center;padding:20px 8px}
 .success-wrap .ico{font-size:56px;margin-bottom:10px}
@@ -138,6 +165,26 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
       <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
     </div>
+  </div>
+</div>
+
+<!-- PANTALLA CLIENTE — tracking de pedidos y opciones -->
+<div class="screen" id="s-cliente">
+  <div class="cli-greeting">
+    <div class="cli-ico">👋</div>
+    <h2 id="cli-nombre-ttl">¡Hola!</h2>
+    <p id="cli-sub">Aquí están tus pedidos recientes</p>
+  </div>
+  <div id="cli-ordenes"></div>
+  <div class="btn-accion-wrap">
+    <button class="btn-accion outline" onclick="iniciarNuevoPedido()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuevo pedido
+    </button>
+    <button class="btn-accion primary" onclick="showScreen('s-phone')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Buscar otro
+    </button>
   </div>
 </div>
 
@@ -277,19 +324,66 @@ function buscarTel(){
     .then(function(d){
       if(d.ok&&d.encontrado){
         _cli=d;_dirs=d.direcciones||[];
-        document.getElementById('ce-name').textContent='¡Hola, '+d.nombre+'!';
-        document.getElementById('ce-info').textContent=d.totalPedidos+' pedido(s) anterior(es) · tus datos se completan automáticamente';
-        document.getElementById('ce-box').style.display='block';
-        setTimeout(iniciar,800);
+        // Mostrar pantalla de cliente con tracking de pedidos
+        mostrarPantallaCliente(d);
       }else{
         showErr('phone','No encontramos ese número u orden. Continúa como cliente nuevo.');
       }
     }).catch(nuevoCli);
 }
 function nuevoCli(){_cli=null;_dirs=[];iniciar();}
+
+function mostrarPantallaCliente(d){
+  document.getElementById('cli-nombre-ttl').textContent='¡Hola, '+d.nombre+'!';
+  document.getElementById('cli-sub').textContent=d.totalPedidos+' pedido(s) registrado(s)';
+  var ords=d.ordenesRecientes||[];
+  var ESTADOS_CLI=['Nueva orden','En proceso','En empaque','En camino','Entregado'];
+  var ICONS_CLI=['📋','⚙️','📦','🚚','✅'];
+  var html='';
+  if(!ords.length){
+    html='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Sin pedidos registrados aún.</div>';
+  } else {
+    ords.forEach(function(o){
+      var est=parseInt(o.estado)||0;
+      var prods=(o.productos||[]).join(', ')||'—';
+      var progreso='<div class="ot-progress">';
+      ESTADOS_CLI.forEach(function(lbl,i){
+        var dc=i<est?'done':i===est?'act':'';
+        var lc=i===est?'act':'';
+        progreso+='<div class="ot-step"><div class="ot-dot '+dc+'">'+(i<est?'✓':(i===est?ICONS_CLI[i]:(i+1)))+'</div><div class="ot-slbl '+lc+'">'+lbl+'</div></div>';
+        if(i<4)progreso+='<div class="ot-line'+(i<est?' done':'')+'"></div>';
+      });
+      progreso+='</div>';
+      var footer='<div class="ot-footer">';
+      if(o.fechaEntrega&&est<4)footer+='<span class="ot-entrega">📅 Entrega est. '+formatFecha(o.fechaEntrega)+'</span>';
+      if(est===4)footer+='<span class="ot-entrega">✅ Pedido entregado</span>';
+      if(o.pendientePago)footer+='<span class="ot-pend">⏳ Pendiente de pago</span>';
+      footer+='</div>';
+      html+='<div class="orden-track">'+
+        '<div class="ot-header"><div class="ot-num">'+o.orden+'</div><div class="ot-fecha">'+o.fecha+'</div></div>'+
+        '<div class="ot-prod">'+prods+'<span>· '+o.cantidad+' und · $'+(o.precio*o.cantidad).toFixed(2)+'</span></div>'+
+        progreso+footer+
+      '</div>';
+    });
+  }
+  document.getElementById('cli-ordenes').innerHTML=html;
+  showScreen('s-cliente');
+}
+
+function formatFecha(iso){
+  if(!iso)return'';
+  var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  var p=iso.slice(0,10).split('-');
+  var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+  return dias[d.getDay()]+' '+p[2]+'/'+p[1];
+}
+
+function iniciarNuevoPedido(){_cli_guardado=_cli;_dirs_guardados=_dirs;iniciar();}
+var _cli_guardado=null,_dirs_guardados=[];
 function iniciar(){
-  if(_catCargado) renderCat(); // catálogo ya listo
-  // Si aún no cargó, el spinner del cat-wrap se mantiene y renderCat() se llama cuando llegue
+  // Si viene de "Nuevo pedido" en la pantalla de cliente, conserva sus datos
+  if(_cli_guardado){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];}
+  if(_catCargado) renderCat();
   showScreen('s-form');setPaso(1);
 }
 
@@ -462,7 +556,7 @@ function mostrarExito(){
 
 // Reinicia el formulario para hacer otro pedido
 function nuevoP(){
-  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;
+  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];
   document.getElementById('p-tel').value='';
   document.getElementById('ce-box').style.display='none';
   document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';
@@ -472,7 +566,7 @@ function nuevoP(){
   document.getElementById('qty-card').style.display='none';
   document.getElementById('color-sel').classList.remove('show');
   document.getElementById('orden-mini').style.display='none';
-  if(_catCargado)renderCat(); // refresh catálogo
+  if(_catCargado)renderCat();
   showScreen('s-phone');hideErr('phone');hideErr('form');
 }
 

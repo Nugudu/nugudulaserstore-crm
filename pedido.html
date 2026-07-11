@@ -300,43 +300,71 @@ var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1
 
 var SESSION_KEY='ngd_pedido_v1';
 var CAT_KEY='ngd_cat_v1';
+var CAT_TTL=5*60*1000; // 5 minutos en milisegundos
 
-// ── SESIÓN: persiste en la misma pestaña, se borra al salir ──
-function guardarSesion(s){try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({screen:s,cli:_cli,dirs:_dirs,ultimaOrden:_ultimaOrden}));}catch(e){}}
+// ── SESIÓN: persiste entre refrescos, se borra solo al presionar Salir ──
+function guardarSesion(s,paso){
+  // Guarda también el paso actual del formulario (1, 2 o 3)
+  try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({screen:s,paso:paso||0,cli:_cli,dirs:_dirs,ultimaOrden:_ultimaOrden}));}catch(e){}
+}
 function limpiarSesion(){try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}}
 function restaurarSesion(){
   try{
     var r=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
-    if(!r)return false;
-    if(r.screen==='s-cliente'&&r.cli){_cli=r.cli;_dirs=r.dirs||[];mostrarPantallaCliente(r.cli);return true;}
-    if(r.screen==='s-exito'&&r.ultimaOrden){_ultimaOrden=r.ultimaOrden;mostrarExito();return true;}
+    if(!r) return false;
+    if(r.screen==='s-cliente'&&r.cli){
+      _cli=r.cli;_dirs=r.dirs||[];
+      mostrarPantallaCliente(r.cli);
+      return true;
+    }
+    if(r.screen==='s-form'&&r.cli){
+      // Restaura el formulario en el paso donde estaba
+      _cli=r.cli;_dirs=r.dirs||[];
+      if(!_catCargado){_cat=fallback();_catCargado=true;}
+      renderCat();
+      showScreen('s-form');
+      setPaso(r.paso&&r.paso>0?r.paso:1);
+      return true;
+    }
+    if(r.screen==='s-exito'&&r.ultimaOrden){
+      _ultimaOrden=r.ultimaOrden;
+      mostrarExito();
+      return true;
+    }
   }catch(e){}
   return false;
 }
 function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;document.getElementById('p-tel').value='';hideErr('phone');hideErr('form');showScreen('s-phone');}
 function volverDesdeForm(){
-  if(document.getElementById('p2').style.display==='block'){setPaso(1);return;}
-  if(document.getElementById('p3').style.display==='block'){setPaso(2);return;}
+  if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
+  if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
   if(_cli){guardarSesion('s-cliente');mostrarPantallaCliente(_cli);}else{salir();}
 }
 
-// ── INIT: pantalla inmediata + catálogo en caché ──
+// ── INIT: pantalla inmediata + catálogo con caché de 5 minutos ──
 window.addEventListener('DOMContentLoaded',function(){
-  // Catálogo: caché en sessionStorage → carga instantánea en visitas repetidas
-  try{var cc=JSON.parse(sessionStorage.getItem(CAT_KEY)||'null');if(cc&&cc.length){_cat=cc;_catCargado=true;}}catch(e){}
-  // Fetch de catálogo en background (actualiza caché silenciosamente)
+  // Catálogo: usa caché si existe Y tiene menos de 5 minutos
+  try{
+    var cc=JSON.parse(sessionStorage.getItem(CAT_KEY)||'null');
+    if(cc&&cc.data&&cc.data.length&&(Date.now()-cc.ts)<CAT_TTL){
+      _cat=cc.data;_catCargado=true;
+    }
+  }catch(e){}
+  // Fetch de catálogo: inmediato si no hay caché válido, en background si lo hay
+  var necesitaFetch=!_catCargado;
+  if(!_catCargado){_cat=fallback();_catCargado=true;} // Render inmediato con fallback
   fetch(GAS+'?action=catalogo')
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok&&d.productos&&d.productos.length){
-        _cat=d.productos;_catCargado=true;
-        try{sessionStorage.setItem(CAT_KEY,JSON.stringify(_cat));}catch(e){}
-        // Refresca silenciosamente si el usuario ya está viendo el paso 1
+        _cat=d.productos;
+        // Guarda con timestamp para el caché de 5 minutos
+        try{sessionStorage.setItem(CAT_KEY,JSON.stringify({ts:Date.now(),data:_cat}));}catch(e){}
+        // Refresca si el usuario ya está viendo el paso 1
         var p1=document.getElementById('p1');
         if(p1&&p1.style.display!=='none') renderCat();
       }
     }).catch(function(){});
-  if(!_catCargado){_cat=fallback();_catCargado=true;}
   // Mostrar pantalla — restaurar sesión o ir a inicio
   if(!restaurarSesion()) showScreen('s-phone');
 });
@@ -410,7 +438,7 @@ function mostrarPantallaCliente(d){
     });
   }
   document.getElementById('cli-ordenes').innerHTML=html;
-  guardarSesion('s-cliente');
+  guardarSesion('s-cliente',0);
   showScreen('s-cliente');
 }
 
@@ -426,11 +454,9 @@ function iniciarNuevoPedido(){_cli_guardado=_cli;_dirs_guardados=_dirs;iniciar()
 var _cli_guardado=null,_dirs_guardados=[];
 function iniciar(){
   if(_cli_guardado){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];}
-  // Siempre renderiza de inmediato — usa caché, datos GAS, o fallback.
-  // El usuario nunca espera: pantalla 2 aparece instantánea.
   if(!_catCargado){_cat=fallback();_catCargado=true;}
   renderCat();
-  guardarSesion('s-form');
+  guardarSesion('s-form',1);
   showScreen('s-form');setPaso(1);
 }
 
@@ -509,7 +535,7 @@ function goP2(){
     elDir(0);
     document.getElementById('nueva-dir').style.display='none';
   }else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
-  setPaso(2);window.scrollTo({top:0,behavior:'smooth'});
+  setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'smooth'});
 }
 function elDir(i){
   _dirSel=_dirs[i];
@@ -558,7 +584,7 @@ function goP3(){
     rf('Cantidad',_qty+' unidad(es)')+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
-  setPaso(3);window.scrollTo({top:0,behavior:'smooth'});
+  setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'smooth'});
 }
 function rf(l,v){return '<div class="res-fila"><span class="res-lbl">'+l+'</span><span class="res-val">'+v+'</span></div>';}
 

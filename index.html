@@ -983,6 +983,30 @@ function badgePendientePago(o){
 }
 // Etiqueta para pedidos de consumo interno/patrocinio — no se cobra,
 // se cuenta aparte en Reportes e Inventario, nunca como ingreso real.
+// Mapeo de sufijos de color → nombre y hex
+var COLOR_MAP={
+  'NG':{nombre:'Negro', hex:'#1a1a1a'},
+  'GR':{nombre:'Gris',  hex:'#6b7280'},
+  'AZ':{nombre:'Azul',  hex:'#2563eb'},
+  'CF':{nombre:'Café',  hex:'#92400e'},
+  'RJ':{nombre:'Rojo',  hex:'#dc2626'},
+  'VD':{nombre:'Verde', hex:'#16a34a'},
+  'BL':{nombre:'Blanco',hex:'#e5e7eb'},
+  'CR7':{nombre:'Crema',hex:'#d4c5a0'}
+};
+// Renderiza el SKU con punto de color y nombre — extrae el sufijo del SKU
+function renderSkuColor(productos){
+  if(!productos||!productos.length) return '–';
+  return productos.map(function(sku){
+    var parts=sku.split('-');
+    // El color está en el último segmento (ej. RSV-KA-NG → NG)
+    var sufijo=parts[parts.length-1];
+    var color=COLOR_MAP[sufijo];
+    var dot=color?'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+color.hex+';border:1px solid rgba(0,0,0,.15);margin-right:4px;vertical-align:middle"></span>':'';
+    var label=color?'<span style="color:var(--muted)"> '+color.nombre+'</span>':'';
+    return '<span style="font-size:11px">'+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
+  }).join('<br>');
+}
 function badgeConsumoInterno(o){
   if (!o.consumoInterno) return '';
   return '<div style="margin-top:4px"><span style="display:inline-block;font-size:11px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 8px;border-radius:10px">🎁 Consumo interno</span></div>';
@@ -1487,7 +1511,7 @@ function buildTable(data,cid,deletable){
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
     var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px;color:var(--muted)">'+(o.productos||[]).join(', ')+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[])+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){

@@ -299,8 +299,7 @@ var WA='50376837604';
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null;
 
 var SESSION_KEY='ngd_pedido_v1';
-var CAT_KEY='ngd_cat_v1';
-var CAT_TTL=5*60*1000; // 5 minutos en milisegundos
+// Catálogo siempre fresco de Sheets — sin caché local
 
 // ── SESIÓN: persiste entre refrescos, se borra solo al presionar Salir ──
 function guardarSesion(s,paso){
@@ -341,26 +340,17 @@ function volverDesdeForm(){
   if(_cli){guardarSesion('s-cliente');mostrarPantallaCliente(_cli);}else{salir();}
 }
 
-// ── INIT: pantalla inmediata + catálogo con caché de 5 minutos ──
+// ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
 window.addEventListener('DOMContentLoaded',function(){
-  // Catálogo: usa caché si existe Y tiene menos de 5 minutos
-  try{
-    var cc=JSON.parse(sessionStorage.getItem(CAT_KEY)||'null');
-    if(cc&&cc.data&&cc.data.length&&(Date.now()-cc.ts)<CAT_TTL){
-      _cat=cc.data;_catCargado=true;
-    }
-  }catch(e){}
-  // Fetch de catálogo: inmediato si no hay caché válido, en background si lo hay
-  var necesitaFetch=!_catCargado;
-  if(!_catCargado){_cat=fallback();_catCargado=true;} // Render inmediato con fallback
+  // Muestra fallback inmediatamente para que el paso 1 sea instantáneo
+  _cat=fallback(); _catCargado=true;
+  // Siempre busca datos frescos de Google Sheets — garantiza actualizaciones
   fetch(GAS+'?action=catalogo')
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok&&d.productos&&d.productos.length){
         _cat=d.productos;
-        // Guarda con timestamp para el caché de 5 minutos
-        try{sessionStorage.setItem(CAT_KEY,JSON.stringify({ts:Date.now(),data:_cat}));}catch(e){}
-        // Refresca si el usuario ya está viendo el paso 1
+        // Actualiza el catálogo si el usuario ya está en el paso 1
         var p1=document.getElementById('p1');
         if(p1&&p1.style.display!=='none') renderCat();
       }
@@ -401,45 +391,72 @@ function nuevoCli(){limpiarSesion();_cli=null;_dirs=[];iniciar();}
 
 function mostrarPantallaCliente(d){
   document.getElementById('cli-nombre-ttl').textContent='¡Hola, '+d.nombre+'!';
-  document.getElementById('cli-sub').textContent=d.totalPedidos+' pedido(s) registrado(s)';
   var ords=d.ordenesRecientes||[];
   var ESTADOS_CLI=['Nueva orden','En proceso','En empaque','En camino','Entregado'];
   var ICONS_CLI=['📋','⚙️','📦','🚚','✅'];
-  var html='';
-  if(!ords.length){
-    html='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Sin pedidos registrados aún.</div>';
-  } else {
-    ords.forEach(function(o){
-      var est=parseInt(o.estado)||0;
-      var prods=(o.productos||[]).join(', ')||'—';
-      var progreso='<div class="ot-progress">';
-      ESTADOS_CLI.forEach(function(lbl,i){
-        var dc=i<est?'done':i===est?'act':'';
-        var lc=i===est?'act':'';
-        progreso+='<div class="ot-step"><div class="ot-dot '+dc+'">'+(i<est?'✓':(i===est?ICONS_CLI[i]:(i+1)))+'</div><div class="ot-slbl '+lc+'">'+lbl+'</div></div>';
-        if(i<4)progreso+='<div class="ot-line'+(i<est?' done':'')+'"></div>';
-      });
-      progreso+='</div>';
-      var footer='<div class="ot-footer">';
-      if(est===2&&o.fechaEntrega){
-        // Estado 3 para el usuario (En empaque) — fecha destacada
-        footer+='<span class="ot-entrega" style="background:#e8f5ee;padding:4px 12px;border-radius:10px;font-size:13px;font-weight:600">📅 Entrega estimada: <strong>'+formatFecha(o.fechaEntrega)+'</strong></span>';
-      }else if(o.fechaEntrega&&est>0&&est<4){
-        footer+='<span class="ot-entrega">📅 Entrega est. '+formatFecha(o.fechaEntrega)+'</span>';
-      }
-      if(est===4)footer+='<span class="ot-entrega">✅ Pedido entregado</span>';
-      if(o.pendientePago)footer+='<span class="ot-pend">⏳ Pendiente de pago</span>';
-      footer+='</div>';
-      html+='<div class="orden-track">'+
-        '<div class="ot-header"><div class="ot-num">'+o.orden+'</div><div class="ot-fecha">'+o.fecha+'</div></div>'+
-        '<div class="ot-prod">'+prods+'<span>· '+o.cantidad+' und · $'+(o.precio*o.cantidad).toFixed(2)+'</span></div>'+
-        progreso+footer+
-      '</div>';
+
+  // Separa pedidos activos de entregados
+  var activos=ords.filter(function(o){return parseInt(o.estado||0)<4;});
+  var entregados=ords.filter(function(o){return parseInt(o.estado||0)===4;});
+
+  document.getElementById('cli-sub').textContent=
+    activos.length>0?activos.length+' pedido(s) en curso':'Sin pedidos activos';
+
+  function renderOrden(o){
+    var est=parseInt(o.estado)||0;
+    var prods=(o.productos||[]).join(', ')||'—';
+    var progreso='<div class="ot-progress">';
+    ESTADOS_CLI.forEach(function(lbl,i){
+      var dc=i<est?'done':i===est?'act':'';
+      var lc=i===est?'act':'';
+      progreso+='<div class="ot-step"><div class="ot-dot '+dc+'">'+(i<est?'✓':(i===est?ICONS_CLI[i]:(i+1)))+'</div><div class="ot-slbl '+lc+'">'+lbl+'</div></div>';
+      if(i<4)progreso+='<div class="ot-line'+(i<est?' done':'')+'"></div>';
     });
+    progreso+='</div>';
+    var footer='<div class="ot-footer">';
+    if(est===2&&o.fechaEntrega){
+      footer+='<span class="ot-entrega" style="background:#e8f5ee;padding:4px 12px;border-radius:10px;font-size:13px;font-weight:600">📅 Entrega estimada: <strong>'+formatFecha(o.fechaEntrega)+'</strong></span>';
+    }else if(o.fechaEntrega&&est>0&&est<4){
+      footer+='<span class="ot-entrega">📅 Entrega est. '+formatFecha(o.fechaEntrega)+'</span>';
+    }
+    if(est===4) footer+='<span class="ot-entrega">✅ Entregado el '+o.fecha+'</span>';
+    if(o.pendientePago) footer+='<span class="ot-pend">⏳ Pendiente de pago</span>';
+    footer+='</div>';
+    return '<div class="orden-track">'+
+      '<div class="ot-header"><div class="ot-num">'+o.orden+'</div><div class="ot-fecha">'+o.fecha+'</div></div>'+
+      '<div class="ot-prod">'+prods+'<span>· '+o.cantidad+' und · $'+(o.precio*o.cantidad).toFixed(2)+'</span></div>'+
+      progreso+footer+'</div>';
   }
+
+  var html='';
+  if(!activos.length){
+    html='<div style="text-align:center;padding:24px 0 8px;color:var(--muted);font-size:13px">✅ No tienes pedidos activos en este momento.</div>';
+  } else {
+    activos.forEach(function(o){ html+=renderOrden(o); });
+  }
+
+  // Historial de entregados — colapsable, oculto por defecto
+  if(entregados.length){
+    html+='<div style="margin-top:8px">';
+    html+='<button onclick="toggleHistorial()" style="background:none;border:none;color:var(--hint);font-size:12px;cursor:pointer;padding:6px 0;display:flex;align-items:center;gap:5px" id="btn-historial">';
+    html+='<span id="ico-historial">▸</span> Ver historial ('+entregados.length+' entregado'+(entregados.length>1?'s':'')+')</button>';
+    html+='<div id="historial-wrap" style="display:none">';
+    entregados.forEach(function(o){ html+=renderOrden(o); });
+    html+='</div></div>';
+  }
+
   document.getElementById('cli-ordenes').innerHTML=html;
   guardarSesion('s-cliente',0);
   showScreen('s-cliente');
+}
+
+function toggleHistorial(){
+  var wrap=document.getElementById('historial-wrap');
+  var ico=document.getElementById('ico-historial');
+  if(!wrap)return;
+  var visible=wrap.style.display!=='none';
+  wrap.style.display=visible?'none':'block';
+  if(ico)ico.textContent=visible?'▸':'▾';
 }
 
 function formatFecha(iso){

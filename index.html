@@ -35,6 +35,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .nav.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:var(--gold);font-weight:500}
 .nav i{width:16px;text-align:center;font-size:13px}
 .nbadge{margin-left:auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px}
+.nb-new{background:#e53e3e;color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;margin-left:auto;animation:pulse-badge .8s ease-in-out infinite alternate}
+@keyframes pulse-badge{from{opacity:1}to{opacity:.6}}
 .nb-do{background:var(--gold);color:var(--navy)}.nb-care{background:#2e7d52;color:#fff}.nb-rep{background:#0d7377;color:#fff}
 .sb-pdf{padding:.5rem .85rem .2rem}
 .sb-foot{padding:.7rem 1rem .85rem;border-top:1px solid rgba(255,255,255,.07);margin-top:auto;font-size:10px;color:rgba(255,255,255,.25)}
@@ -152,9 +154,10 @@ tbody tr:last-child td{border-bottom:none}
 @media(max-width:768px){
   .sidebar{width:100%;height:58px;flex-direction:row;top:auto;bottom:0;overflow-x:auto;overflow-y:hidden;padding:0;-webkit-overflow-scrolling:touch}
   .sb-logo,.sb-sec,.sb-pdf,.sb-foot{display:none}
-  .nav{flex-direction:column;gap:2px;padding:7px 6px;font-size:9px;border-left:none;border-top:3px solid transparent;flex:0 0 70px;justify-content:center;text-align:center;white-space:nowrap}
+  .nav{flex-direction:column;gap:2px;padding:7px 6px;font-size:9px;border-left:none;border-top:3px solid transparent;flex:0 0 70px;justify-content:center;text-align:center;white-space:nowrap;position:relative}
   .nav i{width:auto;font-size:17px;margin-bottom:1px}
   .nav.active{border-left:none;border-top-color:var(--gold)}.nbadge{display:none}
+  .nb-new{position:absolute;top:4px;right:4px;font-size:9px;padding:1px 5px;min-width:16px;text-align:center;margin-left:0}
   .main{margin-left:0;padding-bottom:58px}
   .topbar{padding:.65rem 1rem;flex-wrap:wrap;row-gap:8px}.content{padding:1rem}
   .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
@@ -208,7 +211,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="sb-sec">Registro</div>
   <div class="nav active" onclick="go('overview')" id="nav-overview"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
   <div class="nav" onclick="go('nueva')" id="nav-nueva"><i class="fa-solid fa-circle-plus"></i> Nueva Venta <span class="nbadge nb-do">DO</span></div>
-  <div class="nav" onclick="go('ordenes')" id="nav-ordenes"><i class="fa-solid fa-list-check"></i> Órdenes</div>
+  <div class="nav" onclick="go('ordenes');limpiarBadgeOrdenes()" id="nav-ordenes"><i class="fa-solid fa-list-check"></i> Órdenes<span class="nb-new" id="badge-nuevas" style="display:none">0</span></div>
   <div class="nav" onclick="go('tracking')" id="nav-tracking"><i class="fa-solid fa-truck-fast"></i> Tracking <span class="nbadge nb-care">CARE</span></div>
   <div class="nav" onclick="go('repartidor')" id="nav-repartidor"><i class="fa-solid fa-motorcycle"></i> Repartidor <span class="nbadge nb-rep">ENTREGA</span></div>
   <div class="sb-sec">Formularios</div>
@@ -767,6 +770,20 @@ function aplicarTumbas(lista){
   return lista.filter(function(o){ return t.indexOf(o.id) < 0; });
 }
 
+var _badgeCount=0;
+function mostrarBadgeOrdenes(n){
+  _badgeCount+=n;
+  var b=document.getElementById('badge-nuevas');
+  if(!b)return;
+  b.textContent=_badgeCount;
+  b.style.display='inline-block';
+}
+function limpiarBadgeOrdenes(){
+  _badgeCount=0;
+  var b=document.getElementById('badge-nuevas');
+  if(b)b.style.display='none';
+}
+
 function syncFromGAS(silent) {
   if (_syncing) return;
   _syncing = true;
@@ -778,11 +795,13 @@ function syncFromGAS(silent) {
       return;
     }
     if (res.ordenes) {
-      // Filtrar cualquier orden que el usuario eliminó localmente pero
-      // que el servidor todavía no confirmó como borrada.
+      var idsAntes = _ordenes.map(function(o){return o.id;});
       _ordenes = aplicarTumbas(res.ordenes);
       saveLocal();
       updateOverview();
+      // Badge: cuenta órdenes que no existían antes de este sync
+      var nuevas = _ordenes.filter(function(o){ return idsAntes.indexOf(o.id)<0; });
+      if(nuevas.length>0) mostrarBadgeOrdenes(nuevas.length);
       var active = document.querySelector('.panel.active');
       if (active) {
         if (active.id === 'panel-ordenes')    renderOrdenes();
@@ -1511,7 +1530,7 @@ function buildTable(data,cid,deletable){
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
     var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[])+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+o.fecha.slice(11,16)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[])+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){

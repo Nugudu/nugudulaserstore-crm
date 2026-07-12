@@ -1520,6 +1520,13 @@ function renderOrdenes(){
   buildTable(d,'tbl-ordenes',true);
 }
 function resetOrd(){ document.getElementById('o-buscar').value=''; document.getElementById('o-estado').value=''; document.getElementById('o-zona').value=''; renderOrdenes(); }
+// Convierte fecha ISO (UTC) a hora de El Salvador (UTC-6) en formato 12h
+function horaLocal(iso){
+  try{
+    var d=new Date(iso);
+    return d.toLocaleTimeString('es-SV',{timeZone:'America/El_Salvador',hour:'numeric',minute:'2-digit',hour12:true});
+  }catch(e){return iso.slice(11,16);}
+}
 function buildTable(data,cid,deletable){
   var c=document.getElementById(cid);
   if(!data.length){ c.innerHTML='<div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin resultados.</p></div>'; return; }
@@ -1530,7 +1537,7 @@ function buildTable(data,cid,deletable){
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
     var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+o.fecha.slice(11,16)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[])+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[])+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){

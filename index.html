@@ -709,6 +709,9 @@ var PANELS  = {
 };
 var KEY  = 'ngd_crm_v10';
 var GAS  = 'https://script.google.com/macros/s/AKfycbxXSFbECrtrRPohWOfmU3ZShV5DUEhC2xIlFGWEPL4ur60qpvzYRi7FT1neL1qoFT_m/exec';
+// Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
+// Cierra el acceso publico anonimo a los datos de clientes.
+var API_TOKEN = '20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var _syncing = false;
 var CH   = {};
 var skus = [];
@@ -738,9 +741,12 @@ function gasCall(opts, cb) {
       try{ cb(null, JSON.parse(xhr.responseText)); }catch(e){ cb(e); }
     };
     xhr.onerror = function(){ cb(new Error('Network error')); };
-    xhr.send(JSON.stringify(opts.body));
+    var body = opts.body || {};
+    body.token = API_TOKEN;
+    xhr.send(JSON.stringify(body));
   } else {
-    var url = GAS + (opts.params ? '?' + opts.params : '');
+    var params = 'token=' + encodeURIComponent(API_TOKEN) + (opts.params ? '&' + opts.params : '');
+    var url = GAS + '?' + params;
     xhr.open('GET', url, true);
     xhr.onload = function(){
       try{ cb(null, JSON.parse(xhr.responseText)); }catch(e){ cb(e); }

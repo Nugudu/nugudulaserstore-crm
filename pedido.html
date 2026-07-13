@@ -295,6 +295,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <script>
 var GAS='https://script.google.com/macros/s/AKfycbxXSFbECrtrRPohWOfmU3ZShV5DUEhC2xIlFGWEPL4ur60qpvzYRi7FT1neL1qoFT_m/exec';
+// Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
+var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null;
 
@@ -345,7 +347,7 @@ window.addEventListener('DOMContentLoaded',function(){
   // Muestra fallback inmediatamente para que el paso 1 sea instantáneo
   _cat=fallback(); _catCargado=true;
   // Siempre busca datos frescos de Google Sheets — garantiza actualizaciones
-  fetch(GAS+'?action=catalogo')
+  fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok&&d.productos&&d.productos.length){
@@ -375,7 +377,7 @@ function buscarTel(){
   if(spin)spin.style.display='block';
   var esOrden=/^ORD-/i.test(val);
   var param=esOrden?'&orden='+encodeURIComponent(val.toUpperCase()):'&tel='+encodeURIComponent(val);
-  fetch(GAS+'?action=buscarCliente'+param)
+  fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(spin)spin.style.display='none';
@@ -615,7 +617,7 @@ function enviar(){
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_dirSel&&_dirSel.mapaLink?_dirSel.mapaLink:_mapa;
-  var payload={action:'pedidoWeb',nombre:nom,contacto:tel,direccion:dir,zona:zona,sku:_color.sku,precio:_color.precio,cantidad:_qty,notas:notas,mapaLink:mapa};
+  var payload={action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,direccion:dir,zona:zona,sku:_color.sku,precio:_color.precio,cantidad:_qty,notas:notas,mapaLink:mapa};
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
     .then(function(d){

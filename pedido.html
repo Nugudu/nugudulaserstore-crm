@@ -32,15 +32,21 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .step-line.done{background:var(--teal)}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
 .card-ttl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
-.phone-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px 16px;text-align:center;box-shadow:0 1px 5px rgba(45,36,96,.06)}
-.phone-icon{font-size:40px;margin-bottom:10px}
-.phone-card h2{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:6px}
-.phone-card p{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6}
-.phone-row{display:flex;gap:8px;margin-bottom:10px}
-.phone-row input{flex:1;padding:12px 13px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:15px;outline:none;transition:border .15s}
-.phone-row input:focus{border-color:var(--navy)}
-.phone-row button{padding:12px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer}
-.btn-skip{width:100%;padding:11px;background:transparent;color:var(--hint);border:1px solid var(--border);border-radius:var(--rs);font-size:13px;cursor:pointer;margin-top:4px}
+.phone-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:30px 20px;text-align:center;box-shadow:0 1px 5px rgba(45,36,96,.06)}
+.phone-icon{font-size:46px;margin-bottom:8px}
+.phone-brand{font-size:22px;font-weight:800;color:var(--navy);line-height:1.25;margin-bottom:2px;letter-spacing:-.2px}
+.phone-welcome{font-size:16px;font-weight:600;color:var(--teal);margin-bottom:10px;line-height:1.3}
+.phone-card h2{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.phone-card p{font-size:17px;color:var(--text);margin-bottom:24px;line-height:1.75;font-weight:400}
+.phone-row{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.phone-row input{width:100%;box-sizing:border-box;padding:17px 16px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:17px;outline:none;transition:border .15s,box-shadow .15s}
+.phone-row input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(45,36,96,.1)}
+.phone-row button{width:100%;box-sizing:border-box;padding:17px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(45,36,96,.28);transition:transform .12s ease,box-shadow .12s ease,background .15s}
+.phone-row button:hover{background:#241d52}
+.phone-row button:active{transform:scale(.97);box-shadow:0 2px 6px rgba(45,36,96,.28)}
+.btn-skip{width:100%;box-sizing:border-box;padding:17px;background:#eeecf9;color:var(--navy);border:1.5px solid var(--navy);border-radius:var(--rs);font-size:17px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 2px 8px rgba(45,36,96,.08);transition:transform .12s ease,background .15s}
+.btn-skip:hover{background:#e2ddf7}
+.btn-skip:active{transform:scale(.97)}
 .ce-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .ce-name{font-size:15px;font-weight:700;color:var(--green)}
 .ce-info{font-size:12px;color:var(--muted);margin-top:2px}
@@ -155,6 +161,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
   <div style="padding-top:8px">
     <div class="phone-card">
       <div class="phone-icon">👋</div>
+      <div class="phone-brand">Nugudú Láser Store</div>
+      <div class="phone-welcome">te da la bienvenida</div>
       <h2>¿Ya pediste con nosotros?</h2>
       <p>Ingresa tu WhatsApp o número de orden y tus datos se completan automáticamente. Si es tu primera vez, continúa como nuevo.</p>
       <div class="ce-box" id="ce-box"><div class="ce-name" id="ce-name"></div><div class="ce-info" id="ce-info"></div></div>

@@ -1048,7 +1048,7 @@ function renderSkuColor(productos, conFoto){
     var foto='';
     if(conFoto && parts.length>1){
       var slug=DISENO_SLUG[parts[1]];
-      if(slug) foto='<img src="imagenes/'+slug+'.jpg" alt="" loading="lazy" data-slug="'+slug+'" data-intento="0" onerror="imgFallbackMini(this)" style="width:22px;height:22px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:5px;border:1px solid var(--border)">';
+      if(slug) foto='<img src="imagenes/'+slug+'.jpg" alt="" loading="lazy" data-slug="'+slug+'" data-intento="0" onerror="imgFallbackMini(this)" onclick="event.stopPropagation();verFotoAmpliada(this.src)" title="Ver foto más grande" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px;border:1px solid var(--border);cursor:pointer">';
     }
     return '<span style="font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
   }).join('<br>');
@@ -1857,6 +1857,15 @@ function mostrarModalDireccion(o, dirs){
 function cerrarModalDireccion(){
   document.getElementById('modal-direccion-overlay').style.display = 'none';
 }
+function verFotoAmpliada(src){
+  var img = document.getElementById('modal-imagen-img');
+  if (!img) return;
+  img.src = src;
+  document.getElementById('modal-imagen-overlay').style.display = 'flex';
+}
+function cerrarFotoAmpliada(){
+  document.getElementById('modal-imagen-overlay').style.display = 'none';
+}
 function confirmarDireccionImpresion(id){
   var o = getOrd().filter(function(x){ return x.id === id; })[0];
   if (!o) return;
@@ -2235,5 +2244,10 @@ function exportPDF(){
 }
 </script>
 <div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>
+<!-- Ver foto ampliada del diseno — se abre al tocar/clickear la miniatura en Ordenes.
+     Funciona igual en mobile (tap) y desktop (click); tocar en cualquier parte cierra. -->
+<div id="modal-imagen-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.82);z-index:999;align-items:center;justify-content:center;padding:1rem" onclick="cerrarFotoAmpliada()">
+  <img id="modal-imagen-img" src="" alt="" style="max-width:92vw;max-height:88vh;border-radius:14px;box-shadow:0 12px 46px rgba(0,0,0,.5)">
+</div>
 </body>
 </html>

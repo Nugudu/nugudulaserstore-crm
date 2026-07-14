@@ -488,6 +488,11 @@ function iniciar(){
   showScreen('s-form');setPaso(1);
 }
 
+// Mapeo del codigo de diseno (segmento central del SKU, ej. RSV-KA-NG → KA)
+// al nombre de archivo en imagenes/. Se usa el SKU (estable) en vez del
+// nombre visible del producto (que puede cambiar en Sheets sin avisar),
+// para que renombrar "KAAN" a "GORRA KAAN" en Sheets NO rompa la foto.
+var DISENO_SLUG={'KA':'kaan','MU':'muuk','IKA':'ikal','SA':'saan','KI':'kin','OX':'oxan'};
 // ── CATÁLOGO ──
 function renderCat(){
   var cols={};
@@ -501,7 +506,10 @@ function renderCat(){
       var vs=dis[nom];
       var agot=vs.every(function(v){return v.stock<=0;});
       var dots=vs.map(function(v){return '<div class="cdot" style="background:'+v.hex+'" title="'+v.color+'"></div>';}).join('');
-      var slug=nom.toLowerCase().replace(/[^a-z0-9]/g,'');
+      // Primero intenta por codigo de SKU (estable); si el diseno es nuevo y
+      // no esta en el mapeo, intenta por nombre como respaldo.
+      var codigoSku=(vs[0].sku||'').split('-')[1]||'';
+      var slug=DISENO_SLUG[codigoSku]||nom.toLowerCase().replace(/[^a-z0-9]/g,'');
       html+='<div class="prod-card'+(agot?' agotado':'')+'" id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
       html+='<div class="pcheck">✓</div>';
       html+='<img class="p-foto" src="imagenes/'+slug+'.jpg" alt="'+esc(nom)+'" loading="lazy" data-slug="'+slug+'" data-intento="0" onerror="imgFallback(this)">';

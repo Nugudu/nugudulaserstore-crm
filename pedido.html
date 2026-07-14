@@ -96,9 +96,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .do-dir{font-size:13px;font-weight:600}
 .do-zona{font-size:11px;color:var(--muted);margin-top:2px}
 .btn-ndir{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--rs);color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px}
-.gps-row{display:flex;gap:6px;margin-top:4px}
-.gps-row input{flex:1;font-size:13px;padding:11px 12px}
-.gps-btn{padding:0 12px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap}
 .map-mini{margin-top:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);display:none}
 .map-mini iframe{display:block;width:100%;height:145px;border:0}
 .res-fila{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -262,12 +259,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…"></div>
         <div class="fg">
-          <label style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase">O pega tu ubicación GPS</label>
-          <div class="gps-row">
-            <input id="f-gps" type="text" placeholder="Link de Google Maps o coordenadas" oninput="onGPSInp()">
-            <button class="gps-btn" onclick="fijarGPS()">📍 Fijar</button>
-          </div>
-          <span class="hint" id="gps-hint">Pega el link que compartes desde Google Maps, WhatsApp o Waze</span>
           <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe></div>
         </div>
       </div>
@@ -375,14 +366,19 @@ window.addEventListener('DOMContentLoaded',function(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok&&d.productos&&d.productos.length){
-        var catNuevo=JSON.stringify(d.productos);
-        var catAnterior=JSON.stringify(_cat);
+        // Solo reconstruye las tarjetas si algo VISUAL realmente cambió
+        // (sku, nombre, color, precio). El STOCK se excluye a propósito de
+        // esta comparación: casi siempre es distinto al del catálogo de
+        // respaldo (cada venta real lo baja), así que compararlo tal cual
+        // hacía que esto disparara una reconstrucción completa prácticamente
+        // siempre — y esa reconstrucción es la causa del parpadeo. El stock
+        // sigue quedando 100% actualizado en _cat para la selección de color
+        // y cantidad (elDis/elCol lo leen en el momento, no del render viejo),
+        // solo se evita repintar la cuadrícula de tarjetas sin necesidad.
+        var claveVisual=function(arr){return JSON.stringify((arr||[]).map(function(p){return p.sku+'|'+p.nombre+'|'+p.coleccion+'|'+p.color+'|'+p.hex+'|'+p.precio;}));};
+        var cambioVisual=claveVisual(d.productos)!==claveVisual(_cat);
         _cat=d.productos;
-        // Solo reconstruye las tarjetas si el catálogo fresco realmente cambió
-        // respecto al fallback ya mostrado — antes se reconstruía siempre,
-        // aunque los datos fueran idénticos, y eso causaba el parpadeo de las
-        // imágenes (se recreaban de golpe aunque ya estuvieran cargadas).
-        if(catNuevo!==catAnterior){
+        if(cambioVisual){
           var p1=document.getElementById('p1');
           if(p1&&p1.style.display!=='none') renderCat();
         }
@@ -644,7 +640,7 @@ function showNuevaDir(){
   _dirSel=null;document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
   document.getElementById('nueva-dir').style.display='block';
   document.getElementById('f-dir').value='';document.getElementById('f-zona').value='';
-  document.getElementById('f-gps').value='';document.getElementById('map-mini').style.display='none';_mapa='';
+  document.getElementById('map-mini').style.display='none';_mapa='';
   setTimeout(function(){document.getElementById('f-dir').focus();},100);
 }
 
@@ -654,47 +650,8 @@ function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
   _dt=setTimeout(function(){var q=encodeURIComponent(v+', El Salvador');document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';document.getElementById('map-mini').style.display='block';_mapa='https://www.google.com/maps/search/?api=1&query='+q;},800);
 }
-function onGPSInp(){clearTimeout(_gt);var v=(document.getElementById('f-gps').value||'').trim();if(!v)return;_gt=setTimeout(fijarGPS,700);}
-function fijarGPS(){
-  var link=(document.getElementById('f-gps').value||'').trim();if(!link)return;
-  var c=xCoords(link);
-  if(c){aplicarGPSCoords(c);return;}
-  // No se pudo leer la coordenada directamente del texto — pasa con links
-  // acortados (maps.app.goo.gl, goo.gl/maps, waze.com/ul con id en vez de
-  // coordenadas visibles). En ese caso se le pide al backend que siga la
-  // redirección y extraiga las coordenadas reales (mismo resolverLink que ya
-  // usa el panel de administración).
-  if(/^https?:\/\//i.test(link)){
-    var hint=document.getElementById('gps-hint');
-    var hintTxt=hint?hint.textContent:'';
-    if(hint)hint.textContent='Buscando ubicación…';
-    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'resolverLink',token:API_TOKEN,url:link})})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(hint)hint.textContent=hintTxt;
-        if(d&&d.ok&&d.lat&&d.lng) aplicarGPSCoords({lat:d.lat,lng:d.lng});
-        else if(hint){hint.textContent='No se pudo leer la ubicación de ese link — probá pegando las coordenadas.';setTimeout(function(){hint.textContent=hintTxt;},4000);}
-      }).catch(function(){ if(hint)hint.textContent=hintTxt; });
-  }
-}
-function aplicarGPSCoords(c){
-  var q=c.lat+','+c.lng;document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';document.getElementById('map-mini').style.display='block';_mapa='https://www.google.com/maps?q='+q;
-}
-// Patrones reconocidos, de más a menos comunes: link normal de Google Maps
-// (@lat,lng), link con ?q=lat,lng, link de Waze con ll=lat,lng, JSON con
-// "lat"/"lng", formato interno !3d!4d de Google Maps, arreglo [lat,lng], y
-// coordenadas en texto plano "lat,lng" pegadas directamente.
-function xCoords(s){
-  var m;
-  m=s.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
-  m=s.match(/[?&]q=(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
-  m=s.match(/[?&]ll=(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
-  m=s.match(/"lat"\s*:\s*(-?\d+\.?\d+)[^}]*"lng"\s*:\s*(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
-  m=s.match(/!3d(-?\d+\.?\d+)!4d(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
-  m=s.match(/\[(-?\d+\.?\d+),(-?\d+\.?\d+)\]/);if(m)return{lat:m[1],lng:m[2]};
-  m=s.match(/^\s*(-?\d+\.?\d+)\s*,\s*(-?\d+\.?\d+)\s*$/);if(m)return{lat:m[1],lng:m[2]};
-  return null;
-}
+// (el link de GPS pegado se removió de este archivo — el mapa se arma
+// siempre desde la dirección escrita a mano, ver onDirInp más abajo)
 
 // ── PASO 3 ──
 function goP3(){
@@ -771,7 +728,7 @@ function nuevoP(){
   document.getElementById('ce-box').style.display='none';
   document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';
   document.getElementById('f-dir').value='';document.getElementById('f-zona').value='';
-  document.getElementById('f-gps').value='';document.getElementById('f-notas').value='';
+  document.getElementById('f-notas').value='';
   document.getElementById('map-mini').style.display='none';
   document.getElementById('qty-card').style.display='none';
   document.getElementById('color-sel').classList.remove('show');

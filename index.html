@@ -2269,29 +2269,62 @@ function cpLink(id){
 }
 
 // PDF GENERAL
+// Antes de armar el PDF, precarga (una sola vez por SKU único, no por fila)
+// la foto de cada pedido que aparece en el reporte, para poder incluir una
+// miniatura pequeña junto a cada orden — igual que ya se ve en la tabla de
+// Órdenes. Si algún SKU no tiene foto, esa fila simplemente sale sin foto.
 function exportPDF(){
+  var o=getOrd();
+  var data=_reporteData||o;
+  var skusUnicos={};
+  data.forEach(function(row){ var s=(row.productos&&row.productos[0])||''; if(s) skusUnicos[s]=true; });
+  var skus=Object.keys(skusUnicos);
+  Promise.all(skus.map(function(s){
+    return new Promise(function(res){ cargarFotoParaPdf(s,function(url,w,h){ res({sku:s,url:url,w:w,h:h}); }); });
+  })).then(function(resultados){
+    var fotos={};
+    resultados.forEach(function(r){ if(r.url) fotos[r.sku]=r; });
+    generarPdfReporte(o, data, fotos);
+  });
+}
+function generarPdfReporte(o, data, fotos){
   var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   var W=297,gm=13;
   doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
   doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Láser Store — Reporte CRM',gm,9.5);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
-  var o=getOrd(); var ent=o.filter(function(x){return parseInt(x.estado)===4;}).length;
+  var ent=o.filter(function(x){return parseInt(x.estado)===4;}).length;
   var rev=o.reduce(function(s,x){return s+(x.precio||0)*(x.cantidad||1);},0);
   doc.setTextColor(50);doc.setFontSize(9);doc.text('Órdenes: '+o.length+'   Entregadas: '+ent+'   Tasa: '+(o.length?Math.round(ent/o.length*100):0)+'%   Ingresos: $'+rev.toFixed(2),gm,22);
   var y=30;
-  var cols=['Nº Orden','Fecha','Cliente','Contacto','Zona','Canal','Cant','P.Unit','Total','SKU','Estado'];
-  var cw=[26,20,36,28,28,20,10,14,14,42,22];
+  // 'Nº Orden' se ensanchó de 26 a 32mm — con 26 el texto se recortaba a 13
+  // caracteres y el número de orden (siempre 15, ej. ORD-260714-9282) salía
+  // incompleto. Se agregó la columna 'Foto' al inicio; Cliente y Zona se
+  // achicaron 2mm cada una para que la tabla siga cabiendo en la página.
+  var cols=['Foto','Nº Orden','Fecha','Cliente','Contacto','Zona','Canal','Cant','P.Unit','Total','SKU','Estado'];
+  var cw=[9,32,20,34,28,26,20,10,14,14,42,22];
   doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(255);
   doc.setFillColor(45,36,96);doc.rect(gm,y,W-gm*2,6,'F');
-  var x=gm+1.5;cols.forEach(function(h,i){doc.text(h,x,y+4.3);x+=cw[i];});y+=6;
-  var data=_reporteData||o;
+  var x=gm+1.5;cols.forEach(function(h,i){if(i>0)doc.text(h,x,y+4.3);x+=cw[i];});y+=6;
   doc.setFont('helvetica','normal');doc.setTextColor(35);
   data.forEach(function(row,idx){
     if(y>193){doc.addPage('landscape');y=14;}
     doc.setFillColor(idx%2===0?246:255,idx%2===0?245:255,idx%2===0?252:255);doc.rect(gm,y,W-gm*2,6,'F');
-    x=gm+1.5; var tot=(row.precio||0)*(row.cantidad||1);
+    x=gm+1.5;
+    var skuPrincipal=(row.productos&&row.productos[0])||'';
+    var foto=fotos[skuPrincipal];
+    if(foto){
+      var boxW=cw[0]-2,boxH=5;
+      var ratio=(foto.w&&foto.h)?(foto.w/foto.h):1;
+      var dw,dh; if(ratio>=1){dw=boxW;dh=boxW/ratio;}else{dh=boxH;dw=boxH*ratio;}
+      if(dh>boxH){dh=boxH;dw=boxH*ratio;}
+      try{ doc.addImage(foto.url,'PNG',x+(boxW-dw)/2,y+(6-dh)/2,dw,dh); }catch(e){}
+    }
+    x+=cw[0];
+    var tot=(row.precio||0)*(row.cantidad||1);
     var cells=[row.orden,(row.fecha||'').slice(0,10),(row.nombre||'').slice(0,16),(row.contacto||'').slice(0,14),(row.zona||'').slice(0,13),row.canal||'–',String(row.cantidad||1),'$'+(row.precio||0).toFixed(2),'$'+tot.toFixed(2),((row.productos||[]).join(','))||'–',ESTADOS[parseInt(row.estado)||0]];
-    cells.forEach(function(v,i){doc.text(String(v).slice(0,Math.floor(cw[i]/2)),x,y+4.2);x+=cw[i];});y+=6;
+    cells.forEach(function(v,i){var ci=i+1;doc.text(String(v).slice(0,Math.floor(cw[ci]/2)),x,y+4.2);x+=cw[ci];});
+    y+=6;
   });
   doc.save('nugudú_reporte_'+new Date().toISOString().slice(0,10)+'.pdf');
 }

@@ -69,6 +69,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .color-sel{background:#f4f3fa;border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .color-sel.show{display:block}
 .cs-ttl{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.cs-foto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;margin-bottom:10px;background:#fff;border:1px solid var(--border)}
 .color-opts{display:flex;gap:8px;flex-wrap:wrap}
 .copt{display:flex;align-items:center;gap:7px;padding:7px 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
 .copt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
@@ -214,6 +215,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
   <div id="p1">
     <div id="cat-wrap"><div class="cat-spin"><div class="spinner"></div><p style="color:var(--muted);font-size:13px">Cargando colección…</p></div></div>
     <div class="color-sel" id="color-sel">
+      <img class="cs-foto" id="cs-foto" alt="" style="display:none">
       <div class="cs-ttl">Elige el color para <strong id="cs-nom"></strong></div>
       <div class="color-opts" id="color-opts"></div>
     </div>
@@ -327,7 +329,7 @@ function restaurarSesion(){
       mostrarPantallaCliente(r.cli);
       return true;
     }
-    if(r.screen==='s-form'&&r.cli){
+    if(r.screen==='s-form'){
       // Restaura el formulario en el paso donde estaba
       _cli=r.cli;_dirs=r.dirs||[];
       if(!_catCargado){_cat=fallback();_catCargado=true;}
@@ -506,13 +508,11 @@ function renderCat(){
       var vs=dis[nom];
       var agot=vs.every(function(v){return v.stock<=0;});
       var dots=vs.map(function(v){return '<div class="cdot" style="background:'+v.hex+'" title="'+v.color+'"></div>';}).join('');
-      // Primero intenta por codigo de SKU (estable); si el diseno es nuevo y
-      // no esta en el mapeo, intenta por nombre como respaldo.
-      var codigoSku=(vs[0].sku||'').split('-')[1]||'';
-      var slug=DISENO_SLUG[codigoSku]||nom.toLowerCase().replace(/[^a-z0-9]/g,'');
+      var candidatos=candidatosFoto(vs[0].sku,nom);
+      var candAttr=JSON.stringify(candidatos).replace(/'/g,'&#39;');
       html+='<div class="prod-card'+(agot?' agotado':'')+'" id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
       html+='<div class="pcheck">✓</div>';
-      html+='<img class="p-foto" src="imagenes/'+slug+'.jpg" alt="'+esc(nom)+'" loading="lazy" data-slug="'+slug+'" data-intento="0" onerror="imgFallback(this)">';
+      html+='<img class="p-foto" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" loading="lazy" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
       html+='<div class="p-dots">'+dots+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
@@ -524,14 +524,41 @@ function renderCat(){
   document.getElementById('cat-wrap').innerHTML=html;
 }
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
-// Prueba imagenes/<slug>.jpg, luego .png, luego .webp. Si ninguna existe,
-// oculta la foto y la tarjeta se ve igual que un diseno sin imagen (como hoy).
+// Construye la lista de archivos a probar, en orden de prioridad:
+// 1) la foto EXACTA del SKU/color (ej. RSV-IKA-GR.png) — la foto real del
+//    producto terminado (gorra + parche), la mas fiel a lo que se va a llevar.
+// 2) si esa no existe, el dibujo generico del diseno (ej. ikal.png) como respaldo.
+// .png va primero porque son los archivos que ya subiste.
+function candidatosFoto(sku,nombreDiseno){
+  var codigoSku=(sku||'').split('-')[1]||'';
+  var slugDiseno=DISENO_SLUG[codigoSku]||(nombreDiseno||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  var exts=['png','jpg','webp'],out=[];
+  exts.forEach(function(e){ if(sku) out.push(sku+'.'+e); });
+  exts.forEach(function(e){ if(slugDiseno) out.push(slugDiseno+'.'+e); });
+  return out;
+}
+// Prueba cada candidato en orden. Si ninguno existe, oculta la foto y la
+// tarjeta/vista previa se ve igual que sin imagen (como hoy).
 function imgFallback(img){
-  var exts=['jpg','png','webp'];
-  var i=(parseInt(img.dataset.intento)||0)+1;
-  img.dataset.intento=i;
-  if(i>=exts.length){img.style.display='none';img.onerror=null;return;}
-  img.src='imagenes/'+img.dataset.slug+'.'+exts[i];
+  var cand=JSON.parse(img.getAttribute('data-candidatos')||'[]');
+  var i=(parseInt(img.dataset.idx)||0)+1;
+  img.dataset.idx=i;
+  if(i>=cand.length){img.style.display='none';img.onerror=null;return;}
+  img.src='imagenes/'+cand[i];
+}
+// Actualiza la foto grande de vista previa en el paso "Elige el color" — se
+// llama al elegir un diseno (foto del color por defecto) y de nuevo al elegir
+// un color especifico (foto exacta de ESE color), para que el cliente vea
+// siempre la foto real de lo que va a pedir.
+function actualizarFotoPreview(sku,nombreDiseno){
+  var img=document.getElementById('cs-foto');
+  if(!img) return;
+  var candidatos=candidatosFoto(sku,nombreDiseno);
+  img.setAttribute('data-candidatos',JSON.stringify(candidatos));
+  img.dataset.idx='0';
+  img.onerror=function(){imgFallback(img);};
+  img.style.display='block';
+  img.src='imagenes/'+candidatos[0];
 }
 function elDis(nomEnc){
   var nombre=_cat.find(function(p){return encodeId(p.nombre)===nomEnc;});
@@ -550,6 +577,7 @@ function elDis(nomEnc){
     '</div>';
   }).join('');
   document.getElementById('color-opts').innerHTML=opts;
+  actualizarFotoPreview(vs[0].sku,nombre);
   document.getElementById('color-sel').classList.add('show');
   document.getElementById('qty-card').style.display='none';
   setTimeout(function(){document.getElementById('color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
@@ -559,6 +587,7 @@ function elCol(sku){
   _color=v;_qty=1;
   document.querySelectorAll('.copt').forEach(function(c){c.classList.remove('sel');});
   document.getElementById('co-'+sku).classList.add('sel');
+  actualizarFotoPreview(sku,_diseno);
   document.getElementById('qty-n').textContent=1;
   document.getElementById('qty-t').textContent='$'+v.precio.toFixed(2);
   document.getElementById('qty-card').style.display='block';

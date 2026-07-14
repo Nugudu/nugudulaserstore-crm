@@ -1023,14 +1023,16 @@ var COLOR_MAP={
 // al nombre de archivo en la carpeta imagenes/ — son las mismas fotos que
 // usa pedido.html (kaan.jpg, muuk.jpg, etc.), asi no hay que duplicarlas.
 var DISENO_SLUG={'KA':'kaan','MU':'muuk','IKA':'ikal','SA':'saan','KI':'kin','OX':'oxan'};
-// Miniatura con respaldo automatico jpg->png->webp->oculta (igual que pedido.html).
-// Si no hay foto para ese diseno, no se muestra nada — la fila se ve igual que hoy.
+// Miniatura con respaldo automatico: primero intenta la foto EXACTA del SKU/color
+// (ej. RSV-IKA-GR.png), luego el dibujo generico del diseno (ej. ikal.png), luego
+// se oculta. .png va primero porque son los archivos ya subidos — antes probaba
+// .jpg primero (que no existe) y causaba un parpadeo antes de cargar la real.
 function imgFallbackMini(img){
-  var exts=['jpg','png','webp'];
-  var i=(parseInt(img.dataset.intento)||0)+1;
-  img.dataset.intento=i;
-  if(i>=exts.length){img.style.display='none';img.onerror=null;return;}
-  img.src='imagenes/'+img.dataset.slug+'.'+exts[i];
+  var cand=JSON.parse(img.getAttribute('data-candidatos')||'[]');
+  var i=(parseInt(img.dataset.idx)||0)+1;
+  img.dataset.idx=i;
+  if(i>=cand.length){img.style.display='none';img.onerror=null;return;}
+  img.src='imagenes/'+cand[i];
 }
 // Renderiza el SKU con punto de color y nombre — extrae el sufijo del SKU.
 // conFoto=true agrega una miniatura pequeña del diseno (solo se usa en la
@@ -1047,8 +1049,14 @@ function renderSkuColor(productos, conFoto){
     var label=color?'<span style="color:var(--muted)"> '+color.nombre+'</span>':'';
     var foto='';
     if(conFoto && parts.length>1){
-      var slug=DISENO_SLUG[parts[1]];
-      if(slug) foto='<img src="imagenes/'+slug+'.jpg" alt="" loading="lazy" data-slug="'+slug+'" data-intento="0" onerror="imgFallbackMini(this)" onclick="event.stopPropagation();verFotoAmpliada(this.src)" title="Ver foto más grande" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px;border:1px solid var(--border);cursor:pointer">';
+      var slugDiseno=DISENO_SLUG[parts[1]];
+      if(slugDiseno){
+        var exts=['png','jpg','webp'],cand=[];
+        exts.forEach(function(e){ cand.push(sku+'.'+e); });
+        exts.forEach(function(e){ cand.push(slugDiseno+'.'+e); });
+        var candAttr=JSON.stringify(cand).replace(/'/g,'&#39;');
+        foto='<img src="imagenes/'+cand[0]+'" alt="" loading="lazy" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallbackMini(this)" onclick="event.stopPropagation();verFotoAmpliada(this.src)" title="Ver foto más grande" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px;border:1px solid var(--border);cursor:pointer">';
+      }
     }
     return '<span style="font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
   }).join('<br>');

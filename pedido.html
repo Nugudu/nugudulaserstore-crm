@@ -57,14 +57,15 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .prod-card:hover{border-color:var(--navy);transform:translateY(-1px)}
 .prod-card.sel{border-color:var(--navy);background:#f0eefb}
 .prod-card.agotado{opacity:.5;cursor:not-allowed}
+.p-foto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:8px;background:#f4f3fa;display:block;border:1px solid var(--border)}
 .p-nombre{font-size:14px;font-weight:700;margin-bottom:4px}
 .p-dots{display:flex;gap:5px;justify-content:center;margin:5px 0 3px}
 .cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12)}
 .p-precio{font-size:13px;font-weight:700;color:var(--teal)}
 .p-stock{font-size:10px;margin-top:2px}
 .sok{color:var(--green)}.slow{color:var(--amber)}.sno{color:var(--coral)}
-.pcheck{position:absolute;top:6px;right:8px;font-size:16px;display:none}
-.prod-card.sel .pcheck{display:block}
+.pcheck{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(45,36,96,.35)}
+.prod-card.sel .pcheck{display:flex}
 .color-sel{background:#f4f3fa;border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .color-sel.show{display:block}
 .cs-ttl{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px}
@@ -500,8 +501,11 @@ function renderCat(){
       var vs=dis[nom];
       var agot=vs.every(function(v){return v.stock<=0;});
       var dots=vs.map(function(v){return '<div class="cdot" style="background:'+v.hex+'" title="'+v.color+'"></div>';}).join('');
+      var slug=nom.toLowerCase().replace(/[^a-z0-9]/g,'');
       html+='<div class="prod-card'+(agot?' agotado':'')+'" id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
-      html+='<div class="pcheck">✓</div><div class="p-nombre">'+esc(nom)+'</div>';
+      html+='<div class="pcheck">✓</div>';
+      html+='<img class="p-foto" src="imagenes/'+slug+'.jpg" alt="'+esc(nom)+'" loading="lazy" data-slug="'+slug+'" data-intento="0" onerror="imgFallback(this)">';
+      html+='<div class="p-nombre">'+esc(nom)+'</div>';
       html+='<div class="p-dots">'+dots+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
       if(agot)html+='<div class="p-stock sno">✗ Agotado</div>';
@@ -512,6 +516,15 @@ function renderCat(){
   document.getElementById('cat-wrap').innerHTML=html;
 }
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+// Prueba imagenes/<slug>.jpg, luego .png, luego .webp. Si ninguna existe,
+// oculta la foto y la tarjeta se ve igual que un diseno sin imagen (como hoy).
+function imgFallback(img){
+  var exts=['jpg','png','webp'];
+  var i=(parseInt(img.dataset.intento)||0)+1;
+  img.dataset.intento=i;
+  if(i>=exts.length){img.style.display='none';img.onerror=null;return;}
+  img.src='imagenes/'+img.dataset.slug+'.'+exts[i];
+}
 function elDis(nomEnc){
   var nombre=_cat.find(function(p){return encodeId(p.nombre)===nomEnc;});
   if(!nombre)return;

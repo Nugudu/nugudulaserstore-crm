@@ -1019,8 +1019,24 @@ var COLOR_MAP={
   'BL':{nombre:'Blanco',hex:'#e5e7eb'},
   'CR7':{nombre:'Crema',hex:'#d4c5a0'}
 };
-// Renderiza el SKU con punto de color y nombre — extrae el sufijo del SKU
-function renderSkuColor(productos){
+// Mapeo del codigo de diseno (segmento central del SKU, ej. RSV-KA-NG → KA)
+// al nombre de archivo en la carpeta imagenes/ — son las mismas fotos que
+// usa pedido.html (kaan.jpg, muuk.jpg, etc.), asi no hay que duplicarlas.
+var DISENO_SLUG={'KA':'kaan','MU':'muuk','IKA':'ikal','SA':'saan','KI':'kin','OX':'oxan'};
+// Miniatura con respaldo automatico jpg->png->webp->oculta (igual que pedido.html).
+// Si no hay foto para ese diseno, no se muestra nada — la fila se ve igual que hoy.
+function imgFallbackMini(img){
+  var exts=['jpg','png','webp'];
+  var i=(parseInt(img.dataset.intento)||0)+1;
+  img.dataset.intento=i;
+  if(i>=exts.length){img.style.display='none';img.onerror=null;return;}
+  img.src='imagenes/'+img.dataset.slug+'.'+exts[i];
+}
+// Renderiza el SKU con punto de color y nombre — extrae el sufijo del SKU.
+// conFoto=true agrega una miniatura pequeña del diseno (solo se usa en la
+// tabla de Órdenes, con loading="lazy" para no afectar el rendimiento; las
+// 6 fotos se descargan una sola vez y el navegador las reusa en cada fila).
+function renderSkuColor(productos, conFoto){
   if(!productos||!productos.length) return '–';
   return productos.map(function(sku){
     var parts=sku.split('-');
@@ -1029,7 +1045,12 @@ function renderSkuColor(productos){
     var color=COLOR_MAP[sufijo];
     var dot=color?'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+color.hex+';border:1px solid rgba(0,0,0,.15);margin-right:4px;vertical-align:middle"></span>':'';
     var label=color?'<span style="color:var(--muted)"> '+color.nombre+'</span>':'';
-    return '<span style="font-size:11px">'+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
+    var foto='';
+    if(conFoto && parts.length>1){
+      var slug=DISENO_SLUG[parts[1]];
+      if(slug) foto='<img src="imagenes/'+slug+'.jpg" alt="" loading="lazy" data-slug="'+slug+'" data-intento="0" onerror="imgFallbackMini(this)" style="width:22px;height:22px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:5px;border:1px solid var(--border)">';
+    }
+    return '<span style="font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
   }).join('<br>');
 }
 function badgeConsumoInterno(o){
@@ -1543,7 +1564,7 @@ function buildTable(data,cid,deletable){
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
     var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[])+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){

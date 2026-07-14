@@ -366,10 +366,10 @@ tbody tr:last-child td{border-bottom:none}
     <div id="panel-ordenes" class="panel">
       <div class="ph-row">
         <div><h2>Órdenes</h2><p>Pedidos activos · las entregadas se trasladan a Reportes · 🚚 para ir al tracking de esa orden</p></div>
-        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-primary btn-sm" onclick="go('nueva')"><i class="fa-solid fa-plus"></i> Nueva</button></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportPDFOrdenes()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-primary btn-sm" onclick="go('nueva')"><i class="fa-solid fa-plus"></i> Nueva</button></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.1rem">
-        <div class="fg" style="min-width:160px"><label>Buscar</label><input id="o-buscar" type="text" placeholder="Orden, nombre, contacto…" oninput="renderOrdenes()"></div>
+        <div class="fg" style="min-width:160px"><label>Buscar</label><input id="o-buscar" type="text" placeholder="Orden, nombre, contacto, SKU…" oninput="renderOrdenes()"></div>
         <div class="fg"><label>Estado</label><select id="o-estado" onchange="renderOrdenes()"><option value="">Todos</option><option value="0">Nueva orden</option><option value="1">En proceso</option><option value="2">En empaque</option><option value="3">Paquete en tránsito</option><option value="4">Entregado</option></select></div>
         <div class="fg"><label>Zona</label><select id="o-zona" onchange="renderOrdenes()"><option value="">Todas</option><option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option></select></div>
         <button class="btn btn-outline btn-sm" onclick="resetOrd()"><i class="fa-solid fa-rotate-left"></i></button>
@@ -1549,7 +1549,7 @@ function renderOrdenes(){
   // Las órdenes Entregadas (estado 4) se "evacuan" a Reportes y no aparecen
   // aquí salvo que el usuario las busque explícitamente por estado o texto.
   if(est===''){ d=d.filter(function(o){ return parseInt(o.estado)!==4; }); }
-  if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto).toLowerCase().indexOf(q)>=0;});
+  if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
   if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(zona) d=d.filter(function(o){return o.zona===zona;});
   buildTable(d,'tbl-ordenes',true);
@@ -2328,8 +2328,108 @@ function generarPdfReporte(o, data, fotos){
   });
   doc.save('nugudú_reporte_'+new Date().toISOString().slice(0,10)+'.pdf');
 }
+
+// ── PDF de Órdenes: pregunta general vs. por SKU ──────────────────────────
+// Solo el botón "PDF" del panel de Órdenes usa esto — el resto de botones
+// "Exportar PDF" (Dashboard, topbar, Reportes, Base de datos filtrada) siguen
+// llamando a exportPDF() exactamente igual que antes, sin cambios.
+// Devuelve las órdenes que se ven ahora mismo en la tabla de Órdenes,
+// aplicando los mismos filtros que renderOrdenes() (buscar/estado/zona).
+function ordenesFiltradasActuales(){
+  var q=(document.getElementById('o-buscar').value||'').toLowerCase();
+  var est=document.getElementById('o-estado').value, zona=document.getElementById('o-zona').value;
+  var d=getOrd();
+  if(est===''){ d=d.filter(function(o){ return parseInt(o.estado)!==4; }); }
+  if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
+  if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
+  if(zona) d=d.filter(function(o){return o.zona===zona;});
+  return d;
+}
+function exportPDFOrdenes(){
+  var d=ordenesFiltradasActuales();
+  if(!d.length){ exportPDF(); return; } // sin datos que agrupar, comportamiento de siempre
+  var conteo={};
+  d.forEach(function(o){ (o.productos||[]).forEach(function(s){ conteo[s]=(conteo[s]||0)+1; }); });
+  var skus=Object.keys(conteo).sort();
+  if(!skus.length){ exportPDF(); return; }
+  window._repOrdenesData=d;
+  var overlay=document.getElementById('modal-reporte-overlay');
+  var opts=skus.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+' ('+conteo[s]+' orden(es))</option>';}).join('');
+  var html='<div style="background:#fff;border-radius:var(--r);max-width:420px;width:90%;padding:1.4rem;box-shadow:0 12px 40px rgba(0,0,0,.25)">'+
+    '<h3 style="font-size:16px;margin-bottom:4px">¿Qué reporte querés descargar?</h3>'+
+    '<p style="font-size:13px;color:var(--muted);margin-bottom:14px">Hay '+d.length+' orden(es) con los filtros actuales de Órdenes.</p>'+
+    '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;cursor:pointer">'+
+    '<input type="radio" name="rep-tipo" value="general" checked onchange="toggleSelectSkuReporte()" style="margin-top:3px">'+
+    '<span style="font-size:13px"><b>Reporte general</b><br><span style="color:var(--muted)">Todas las órdenes filtradas, con una foto pequeña por fila</span></span></label>'+
+    '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;cursor:pointer">'+
+    '<input type="radio" name="rep-tipo" value="sku" onchange="toggleSelectSkuReporte()" style="margin-top:3px">'+
+    '<span style="font-size:13px"><b>Reporte por SKU</b><br><span style="color:var(--muted)">Solo las órdenes de un SKU, todas en un mismo PDF con una sola foto representativa</span></span></label>'+
+    '<select id="rep-sku-select" disabled style="width:100%;margin:6px 0 4px;padding:8px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;color:var(--hint)">'+opts+'</select>'+
+    '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">'+
+    '<button class="btn btn-outline btn-sm" onclick="cerrarModalReporteOrdenes()">Cancelar</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="confirmarReporteOrdenes()"><i class="fa-solid fa-file-pdf"></i> Descargar</button>'+
+    '</div></div>';
+  overlay.innerHTML=html;
+  overlay.style.display='flex';
+}
+function toggleSelectSkuReporte(){
+  var tipo=document.querySelector('input[name="rep-tipo"]:checked').value;
+  var sel=document.getElementById('rep-sku-select');
+  sel.disabled=(tipo!=='sku');
+  sel.style.color=(tipo==='sku')?'var(--text)':'var(--hint)';
+}
+function cerrarModalReporteOrdenes(){
+  var overlay=document.getElementById('modal-reporte-overlay');
+  if(overlay){overlay.style.display='none';overlay.innerHTML='';}
+}
+function confirmarReporteOrdenes(){
+  var tipoEl=document.querySelector('input[name="rep-tipo"]:checked');
+  var tipo=tipoEl?tipoEl.value:'general';
+  if(tipo==='general'){ cerrarModalReporteOrdenes(); exportPDF(); return; }
+  var sku=document.getElementById('rep-sku-select').value;
+  var datosSku=(window._repOrdenesData||[]).filter(function(o){return (o.productos||[]).indexOf(sku)>=0;});
+  cerrarModalReporteOrdenes();
+  cargarFotoParaPdf(sku, function(url,w,h){ generarPdfReporteSku(datosSku, sku, {url:url,w:w,h:h}); });
+}
+// Reporte de un solo SKU: mismo formato de tabla que el reporte general, pero
+// SIN columna de foto por fila (sería la misma foto repetida en cada fila) —
+// en su lugar se pone una sola foto representativa arriba, junto al título.
+function generarPdfReporteSku(data, sku, foto){
+  var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var W=297,gm=13;
+  doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Láser Store — Reporte por SKU',gm,9.5);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
+  var rev=data.reduce(function(s,x){return s+(x.precio||0)*(x.cantidad||1);},0);
+  doc.setTextColor(50);doc.setFontSize(9);doc.text('SKU: '+sku+'   Órdenes: '+data.length+'   Ingresos: $'+rev.toFixed(2),gm,22);
+  if(foto&&foto.url){
+    var boxW=24,boxH=18,boxX=W-gm-boxW,boxY=16;
+    var ratio=(foto.w&&foto.h)?(foto.w/foto.h):1;
+    var dw,dh; if(ratio>=1){dw=boxW;dh=boxW/ratio;}else{dh=boxH;dw=boxH*ratio;}
+    if(dh>boxH){dh=boxH;dw=boxH*ratio;}
+    doc.setDrawColor(228,225,238);doc.setLineWidth(0.3);doc.rect(boxX,boxY,boxW,boxH);
+    try{ doc.addImage(foto.url,'PNG',boxX+(boxW-dw)/2,boxY+(boxH-dh)/2,dw,dh); }catch(e){}
+  }
+  var y=40;
+  var cols=['Nº Orden','Fecha','Cliente','Contacto','Zona','Canal','Cant','P.Unit','Total','SKU','Estado'];
+  var cw=[32,20,34,28,26,20,10,14,14,42,22];
+  doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(255);
+  doc.setFillColor(45,36,96);doc.rect(gm,y,W-gm*2,6,'F');
+  var x=gm+1.5;cols.forEach(function(h,i){doc.text(h,x,y+4.3);x+=cw[i];});y+=6;
+  doc.setFont('helvetica','normal');doc.setTextColor(35);
+  data.forEach(function(row,idx){
+    if(y>193){doc.addPage('landscape');y=14;}
+    doc.setFillColor(idx%2===0?246:255,idx%2===0?245:255,idx%2===0?252:255);doc.rect(gm,y,W-gm*2,6,'F');
+    x=gm+1.5; var tot=(row.precio||0)*(row.cantidad||1);
+    var cells=[row.orden,(row.fecha||'').slice(0,10),(row.nombre||'').slice(0,16),(row.contacto||'').slice(0,14),(row.zona||'').slice(0,13),row.canal||'–',String(row.cantidad||1),'$'+(row.precio||0).toFixed(2),'$'+tot.toFixed(2),((row.productos||[]).join(','))||'–',ESTADOS[parseInt(row.estado)||0]];
+    cells.forEach(function(v,i){doc.text(String(v).slice(0,Math.floor(cw[i]/2)),x,y+4.2);x+=cw[i];});y+=6;
+  });
+  doc.save('nugudú_reporte_sku_'+sku+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
 </script>
 <div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>
+<!-- Elegir reporte general o por SKU al descargar PDF desde Ordenes -->
+<div id="modal-reporte-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>
 <!-- Ver foto ampliada del diseno — se abre al tocar/clickear la miniatura en Ordenes.
      Funciona igual en mobile (tap) y desktop (click); tocar en cualquier parte cierra. -->
 <div id="modal-imagen-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.82);z-index:999;align-items:center;justify-content:center;padding:1rem" onclick="cerrarFotoAmpliada()">

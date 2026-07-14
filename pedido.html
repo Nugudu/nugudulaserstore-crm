@@ -648,7 +648,36 @@ function showNuevaDir(){
 var _dt=null,_gt=null;
 function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
-  _dt=setTimeout(function(){var q=encodeURIComponent(v+', El Salvador');document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';document.getElementById('map-mini').style.display='block';_mapa='https://www.google.com/maps/search/?api=1&query='+q;},800);
+  _dt=setTimeout(function(){
+    // Geocodifica la dirección COMPLETA (sin importar el orden de las
+    // palabras — "avenida x casa 9" o "residencial x villa y polígono z casa
+    // n" funcionan igual) contra un servicio real de geocodificación en el
+    // backend, y centra el mapa en coordenadas exactas: un solo punto
+    // preciso, nunca una búsqueda de texto ambigua con varios resultados. Si
+    // no logra encontrar coordenadas para esa dirección puntual, cae de
+    // vuelta a la búsqueda de texto de siempre para que el mapa no quede vacío.
+    var direccionCompleta=v;
+    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:direccionCompleta})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d&&d.ok&&d.lat&&d.lng){
+          var q=d.lat+','+d.lng;
+          document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
+          document.getElementById('map-mini').style.display='block';
+          _mapa='https://www.google.com/maps?q='+q;
+        }else{
+          var qTxt=encodeURIComponent(direccionCompleta+', El Salvador');
+          document.getElementById('map-fr').src='https://maps.google.com/maps?q='+qTxt+'&output=embed';
+          document.getElementById('map-mini').style.display='block';
+          _mapa='https://www.google.com/maps/search/?api=1&query='+qTxt;
+        }
+      }).catch(function(){
+        var qTxt=encodeURIComponent(direccionCompleta+', El Salvador');
+        document.getElementById('map-fr').src='https://maps.google.com/maps?q='+qTxt+'&output=embed';
+        document.getElementById('map-mini').style.display='block';
+        _mapa='https://www.google.com/maps/search/?api=1&query='+qTxt;
+      });
+  },800);
 }
 // (el link de GPS pegado se removió de este archivo — el mapa se arma
 // siempre desde la dirección escrita a mano, ver onDirInp más abajo)

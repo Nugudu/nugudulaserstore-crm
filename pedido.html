@@ -248,7 +248,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <button class="btn-ndir" onclick="showNuevaDir()">+ Usar otra dirección</button>
       </div>
       <div id="nueva-dir">
-        <div class="fg"><label>Dirección *</label><input id="f-dir" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDirInp()"></div>
+        <div class="fg">
+          <label>Dirección *</label>
+          <div style="display:flex;gap:6px">
+            <input id="f-dir" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDirInp()" style="flex:1">
+            <button type="button" onclick="fijarDireccion()" style="padding:0 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap">📍 Fijar</button>
+          </div>
+        </div>
         <div class="fg">
           <label>Zona de envío *</label>
           <select id="f-zona" onchange="document.getElementById('otra-zona').style.display=this.value==='otra'?'block':'none'">
@@ -648,36 +654,39 @@ function showNuevaDir(){
 var _dt=null,_gt=null;
 function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
-  _dt=setTimeout(function(){
-    // Geocodifica la dirección COMPLETA (sin importar el orden de las
-    // palabras — "avenida x casa 9" o "residencial x villa y polígono z casa
-    // n" funcionan igual) contra un servicio real de geocodificación en el
-    // backend, y centra el mapa en coordenadas exactas: un solo punto
-    // preciso, nunca una búsqueda de texto ambigua con varios resultados. Si
-    // no logra encontrar coordenadas para esa dirección puntual, cae de
-    // vuelta a la búsqueda de texto de siempre para que el mapa no quede vacío.
-    var direccionCompleta=v;
-    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:direccionCompleta})})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(d&&d.ok&&d.lat&&d.lng){
-          var q=d.lat+','+d.lng;
-          document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
-          document.getElementById('map-mini').style.display='block';
-          _mapa='https://www.google.com/maps?q='+q;
-        }else{
-          var qTxt=encodeURIComponent(direccionCompleta+', El Salvador');
-          document.getElementById('map-fr').src='https://maps.google.com/maps?q='+qTxt+'&output=embed';
-          document.getElementById('map-mini').style.display='block';
-          _mapa='https://www.google.com/maps/search/?api=1&query='+qTxt;
-        }
-      }).catch(function(){
+  _dt=setTimeout(fijarDireccion,800);
+}
+// Geocodifica la dirección COMPLETA (sin importar el orden de las palabras —
+// "avenida x casa 9" o "residencial x villa y polígono z casa n" funcionan
+// igual) directo desde el navegador contra Nominatim (OpenStreetMap), igual
+// que ya hace index.html para sugerir la zona especial — así no depende de
+// tener Code_1.gs desplegado para funcionar. Se dispara sola al escribir
+// (onDirInp, con espera de 800ms) y también al tocar el botón "Fijar".
+function fijarDireccion(){
+  var v=(document.getElementById('f-dir').value||'').trim();
+  if(v.length<5)return;
+  var direccionCompleta=v;
+  var url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sv&q='+encodeURIComponent(direccionCompleta+', El Salvador');
+  fetch(url,{headers:{'Accept-Language':'es'}})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data&&data.length&&data[0].lat&&data[0].lon){
+        var q=data[0].lat+','+data[0].lon;
+        document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
+        document.getElementById('map-mini').style.display='block';
+        _mapa='https://www.google.com/maps?q='+q;
+      }else{
         var qTxt=encodeURIComponent(direccionCompleta+', El Salvador');
         document.getElementById('map-fr').src='https://maps.google.com/maps?q='+qTxt+'&output=embed';
         document.getElementById('map-mini').style.display='block';
         _mapa='https://www.google.com/maps/search/?api=1&query='+qTxt;
-      });
-  },800);
+      }
+    }).catch(function(){
+      var qTxt=encodeURIComponent(direccionCompleta+', El Salvador');
+      document.getElementById('map-fr').src='https://maps.google.com/maps?q='+qTxt+'&output=embed';
+      document.getElementById('map-mini').style.display='block';
+      _mapa='https://www.google.com/maps/search/?api=1&query='+qTxt;
+    });
 }
 // (el link de GPS pegado se removió de este archivo — el mapa se arma
 // siempre desde la dirección escrita a mano, ver onDirInp más abajo)

@@ -642,9 +642,14 @@ function elDir(i){
   document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
   document.getElementById('dop-'+i).classList.add('sel');
   if(_dirSel.mapaLink){
+    _mapa=_dirSel.mapaLink;
     var coords=extraerLatLngDeLink(_dirSel.mapaLink);
     if(coords){ mostrarMapaEnPunto(coords.lat,coords.lng); }
-    else { geocodificarYMostrar(_dirSel.direccion); }
+    else{
+      var q=encodeURIComponent(_dirSel.direccion+', El Salvador');
+      document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
+      document.getElementById('map-mini').style.display='block';
+    }
   }
 }
 function showNuevaDir(){
@@ -661,41 +666,29 @@ function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
   _dt=setTimeout(fijarDireccion,800);
 }
-function fijarDireccion(){ geocodificarYMostrar(document.getElementById('f-dir').value); }
-// Extrae lat,lng de un link guardado (formato "?q=LAT,LNG"). Direcciones
-// guardadas de antes de tener el mapa interactivo pueden no traer coordenadas
-// (traían el texto de la dirección) — en ese caso se re-geocodifica al vuelo.
+// Mapa de Google (iframe gratuito, sin llave) — se arma directo con el texto
+// de la dirección tal cual lo escribe el cliente, sin pasar por ningún
+// buscador de coordenadas externo (se probaron Nominatim del lado del
+// navegador y del servidor y ninguno resultó confiable — siempre terminaban
+// en el mismo punto por defecto). Google resuelve el texto puertas adentro
+// del propio mapa embebido, igual que en la búsqueda simple de siempre. Se
+// dispara sola al escribir (onDirInp, 800ms de espera) y también al tocar el
+// botón "Fijar".
+function fijarDireccion(){
+  var v=(document.getElementById('f-dir').value||'').trim();
+  if(v.length<5) return;
+  var q=encodeURIComponent(v+', El Salvador');
+  document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
+  document.getElementById('map-mini').style.display='block';
+  _mapa='https://www.google.com/maps/search/?api=1&query='+q;
+}
+// Extrae lat,lng de un link guardado (formato "?q=LAT,LNG"), por si alguna
+// dirección anterior se guardó con coordenadas en vez de texto.
 function extraerLatLngDeLink(link){
   if(!link) return null;
   var m=String(link).match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   return m ? {lat:m[1],lng:m[2]} : null;
 }
-// Geocodifica la dirección COMPLETA (sin importar el orden de las palabras —
-// "avenida x casa 9" o "residencial x villa y polígono z casa n" funcionan
-// igual). Se probó llamando a Nominatim directo desde el navegador, pero en
-// la práctica fallaba siempre (problemas de CORS/bloqueo del lado del
-// navegador) y terminaba mostrando el mismo punto por defecto sin importar
-// la dirección — por eso ahora se resuelve del lado del servidor (GAS,
-// función geocodificarDireccion en Code_1.gs), igual que resolverLink, que sí
-// funciona de forma confiable porque la petición sale desde Google y no
-// desde el navegador del cliente. Necesita que Code_1.gs esté desplegado con
-// la última versión. Se dispara sola al escribir (onDirInp, 800ms de espera)
-// y también al tocar el botón "Fijar". Si no encuentra nada, igual muestra
-// el mapa centrado en El Salvador para poder ajustarlo a mano.
-function geocodificarYMostrar(direccionTexto){
-  var v=(direccionTexto||'').trim();
-  if(v.length<5) return;
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:v})})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d&&d.ok&&d.lat&&d.lng){ mostrarMapaEnPunto(d.lat,d.lng); }
-      else{ mostrarMapaEnPunto(13.6929,-89.2182); }
-    }).catch(function(){ mostrarMapaEnPunto(13.6929,-89.2182); });
-}
-// Mapa de Google (iframe gratuito, sin llave) — trae Estándar/Satélite
-// integrado (ícono dentro del propio mapa) y se puede mover y hacer zoom
-// libremente. La precisión del punto depende de qué tan bien Google
-// interpreta el texto de la dirección (geocodificado antes con Nominatim).
 function mostrarMapaEnPunto(lat,lng){
   lat=parseFloat(lat);lng=parseFloat(lng);
   var q=lat+','+lng;

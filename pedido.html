@@ -6,6 +6,8 @@
 <title>Nugudú Láser Store — Hacer pedido</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#2D2460;--teal:#1a9e8f;--green:#2e7d52;--amber:#d97706;--coral:#e05c40;--bg:#f4f3fa;--surface:#fff;--border:#e4e1ee;--text:#18152e;--muted:#6b6585;--hint:#9b96b0;--r:14px;--rs:10px}
@@ -97,7 +99,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .do-zona{font-size:11px;color:var(--muted);margin-top:2px}
 .btn-ndir{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--rs);color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px}
 .map-mini{margin-top:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);display:none}
-.map-mini iframe{display:block;width:100%;height:145px;border:0}
+.map-mini #map-fr{width:100%;height:220px}
+.map-mini .hint-mapa{display:block;font-size:11px;color:var(--hint);padding:6px 8px;background:var(--bg)}
 .res-fila{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)}
 .res-fila:last-child{border-bottom:none}
 .res-lbl{font-size:12px;color:var(--muted);min-width:88px;flex-shrink:0;padding-top:1px}
@@ -265,7 +268,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…"></div>
         <div class="fg">
-          <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe></div>
+          <div class="map-mini" id="map-mini"><div id="map-fr"></div><span class="hint-mapa">📍 Arrastra el pin para ajustarlo al punto exacto · cambia entre Calles/Satélite arriba a la derecha</span></div>
         </div>
       </div>
       <div class="fg"><label>Notas adicionales</label><textarea id="f-notas" placeholder="Referencias, instrucciones especiales, horario disponible…"></textarea></div>
@@ -640,7 +643,11 @@ function elDir(i){
   _dirSel=_dirs[i];
   document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
   document.getElementById('dop-'+i).classList.add('sel');
-  if(_dirSel.mapaLink){_mapa=_dirSel.mapaLink;document.getElementById('map-fr').src='https://maps.google.com/maps?q='+encodeURIComponent(_dirSel.direccion+', El Salvador')+'&output=embed';document.getElementById('map-mini').style.display='block';}
+  if(_dirSel.mapaLink){
+    var coords=extraerLatLngDeLink(_dirSel.mapaLink);
+    if(coords){ mostrarMapaEnPunto(coords.lat,coords.lng); }
+    else { geocodificarYMostrar(_dirSel.direccion); }
+  }
 }
 function showNuevaDir(){
   _dirSel=null;document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
@@ -656,37 +663,60 @@ function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
   _dt=setTimeout(fijarDireccion,800);
 }
+function fijarDireccion(){ geocodificarYMostrar(document.getElementById('f-dir').value); }
+// Extrae lat,lng de un link guardado (formato "?q=LAT,LNG"). Direcciones
+// guardadas de antes de tener el mapa interactivo pueden no traer coordenadas
+// (traían el texto de la dirección) — en ese caso se re-geocodifica al vuelo.
+function extraerLatLngDeLink(link){
+  if(!link) return null;
+  var m=String(link).match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  return m ? {lat:m[1],lng:m[2]} : null;
+}
 // Geocodifica la dirección COMPLETA (sin importar el orden de las palabras —
 // "avenida x casa 9" o "residencial x villa y polígono z casa n" funcionan
 // igual) directo desde el navegador contra Nominatim (OpenStreetMap), igual
 // que ya hace index.html para sugerir la zona especial — así no depende de
 // tener Code_1.gs desplegado para funcionar. Se dispara sola al escribir
-// (onDirInp, con espera de 800ms) y también al tocar el botón "Fijar".
-function fijarDireccion(){
-  var v=(document.getElementById('f-dir').value||'').trim();
-  if(v.length<5)return;
-  var direccionCompleta=v;
-  var url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sv&q='+encodeURIComponent(direccionCompleta+', El Salvador');
+// (onDirInp, con espera de 800ms) y también al tocar el botón "Fijar". Si no
+// encuentra nada, igual muestra el mapa centrado en El Salvador para que se
+// pueda arrastrar el pin a mano al punto correcto.
+function geocodificarYMostrar(direccionTexto){
+  var v=(direccionTexto||'').trim();
+  if(v.length<5) return;
+  var url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sv&q='+encodeURIComponent(v+', El Salvador');
   fetch(url,{headers:{'Accept-Language':'es'}})
     .then(function(r){return r.json();})
     .then(function(data){
-      if(data&&data.length&&data[0].lat&&data[0].lon){
-        var q=data[0].lat+','+data[0].lon;
-        document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
-        document.getElementById('map-mini').style.display='block';
-        _mapa='https://www.google.com/maps?q='+q;
-      }else{
-        var qTxt=encodeURIComponent(direccionCompleta+', El Salvador');
-        document.getElementById('map-fr').src='https://maps.google.com/maps?q='+qTxt+'&output=embed';
-        document.getElementById('map-mini').style.display='block';
-        _mapa='https://www.google.com/maps/search/?api=1&query='+qTxt;
-      }
-    }).catch(function(){
-      var qTxt=encodeURIComponent(direccionCompleta+', El Salvador');
-      document.getElementById('map-fr').src='https://maps.google.com/maps?q='+qTxt+'&output=embed';
-      document.getElementById('map-mini').style.display='block';
-      _mapa='https://www.google.com/maps/search/?api=1&query='+qTxt;
+      if(data&&data.length&&data[0].lat&&data[0].lon){ mostrarMapaEnPunto(data[0].lat,data[0].lon); }
+      else{ mostrarMapaEnPunto(13.6929,-89.2182); }
+    }).catch(function(){ mostrarMapaEnPunto(13.6929,-89.2182); });
+}
+// Mapa interactivo (Leaflet + OpenStreetMap/Esri, gratis, sin llave): se crea
+// una sola vez y luego solo se mueve. El pin es arrastrable — al soltarlo, ESE
+// punto (no el geocodificado) es el que queda guardado en _mapa para el
+// pedido, así el cliente puede corregir a mano si el buscador no acertó
+// exacto. El control de capas (arriba a la derecha del mapa) permite cambiar
+// entre vista de Calles y Satélite.
+var _leafletMap=null,_leafletMarker=null;
+function mostrarMapaEnPunto(lat,lng){
+  lat=parseFloat(lat);lng=parseFloat(lng);
+  document.getElementById('map-mini').style.display='block';
+  _mapa='https://www.google.com/maps?q='+lat+','+lng;
+  if(!_leafletMap){
+    var calles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+    var satelite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
+    _leafletMap=L.map('map-fr',{layers:[calles]}).setView([lat,lng],17);
+    L.control.layers({'Calles':calles,'Satélite':satelite}).addTo(_leafletMap);
+    _leafletMarker=L.marker([lat,lng],{draggable:true}).addTo(_leafletMap);
+    _leafletMarker.on('dragend',function(){
+      var p=_leafletMarker.getLatLng();
+      _mapa='https://www.google.com/maps?q='+p.lat+','+p.lng;
     });
+  }else{
+    _leafletMap.setView([lat,lng],17);
+    _leafletMarker.setLatLng([lat,lng]);
+    setTimeout(function(){ if(_leafletMap) _leafletMap.invalidateSize(); },80);
+  }
 }
 // (el link de GPS pegado se removió de este archivo — el mapa se arma
 // siempre desde la dirección escrita a mano, ver onDirInp más abajo)

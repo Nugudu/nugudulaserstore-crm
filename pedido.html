@@ -672,20 +672,23 @@ function extraerLatLngDeLink(link){
 }
 // Geocodifica la dirección COMPLETA (sin importar el orden de las palabras —
 // "avenida x casa 9" o "residencial x villa y polígono z casa n" funcionan
-// igual) directo desde el navegador contra Nominatim (OpenStreetMap), igual
-// que ya hace index.html para sugerir la zona especial — así no depende de
-// tener Code_1.gs desplegado para funcionar. Se dispara sola al escribir
-// (onDirInp, con espera de 800ms) y también al tocar el botón "Fijar". Si no
-// encuentra nada, igual muestra el mapa centrado en El Salvador para que se
-// pueda arrastrar el pin a mano al punto correcto.
+// igual). Se probó llamando a Nominatim directo desde el navegador, pero en
+// la práctica fallaba siempre (problemas de CORS/bloqueo del lado del
+// navegador) y terminaba mostrando el mismo punto por defecto sin importar
+// la dirección — por eso ahora se resuelve del lado del servidor (GAS,
+// función geocodificarDireccion en Code_1.gs), igual que resolverLink, que sí
+// funciona de forma confiable porque la petición sale desde Google y no
+// desde el navegador del cliente. Necesita que Code_1.gs esté desplegado con
+// la última versión. Se dispara sola al escribir (onDirInp, 800ms de espera)
+// y también al tocar el botón "Fijar". Si no encuentra nada, igual muestra
+// el mapa centrado en El Salvador para poder ajustarlo a mano.
 function geocodificarYMostrar(direccionTexto){
   var v=(direccionTexto||'').trim();
   if(v.length<5) return;
-  var url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sv&q='+encodeURIComponent(v+', El Salvador');
-  fetch(url,{headers:{'Accept-Language':'es'}})
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:v})})
     .then(function(r){return r.json();})
-    .then(function(data){
-      if(data&&data.length&&data[0].lat&&data[0].lon){ mostrarMapaEnPunto(data[0].lat,data[0].lon); }
+    .then(function(d){
+      if(d&&d.ok&&d.lat&&d.lng){ mostrarMapaEnPunto(d.lat,d.lng); }
       else{ mostrarMapaEnPunto(13.6929,-89.2182); }
     }).catch(function(){ mostrarMapaEnPunto(13.6929,-89.2182); });
 }

@@ -2171,8 +2171,39 @@ function abrirInv(id){
   document.getElementById('inv-actions').innerHTML='<a class="btn btn-wa" href="https://wa.me/'+waNum+'?text='+waMsg+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Enviar por WhatsApp</a><a class="btn btn-email" style="background:#EA4335;color:#fff;border:1px solid #EA4335" href="mailto:'+(o.contacto.indexOf('@')>=0?o.contacto:'')+'?subject='+eSubj+'&body='+eBody+'"><i class="fa-solid fa-envelope"></i> Enviar por correo</a><button class="btn btn-primary" onclick="pdfInv('+o.id+')"><i class="fa-solid fa-print"></i> Guardar PDF</button><button class="btn btn-outline" onclick="cpInv('+o.id+')"><i class="fa-solid fa-copy"></i> Copiar texto</button>';
 }
 function cerrarInv(){ document.getElementById('inv-detail-wrap').style.display='none'; document.getElementById('inv-list-wrap').style.display='block'; }
+// Carga la foto del primer SKU del pedido (misma cascada SKU-exacto → dibujo
+// genérico que usa la miniatura de Órdenes) y la entrega ya lista para
+// insertar en el PDF, junto a sus dimensiones reales (para no deformarla).
+// Si no encuentra ninguna foto, cb(null) y el PDF se genera igual, sin foto.
+function cargarFotoParaPdf(sku, cb){
+  if(!sku){cb(null);return;}
+  var parts=sku.split('-');
+  var slugDiseno=parts.length>1?DISENO_SLUG[parts[1]]:null;
+  var exts=['png','jpg','webp'],cand=[];
+  exts.forEach(function(e){cand.push(sku+'.'+e);});
+  if(slugDiseno) exts.forEach(function(e){cand.push(slugDiseno+'.'+e);});
+  var i=0;
+  function intentar(){
+    if(i>=cand.length){cb(null);return;}
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+        c.getContext('2d').drawImage(img,0,0);
+        cb(c.toDataURL('image/png'),img.naturalWidth,img.naturalHeight);
+      }catch(e){cb(null);}
+    };
+    img.onerror=function(){i++;intentar();};
+    img.src='imagenes/'+cand[i];
+  }
+  intentar();
+}
 function pdfInv(id){
   var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
+  var skuFoto=(o.productos&&o.productos[0])||'';
+  cargarFotoParaPdf(skuFoto, function(fotoUrl,natW,natH){ generarPdfRegistroVenta(o, fotoUrl, natW, natH); });
+}
+function generarPdfRegistroVenta(o, fotoUrl, natW, natH){
   var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   var W=210,gm=18,total=((o.precio||0)*(o.cantidad||1)),invNum='RV-'+String(o.id).slice(-6);
   var fe=new Date().toLocaleDateString('es-SV',{year:'numeric',month:'long',day:'numeric'});
@@ -2183,7 +2214,21 @@ function pdfInv(id){
   doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(245,166,35);doc.text(invNum,W-gm,19,{align:'right'});
   doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,175,210);doc.text('REGISTRO DE VENTA',W-gm,25,{align:'right'});
   doc.setFontSize(8);doc.text('Fecha: '+fe,gm,36);doc.text('Orden: '+o.orden,gm+65,36);doc.text('Pago: '+(o.consumoInterno?'Sin costo':(o.pago||'Transferencia')),gm+130,36);
-  var y=58;doc.setFillColor(244,243,250);doc.rect(gm,y-5,W-gm*2,30,'F');
+  // Foto del producto (si se encontró) — se dibuja en el espacio entre el
+  // encabezado y el bloque de datos, preservando su proporción original para
+  // no deformarla. Si no hay foto, no se reserva espacio (el PDF queda igual
+  // que antes).
+  var extraFoto=fotoUrl?32:0;
+  if(fotoUrl){
+    var boxX=W-gm-30,boxY=42,boxW=30,boxH=30;
+    var ratio=(natW&&natH)?(natW/natH):1;
+    var dw,dh;
+    if(ratio>=1){dw=boxW;dh=boxW/ratio;}else{dh=boxH;dw=boxH*ratio;}
+    var px=boxX+(boxW-dw)/2, py=boxY+(boxH-dh)/2;
+    doc.setDrawColor(228,225,238);doc.setLineWidth(0.3);doc.rect(boxX,boxY,boxW,boxH);
+    try{ doc.addImage(fotoUrl,'PNG',px,py,dw,dh); }catch(e){}
+  }
+  var y=58+extraFoto;doc.setFillColor(244,243,250);doc.rect(gm,y-5,W-gm*2,30,'F');
   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(107,101,133);
   doc.text('EMITIDO POR',gm+3,y);doc.text('REGISTRADO A',W/2+2,y);doc.text('ENVÍO',W*0.72+2,y);
   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(24,21,46);

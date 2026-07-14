@@ -21,6 +21,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .cat-spin{text-align:center;padding:30px 0}
 .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* Overlay de "confirmando" — aparece al instante al tocar el botón, mientras
+   el pedido se guarda en el servidor, para que la reacción se sienta inmediata. */
+.overlay-enviando{display:none;position:fixed;inset:0;background:rgba(244,243,250,.97);z-index:500;align-items:center;justify-content:center;flex-direction:column;padding:1rem;text-align:center}
+.overlay-enviando .spinner{width:44px;height:44px;border-width:4px}
+.overlay-enviando p{font-size:15px;font-weight:600;color:var(--navy);margin-top:4px}
+.overlay-enviando span{font-size:12px;color:var(--muted);margin-top:4px}
 .steps{display:flex;align-items:center;margin:14px 0}
 .step{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
 .step-d{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--hint);background:#fff;transition:all .2s}
@@ -261,7 +267,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
             <input id="f-gps" type="text" placeholder="Link de Google Maps o coordenadas" oninput="onGPSInp()">
             <button class="gps-btn" onclick="fijarGPS()">📍 Fijar</button>
           </div>
-          <span class="hint">Pega el link que compartes desde Google Maps, WhatsApp o Waze</span>
+          <span class="hint" id="gps-hint">Pega el link que compartes desde Google Maps, WhatsApp o Waze</span>
           <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe></div>
         </div>
       </div>
@@ -302,6 +308,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     </a>
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
   </div>
+</div>
+
+<!-- Overlay de confirmación instantánea (ver enviar()) -->
+<div class="overlay-enviando" id="overlay-enviando">
+  <div class="spinner"></div>
+  <p>Confirmando tu pedido…</p>
+  <span>Un momento, por favor</span>
 </div>
 
 <script>
@@ -362,10 +375,17 @@ window.addEventListener('DOMContentLoaded',function(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok&&d.productos&&d.productos.length){
+        var catNuevo=JSON.stringify(d.productos);
+        var catAnterior=JSON.stringify(_cat);
         _cat=d.productos;
-        // Actualiza el catálogo si el usuario ya está en el paso 1
-        var p1=document.getElementById('p1');
-        if(p1&&p1.style.display!=='none') renderCat();
+        // Solo reconstruye las tarjetas si el catálogo fresco realmente cambió
+        // respecto al fallback ya mostrado — antes se reconstruía siempre,
+        // aunque los datos fueran idénticos, y eso causaba el parpadeo de las
+        // imágenes (se recreaban de golpe aunque ya estuvieran cargadas).
+        if(catNuevo!==catAnterior){
+          var p1=document.getElementById('p1');
+          if(p1&&p1.style.display!=='none') renderCat();
+        }
       }
     }).catch(function(){});
   // Mostrar pantalla — restaurar sesión o ir a inicio
@@ -638,9 +658,43 @@ function onGPSInp(){clearTimeout(_gt);var v=(document.getElementById('f-gps').va
 function fijarGPS(){
   var link=(document.getElementById('f-gps').value||'').trim();if(!link)return;
   var c=xCoords(link);
-  if(c){var q=c.lat+','+c.lng;document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';document.getElementById('map-mini').style.display='block';_mapa='https://www.google.com/maps?q='+q;}
+  if(c){aplicarGPSCoords(c);return;}
+  // No se pudo leer la coordenada directamente del texto — pasa con links
+  // acortados (maps.app.goo.gl, goo.gl/maps, waze.com/ul con id en vez de
+  // coordenadas visibles). En ese caso se le pide al backend que siga la
+  // redirección y extraiga las coordenadas reales (mismo resolverLink que ya
+  // usa el panel de administración).
+  if(/^https?:\/\//i.test(link)){
+    var hint=document.getElementById('gps-hint');
+    var hintTxt=hint?hint.textContent:'';
+    if(hint)hint.textContent='Buscando ubicación…';
+    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'resolverLink',token:API_TOKEN,url:link})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(hint)hint.textContent=hintTxt;
+        if(d&&d.ok&&d.lat&&d.lng) aplicarGPSCoords({lat:d.lat,lng:d.lng});
+        else if(hint){hint.textContent='No se pudo leer la ubicación de ese link — probá pegando las coordenadas.';setTimeout(function(){hint.textContent=hintTxt;},4000);}
+      }).catch(function(){ if(hint)hint.textContent=hintTxt; });
+  }
 }
-function xCoords(s){var m;m=s.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};m=s.match(/[?&]q=(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};m=s.match(/^\s*(-?\d+\.?\d+)\s*,\s*(-?\d+\.?\d+)\s*$/);if(m)return{lat:m[1],lng:m[2]};return null;}
+function aplicarGPSCoords(c){
+  var q=c.lat+','+c.lng;document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';document.getElementById('map-mini').style.display='block';_mapa='https://www.google.com/maps?q='+q;
+}
+// Patrones reconocidos, de más a menos comunes: link normal de Google Maps
+// (@lat,lng), link con ?q=lat,lng, link de Waze con ll=lat,lng, JSON con
+// "lat"/"lng", formato interno !3d!4d de Google Maps, arreglo [lat,lng], y
+// coordenadas en texto plano "lat,lng" pegadas directamente.
+function xCoords(s){
+  var m;
+  m=s.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
+  m=s.match(/[?&]q=(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
+  m=s.match(/[?&]ll=(-?\d+\.?\d+),(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
+  m=s.match(/"lat"\s*:\s*(-?\d+\.?\d+)[^}]*"lng"\s*:\s*(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
+  m=s.match(/!3d(-?\d+\.?\d+)!4d(-?\d+\.?\d+)/);if(m)return{lat:m[1],lng:m[2]};
+  m=s.match(/\[(-?\d+\.?\d+),(-?\d+\.?\d+)\]/);if(m)return{lat:m[1],lng:m[2]};
+  m=s.match(/^\s*(-?\d+\.?\d+)\s*,\s*(-?\d+\.?\d+)\s*$/);if(m)return{lat:m[1],lng:m[2]};
+  return null;
+}
 
 // ── PASO 3 ──
 function goP3(){
@@ -668,6 +722,10 @@ function rf(l,v){return '<div class="res-fila"><span class="res-lbl">'+l+'</span
 // ── ENVIAR ──
 function enviar(){
   var btn=document.getElementById('btn-conf');btn.textContent='Enviando…';btn.disabled=true;
+  // Reacción inmediata al toque: se muestra el overlay de "confirmando" al
+  // instante, sin esperar la respuesta del servidor, para que se sienta
+  // instantáneo aunque el guardado real tome uno o dos segundos más.
+  var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
@@ -681,9 +739,10 @@ function enviar(){
     .then(function(d){
       if(d.ok){
         _ultimaOrden={orden:d.orden,nombre:nom,tel:tel,sku:_color.sku,diseno:_color.nombre+' · '+_color.color,cantidad:_qty,total:(_color.precio*_qty).toFixed(2)};
+        if(ov)ov.style.display='none';
         mostrarExito();
-      }else{btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error al registrar. Intenta de nuevo.');}
-    }).catch(function(){btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error de conexión. Verifica tu internet.');});
+      }else{if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error al registrar. Intenta de nuevo.');}
+    }).catch(function(){if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error de conexión. Verifica tu internet.');});
 }
 
 function mostrarExito(){

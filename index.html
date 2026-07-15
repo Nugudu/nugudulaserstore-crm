@@ -1136,17 +1136,31 @@ function onDireccionInput(){
     }
   }, 700); // espera a que termine de escribir
 }
+// Geocodifica con LocationIQ (via Code_1.gs) para centrar el mapa en un
+// punto preciso -- si no hay resultado (o la llave de LocationIQ no esta
+// configurada), cae de vuelta a la busqueda de texto simple de Google que
+// ya funcionaba, para que el mapa nunca se quede vacio. La caja de "pega
+// coordenadas / enlace de Google Maps" (f-gps) sigue igual, sin tocar.
 function actualizarMapa(direccionTexto){
-  var query  = encodeURIComponent(direccionTexto + ', El Salvador');
   var frame  = document.getElementById('map-frame');
   var abrir  = document.getElementById('map-abrir');
   var wrap   = document.getElementById('map-wrap');
   var status = document.getElementById('map-status');
   if (!frame) return;
-  frame.src = 'https://maps.google.com/maps?q=' + query + '&output=embed';
-  abrir.href = 'https://www.google.com/maps/search/?api=1&query=' + query;
-  status.textContent = 'Ubicación aproximada según la dirección escrita.';
-  wrap.style.display = 'block';
+  gasCall({method:'POST', body:{action:'geocodificar', direccion:direccionTexto}}, function(err, res){
+    if (!err && res && res.ok && res.lat && res.lng) {
+      var q = res.lat + ',' + res.lng;
+      frame.src = 'https://maps.google.com/maps?q=' + q + '&output=embed';
+      abrir.href = 'https://www.google.com/maps?q=' + q;
+      status.textContent = 'Ubicación precisa (LocationIQ).';
+    } else {
+      var query = encodeURIComponent(direccionTexto + ', El Salvador');
+      frame.src = 'https://maps.google.com/maps?q=' + query + '&output=embed';
+      abrir.href = 'https://www.google.com/maps/search/?api=1&query=' + query;
+      status.textContent = 'Ubicación aproximada según la dirección escrita.';
+    }
+    wrap.style.display = 'block';
+  });
 }
 
 // Extrae coordenadas lat,lng de cualquier formato de link de Google Maps:

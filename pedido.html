@@ -666,17 +666,25 @@ function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
   _dt=setTimeout(fijarDireccion,800);
 }
-// Mapa de Google (iframe gratuito, sin llave) — se arma directo con el texto
-// de la dirección tal cual lo escribe el cliente, sin pasar por ningún
-// buscador de coordenadas externo (se probaron Nominatim del lado del
-// navegador y del servidor y ninguno resultó confiable — siempre terminaban
-// en el mismo punto por defecto). Google resuelve el texto puertas adentro
-// del propio mapa embebido, igual que en la búsqueda simple de siempre. Se
-// dispara sola al escribir (onDirInp, 800ms de espera) y también al tocar el
-// botón "Fijar".
+// Geocodifica la dirección escrita con LocationIQ (vía Code_1.gs) para
+// centrar el mapa en un punto preciso — antes se probó Nominatim (bloqueaba
+// las peticiones automáticas) y Google Maps sin API (no da coordenadas sin
+// JavaScript), ninguno funcionó de forma confiable. Si LocationIQ no
+// encuentra nada (o la llave no está configurada todavía en Code_1.gs), cae
+// de vuelta a la búsqueda de texto simple de Google, para que el mapa nunca
+// se quede vacío. Se dispara sola al escribir (onDirInp, 800ms de espera) y
+// también al tocar el botón "Fijar".
 function fijarDireccion(){
   var v=(document.getElementById('f-dir').value||'').trim();
   if(v.length<5) return;
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:v})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.ok&&d.lat&&d.lng){ mostrarMapaEnPunto(d.lat,d.lng); }
+      else{ mostrarBusquedaTexto(v); }
+    }).catch(function(){ mostrarBusquedaTexto(v); });
+}
+function mostrarBusquedaTexto(v){
   var q=encodeURIComponent(v+', El Salvador');
   document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
   document.getElementById('map-mini').style.display='block';

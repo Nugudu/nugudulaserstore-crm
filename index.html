@@ -1542,6 +1542,7 @@ function renderOvCharts(){
 }
 
 // ORDENES TABLE
+var _ultimaFirmaOrdenes=null;
 function renderOrdenes(){
   var q=(document.getElementById('o-buscar').value||'').toLowerCase();
   var est=document.getElementById('o-estado').value, zona=document.getElementById('o-zona').value;
@@ -1552,6 +1553,13 @@ function renderOrdenes(){
   if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
   if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(zona) d=d.filter(function(o){return o.zona===zona;});
+  // El auto-sync corre cada 30s y llamaba a renderOrdenes() sin condición,
+  // reconstruyendo la tabla completa (y recreando cada miniatura de foto de
+  // cero) aunque no hubiera ningún cambio real — eso causaba el parpadeo.
+  // Ahora solo se reconstruye si el contenido visible realmente cambió.
+  var firma=JSON.stringify(d);
+  if(firma===_ultimaFirmaOrdenes) return;
+  _ultimaFirmaOrdenes=firma;
   buildTable(d,'tbl-ordenes',true);
 }
 function resetOrd(){ document.getElementById('o-buscar').value=''; document.getElementById('o-estado').value=''; document.getElementById('o-zona').value=''; renderOrdenes(); }
@@ -1572,7 +1580,7 @@ function buildTable(data,cid,deletable){
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
     var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button> <button class="btn btn-outline btn-xs" onclick="abrirEditarOrden('+o.id+')" title="Editar orden"><i class="fa-solid fa-pen" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){
@@ -1606,6 +1614,134 @@ function irATracking(id){
     var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
     document.getElementById('track-q').value=o.orden; buscarTrack(); setTimeout(function(){abrirTrack(id);},80);
   },60);
+}
+// ── EDITAR ORDEN ────────────────────────────────────────────────────────
+// Corrige nombre/contacto/dirección/zona/cantidad/notas de una orden ya
+// guardada (útil ej. si el cliente escribió mal su dirección desde
+// pedido.html). Reusa la acción 'update' del backend, la misma que ya usa
+// el switch de producción — no requiere ningún cambio en Code_1.gs.
+function abrirEditarOrden(id){
+  var o=_ordenes.filter(function(x){return x.id===id;})[0];
+  if(!o) return;
+  var overlay=document.getElementById('modal-editar-overlay');
+  var html='<div style="background:#fff;border-radius:var(--r);max-width:460px;width:92%;padding:1.4rem;box-shadow:0 12px 40px rgba(0,0,0,.25);max-height:88vh;overflow:auto">'+
+    '<h3 style="font-size:16px;margin-bottom:4px">Editar orden '+esc(o.orden)+'</h3>'+
+    '<p style="font-size:12px;color:var(--muted);margin-bottom:14px">Los cambios se guardan también en Google Sheets.</p>'+
+    '<div class="fg" style="margin-bottom:10px"><label>Nombre</label><input id="ed-nombre" type="text" value="'+esc(o.nombre||'')+'"></div>'+
+    '<div class="fg" style="margin-bottom:10px"><label>Contacto</label><input id="ed-contacto" type="text" value="'+esc(o.contacto||'')+'"></div>'+
+    '<div class="fg" style="margin-bottom:10px"><label>Dirección</label><input id="ed-direccion" type="text" value="'+esc(o.direccion||'')+'"></div>'+
+    '<div class="fg" style="margin-bottom:10px"><label>Zona</label><input id="ed-zona" type="text" value="'+esc(o.zona||'')+'"></div>'+
+    '<div class="fg" style="margin-bottom:10px"><label>Cantidad</label><input id="ed-cantidad" type="number" min="1" value="'+(o.cantidad||1)+'"></div>'+
+    '<div class="fg" style="margin-bottom:10px"><label>Notas</label><input id="ed-notas" type="text" value="'+esc(o.notas||'')+'"></div>'+
+    '<div class="fg" style="margin-bottom:4px">'+
+      '<label style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase">O pega coordenadas / enlace de Google Maps</label>'+
+      '<div style="display:flex;gap:6px;margin-top:4px">'+
+        '<input id="ed-gps" type="text" placeholder="Ej. 13.682673,-89.144279  o  https://maps.google.com/?q=13.682673,-89.144279" style="flex:1;font-size:13px" oninput="onGPSInputEdit()">'+
+        '<button type="button" class="btn btn-outline btn-sm" onclick="aplicarGPSEdit(document.getElementById(\'ed-gps\').value.trim())" style="white-space:nowrap"><i class="fa-solid fa-location-dot" style="color:#e74c3c"></i> Fijar</button>'+
+      '</div>'+
+      '<span class="hint">Acepta: coordenadas (lat,lng), enlace de Google Maps o enlace compartido desde el teléfono</span>'+
+      '<div id="ed-map-wrap" style="display:none;margin-top:8px">'+
+        '<div style="position:relative;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">'+
+          '<iframe id="ed-map-frame" width="100%" height="180" style="border:0;display:block" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'+
+          '<a id="ed-map-abrir" href="#" target="_blank" style="position:absolute;top:8px;left:8px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.15)"><i class="fa-solid fa-up-right-from-square" style="margin-right:5px"></i>Abrir en Maps</a>'+
+        '</div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">'+
+          '<span class="hint" id="ed-map-status">Ubicación aproximada según la dirección escrita.</span>'+
+          '<button type="button" class="btn btn-outline btn-xs" onclick="quitarMapaEdit()"><i class="fa-solid fa-xmark"></i> Quitar mapa</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'+
+    '<button class="btn btn-outline btn-sm" onclick="cerrarEditarOrden()">Cancelar</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="guardarEdicionOrden('+o.id+')"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>'+
+    '</div></div>';
+  overlay.innerHTML=html;
+  overlay.style.display='flex';
+  window._edMapaLink=o.mapaLink||null;
+  if(o.mapaLink){
+    var coordsPrevias=extraerCoordenadas(o.mapaLink);
+    if(coordsPrevias) mostrarCoordsMapaEdit(coordsPrevias);
+  }
+}
+function cerrarEditarOrden(){
+  var overlay=document.getElementById('modal-editar-overlay');
+  if(overlay){overlay.style.display='none';overlay.innerHTML='';}
+}
+function guardarEdicionOrden(id){
+  var idx=-1;
+  for(var i=0;i<_ordenes.length;i++){ if(_ordenes[i].id===id){idx=i;break;} }
+  if(idx<0) return;
+  var fields={
+    nombre:    (document.getElementById('ed-nombre').value||'').trim(),
+    contacto:  (document.getElementById('ed-contacto').value||'').trim(),
+    direccion: (document.getElementById('ed-direccion').value||'').trim(),
+    zona:      (document.getElementById('ed-zona').value||'').trim(),
+    cantidad:  Math.max(1, parseInt(document.getElementById('ed-cantidad').value)||1),
+    notas:     (document.getElementById('ed-notas').value||'').trim(),
+    mapaLink:  window._edMapaLink || _ordenes[idx].mapaLink || ''
+  };
+  Object.keys(fields).forEach(function(k){ _ordenes[idx][k]=fields[k]; });
+  saveLocal();
+  cerrarEditarOrden();
+  renderOrdenes();
+  showToast('Cambios guardados');
+  gasCall({method:'POST', body:{action:'update', id:String(id), fields:fields}}, function(err,res){
+    setSyncUI((err || !res || !res.ok) ? 'error' : 'ok', false);
+  });
+}
+// Caja de coordenadas del modal Editar orden — copia aislada de
+// onGPSInput/aplicarGPS/mostrarCoordsMapa/quitarMapa (que siguen intactas y
+// se usan en Nueva Venta), con sus propios ids (ed-gps, ed-map-*) y su propia
+// variable (_edMapaLink) para no pisarse con el formulario de Nueva Venta.
+var _edGpsDebounce=null;
+function onGPSInputEdit(){
+  clearTimeout(_edGpsDebounce);
+  var link=(document.getElementById('ed-gps').value||'').trim();
+  if(!link) return;
+  _edGpsDebounce=setTimeout(function(){ aplicarGPSEdit(link); },600);
+}
+function aplicarGPSEdit(link){
+  if(!link) return;
+  var status=document.getElementById('ed-map-status');
+  var wrap=document.getElementById('ed-map-wrap');
+  var coords=extraerCoordenadas(link);
+  if(coords){ mostrarCoordsMapaEdit(coords); return; }
+  if(link.indexOf('http')===0){
+    if(esLinkAcortado(link)){
+      wrap.style.display='block';
+      status.textContent='🔄 Resolviendo enlace acortado… (puede tardar 2-3 seg)';
+      document.getElementById('ed-map-abrir').href=link;
+    }else{
+      wrap.style.display='block';
+      status.textContent='🔄 Resolviendo enlace…';
+    }
+    document.getElementById('ed-map-frame').src='';
+    gasCall({method:'POST', body:{action:'resolverLink', url:link}}, function(err,res){
+      if(!err && res && res.ok && res.lat && res.lng){
+        mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng});
+      }else{
+        status.innerHTML='⚠️ No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, copia la URL completa de la barra de direcciones y pégala aquí. <a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>';
+        document.getElementById('ed-map-abrir').href=link;
+      }
+    });
+    return;
+  }
+  status.textContent='Formato no reconocido — pega coordenadas (13.68,-89.24), un link de Google Maps, Waze o WhatsApp.';
+  wrap.style.display='block';
+  document.getElementById('ed-map-frame').src='';
+}
+function mostrarCoordsMapaEdit(coords){
+  var q=coords.lat+','+coords.lng;
+  document.getElementById('ed-map-frame').src='https://maps.google.com/maps?q='+q+'&output=embed';
+  document.getElementById('ed-map-abrir').href='https://www.google.com/maps?q='+q;
+  document.getElementById('ed-map-status').textContent='📍 '+coords.lat+', '+coords.lng+' — Ubicación GPS fijada.';
+  document.getElementById('ed-map-wrap').style.display='block';
+  window._edMapaLink='https://www.google.com/maps?q='+q;
+}
+function quitarMapaEdit(){
+  window._edMapaLink=null;
+  document.getElementById('ed-map-wrap').style.display='none';
+  document.getElementById('ed-map-frame').src='';
 }
 
 // TRACKING
@@ -2348,13 +2484,20 @@ function ordenesFiltradasActuales(){
 function exportPDFOrdenes(){
   var d=ordenesFiltradasActuales();
   if(!d.length){ exportPDF(); return; } // sin datos que agrupar, comportamiento de siempre
+  // El reporte por SKU se limita SIEMPRE a órdenes en estado "Nueva orden"
+  // (estado 0), sin importar el filtro de Estado que tengas puesto arriba —
+  // es para usarlo como lista de producción pendiente, y así no reimprime
+  // órdenes que ya pasaron a "En proceso" o más adelante.
+  var dNuevas=d.filter(function(o){return parseInt(o.estado)===0;});
   var conteo={};
-  d.forEach(function(o){ (o.productos||[]).forEach(function(s){ conteo[s]=(conteo[s]||0)+1; }); });
+  dNuevas.forEach(function(o){ (o.productos||[]).forEach(function(s){ conteo[s]=(conteo[s]||0)+1; }); });
   var skus=Object.keys(conteo).sort();
-  if(!skus.length){ exportPDF(); return; }
   window._repOrdenesData=d;
+  window._repOrdenesNuevas=dNuevas;
   var overlay=document.getElementById('modal-reporte-overlay');
-  var opts=skus.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+' ('+conteo[s]+' orden(es))</option>';}).join('');
+  var opts=skus.length
+    ? skus.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+' ('+conteo[s]+' orden(es))</option>';}).join('')
+    : '<option value="">No hay órdenes en estado "Nueva orden" para agrupar</option>';
   var html='<div style="background:#fff;border-radius:var(--r);max-width:420px;width:90%;padding:1.4rem;box-shadow:0 12px 40px rgba(0,0,0,.25)">'+
     '<h3 style="font-size:16px;margin-bottom:4px">¿Qué reporte querés descargar?</h3>'+
     '<p style="font-size:13px;color:var(--muted);margin-bottom:14px">Hay '+d.length+' orden(es) con los filtros actuales de Órdenes.</p>'+
@@ -2362,8 +2505,8 @@ function exportPDFOrdenes(){
     '<input type="radio" name="rep-tipo" value="general" checked onchange="toggleSelectSkuReporte()" style="margin-top:3px">'+
     '<span style="font-size:13px"><b>Reporte general</b><br><span style="color:var(--muted)">Todas las órdenes filtradas, con una foto pequeña por fila</span></span></label>'+
     '<label style="display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;cursor:pointer">'+
-    '<input type="radio" name="rep-tipo" value="sku" onchange="toggleSelectSkuReporte()" style="margin-top:3px">'+
-    '<span style="font-size:13px"><b>Reporte por SKU</b><br><span style="color:var(--muted)">Solo las órdenes de un SKU, todas en un mismo PDF con una sola foto representativa</span></span></label>'+
+    '<input type="radio" name="rep-tipo" value="sku" '+(skus.length?'':'disabled')+' onchange="toggleSelectSkuReporte()" style="margin-top:3px">'+
+    '<span style="font-size:13px"><b>Reporte por SKU</b><br><span style="color:var(--muted)">Solo órdenes en estado "Nueva orden" de un SKU, en un mismo PDF con una sola foto representativa</span></span></label>'+
     '<select id="rep-sku-select" disabled style="width:100%;margin:6px 0 4px;padding:8px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;color:var(--hint)">'+opts+'</select>'+
     '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">'+
     '<button class="btn btn-outline btn-sm" onclick="cerrarModalReporteOrdenes()">Cancelar</button>'+
@@ -2387,7 +2530,10 @@ function confirmarReporteOrdenes(){
   var tipo=tipoEl?tipoEl.value:'general';
   if(tipo==='general'){ cerrarModalReporteOrdenes(); exportPDF(); return; }
   var sku=document.getElementById('rep-sku-select').value;
-  var datosSku=(window._repOrdenesData||[]).filter(function(o){return (o.productos||[]).indexOf(sku)>=0;});
+  if(!sku) return;
+  // window._repOrdenesNuevas ya viene filtrado a estado "Nueva orden" desde
+  // exportPDFOrdenes() — aquí solo se filtra por el SKU elegido.
+  var datosSku=(window._repOrdenesNuevas||[]).filter(function(o){return (o.productos||[]).indexOf(sku)>=0;});
   cerrarModalReporteOrdenes();
   cargarFotoParaPdf(sku, function(url,w,h){ generarPdfReporteSku(datosSku, sku, {url:url,w:w,h:h}); });
 }
@@ -2430,6 +2576,8 @@ function generarPdfReporteSku(data, sku, foto){
 <div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>
 <!-- Elegir reporte general o por SKU al descargar PDF desde Ordenes -->
 <div id="modal-reporte-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>
+<!-- Editar orden desde Ordenes -->
+<div id="modal-editar-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>
 <!-- Ver foto ampliada del diseno — se abre al tocar/clickear la miniatura en Ordenes.
      Funciona igual en mobile (tap) y desktop (click); tocar en cualquier parte cierra. -->
 <div id="modal-imagen-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.82);z-index:999;align-items:center;justify-content:center;padding:1rem" onclick="cerrarFotoAmpliada()">

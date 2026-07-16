@@ -1115,6 +1115,19 @@ function enviarDatosBancarios(id){
     'Monto a transferir: $'+total+'\n\n'+
     'Cuando realices la transferencia, envianos el comprobante por este mismo chat y confirmamos tu pedido. Gracias.';
   window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(msg),'_blank');
+  // Marca (y sincroniza) que los datos bancarios de esta orden ya se
+  // enviaron -- persiste con la orden, no solo en este navegador, para que
+  // si alguien abre el mismo pedido desde otro dispositivo sepa que ya se
+  // mando antes en vez de reenviarlo sin darse cuenta.
+  if (!o.datosBancariosEnviados) {
+    var idxDB=-1;
+    for (var i=0;i<_ordenes.length;i++){ if(_ordenes[i].id===id){idxDB=i;break;} }
+    if (idxDB>=0) {
+      _ordenes[idxDB].datosBancariosEnviados = true;
+      saveLocal();
+      updateGASField(id, {datosBancariosEnviados:true});
+    }
+  }
 }
 
 // MAPA — se integra automáticamente al escribir la dirección.
@@ -1832,7 +1845,12 @@ function abrirTrack(id){
   // detalle o se refresca despues de otra accion.
   if (est === 0 && o.pendientePago && !_waAutoAbiertoIds[id]) {
     _waAutoAbiertoIds[id] = true;
-    enviarDatosBancarios(id);
+    if (!o.datosBancariosEnviados) {
+      // Primera vez que se ve esta orden (en cualquier dispositivo) -- se abre sola.
+      enviarDatosBancarios(id);
+    } else if (confirm('Los datos bancarios de este pedido ya se enviaron antes (desde este u otro dispositivo). ¿Deseas enviarlos de nuevo?')) {
+      enviarDatosBancarios(id);
+    }
   }
 }
 

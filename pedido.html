@@ -231,6 +231,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <button class="qty-btn" onclick="chgQty(1)">+</button>
         <div class="qty-total">Total: <strong id="qty-t">/bin/sh.00</strong></div>
       </div>
+      <button type="button" class="btn-outline-teal" id="btn-agregar-otro" style="display:none;margin-top:10px" onclick="agregarOtroProducto()">+ Agregar otro producto</button>
+    </div>
+    <div class="card" id="carrito-wrap" style="display:none">
+      <div class="card-ttl">Tu pedido</div>
+      <div id="carrito-items"></div>
+      <div class="res-total"><span>Total</span><span id="carrito-total">$0.00</span></div>
     </div>
     <button class="btn-main" onclick="goP2()">Continuar →</button>
   </div>
@@ -370,7 +376,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;document.getElementById('p-tel').value='';hideErr('phone');hideErr('form');showScreen('s-phone');}
+function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];document.getElementById('p-tel').value='';hideErr('phone');hideErr('form');showScreen('s-phone');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -627,7 +633,53 @@ function elCol(sku){
   document.getElementById('qty-n').textContent=1;
   document.getElementById('qty-t').textContent='$'+v.precio.toFixed(2);
   document.getElementById('qty-card').style.display='block';
+  document.getElementById('btn-agregar-otro').style.display='flex';
   setTimeout(function(){document.getElementById('qty-card').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+}
+// ── CARRITO (varios productos por pedido) ──
+// Antes solo se podia pedir un producto a la vez. Ahora se puede agregar mas
+// de uno al mismo pedido (ej. un gorro para la pareja, otro para un hijo)
+// sin salir de este flujo -- pensado para el consumidor B2C de hoy; un
+// formato aparte para B2B (por volumen) se puede armar mas adelante, esto no
+// le cierra la puerta a ninguno de los dos.
+var _carrito=[];
+// Suma la seleccion actual (diseno+color+cantidad) al carrito y limpia la
+// seleccion para poder elegir otro producto. Devuelve false si no hay nada
+// seleccionado todavia (nada que agregar).
+function agregarSeleccionAlCarrito(){
+  if(!_color) return false;
+  _carrito.push({sku:_color.sku,diseno:_diseno,color:_color.color,hex:_color.hex,precio:_color.precio,cantidad:_qty});
+  _color=null;_qty=1;
+  document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
+  document.querySelectorAll('.copt').forEach(function(c){c.classList.remove('sel');});
+  document.getElementById('color-sel').classList.remove('show');
+  document.getElementById('qty-card').style.display='none';
+  document.getElementById('btn-agregar-otro').style.display='none';
+  return true;
+}
+function agregarOtroProducto(){
+  if(!agregarSeleccionAlCarrito()) return;
+  renderCarrito();
+  document.getElementById('cat-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function quitarDelCarrito(idx){
+  _carrito.splice(idx,1);
+  renderCarrito();
+}
+function totalCarrito(){
+  return _carrito.reduce(function(sum,it){return sum+it.precio*it.cantidad;},0);
+}
+function renderCarrito(){
+  var wrap=document.getElementById('carrito-wrap');
+  if(_carrito.length===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  document.getElementById('carrito-items').innerHTML=_carrito.map(function(it,i){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
+      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong><br><span style="color:var(--muted)">x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>'+
+      '<button type="button" onclick="quitarDelCarrito('+i+')" style="background:none;border:none;color:var(--coral);font-size:18px;cursor:pointer;padding:4px 8px" title="Quitar">✕</button>'+
+    '</div>';
+  }).join('');
+  document.getElementById('carrito-total').textContent='$'+totalCarrito().toFixed(2);
 }
 function chgQty(d){
   var mx=_color?Math.min(_color.stock||10,10):10;
@@ -638,7 +690,9 @@ function chgQty(d){
 
 // ── PASO 2 ──
 function goP2(){
-  if(!_color){showErr('form','Elige un diseño y un color antes de continuar.');return;}
+  agregarSeleccionAlCarrito(); // si hay una seleccion sin agregar todavia, se suma sola -- no se pierde nada
+  renderCarrito();
+  if(_carrito.length===0){showErr('form','Elige un diseño y un color antes de continuar.');return;}
   hideErr('form');
   if(_cli){document.getElementById('f-nom').value=_cli.nombre||'';document.getElementById('f-tel').value=_cli.contacto||'';}
   if(_dirs.length>0){
@@ -733,10 +787,12 @@ function goP3(){
   if(!zona){showErr('form','Selecciona la zona de entrega.');return;}
   hideErr('form');
   var notas=(document.getElementById('f-notas').value||'').trim();
-  var total=(_color.precio*_qty).toFixed(2);
+  var total=totalCarrito().toFixed(2);
+  var prodsHtml=_carrito.map(function(it){
+    return rf(it.diseno+' · '+it.color,'x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2));
+  }).join('');
   document.getElementById('resumen').innerHTML=
-    rf('Diseño',_color.nombre+' · '+_color.color)+rf('SKU','<span style="font-family:monospace;font-size:12px">'+esc(_color.sku)+'</span>')+
-    rf('Cantidad',_qty+' unidad(es)')+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
+    prodsHtml+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
   setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'smooth'});
@@ -757,12 +813,13 @@ function enviar(){
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_dirSel&&_dirSel.mapaLink?_dirSel.mapaLink:_mapa;
-  var payload={action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,direccion:dir,zona:zona,sku:_color.sku,precio:_color.precio,cantidad:_qty,notas:notas,mapaLink:mapa,vendedorRef:_refV};
+  var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
+  var payload={action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,vendedorRef:_refV};
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok){
-        _ultimaOrden={orden:d.orden,nombre:nom,tel:tel,sku:_color.sku,diseno:_color.nombre+' · '+_color.color,cantidad:_qty,total:(_color.precio*_qty).toFixed(2)};
+        _ultimaOrden={orden:d.orden,nombre:nom,tel:tel,items:_carrito.slice(),total:totalCarrito().toFixed(2)};
         if(ov)ov.style.display='none';
         mostrarExito();
       }else{if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error al registrar. Intenta de nuevo.');}
@@ -774,8 +831,9 @@ function mostrarExito(){
   document.getElementById('ex-orden').textContent=o.orden;
   // Mini resumen de la orden
   document.getElementById('om-contenido').innerHTML=
-    '<div class="om-fila"><span>Producto</span><span>'+esc(o.diseno)+'</span></div>'+
-    '<div class="om-fila"><span>Cantidad</span><span>'+o.cantidad+' unidad(es)</span></div>'+
+    o.items.map(function(it){
+      return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
+    }).join('')+
     '<div class="om-fila"><span>Total</span><span>$'+o.total+'</span></div>'+
     '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>';
   document.getElementById('orden-mini').style.display='block';
@@ -790,7 +848,7 @@ function mostrarExito(){
 // Reinicia el formulario para hacer otro pedido
 function nuevoP(){
   limpiarSesion();
-  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];
+  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];
   document.getElementById('p-tel').value='';
   document.getElementById('ce-box').style.display='none';
   document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';
@@ -798,6 +856,8 @@ function nuevoP(){
   document.getElementById('f-notas').value='';
   document.getElementById('map-mini').style.display='none';
   document.getElementById('qty-card').style.display='none';
+  document.getElementById('btn-agregar-otro').style.display='none';
+  document.getElementById('carrito-wrap').style.display='none';
   document.getElementById('color-sel').classList.remove('show');
   document.getElementById('orden-mini').style.display='none';
   if(_catCargado)renderCat();

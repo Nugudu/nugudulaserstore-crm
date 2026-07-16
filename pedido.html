@@ -277,7 +277,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
   <div id="p3" style="display:none">
     <div class="card"><div class="card-ttl">Resumen de tu pedido</div><div id="resumen"></div></div>
-    <div class="pago-card"><h4>📋 ¿Cómo pagar?</h4><p>Al confirmar tu pedido podrás solicitar los datos por WhatsApp para realizar la transferencia.</p></div>
+    <div class="pago-card"><h4>📋 ¿Cómo pagar?</h4><p>Al confirmar tu pedido te enviaremos los datos bancarios para que puedas realizar la transferencia.<br><strong>Nota importante:</strong> este paso podría tardar hasta 3 minutos mientras el sistema recibe la orden.</p></div>
     <button class="btn-main" id="btn-conf" onclick="enviar()">✓ Confirmar pedido</button>
     <button class="btn-sec" onclick="goP2()">← Editar mis datos</button>
   </div>
@@ -297,14 +297,18 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="om-contenido"></div>
     </div>
 
-    <div class="snote"><strong>Próximo paso:</strong> solicita los datos bancarios por WhatsApp y envíanos el comprobante para confirmar tu pedido.</div>
+    <div class="snote">Pronto recibirás la cuenta bancaria.</div>
 
     <!-- Botón principal: solicitar datos bancarios -->
-    <a class="btn-wa" id="btn-solicitar" href="#" target="_blank">
+    <!-- Oculto temporalmente a pedido de Nuria (prueba) -- se deja intacto
+         en el DOM, solo con display:none, para poder reactivarlo despues
+         quitando ese estilo, sin tener que reconstruir nada. -->
+    <a class="btn-wa" id="btn-solicitar" href="#" target="_blank" style="display:none">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
       Solicitar datos para transferencia
     </a>
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
+    <button class="btn-sec" onclick="salir()">Salir</button>
   </div>
 </div>
 
@@ -320,6 +324,15 @@ var GAS='https://script.google.com/macros/s/AKfycbxXSFbECrtrRPohWOfmU3ZShV5DUEhC
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
+// Codigo de vendedora que comparte su propio link de pedido.html (ej.
+// pedido.html?v=N1). Se lee una sola vez al cargar la pagina y se manda
+// junto con el pedido -- el cliente no ve ni toca nada de esto. Si no viene
+// en la URL, queda vacio y el pedido se guarda como siempre (canal digital
+// organico, sin vendedora asociada).
+var _refV = (function(){
+  try { return (new URLSearchParams(location.search).get('v') || '').trim().toUpperCase(); }
+  catch(e){ return ''; }
+})();
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null;
 
 var SESSION_KEY='ngd_pedido_v1';
@@ -744,7 +757,7 @@ function enviar(){
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_dirSel&&_dirSel.mapaLink?_dirSel.mapaLink:_mapa;
-  var payload={action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,direccion:dir,zona:zona,sku:_color.sku,precio:_color.precio,cantidad:_qty,notas:notas,mapaLink:mapa};
+  var payload={action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,direccion:dir,zona:zona,sku:_color.sku,precio:_color.precio,cantidad:_qty,notas:notas,mapaLink:mapa,vendedorRef:_refV};
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
     .then(function(d){

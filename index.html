@@ -1153,6 +1153,14 @@ function actualizarMapa(direccionTexto){
       frame.src = 'https://maps.google.com/maps?q=' + q + '&output=embed';
       abrir.href = 'https://www.google.com/maps?q=' + q;
       status.textContent = 'Ubicación precisa (LocationIQ).';
+      // Autocompleta la caja "pega coordenadas" SOLO si esta vacia, para no
+      // pisar una coordenada que la persona ya haya pegado a mano -- sigue
+      // siendo 100% editable despues, esto solo la completa por defecto.
+      var gpsBoxAuto = document.getElementById('f-gps');
+      if (gpsBoxAuto && !(gpsBoxAuto.value||'').trim()) {
+        gpsBoxAuto.value = res.lat + ', ' + res.lng;
+        window._mapaLinkGPS = 'https://www.google.com/maps?q=' + q;
+      }
     } else {
       var query = encodeURIComponent(direccionTexto + ', El Salvador');
       frame.src = 'https://maps.google.com/maps?q=' + query + '&output=embed';
@@ -1233,6 +1241,8 @@ function mostrarCoordsMapa(coords){
   document.getElementById('map-status').textContent = '📍 ' + coords.lat + ', ' + coords.lng + ' — Ubicación GPS fijada.';
   document.getElementById('map-wrap').style.display = 'block';
   window._mapaLinkGPS = 'https://www.google.com/maps?q=' + q;
+  var gpsBoxSync = document.getElementById('f-gps');
+  if (gpsBoxSync) gpsBoxSync.value = coords.lat + ', ' + coords.lng;
   // Auto-llenar el campo de dirección con las coordenadas si está vacío,
   // y luego intentar reverse geocoding con Nominatim para obtener una dirección legible.
   var campoDir = document.getElementById('f-direccion');
@@ -1672,9 +1682,19 @@ function abrirEditarOrden(id){
   overlay.innerHTML=html;
   overlay.style.display='flex';
   window._edMapaLink=o.mapaLink||null;
-  if(o.mapaLink){
-    var coordsPrevias=extraerCoordenadas(o.mapaLink);
-    if(coordsPrevias) mostrarCoordsMapaEdit(coordsPrevias);
+  var coordsPrevias = o.mapaLink ? extraerCoordenadas(o.mapaLink) : null;
+  if(coordsPrevias){
+    mostrarCoordsMapaEdit(coordsPrevias);
+  } else if (o.direccion) {
+    // La orden no trae coordenadas guardadas (ej. vino de pedido.html con
+    // solo texto de direccion, sin que LocationIQ encontrara un resultado
+    // exacto en su momento) -- se geocodifica automaticamente al abrir el
+    // modal para completar la caja, pero el campo sigue 100% editable.
+    gasCall({method:'POST', body:{action:'geocodificar', direccion:o.direccion}}, function(err,res){
+      if(!err && res && res.ok && res.lat && res.lng && document.getElementById('ed-gps')){
+        mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng});
+      }
+    });
   }
 }
 function cerrarEditarOrden(){
@@ -1746,11 +1766,14 @@ function aplicarGPSEdit(link){
 }
 function mostrarCoordsMapaEdit(coords){
   var q=coords.lat+','+coords.lng;
-  document.getElementById('ed-map-frame').src='https://maps.google.com/maps?q='+q+'&output=embed';
+  var edGpsFrame=document.getElementById('ed-map-frame'); if(!edGpsFrame) return;
+  edGpsFrame.src='https://maps.google.com/maps?q='+q+'&output=embed';
   document.getElementById('ed-map-abrir').href='https://www.google.com/maps?q='+q;
   document.getElementById('ed-map-status').textContent='📍 '+coords.lat+', '+coords.lng+' — Ubicación GPS fijada.';
   document.getElementById('ed-map-wrap').style.display='block';
   window._edMapaLink='https://www.google.com/maps?q='+q;
+  var edGpsBox=document.getElementById('ed-gps');
+  if(edGpsBox) edGpsBox.value = coords.lat + ', ' + coords.lng;
 }
 function quitarMapaEdit(){
   window._edMapaLink=null;

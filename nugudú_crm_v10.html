@@ -1150,9 +1150,11 @@ function onDireccionInput(){
   }, 700); // espera a que termine de escribir
 }
 function osmLinkURL(lat,lng){
+  lat=parseFloat(lat);lng=parseFloat(lng);
   return 'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lng+'#map=15/'+lat+'/'+lng;
 }
 function osmEmbedURL(lat,lng){
+  lat=parseFloat(lat);lng=parseFloat(lng);
   var o=0.01;
   return 'https://www.openstreetmap.org/export/embed.html?bbox='+(lng-o)+','+(lat-o)+','+(lng+o)+','+(lat+o)+'&layer=mapnik&marker='+lat+','+lng;
 }

@@ -6,6 +6,8 @@
 <title>Nugudú Láser Store — Hacer pedido</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#2D2460;--teal:#1a9e8f;--green:#2e7d52;--amber:#d97706;--coral:#e05c40;--bg:#f4f3fa;--surface:#fff;--border:#e4e1ee;--text:#18152e;--muted:#6b6585;--hint:#9b96b0;--r:14px;--rs:10px}
@@ -154,6 +156,14 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .om-fila{display:flex;gap:8px;font-size:13px;margin-bottom:4px}
 .om-fila span:first-child{color:var(--muted);min-width:80px}
 .om-fila span:last-child{font-weight:600}
+/* Leaflet mapa interactivo */
+.leaflet-map-wrap{margin-top:6px}
+.leaflet-map-wrap .fg label{font-size:11px;color:var(--hint)}
+.leaflet-map-wrap .fg input{font-size:12px!important;background:#f4f3fa!important;cursor:default!important;padding:8px 10px!important}
+#leaflet-map{border-radius:10px;overflow:hidden;border:1.5px solid var(--border);z-index:1}
+#btn-mi-ubicacion{transition:transform .12s ease,opacity .15s}
+#btn-mi-ubicacion:active{transform:scale(.97)}
+#btn-mi-ubicacion:hover{opacity:.9}
 </style>
 </head>
 <body>
@@ -273,6 +283,15 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…"></div>
         <div class="fg">
           <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">📍 Puedes mover el mapa, hacer zoom y cambiar a vista Satélite tocando el ícono dentro del mapa</span></div>
+        </div>
+        <!-- Leaflet mapa interactivo -->
+        <div class="leaflet-map-wrap" id="leaflet-map-wrap" style="display:none">
+          <div id="leaflet-map" style="height:260px"></div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div class="fg" style="flex:1;margin-bottom:0"><label>Latitud</label><input id="latitud" type="text" readonly placeholder="—"></div>
+            <div class="fg" style="flex:1;margin-bottom:0"><label>Longitud</label><input id="longitud" type="text" readonly placeholder="—"></div>
+          </div>
+          <button type="button" id="btn-mi-ubicacion" onclick="obtenerMiUbicacion()">📍 Usar mi ubicación actual</button>
         </div>
       </div>
       <div class="fg"><label>Notas adicionales</label><textarea id="f-notas" placeholder="Referencias, instrucciones especiales, horario disponible…"></textarea></div>
@@ -713,8 +732,7 @@ function elDir(i){
     var coords=extraerLatLngDeLink(_dirSel.mapaLink);
     if(coords){ mostrarMapaEnPunto(coords.lat,coords.lng); }
     else{
-      var q=encodeURIComponent(_dirSel.direccion+', El Salvador');
-      document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
+      document.getElementById('map-fr').src='';
       document.getElementById('map-mini').style.display='block';
     }
   }
@@ -753,9 +771,9 @@ function fijarDireccion(){
 }
 function mostrarBusquedaTexto(v){
   var q=encodeURIComponent(v+', El Salvador');
-  document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
+  document.getElementById('map-fr').src='';
   document.getElementById('map-mini').style.display='block';
-  _mapa='https://www.google.com/maps/search/?api=1&query='+q;
+  _mapa='https://www.openstreetmap.org/search?query='+q;
 }
 // Extrae lat,lng de un link guardado (formato "?q=LAT,LNG"), por si alguna
 // dirección anterior se guardó con coordenadas en vez de texto.
@@ -764,12 +782,15 @@ function extraerLatLngDeLink(link){
   var m=String(link).match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   return m ? {lat:m[1],lng:m[2]} : null;
 }
+function osmEmbed(lat,lng){
+  var o=0.01;
+  return 'https://www.openstreetmap.org/export/embed.html?bbox='+(lng-o)+','+(lat-o)+','+(lng+o)+','+(lat+o)+'&layer=mapnik&marker='+lat+','+lng;
+}
 function mostrarMapaEnPunto(lat,lng){
   lat=parseFloat(lat);lng=parseFloat(lng);
-  var q=lat+','+lng;
-  document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
+  document.getElementById('map-fr').src=osmEmbed(lat,lng);
   document.getElementById('map-mini').style.display='block';
-  _mapa='https://www.google.com/maps?q='+q;
+  _mapa=osmLink(lat,lng);
 }
 // (el link de GPS pegado se removió de este archivo — el mapa se arma
 // siempre desde la dirección escrita a mano, ver onDirInp más abajo)
@@ -882,6 +903,74 @@ function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'smooth'});}
 function showScreen(id){['s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){var el=document.getElementById(sid);if(el)el.style.display='none';});var t=document.getElementById(id);if(t)t.style.display='block';window.scrollTo({top:0});}
 function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
 function hideErr(c){document.getElementById('err-'+c).style.display='none';}
+// ── LEAFLET MAPA INTERACTIVO ──
+var _leafletMap=null,_leafletMarker=null,_leafletInit=false;
+
+function esperarL(){
+  if(typeof L==='undefined'){setTimeout(esperarL,200);return;}
+  iniciarLeaflet();
+}
+function iniciarLeaflet(){
+  if(_leafletInit) return;
+  var wrap=document.getElementById('leaflet-map-wrap');
+  if(!wrap) return;
+  wrap.style.display='block';
+  _leafletInit=true;
+  _leafletMap=L.map('leaflet-map',{zoomControl:true}).setView([13.6929,-89.2182],13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:19
+  }).addTo(_leafletMap);
+  _leafletMarker=L.marker([13.6929,-89.2182],{draggable:true}).addTo(_leafletMap);
+  _leafletMarker.on('dragend',function(e){
+    var p=e.target.getLatLng();
+    actualizarCoordenadasLeaflet(p.lat,p.lng);
+  });
+  _leafletMap.on('click',function(e){
+    _leafletMarker.setLatLng(e.latlng);
+    actualizarCoordenadasLeaflet(e.latlng.lat,e.latlng.lng);
+  });
+  setTimeout(function(){_leafletMap.invalidateSize();},300);
+}
+function osmLink(lat,lng){
+  return 'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lng+'#map=15/'+lat+'/'+lng;
+}
+function actualizarCoordenadasLeaflet(lat,lng){
+  lat=parseFloat(lat).toFixed(6);
+  lng=parseFloat(lng).toFixed(6);
+  document.getElementById('latitud').value=lat;
+  document.getElementById('longitud').value=lng;
+  _mapa=osmLink(lat,lng);
+}
+function actualizarPinLeaflet(lat,lng){
+  if(!_leafletInit) iniciarLeaflet();
+  if(_leafletMap){
+    _leafletMap.setView([lat,lng],15);
+    if(_leafletMarker) _leafletMarker.setLatLng([lat,lng]);
+    actualizarCoordenadasLeaflet(lat,lng);
+  }
+}
+function obtenerMiUbicacion(){
+  if(!navigator.geolocation){showErr('form','Tu navegador no soporta geolocalizaci\u00f3n.');return;}
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      var lat=pos.coords.latitude,lng=pos.coords.longitude;
+      if(!_leafletInit) iniciarLeaflet();
+      if(_leafletMap){
+        _leafletMap.setView([lat,lng],16);
+        if(_leafletMarker) _leafletMarker.setLatLng([lat,lng]);
+        actualizarCoordenadasLeaflet(lat,lng);
+      }
+    },
+    function(){showErr('form','No se pudo obtener tu ubicaci\u00f3n. Verifica los permisos en tu navegador.');},
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
+// Hooks en el flujo existente — envuelven funciones originales sin alterarlas
+var _goP2Orig=goP2;goP2=function(){_goP2Orig();setTimeout(function(){if(document.getElementById('nueva-dir').style.display!=='none')esperarL();},250);};
+var _showNuevaDirOrig=showNuevaDir;showNuevaDir=function(){_showNuevaDirOrig();setTimeout(esperarL,250);};
+var _mostrarMapaOrig=mostrarMapaEnPunto;mostrarMapaEnPunto=function(lat,lng){_mostrarMapaOrig(lat,lng);if(typeof actualizarPinLeaflet==='function')actualizarPinLeaflet(lat,lng);};
+
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 </script>
 </body>

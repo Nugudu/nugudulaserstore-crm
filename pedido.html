@@ -992,7 +992,7 @@ function confirmarPedido(){
           body:JSON.stringify({
             action:'crearEnlacePago',token:API_TOKEN,
             orden:d.orden,monto:total,nombre:nom,email:email,telefono:tel,
-            urlRetorno:window.location.href.split('?')[0]+'?orden='+d.orden
+            urlRetorno:window.location.href.split('?')[0]
           })
         }).then(function(r2){return r2.json();})
         .then(function(wd){
@@ -1000,7 +1000,7 @@ function confirmarPedido(){
             window.location.href=wd.urlEnlace;
           }else{
             btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-            showErr('form','Error al crear enlace de pago. Intenta de nuevo.');
+            showErr('form','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));
           }
         }).catch(function(){
           btn.textContent='✓ Confirmar pedido';btn.disabled=false;
@@ -1183,15 +1183,50 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 // ── INICIO: detectar retorno de Wompi ──
 (function(){
   var qs=new URLSearchParams(window.location.search);
-  var ordenW=qs.get('orden');
-  if(ordenW){
-    // Viene de Wompi (pago con tarjeta)
-    _ultimaOrden={orden:ordenW,nombre:'',tel:'',email:'',items:[],total:'0.00',metodoPago:'tarjeta'};
-    document.getElementById('ex-orden').textContent=ordenW;
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago procesado con éxito. Recibirás la confirmación en tu correo.</div>';
-    document.getElementById('ex-accion-comprobante').style.display='none';
+  var idTransaccion=qs.get('idTransaccion');
+  var hash=qs.get('hash');
+  if(idTransaccion && hash){
+    // Viene de Wompi (enlace de pago) — validar hash antes de mostrar éxito
+    var params={
+      identificadorEnlaceComercio: qs.get('identificadorEnlaceComercio')||'',
+      idTransaccion: idTransaccion,
+      idEnlace: qs.get('idEnlace')||'',
+      monto: qs.get('monto')||'',
+      esAprobada: qs.get('esAprobada')||'',
+      esReal: qs.get('esReal')||'',
+      hash: hash
+    };
+    // Mostrar pantalla de validación
+    document.getElementById('s-exito').style.display='block';
+    document.getElementById('ex-orden').textContent=params.identificadorEnlaceComercio||'...';
+    document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Verificando pago…</p></div>';
     document.getElementById('orden-mini').style.display='none';
-    setTimeout(function(){showScreen('s-exito');},100);
+    document.getElementById('ex-accion-comprobante').style.display='none';
+    document.querySelector('#s-exito .btn-outline-teal').style.display='none';
+    document.querySelector('#s-exito .btn-sec').style.display='none';
+
+    // Validar hash vía GAS
+    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'validarHashWompi',token:API_TOKEN,params:params})
+    }).then(function(r){return r.json();})
+    .then(function(res){
+      if(res.ok && res.esAprobada){
+        // Pago confirmado — mostrar éxito
+        document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Recibirás la confirmación en tu correo.</div>';
+        document.querySelector('#s-exito .btn-outline-teal').style.display='';
+        document.querySelector('#s-exito .btn-sec').style.display='';
+      }else{
+        // Pago fallido o hash inválido
+        var msg=res.error||'El pago no pudo ser verificado.';
+        document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';
+        document.querySelector('#s-exito .btn-outline-teal').style.display='';
+        document.querySelector('#s-exito .btn-sec').style.display='';
+      }
+    }).catch(function(){
+      document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fef6e4;border-color:#f5d88a;color:#92400e">⚠️ No se pudo verificar el pago. Si realizaste la transferencia, contacta a la tienda.</div>';
+      document.querySelector('#s-exito .btn-outline-teal').style.display='';
+      document.querySelector('#s-exito .btn-sec').style.display='';
+    });
   }
 })();
 </script>

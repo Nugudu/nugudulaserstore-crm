@@ -109,6 +109,8 @@ function doGet(e) {
     if (action === 'testGeo')       return respond(geocodificarDireccion(p.dir || ''));
     if (action === 'getConfigOpenWa') return respond(getConfigOpenWa());
     if (action === 'enviarComprobante') return respond(enviarComprobante(p));
+    if (action === 'validarHashWompi')   return respond(validarHashWompi(p));
+    if (action === 'verificarTransaccion') return respond(verificarTransaccionWompi(p.idTransaccion || ''));
     return respond({ error: 'Accion desconocida: ' + action });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -758,18 +760,17 @@ function wompiAutenticar() {
   var cacheExp = parseInt(props.getProperty('WOMPI_TOKEN_EXP') || '0');
   if (cached && Date.now() < cacheExp) return cached;
 
-  var resp = UrlFetchApp.fetch(WOMPPI_BASE + '/oauth/token', {
+  var resp = UrlFetchApp.fetch('https://id.wompi.sv/connect/token', {
     method: 'post',
-    headers: { 'Content-Type': 'application/json' },
-    payload: JSON.stringify({
-      client_id: WOMPPI_APP_ID,
-      client_secret: WOMPPI_API_SECRET,
-      grant_type: 'client_credentials'
-    }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    payload: 'grant_type=client_credentials'
+      + '&client_id=' + encodeURIComponent(WOMPPI_APP_ID)
+      + '&client_secret=' + encodeURIComponent(WOMPPI_API_SECRET)
+      + '&audience=wompi_api',
     muteHttpExceptions: true
   });
   var data = JSON.parse(resp.getContentText());
-  if (!data.access_token) throw new Error('Wompi auth falló: ' + (data.error || resp.getContentText()));
+  if (!data.access_token) throw new Error('Wompi auth falló: ' + (data.error_description || data.error || resp.getContentText()));
   var expiresIn = parseInt(data.expires_in) || 3600;
   props.setProperty('WOMPI_TOKEN', data.access_token);
   props.setProperty('WOMPI_TOKEN_EXP', String(Date.now() + (expiresIn - 60) * 1000));
@@ -779,35 +780,50 @@ function wompiAutenticar() {
 function crearEnlacePago(payload) {
   try {
     var token = wompiAutenticar();
-    var monto = parseInt(Math.round(parseFloat(payload.monto) * 100));
-    if (!monto || monto < 100) return { ok: false, error: 'Monto invalido' };
+    var monto = parseFloat(payload.monto);
+    if (!monto || monto < 0.01) return { ok: false, error: 'Monto invalido' };
     var ref = payload.orden || 'ORD-' + Date.now();
-    var resp = UrlFetchApp.fetch(WOMPPI_BASE + '/v1/payment_links', {
+    var urlWebhook = ScriptApp.getService().getUrl() + '?action=webhookWompi&token=' + encodeURIComponent(API_TOKEN);
+    var resp = UrlFetchApp.fetch('https://api.wompi.sv/EnlacePago', {
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
       },
       payload: JSON.stringify({
-        name: 'Nugudú - ' + ref,
-        description: 'Pago pedido ' + ref,
-        single_use: true,
-        currency: 'USD',
-        amount_in_cents: monto,
-        redirect_url: payload.urlRetorno || '',
-        customer: {
-          email: payload.email || '',
-          full_name: payload.nombre || '',
-          phone: payload.telefono || ''
+        identificadorEnlaceComercio: ref,
+        monto: monto,
+        nombreProducto: 'Nugudú - ' + ref,
+        formaPago: {
+          permitirTarjetaCreditoDebido: true,
+          permitirPagoConPuntoAgricola: false,
+          permitirPagoEnCuotasAgricola: false,
+          permitirPagoEnBitcoin: false,
+          permitePagoQuickPay: false
+        },
+        infoProducto: {
+          descripcionProducto: 'Pago pedido ' + ref
+        },
+        configuracion: {
+          urlRedirect: payload.urlRetorno || '',
+          esMontoEditable: false,
+          esCantidadEditable: false,
+          notificarTransaccionCliente: true,
+          emailsNotificacion: payload.email || '',
+          urlWebhook: urlWebhook
         }
       }),
       muteHttpExceptions: true
     });
-    var data = JSON.parse(resp.getContentText());
-    if (data.data && data.data.url) {
-      return { ok: true, urlEnlace: data.data.url, idEnlace: data.data.id };
+    var texto = resp.getContentText();
+    var data;
+    try { data = JSON.parse(texto); } catch(pe) {
+      return { ok: false, error: 'Respuesta invalida de Wompi (HTTP ' + resp.getResponseCode() + ')' };
     }
-    return { ok: false, error: 'Wompi: ' + JSON.stringify(data) };
+    if (data.urlEnlace) {
+      return { ok: true, urlEnlace: data.urlEnlace, idEnlace: data.idEnlace };
+    }
+    return { ok: false, error: 'Wompi: ' + JSON.stringify(data).substring(0, 500) };
   } catch (err) {
     return { ok: false, error: err.message };
   }
@@ -815,25 +831,84 @@ function crearEnlacePago(payload) {
 
 function webhookWompi(payload) {
   try {
-    var evento = payload.event || '';
-    var data   = payload.data || {};
-    if (evento === 'payment_link.completed') {
-      var ref = data.reference || '';
+    var resultado = payload.ResultadoTransaccion || '';
+    var idEnlace = (payload.EnlacePago && payload.EnlacePago.IdentificadorEnlaceComercio) || '';
+    var montoWompi = parseFloat(payload.Monto) || 0;
+    var idTransaccion = payload.IdTransaccion || '';
+
+    if (resultado === 'ExitosaAprobada' && idEnlace) {
       var ordenes = leerOrdenes();
       for (var i = 0; i < ordenes.length; i++) {
-        if (ordenes[i].orden === ref || String(ordenes[i].id) === ref) {
+        if (ordenes[i].orden === idEnlace) {
           ordenes[i].pendientePago = false;
           ordenes[i].pagoConfirmado = true;
           ordenes[i].pagoMetodo = 'Tarjeta Wompi';
           ordenes[i].pagoFecha = new Date().toISOString();
+          ordenes[i].wompiIdTransaccion = idTransaccion;
           if (!ordenes[i].historial) ordenes[i].historial = [];
-          ordenes[i].historial.push({ estado: 'pagado', fecha: new Date().toISOString(), fuente: 'Wompi Webhook' });
+          ordenes[i].historial.push({
+            estado: 'pagado',
+            fecha: new Date().toISOString(),
+            fuente: 'Wompi Webhook',
+            wompiId: idTransaccion,
+            monto: montoWompi
+          });
           break;
         }
       }
       guardarOrdenes(ordenes);
     }
     return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// Valida el hash HMAC-SHA256 que Wompi agrega a la URL de redirect.
+// El frontend llama a esta funcion antes de mostrar "Pago exitoso".
+function validarHashWompi(params) {
+  try {
+    var identificador = params.identificadorEnlaceComercio || '';
+    var idTransaccion = params.idTransaccion || '';
+    var idEnlace      = params.idEnlace || '';
+    var monto         = params.monto || '';
+    var esAprobada    = params.esAprobada || '';
+    var hashRecibido  = params.hash || '';
+
+    if (!hashRecibido) return { ok: false, error: 'Falta hash' };
+
+    var textoConcat = identificador + idTransaccion + idEnlace + monto;
+    var hashCalculado = Utilities.computeHmacSha256(textoConcat, WOMPPI_API_SECRET);
+
+    if (hashCalculado !== hashRecibido) {
+      return { ok: false, error: 'Hash invalido - posible manipulacion' };
+    }
+
+    return { ok: true, esAprobada: esAprobada === 'true', esReal: params.esReal === 'true' };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// Verifica el estado real de una transaccion consultando la API de Wompi.
+function verificarTransaccionWompi(idTransaccion) {
+  try {
+    var token = wompiAutenticar();
+    var resp = UrlFetchApp.fetch('https://api.wompi.sv/TransaccionCompra/' + idTransaccion, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      muteHttpExceptions: true
+    });
+    var data = JSON.parse(resp.getContentText());
+    return {
+      ok: true,
+      esAprobada: data.esAprobada === true || data.esAprobada === 'true',
+      esReal: data.esReal === true || data.esReal === 'true',
+      monto: data.monto,
+      estado: data.estado || data.ResultadoTransaccion || ''
+    };
   } catch (err) {
     return { ok: false, error: err.message };
   }

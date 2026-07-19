@@ -138,7 +138,7 @@ function doPost(e) {
     if (action === 'saveConfigOpenWa'){ return respond(saveConfigOpenWa(payload)); }
     if (action === 'saveConfigWompi') { return respond(saveConfigWompi(payload)); }
     if (action === 'enviarComprobante'){ return respond(enviarComprobante(payload)); }
-    if (action === 'validarHashWompi') return respond(validarHashWompi(payload));
+    if (action === 'validarHashWompi') return respond(validarHashWompi(payload.params || payload));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });

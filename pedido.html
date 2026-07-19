@@ -444,7 +444,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 </div>
 
 <script>
-var GAS='https://script.google.com/macros/s/AKfycbzwQeCmjoYZxv5h-AmhoRZkaJJddaDp6xbG2x50RFG29gIywZsMCvcCzo7iYv0L8GLh/exec';
+var GAS='https://script.google.com/macros/s/AKfycbxwhYSeiU2KPvJ8Tk9MKyWQzBAWmV2Nlw8yuBBlDLoAkBrOtFYILVNiYKql-9fpBs6e/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
@@ -1041,7 +1041,9 @@ function mostrarExito(){
 
   if(o.metodoPago==='tarjeta'){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago procesado con éxito. Te enviaremos la confirmación a tu correo.</div>';
-    document.getElementById('ex-accion-comprobante').style.display='none';
+    document.getElementById('ex-accion-comprobante').style.display='block';
+    var waMsg=encodeURIComponent('Hola! Ya pagué mi pedido '+o.orden+' con tarjeta. Quiero recibir los datos de mi orden.');
+    document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+waMsg;
   }else{
     document.getElementById('ex-pago-info').innerHTML=
       '<div class="bc-card" style="margin-bottom:0">'+
@@ -1180,15 +1182,29 @@ var _mostrarMapaOrig=mostrarMapaEnPunto;mostrarMapaEnPunto=function(lat,lng){_mo
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+function enviarDatosPorCorreo(orden){
+  var email=prompt('Ingresá tu correo para recibir los datos de tu orden '+orden+':');
+  if(!email||!email.includes('@')) return alert('Correo inválido');
+  document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Enviando datos de la orden…</p></div>';
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'enviarComprobante',token:API_TOKEN,ordenId:orden,via:'email',email:email})
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    if(res.ok) alert('✅ Datos enviados a '+email);
+    else alert('❌ Error: '+(res.error||'No se pudo enviar'));
+  }).catch(function(){alert('❌ Error de conexión');});
+}
+
 // ── INICIO: detectar retorno de Wompi ──
 (function(){
   var qs=new URLSearchParams(window.location.search);
   var idTransaccion=qs.get('idTransaccion');
   if(!idTransaccion) return;
 
+  var orden=qs.get('identificadorEnlaceComercio')||'';
   var hash=qs.get('hash')||'';
   var params={
-    identificadorEnlaceComercio: qs.get('identificadorEnlaceComercio')||'',
+    identificadorEnlaceComercio: orden,
     idTransaccion: idTransaccion,
     idEnlace: qs.get('idEnlace')||'',
     monto: qs.get('monto')||'',
@@ -1216,7 +1232,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
   var sd5=document.getElementById('sd5');
   var sl5=document.getElementById('sl5');
-  if(sd5){sd5.className='step-d act';sd5.textContent='5';}
+  if(sd5){sd5.className='step-d act';sd5.textContent='4';}
   if(sl5)sl5.className='step-l act';
 
   ['p1','p2','p3','p4'].forEach(function(id){
@@ -1224,16 +1240,25 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
   });
 
   document.getElementById('s-exito').style.display='block';
-  document.getElementById('ex-orden').textContent=params.identificadorEnlaceComercio||'...';
+  document.getElementById('ex-orden').textContent=orden||'...';
   document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Verificando pago…</p></div>';
-  document.getElementById('orden-mini').style.display='none';
+  document.getElementById('orden-mini').style.display='block';
+  document.getElementById('om-contenido').innerHTML='<div style="color:var(--muted);font-size:13px">Orden <strong>'+esc(orden)+'</strong> — verificando…</div>';
   document.getElementById('ex-accion-comprobante').style.display='none';
   document.querySelector('#s-exito .btn-outline-teal').style.display='none';
   document.querySelector('#s-exito .btn-sec').style.display='none';
 
   function mostrarExito(){
     if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Recibirás la confirmación en tu correo.</div>';
+    document.getElementById('ex-pago-info').innerHTML=
+      '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Orden <strong>'+esc(orden)+'</strong>.</div>'+
+      '<div style="margin-top:14px;text-align:center">'+
+      '<p style="font-size:13px;color:var(--muted);margin-bottom:10px">¿Cómo querés recibir los datos de tu orden?</p>'+
+      '<a class="btn-wa" id="btn-wa-confirm" href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola, quiero recibir los datos de mi orden '+orden)+'" target="_blank" style="margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px">'+
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>'+
+      'Enviar datos por WhatsApp</a>'+
+      '<button class="btn-outline-teal" onclick="enviarDatosPorCorreo(\''+esc(orden)+'\')" style="margin-top:0;width:100%">📧 Enviar datos por correo</button>'+
+      '</div>';
     document.querySelector('#s-exito .btn-outline-teal').style.display='';
     document.querySelector('#s-exito .btn-sec').style.display='';
   }
@@ -1243,21 +1268,25 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
     document.querySelector('#s-exito .btn-sec').style.display='';
   }
 
+  function verificarTransaccionWompi(){
+    fetch(GAS+'?action=verificarTransaccion&idTransaccion='+encodeURIComponent(idTransaccion)+'&token='+encodeURIComponent(API_TOKEN)+'&_t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.ok && res.esAprobada) mostrarExito();
+      else mostrarError((res.estado||res.error||'El pago no pudo ser verificado con Wompi.'));
+    }).catch(function(){ mostrarError('No se pudo verificar el pago con Wompi.'); });
+  }
+
   if(hash){
     fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'validarHashWompi',token:API_TOKEN,params:params})
     }).then(function(r){return r.json();})
     .then(function(res){
-      if(res.ok && res.esAprobada) mostrarExito();
+      if(res.ok && res.esAprobada) verificarTransaccionWompi();
       else mostrarError(res.error||'El pago no pudo ser verificado.');
     }).catch(function(){ mostrarError('No se pudo verificar el pago.'); });
   }else{
-    fetch(GAS+'?action=verificarTransaccion&idTransaccion='+encodeURIComponent(idTransaccion)+'&token='+encodeURIComponent(API_TOKEN)+'&_t='+Date.now())
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.ok && res.esAprobada) mostrarExito();
-      else mostrarError((res.estado||res.error||'El pago no pudo ser verificado.'));
-    }).catch(function(){ mostrarError('No se pudo verificar el pago.'); });
+    verificarTransaccionWompi();
   }
 })();
 </script>

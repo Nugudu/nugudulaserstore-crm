@@ -111,6 +111,25 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .pago-card{background:#fef6e4;border:1px solid #f5d88a;border-radius:var(--rs);padding:13px;margin-bottom:12px}
 .pago-card h4{font-size:13px;font-weight:700;color:#92400e;margin-bottom:5px}
 .pago-card p{font-size:13px;color:#78350f;line-height:1.6}
+/* Método de pago */
+.mp-opts{display:flex;flex-direction:column;gap:8px}
+.mp-opt{display:flex;align-items:center;gap:12px;padding:12px;border:2px solid var(--border);border-radius:var(--rs);cursor:pointer;background:#fff;transition:all .15s}
+.mp-opt.sel{border-color:var(--navy);background:#f0eefb}
+.mp-opt .mp-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.mp-opt.sel .mp-radio{border-color:var(--navy)}
+.mp-opt.sel .mp-radio.chk:after,.mp-opt.sel .mp-radio:after{content:'';width:10px;height:10px;border-radius:50%;background:var(--navy)}
+.mp-info{flex:1}
+.mp-nombre{font-size:14px;font-weight:600}
+.mp-desc{font-size:11px;color:var(--muted);margin-top:1px}
+/* Banco card */
+.bc-card{background:var(--surface);border:2px solid var(--teal);border-radius:var(--rs);padding:16px;margin-bottom:12px;text-align:center}
+.bc-banco{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.bc-tipo{font-size:12px;color:var(--muted);margin-top:2px}
+.bc-cuenta{font-size:22px;font-weight:800;color:var(--navy);margin:8px 0;letter-spacing:3px;font-family:'DM Mono',monospace}
+.bc-titular{font-size:13px;color:var(--text);font-weight:600}
+.bc-monto{font-size:15px;color:var(--navy);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.alert-info{background:#eef2ff;border:1px solid #c7d2fe;border-radius:var(--rs);padding:12px;font-size:13px;color:#312e81;line-height:1.6;margin-bottom:12px}
+.hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .btn-main:disabled{opacity:.5;cursor:not-allowed}
 .btn-sec{width:100%;padding:12px;background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;cursor:pointer;margin-top:8px}
@@ -222,7 +241,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="step-line" id="sl-1"></div>
     <div class="step"><div class="step-d" id="sd2">2</div><div class="step-l" id="sl2">Mis datos</div></div>
     <div class="step-line" id="sl-2"></div>
-    <div class="step"><div class="step-d" id="sd3">3</div><div class="step-l" id="sl3">Confirmar</div></div>
+    <div class="step"><div class="step-d" id="sd3">3</div><div class="step-l" id="sl3">Pago</div></div>
+    <div class="step-line" id="sl-3"></div>
+    <div class="step" id="step4-wrap"><div class="step-d" id="sd4">4</div><div class="step-l" id="sl4">Transferencia</div></div>
+    <div class="step-line" id="sl-4"></div>
+    <div class="step"><div class="step-d" id="sd5">5</div><div class="step-l" id="sl5">Confirmar</div></div>
   </div>
   <div id="err-form" class="err-box"></div>
 
@@ -302,9 +325,84 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
   <div id="p3" style="display:none">
     <div class="card"><div class="card-ttl">Resumen de tu pedido</div><div id="resumen"></div></div>
-    <div class="pago-card"><h4>📋 ¿Cómo pagar?</h4><p>Al confirmar tu pedido te enviaremos los datos bancarios a WhatsApp para que puedas realizar la transferencia.<br><strong>Nota importante:</strong> este paso podría tardar hasta 3 minutos mientras el sistema recibe la orden.</p></div>
-    <button class="btn-main" id="btn-conf" onclick="enviar()">✓ Confirmar pedido</button>
+
+    <div class="card">
+      <div class="card-ttl">Elige cómo pagar</div>
+      <div class="mp-opts">
+        <label class="mp-opt" id="mp-tarjeta" onclick="selMetodoPago('tarjeta')">
+          <div class="mp-radio"></div>
+          <div class="mp-info">
+            <div class="mp-nombre">Pagar con tarjeta</div>
+            <div class="mp-desc">Débito o crédito — Pago seguro vía Wompi</div>
+          </div>
+        </label>
+        <label class="mp-opt" id="mp-transferencia" onclick="selMetodoPago('transferencia')">
+          <div class="mp-radio"></div>
+          <div class="mp-info">
+            <div class="mp-nombre">Transferencia bancaria</div>
+            <div class="mp-desc">Banco Agrícola — Datos en pantalla</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl">Recibir comprobante</div>
+      <div class="fg"><label>Tu correo electrónico</label><input type="email" id="f-email" placeholder="correo@ejemplo.com" autocomplete="email"></div>
+      <div class="hint">Lo usaremos para enviarte tu factura y estado del pedido. Si no tienes, lo recibirás por WhatsApp.</div>
+    </div>
+
+    <button class="btn-main" id="btn-conf" onclick="confirmarPedido()">✓ Confirmar pedido</button>
     <button class="btn-sec" onclick="goP2()">← Editar mis datos</button>
+  </div>
+
+  <!-- P4: Datos bancarios (solo para transferencia) -->
+  <div id="p4" style="display:none">
+    <div class="card">
+      <div class="card-ttl">Datos para transferencia</div>
+      <div class="bc-card">
+        <div class="bc-banco">Banco Agrícola</div>
+        <div class="bc-tipo">Cuenta de ahorro</div>
+        <div class="bc-cuenta">3008410011</div>
+        <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
+        <div class="bc-monto">Monto: <strong id="p4-monto">$0.00</strong></div>
+      </div>
+      <div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante aquí abajo.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl">Enviar comprobante</div>
+      <div class="hint" style="margin-bottom:10px">¿Cómo quieres enviar tu comprobante de pago?</div>
+      <div class="mp-opts">
+        <label class="mp-opt sel" id="cp-wa" onclick="selComprobanteVia('wa')">
+          <div class="mp-radio chk"></div>
+          <div class="mp-info">
+            <div class="mp-nombre">WhatsApp</div>
+            <div class="mp-desc">Envía la foto desde tu WhatsApp</div>
+          </div>
+        </label>
+        <label class="mp-opt" id="cp-email" onclick="selComprobanteVia('email')">
+          <div class="mp-radio"></div>
+          <div class="mp-info">
+            <div class="mp-nombre">Correo electrónico</div>
+            <div class="mp-desc" id="cp-email-desc">Envía a nugudulasersv@gmail.com</div>
+          </div>
+        </label>
+      </div>
+      <div id="cp-accion">
+        <a class="btn-wa" id="btn-wa-comprobante" href="#" target="_blank">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
+          Enviar comprobante por WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center">
+      <p style="font-size:13px;color:var(--muted);line-height:1.6">¿Ya realizaste la transferencia?<br>Confirma tu pedido y te notificaremos cuando lo recibamos.</p>
+      <button class="btn-outline-teal" onclick="irAExito()" style="margin-top:8px;width:100%">✓ Ya transferí — Confirmar</button>
+    </div>
+
+    <button class="btn-sec" onclick="goP3()">← Volver a método de pago</button>
   </div>
 </div>
 
@@ -322,16 +420,17 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="om-contenido"></div>
     </div>
 
-    <div class="snote">Pronto recibirás la cuenta bancaria.</div>
+    <!-- Información de pago (cambia según método) -->
+    <div id="ex-pago-info"></div>
 
-    <!-- Botón principal: solicitar datos bancarios -->
-    <!-- Oculto temporalmente a pedido de Nuria (prueba) -- se deja intacto
-         en el DOM, solo con display:none, para poder reactivarlo despues
-         quitando ese estilo, sin tener que reconstruir nada. -->
-    <a class="btn-wa" id="btn-solicitar" href="#" target="_blank" style="display:none">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
-      Solicitar datos para transferencia
-    </a>
+    <!-- Acción enviar comprobante (solo transferencia) -->
+    <div id="ex-accion-comprobante" style="display:none">
+      <a class="btn-wa" id="btn-wa-exito" href="#" target="_blank">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
+        Enviar comprobante por WhatsApp
+      </a>
+    </div>
+
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
     <button class="btn-sec" onclick="salir()">Salir</button>
   </div>
@@ -796,7 +895,34 @@ function mostrarMapaEnPunto(lat,lng){
 // (el link de GPS pegado se removió de este archivo — el mapa se arma
 // siempre desde la dirección escrita a mano, ver onDirInp más abajo)
 
-// ── PASO 3 ──
+// ── PASO 3: REVISAR + MÉTODO DE PAGO ──
+var _metodoPago='transferencia'; // 'transferencia' | 'tarjeta'
+var _comprobanteVia='wa'; // 'wa' | 'email'
+
+function selMetodoPago(m){
+  _metodoPago=m;
+  ['mp-tarjeta','mp-transferencia'].forEach(function(id){
+    document.getElementById(id).classList.toggle('sel',id==='mp-'+m);
+  });
+}
+
+function selComprobanteVia(v){
+  _comprobanteVia=v;
+  ['cp-wa','cp-email'].forEach(function(id){
+    document.getElementById(id).classList.toggle('sel',id==='cp-'+v);
+  });
+  var btnWrap=document.getElementById('cp-accion');
+  if(v==='wa'){
+    btnWrap.innerHTML='<a class="btn-wa" id="btn-wa-comprobante" href="#" target="_blank">'+
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>'+
+      'Enviar comprobante por WhatsApp</a>';
+  }else{
+    btnWrap.innerHTML='<p style="font-size:13px;color:var(--muted);margin-bottom:8px">Envía tu comprobante a:</p>'+
+      '<p style="font-size:14px;font-weight:600;color:var(--navy)">nugudulasersv@gmail.com</p>'+
+      '<p style="font-size:12px;color:var(--muted);margin-top:4px">Indica tu número de orden en el asunto.</p>';
+  }
+}
+
 function goP3(){
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim();
@@ -821,13 +947,9 @@ function goP3(){
 }
 function rf(l,v){return '<div class="res-fila"><span class="res-lbl">'+l+'</span><span class="res-val">'+v+'</span></div>';}
 
-// ── ENVIAR ──
-function enviar(){
-  var btn=document.getElementById('btn-conf');btn.textContent='Enviando…';btn.disabled=true;
-  // Reacción inmediata al toque: se muestra el overlay de "confirmando" al
-  // instante, sin esperar la respuesta del servidor, para que se sienta
-  // instantáneo aunque el guardado real tome uno o dos segundos más.
-  var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
+// ── CONFIRMAR PEDIDO ──
+function confirmarPedido(){
+  var email=(document.getElementById('f-email').value||'').trim();
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
@@ -836,34 +958,107 @@ function enviar(){
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_dirSel&&_dirSel.mapaLink?_dirSel.mapaLink:_mapa;
   var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
-  var payload={action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,vendedorRef:_refV};
+  var total=totalCarrito().toFixed(2);
+
+  if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}
+  hideErr('form');
+
+  var btn=document.getElementById('btn-conf');btn.textContent='Procesando…';btn.disabled=true;
+  var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
+
+  var payload={
+    action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,
+    direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
+    vendedorRef:_refV,email:email,metodoPago:_metodoPago
+  };
+
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok){
-        _ultimaOrden={orden:d.orden,nombre:nom,tel:tel,items:_carrito.slice(),total:totalCarrito().toFixed(2)};
-        if(ov)ov.style.display='none';
-        mostrarExito();
-      }else{if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error al registrar. Intenta de nuevo.');}
-    }).catch(function(){if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error de conexión. Verifica tu internet.');});
+      if(!d.ok){
+        if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;
+        showErr('form','Error al registrar. Intenta de nuevo.');
+        return;
+      }
+      _ultimaOrden={
+        orden:d.orden,nombre:nom,tel:tel,email:email,
+        items:_carrito.slice(),total:total,metodoPago:_metodoPago
+      };
+      if(ov)ov.style.display='none';
+
+      if(_metodoPago==='tarjeta'){
+        btn.textContent='Redirigiendo a Wompi…';
+        fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+          body:JSON.stringify({
+            action:'crearEnlacePago',token:API_TOKEN,
+            orden:d.orden,monto:total,nombre:nom,email:email,telefono:tel,
+            urlRetorno:window.location.href.split('?')[0]+'?orden='+d.orden
+          })
+        }).then(function(r2){return r2.json();})
+        .then(function(wd){
+          if(wd.ok&&wd.urlEnlace){
+            window.location.href=wd.urlEnlace;
+          }else{
+            btn.textContent='✓ Confirmar pedido';btn.disabled=false;
+            showErr('form','Error al crear enlace de pago. Intenta de nuevo.');
+          }
+        }).catch(function(){
+          btn.textContent='✓ Confirmar pedido';btn.disabled=false;
+          showErr('form','Error de conexión con Wompi. Intenta de nuevo.');
+        });
+      }else{
+        // Transferencia bancaria → paso 4
+        goP4();
+      }
+    }).catch(function(){
+      if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;
+      showErr('form','Error de conexión. Verifica tu internet.');
+    });
+}
+
+// ── PASO 4: DATOS BANCARIOS ──
+function goP4(){
+  var o=_ultimaOrden;
+  document.getElementById('p4-monto').textContent='$'+o.total;
+  setPaso(4);window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function irAExito(){
+  mostrarExito();
 }
 
 function mostrarExito(){
   var o=_ultimaOrden;
   document.getElementById('ex-orden').textContent=o.orden;
-  // Mini resumen de la orden
   document.getElementById('om-contenido').innerHTML=
     o.items.map(function(it){
       return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
     }).join('')+
-    '<div class="om-fila"><span>Total</span><span>$'+o.total+'</span></div>'+
-    '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>';
+    '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
+    '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
+    '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':'Transferencia bancaria')+'</span></div>';
   document.getElementById('orden-mini').style.display='block';
-  // Botón: solicitar datos bancarios (no comprobante — todavía no ha pagado)
-  var waNum=o.tel.replace(/\D/g,'');
-  if(waNum.length<8)waNum=WA; // fallback al número de la tienda
-  var msg=encodeURIComponent('Hola! Acabo de registrar mi pedido '+o.orden+' y quisiera los datos para realizar la transferencia. Gracias.');
-  document.getElementById('btn-solicitar').href='https://wa.me/'+WA+'?text='+msg;
+
+  if(o.metodoPago==='tarjeta'){
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago procesado con éxito. Te enviaremos la confirmación a tu correo.</div>';
+    document.getElementById('ex-accion-comprobante').style.display='none';
+  }else{
+    document.getElementById('ex-pago-info').innerHTML=
+      '<div class="bc-card" style="margin-bottom:0">'+
+      '<div class="bc-banco">Banco Agrícola</div>'+
+      '<div class="bc-tipo">Cuenta de ahorro</div>'+
+      '<div class="bc-cuenta">3008410011</div>'+
+      '<div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>'+
+      '<div class="bc-monto">Monto: <strong>$'+o.total+'</strong></div></div>'+
+      '<div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante.</div>';
+    document.getElementById('ex-accion-comprobante').style.display='block';
+    // WhatsApp link
+    var waNum=o.tel.replace(/\D/g,'');
+    if(waNum.length<8)waNum=WA;
+    var msg=encodeURIComponent('Hola! Adjunto comprobante de pago de mi pedido '+o.orden+'.');
+    document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+msg;
+  }
+
   showScreen('s-exito');window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -871,37 +1066,47 @@ function mostrarExito(){
 function nuevoP(){
   limpiarSesion();
   _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];
+  _metodoPago='transferencia';_comprobanteVia='wa';
   document.getElementById('p-tel').value='';
   document.getElementById('ce-box').style.display='none';
   document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';
   document.getElementById('f-dir').value='';document.getElementById('f-zona').value='';
   document.getElementById('f-notas').value='';
+  document.getElementById('f-email').value='';
   document.getElementById('map-mini').style.display='none';
   document.getElementById('qty-card').style.display='none';
   document.getElementById('btn-agregar-otro').style.display='none';
   document.getElementById('carrito-wrap').style.display='none';
   document.getElementById('color-sel').classList.remove('show');
   document.getElementById('orden-mini').style.display='none';
+  document.getElementById('ex-accion-comprobante').style.display='none';
+  document.getElementById('ex-pago-info').innerHTML='';
   if(_catCargado)renderCat();
   showScreen('s-phone');hideErr('phone');hideErr('form');
 }
 
 // ── NAVEGACIÓN ──
 function setPaso(n){
-  [1,2,3].forEach(function(i){
-    var d=document.getElementById('sd'+i),l=document.getElementById('sl'+i);
-    d.className='step-d';l.className='step-l';
+  var maxPaso=_metodoPago==='tarjeta'?4:5;
+  [1,2,3,4,5].forEach(function(i){
+    var d=document.getElementById('sd'+i);if(!d)return;
+    var l=document.getElementById('sl'+i);
+    d.className='step-d';if(l)l.className='step-l';
     if(i<n){d.classList.add('done');d.textContent='✓';}
-    else if(i===n){d.classList.add('act');d.textContent=i;l.classList.add('act');}
+    else if(i===n){d.classList.add('act');d.textContent=i;if(l)l.classList.add('act');}
     else{d.textContent=i;}
-    if(i<3){var ln=document.getElementById('sl-'+i);if(i<n)ln.classList.add('done');else ln.classList.remove('done');}
+    if(l&&i<maxPaso){
+      var ln=document.getElementById('sl-'+i);
+      if(ln){if(i<n)ln.classList.add('done');else ln.classList.remove('done');}
+    }
   });
   document.getElementById('p1').style.display=n===1?'block':'none';
   document.getElementById('p2').style.display=n===2?'block':'none';
   document.getElementById('p3').style.display=n===3?'block':'none';
+  document.getElementById('p4').style.display=n===4?'block':'none';
 }
 function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'smooth'});}
-function showScreen(id){['s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){var el=document.getElementById(sid);if(el)el.style.display='none';});var t=document.getElementById(id);if(t)t.style.display='block';window.scrollTo({top:0});}
+function showScreen(id){['s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){var el=document.getElementById(sid);if(el)el.style.display='none';});var t=document.getElementById(id);if(t)t.style.display='block';window.scrollTo({top:0});if(id==='s-form'){document.getElementById('steps').style.display='flex';}else{var st=document.getElementById('steps');if(st)st.style.display='none';}}
 function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
 function hideErr(c){document.getElementById('err-'+c).style.display='none';}
 // ── LEAFLET MAPA INTERACTIVO ──
@@ -974,6 +1179,21 @@ var _showNuevaDirOrig=showNuevaDir;showNuevaDir=function(){_showNuevaDirOrig();s
 var _mostrarMapaOrig=mostrarMapaEnPunto;mostrarMapaEnPunto=function(lat,lng){_mostrarMapaOrig(lat,lng);if(typeof actualizarPinLeaflet==='function')actualizarPinLeaflet(lat,lng);};
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── INICIO: detectar retorno de Wompi ──
+(function(){
+  var qs=new URLSearchParams(window.location.search);
+  var ordenW=qs.get('orden');
+  if(ordenW){
+    // Viene de Wompi (pago con tarjeta)
+    _ultimaOrden={orden:ordenW,nombre:'',tel:'',email:'',items:[],total:'0.00',metodoPago:'tarjeta'};
+    document.getElementById('ex-orden').textContent=ordenW;
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago procesado con éxito. Recibirás la confirmación en tu correo.</div>';
+    document.getElementById('ex-accion-comprobante').style.display='none';
+    document.getElementById('orden-mini').style.display='none';
+    setTimeout(function(){showScreen('s-exito');},100);
+  }
+})();
 </script>
 </body>
 </html>

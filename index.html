@@ -223,6 +223,8 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('analytics')" id="nav-analytics"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
   <div class="nav" onclick="go('reportes')" id="nav-reportes"><i class="fa-solid fa-calendar-days"></i> Reportes</div>
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
+  <div class="sb-sec">Configuración</div>
+  <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
   <div class="sb-pdf"><button class="btn btn-gold" style="width:100%;justify-content:center" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button></div>
   <div class="sb-foot">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
@@ -564,9 +566,67 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
+    <!-- OpenWa Config -->
+    <div id="panel-openwa" class="panel">
+      <div class="ph-row">
+        <div><h2>OpenWa / WhatsApp</h2><p>Configuración del envío automático de comprobantes por WhatsApp.</p></div>
+        <button class="btn btn-primary btn-sm" onclick="guardarConfigOpenWa()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-ttl">Estado</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">Envío automático por API</div>
+            <div style="font-size:12px;color:var(--muted)">Al activarlo, los comprobantes de pago se enviarán automáticamente desde una API de WhatsApp. Si está desactivado, se usará un enlace manual de wa.me.</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="openwa-activo" onchange="onToggleOpenWa()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="openwa-fields" style="opacity:.5;pointer-events:none">
+        <div class="card">
+          <div class="card-ttl">API OpenWa</div>
+          <div class="fg"><label>URL de la API</label><input type="url" id="openwa-api-url" placeholder="https://tuservicio.com/api"></div>
+          <div class="fg"><label>API Key</label><input type="password" id="openwa-api-key" placeholder="••••••••"></div>
+          <div class="fg"><label>Número de la tienda (receptor)</label><input type="text" id="openwa-numero" placeholder="503XXXXXXXXX"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-ttl">Información</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.7">
+            <p>OpenWa permite enviar mensajes de WhatsApp automáticamente desde el servidor sin necesidad de que nadie abra WhatsApp. Cuando un cliente sube su comprobante de pago:</p>
+            <ul style="padding-left:18px;margin-top:8px">
+              <li><strong>Si OpenWa está activo</strong> — el comprobante se envía automáticamente a tu WhatsApp vía API.</li>
+              <li><strong>Si está inactivo</strong> — el cliente ve un botón manual <code>wa.me</code> para enviarlo él mismo.</li>
+            </ul>
+            <p style="margin-top:10px">Plataformas gratuitas recomendadas (ver <code>CONTEXTO_NUGUDU_CRM.md</code>):</p>
+            <ul style="padding-left:18px;margin-top:4px">
+              <li><a href="https://whatsapp.com/business" target="_blank">WhatsApp Business API</a> (oficial)</li>
+              <li><a href="https://evolution-api.com" target="_blank">Evolution API</a> (self-hosted)</li>
+              <li><a href="https://whatsapp-chat-api.com" target="_blank">whatsapp-chat-api.com</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
+
+<style>
+/* Toggle switch */
+.toggle-wrap{position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0}
+.toggle-wrap input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:26px;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle-wrap input:checked+.toggle-slider{background:var(--teal)}
+.toggle-wrap input:checked+.toggle-slider:before{transform:translateX(22px)}
+</style>
 
 <script>
 // ═══════════════════════════════════════════════
@@ -705,7 +765,8 @@ var PANELS  = {
   inventario:   ['Inventario','Productos vendidos por SKU'],
   analytics:    ['Analytics','Productos más vendidos y canales'],
   reportes:     ['Reportes','Análisis por rango de fechas'],
-  registroventa:['Registro de venta','Genera y comparte con tus clientes']
+  registroventa:['Registro de venta','Genera y comparte con tus clientes'],
+  openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes']
 };
 var KEY  = 'ngd_crm_v10';
 var GAS  = 'https://script.google.com/macros/s/AKfycbxXSFbECrtrRPohWOfmU3ZShV5DUEhC2xIlFGWEPL4ur60qpvzYRi7FT1neL1qoFT_m/exec';
@@ -900,6 +961,53 @@ function go(name){
   if(name==='registroventa'){ cerrarInv(); renderInvList(); }
   if(name==='tracking')  { document.getElementById('track-list').innerHTML=''; document.getElementById('track-detail').style.display='none'; document.getElementById('track-q').value=''; }
   if(name==='repartidor' && _repCodigo){ renderRepDash(); }
+  if(name==='openwa'){ cargarConfigOpenWa(); }
+}
+
+// ── OPENWA CONFIG ──
+function onToggleOpenWa(){
+  var active=document.getElementById('openwa-activo').checked;
+  document.getElementById('openwa-fields').style.opacity=active?'1':'.5';
+  document.getElementById('openwa-fields').style.pointerEvents=active?'':'none';
+}
+
+function cargarConfigOpenWa(){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET',GAS+'?action=getConfigOpenWa&token='+encodeURIComponent(API_TOKEN));
+  xhr.onload=function(){
+    try{
+      var d=JSON.parse(xhr.responseText);
+      if(d.ok){
+        document.getElementById('openwa-activo').checked=d.activo;
+        document.getElementById('openwa-api-url').value=d.apiUrl||'';
+        document.getElementById('openwa-api-key').value=d.apiKey||'';
+        document.getElementById('openwa-numero').value=d.numeroTienda||'';
+        onToggleOpenWa();
+      }
+    }catch(e){}
+  };
+  xhr.send();
+}
+
+function guardarConfigOpenWa(){
+  var payload={
+    action:'saveConfigOpenWa',token:API_TOKEN,
+    activo:document.getElementById('openwa-activo').checked,
+    apiUrl:document.getElementById('openwa-api-url').value.trim(),
+    apiKey:document.getElementById('openwa-api-key').value.trim(),
+    numeroTienda:document.getElementById('openwa-numero').value.trim()
+  };
+  var btn=document.querySelector('#panel-openwa .btn-primary');
+  btn.textContent='Guardando…';btn.disabled=true;
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      btn.textContent='¡Guardado!';
+      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
+    }).catch(function(){
+      btn.textContent='Error';
+      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
+    });
 }
 
 // Lleva a "Nueva Venta" con el foco listo en el campo de SKU,

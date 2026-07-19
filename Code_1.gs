@@ -36,6 +36,7 @@ var WOMPI_API_URL  = 'https://api.wompi.sv';
 
 // Cache del spreadsheet abierto durante una misma ejecucion. SHEET_ORDENES y
 // SHEET_CATALOGO son en realidad el MISMO spreadsheet, asi que sin esto
+
 // guardarPedidoWeb lo abria hasta 4 veces seguidas (leerCatalogo, leerOrdenes,
 // guardarOrdenes, descontarStock), cada apertura con su propia latencia de
 // red — esto es lo que hacia sentir lento el boton "Confirmar pedido". Con el

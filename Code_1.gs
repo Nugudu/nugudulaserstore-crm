@@ -758,6 +758,34 @@ function respond(data) {
 
 // ── WOMPI ──────────────────────────────────────────────────────
 
+// FUNCIÓN DE PRUEBA — ejecutar desde GAS para verificar auth
+function testWompiAuth() {
+  Logger.log('=== TEST WOMPI AUTH ===');
+  Logger.log('App ID: [' + WOMPPI_APP_ID + ']');
+  Logger.log('Secret: [' + WOMPPI_API_SECRET + ']');
+  Logger.log('Auth URL: ' + WOMPI_AUTH_URL);
+
+  // Limpiar token cacheado
+  PropertiesService.getScriptProperties().deleteProperty('WOMPI_TOKEN');
+  PropertiesService.getScriptProperties().deleteProperty('WOMPI_TOKEN_EXP');
+
+  var resp = UrlFetchApp.fetch(WOMPI_AUTH_URL, {
+    method: 'post',
+    contentType: 'application/x-www-form-urlencoded',
+    payload: {
+      grant_type: 'client_credentials',
+      client_id: WOMPPI_APP_ID,
+      client_secret: WOMPPI_API_SECRET,
+      audience: 'wompi_api'
+    },
+    muteHttpExceptions: true
+  });
+  Logger.log('Status: ' + resp.getResponseCode());
+  Logger.log('Response Headers: ' + JSON.stringify(resp.getHeaders()));
+  Logger.log('Response Body: ' + resp.getContentText());
+  Logger.log('=== FIN TEST ===');
+}
+
 function wompiAutenticar() {
   var props = PropertiesService.getScriptProperties();
   var cached = props.getProperty('WOMPI_TOKEN');

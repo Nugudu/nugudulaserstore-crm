@@ -766,15 +766,19 @@ function wompiAutenticar() {
 
   var resp = UrlFetchApp.fetch(WOMPI_AUTH_URL, {
     method: 'post',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    payload: 'grant_type=client_credentials'
-      + '&client_id=' + encodeURIComponent(WOMPPI_APP_ID)
-      + '&client_secret=' + encodeURIComponent(WOMPPI_API_SECRET)
-      + '&audience=wompi_api',
+    contentType: 'application/x-www-form-urlencoded',
+    payload: {
+      grant_type: 'client_credentials',
+      client_id: WOMPPI_APP_ID,
+      client_secret: WOMPPI_API_SECRET,
+      audience: 'wompi_api'
+    },
     muteHttpExceptions: true
   });
-  var data = JSON.parse(resp.getContentText());
-  if (!data.access_token) throw new Error('Wompi auth falló: ' + (data.error_description || data.error || resp.getContentText()));
+  var raw = resp.getContentText();
+  Logger.log('[WOMPI AUTH] Status: ' + resp.getResponseCode() + ' | Body: ' + raw);
+  var data = JSON.parse(raw);
+  if (!data.access_token) throw new Error('Wompi auth falló: ' + raw);
   var expiresIn = parseInt(data.expires_in) || 3600;
   props.setProperty('WOMPI_TOKEN', data.access_token);
   props.setProperty('WOMPI_TOKEN_EXP', String(Date.now() + (expiresIn - 60) * 1000));

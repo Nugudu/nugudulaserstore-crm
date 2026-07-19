@@ -26,10 +26,13 @@ var LOCATIONIQ_KEY   = 'pk.566487b350cf28d6d4744b6bb40266aa';
 // mas vendedoras aca es un solo cambio, en esta lista nada mas.
 var CODIGOS_VENDEDORAS_WEB = ['N1', 'N2', 'N4'];
 
-// WOMPI — credenciales de sandbox
-var WOMPPI_APP_ID    = '1548f01b4b-1ee8-4f98-8613-2acbd81d8021';
+// WOMPI — credenciales (obtenidas de panel.wompi.sv → tu negocio → App ID / API Secret)
+var WOMPPI_APP_ID     = '1548f01b4b-1ee8-4f98-8613-2acbd81d8021';
 var WOMPPI_API_SECRET = '48f01b4b-1ee8-4f98-8613-2acbd81d8021';
-var WOMPPI_BASE      = 'https://sandbox.wompi.sv';
+// URLs fijas de la API — el modo sandbox/producción se controla desde
+// panel.wompi.sv (flag "estaProductivo" del negocio), NO con la URL.
+var WOMPI_AUTH_URL = 'https://id.wompi.sv/connect/token';
+var WOMPI_API_URL  = 'https://api.wompi.sv';
 
 // Cache del spreadsheet abierto durante una misma ejecucion. SHEET_ORDENES y
 // SHEET_CATALOGO son en realidad el MISMO spreadsheet, asi que sin esto
@@ -760,7 +763,7 @@ function wompiAutenticar() {
   var cacheExp = parseInt(props.getProperty('WOMPI_TOKEN_EXP') || '0');
   if (cached && Date.now() < cacheExp) return cached;
 
-  var resp = UrlFetchApp.fetch('https://id.wompi.sv/connect/token', {
+  var resp = UrlFetchApp.fetch(WOMPI_AUTH_URL, {
     method: 'post',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     payload: 'grant_type=client_credentials'
@@ -784,7 +787,7 @@ function crearEnlacePago(payload) {
     if (!monto || monto < 0.01) return { ok: false, error: 'Monto invalido' };
     var ref = payload.orden || 'ORD-' + Date.now();
     var urlWebhook = ScriptApp.getService().getUrl() + '?action=webhookWompi&token=' + encodeURIComponent(API_TOKEN);
-    var resp = UrlFetchApp.fetch('https://api.wompi.sv/EnlacePago', {
+    var resp = UrlFetchApp.fetch(WOMPI_API_URL + '/EnlacePago', {
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
@@ -894,7 +897,7 @@ function validarHashWompi(params) {
 function verificarTransaccionWompi(idTransaccion) {
   try {
     var token = wompiAutenticar();
-    var resp = UrlFetchApp.fetch('https://api.wompi.sv/TransaccionCompra/' + idTransaccion, {
+    var resp = UrlFetchApp.fetch(WOMPI_API_URL + '/TransaccionCompra/' + idTransaccion, {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json'

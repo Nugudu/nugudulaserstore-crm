@@ -1282,8 +1282,8 @@ function enviarDatosPorCorreo(orden){
       body:JSON.stringify({action:'validarHashWompi',token:API_TOKEN,params:params})
     }).then(function(r){return r.json();})
     .then(function(res){
-      if(res.ok && res.esAprobada) verificarTransaccionWompi();
-      else mostrarError(res.error||'El pago no pudo ser verificado.');
+      if(res.ok) verificarTransaccionWompi();
+      else mostrarError(res.error||'El hash no pudo ser validado.');
     }).catch(function(){ mostrarError('No se pudo verificar el pago.'); });
   }else{
     verificarTransaccionWompi();

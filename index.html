@@ -225,6 +225,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
   <div class="sb-sec">Configuración</div>
   <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
+  <div class="nav" onclick="go('wompi')" id="nav-wompi"><i class="fa-solid fa-credit-card"></i> Wompi / Pagos</div>
   <div class="sb-pdf"><button class="btn btn-gold" style="width:100%;justify-content:center" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button></div>
   <div class="sb-foot">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
@@ -614,6 +615,28 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
+    <!-- Wompi Config -->
+    <div id="panel-wompi" class="panel">
+      <div class="ph-row">
+        <div><h2>Wompi / Pagos con Tarjeta</h2><p>Credenciales del aplicativo de Wompi para pagos con tarjeta.</p></div>
+        <button class="btn btn-primary btn-sm" onclick="guardarConfigWompi()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-ttl">Credenciales</div>
+        <div class="fg"><label>App ID (client_id)</label><input type="text" id="wompi-app-id" placeholder="UUID del aplicativo"></div>
+        <div class="fg"><label>API Secret (client_secret)</label><input type="password" id="wompi-api-secret" placeholder="••••••••"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-ttl">Información</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
+          <p>Obtén estas credenciales desde <a href="https://panel.wompi.sv" target="_blank">panel.wompi.sv</a> → Tu negocio → App ID / API Secret.</p>
+          <p style="margin-top:8px">Las URLs de autenticación y API son fijas y NO necesitan cambios. El modo sandbox/producción se controla directamente desde el panel de Wompi.</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
@@ -766,7 +789,8 @@ var PANELS  = {
   analytics:    ['Analytics','Productos más vendidos y canales'],
   reportes:     ['Reportes','Análisis por rango de fechas'],
   registroventa:['Registro de venta','Genera y comparte con tus clientes'],
-  openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes']
+  openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes'],
+  wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
 };
 var KEY  = 'ngd_crm_v10';
 var GAS  = 'https://script.google.com/macros/s/AKfycbzLzqdN_o5bmj5B71FNytCIvaf7eTkgO_oh_-L6EKEK17tCjskn5bWX-fGtPfZKWKZZ/exec';
@@ -962,6 +986,7 @@ function go(name){
   if(name==='tracking')  { document.getElementById('track-list').innerHTML=''; document.getElementById('track-detail').style.display='none'; document.getElementById('track-q').value=''; }
   if(name==='repartidor' && _repCodigo){ renderRepDash(); }
   if(name==='openwa'){ cargarConfigOpenWa(); }
+  if(name==='wompi'){ cargarConfigWompi(); }
 }
 
 // ── OPENWA CONFIG ──
@@ -998,6 +1023,41 @@ function guardarConfigOpenWa(){
     numeroTienda:document.getElementById('openwa-numero').value.trim()
   };
   var btn=document.querySelector('#panel-openwa .btn-primary');
+  btn.textContent='Guardando…';btn.disabled=true;
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      btn.textContent='¡Guardado!';
+      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
+    }).catch(function(){
+      btn.textContent='Error';
+      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
+    });
+}
+
+// ── WOMPI CONFIG ──
+function cargarConfigWompi(){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET',GAS+'?action=getConfigWompi&token='+encodeURIComponent(API_TOKEN));
+  xhr.onload=function(){
+    try{
+      var d=JSON.parse(xhr.responseText);
+      if(d.ok){
+        document.getElementById('wompi-app-id').value=d.appId||'';
+        document.getElementById('wompi-api-secret').value=d.apiSecret||'';
+      }
+    }catch(e){}
+  };
+  xhr.send();
+}
+
+function guardarConfigWompi(){
+  var payload={
+    action:'saveConfigWompi',token:API_TOKEN,
+    appId:document.getElementById('wompi-app-id').value.trim(),
+    apiSecret:document.getElementById('wompi-api-secret').value.trim()
+  };
+  var btn=document.querySelector('#panel-wompi .btn-primary');
   btn.textContent='Guardando…';btn.disabled=true;
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})

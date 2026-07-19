@@ -112,6 +112,7 @@ function doGet(e) {
     // ni de permisos del script).
     if (action === 'testGeo')       return respond(geocodificarDireccion(p.dir || ''));
     if (action === 'getConfigOpenWa') return respond(getConfigOpenWa());
+    if (action === 'getConfigWompi')  return respond(getConfigWompi());
     if (action === 'enviarComprobante') return respond(enviarComprobante(p));
     if (action === 'validarHashWompi')   return respond(validarHashWompi(p));
     if (action === 'verificarTransaccion') return respond(verificarTransaccionWompi(p.idTransaccion || ''));
@@ -135,6 +136,7 @@ function doPost(e) {
     if (action === 'crearEnlacePago') { return respond(crearEnlacePago(payload)); }
     if (action === 'webhookWompi')    { return respond(webhookWompi(payload)); }
     if (action === 'saveConfigOpenWa'){ return respond(saveConfigOpenWa(payload)); }
+    if (action === 'saveConfigWompi') { return respond(saveConfigWompi(payload)); }
     if (action === 'enviarComprobante'){ return respond(enviarComprobante(payload)); }
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
@@ -792,13 +794,17 @@ function wompiAutenticar() {
   var cacheExp = parseInt(props.getProperty('WOMPI_TOKEN_EXP') || '0');
   if (cached && Date.now() < cacheExp) return cached;
 
+  // Usar ScriptProperties si existen, fallback a variables globales
+  var appId = props.getProperty('WOMPI_APP_ID') || WOMPPI_APP_ID;
+  var apiSecret = props.getProperty('WOMPI_API_SECRET') || WOMPPI_API_SECRET;
+
   var resp = UrlFetchApp.fetch(WOMPI_AUTH_URL, {
     method: 'post',
     contentType: 'application/x-www-form-urlencoded',
     payload: {
       grant_type: 'client_credentials',
-      client_id: WOMPPI_APP_ID,
-      client_secret: WOMPPI_API_SECRET,
+      client_id: appId,
+      client_secret: apiSecret,
       audience: 'wompi_api'
     },
     muteHttpExceptions: true
@@ -974,6 +980,32 @@ function saveConfigOpenWa(payload) {
     if (payload.apiUrl) props.setProperty('OPENWA_API_URL', payload.apiUrl);
     if (payload.apiKey) props.setProperty('OPENWA_API_KEY', payload.apiKey);
     if (payload.numeroTienda) props.setProperty('OPENWA_NUMERO', payload.numeroTienda);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// ── WOMPI CONFIG ────────────────────────────────────────────────
+
+function getConfigWompi() {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    return {
+      ok: true,
+      appId: props.getProperty('WOMPI_APP_ID') || '',
+      apiSecret: props.getProperty('WOMPI_API_SECRET') || ''
+    };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+function saveConfigWompi(payload) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (payload.appId) props.setProperty('WOMPI_APP_ID', payload.appId);
+    if (payload.apiSecret) props.setProperty('WOMPI_API_SECRET', payload.apiSecret);
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err.message };

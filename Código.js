@@ -921,7 +921,8 @@ function validarHashWompi(params) {
     if (!hashRecibido) return { ok: false, error: 'Falta hash' };
 
     var textoConcat = identificador + idTransaccion + idEnlace + monto;
-    var hashCalculado = Utilities.computeHmacSha256(textoConcat, WOMPPI_API_SECRET);
+    var hashCalculado = Utilities.computeHmacSha256Signature(textoConcat, WOMPPI_API_SECRET)
+      .map(function(b){return ('0' + (b & 0xFF).toString(16)).slice(-2);}).join('');
 
     if (hashCalculado !== hashRecibido) {
       return { ok: false, error: 'Hash invalido - posible manipulacion' };

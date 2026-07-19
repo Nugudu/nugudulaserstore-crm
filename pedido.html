@@ -1184,83 +1184,80 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 (function(){
   var qs=new URLSearchParams(window.location.search);
   var idTransaccion=qs.get('idTransaccion');
-  var hash=qs.get('hash');
-  if(idTransaccion && hash){
-    var params={
-      identificadorEnlaceComercio: qs.get('identificadorEnlaceComercio')||'',
-      idTransaccion: idTransaccion,
-      idEnlace: qs.get('idEnlace')||'',
-      monto: qs.get('monto')||'',
-      esAprobada: qs.get('esAprobada')||'',
-      esReal: qs.get('esReal')||'',
-      hash: hash
-    };
+  if(!idTransaccion) return;
 
-    // Mostrar s-form con barra de pasos visible
-    showScreen('s-form');
-    document.getElementById('steps').style.display='flex';
+  var hash=qs.get('hash')||'';
+  var params={
+    identificadorEnlaceComercio: qs.get('identificadorEnlaceComercio')||'',
+    idTransaccion: idTransaccion,
+    idEnlace: qs.get('idEnlace')||'',
+    monto: qs.get('monto')||'',
+    esAprobada: qs.get('esAprobada')||'',
+    esReal: qs.get('esReal')||'',
+    hash: hash
+  };
 
-    // Marcar pasos 1-3 como completados
-    [1,2,3].forEach(function(i){
-      var d=document.getElementById('sd'+i);
-      var l=document.getElementById('sl'+i);
-      if(d){d.className='step-d done';d.textContent='✓';}
-      if(l){l.className='step-l';}
-      var ln=document.getElementById('sl-'+i);
-      if(ln)ln.classList.add('done');
-    });
+  showScreen('s-form');
+  document.getElementById('steps').style.display='flex';
 
-    // Ocultar paso 4 (transferencia) — no aplica para tarjeta
-    var s4=document.getElementById('step4-wrap');
-    var sl4=document.getElementById('sl-4');
-    if(s4)s4.style.display='none';
-    if(sl4)sl4.style.display='none';
+  [1,2,3].forEach(function(i){
+    var d=document.getElementById('sd'+i);
+    var l=document.getElementById('sl'+i);
+    if(d){d.className='step-d done';d.textContent='✓';}
+    if(l){l.className='step-l';}
+    var ln=document.getElementById('sl-'+i);
+    if(ln)ln.classList.add('done');
+  });
 
-    // Marcar paso 5 como actual
-    var sd5=document.getElementById('sd5');
-    var sl5=document.getElementById('sl5');
-    if(sd5){sd5.className='step-d act';sd5.textContent='5';}
-    if(sl5)sl5.className='step-l act';
+  var s4=document.getElementById('step4-wrap');
+  var sl4=document.getElementById('sl-4');
+  if(s4)s4.style.display='none';
+  if(sl4)sl4.style.display='none';
 
-    // Ocultar todos los panels de contenido
-    ['p1','p2','p3','p4'].forEach(function(id){
-      var el=document.getElementById(id);if(el)el.style.display='none';
-    });
+  var sd5=document.getElementById('sd5');
+  var sl5=document.getElementById('sl5');
+  if(sd5){sd5.className='step-d act';sd5.textContent='5';}
+  if(sl5)sl5.className='step-l act';
 
-    // Mostrar pantalla de verificación
-    document.getElementById('s-exito').style.display='block';
-    document.getElementById('ex-orden').textContent=params.identificadorEnlaceComercio||'...';
-    document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Verificando pago…</p></div>';
-    document.getElementById('orden-mini').style.display='none';
-    document.getElementById('ex-accion-comprobante').style.display='none';
-    document.querySelector('#s-exito .btn-outline-teal').style.display='none';
-    document.querySelector('#s-exito .btn-sec').style.display='none';
+  ['p1','p2','p3','p4'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.style.display='none';
+  });
 
-    // Validar hash vía GAS
+  document.getElementById('s-exito').style.display='block';
+  document.getElementById('ex-orden').textContent=params.identificadorEnlaceComercio||'...';
+  document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Verificando pago…</p></div>';
+  document.getElementById('orden-mini').style.display='none';
+  document.getElementById('ex-accion-comprobante').style.display='none';
+  document.querySelector('#s-exito .btn-outline-teal').style.display='none';
+  document.querySelector('#s-exito .btn-sec').style.display='none';
+
+  function mostrarExito(){
+    if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Recibirás la confirmación en tu correo.</div>';
+    document.querySelector('#s-exito .btn-outline-teal').style.display='';
+    document.querySelector('#s-exito .btn-sec').style.display='';
+  }
+  function mostrarError(msg){
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';
+    document.querySelector('#s-exito .btn-outline-teal').style.display='';
+    document.querySelector('#s-exito .btn-sec').style.display='';
+  }
+
+  if(hash){
     fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'validarHashWompi',token:API_TOKEN,params:params})
     }).then(function(r){return r.json();})
     .then(function(res){
-      if(res.ok && res.esAprobada){
-        // Pago aprobado — marcar paso 5 como completado
-        if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
-        document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Recibirás la confirmación en tu correo.</div>';
-        document.querySelector('#s-exito .btn-outline-teal').style.display='';
-        document.querySelector('#s-exito .btn-sec').style.display='';
-      }else{
-        // Pago fallido — volver al paso 3
-        if(sd5){sd5.className='step-d';sd5.textContent='5';}
-        if(sl5)sl5.className='step-l';
-        var msg=res.error||'El pago no pudo ser verificado.';
-        document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';
-        document.querySelector('#s-exito .btn-outline-teal').style.display='';
-        document.querySelector('#s-exito .btn-sec').style.display='';
-      }
-    }).catch(function(){
-      document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fef6e4;border-color:#f5d88a;color:#92400e">⚠️ No se pudo verificar el pago. Contacta a la tienda.</div>';
-      document.querySelector('#s-exito .btn-outline-teal').style.display='';
-      document.querySelector('#s-exito .btn-sec').style.display='';
-    });
+      if(res.ok && res.esAprobada) mostrarExito();
+      else mostrarError(res.error||'El pago no pudo ser verificado.');
+    }).catch(function(){ mostrarError('No se pudo verificar el pago.'); });
+  }else{
+    fetch(GAS+'?action=verificarTransaccion&idTransaccion='+encodeURIComponent(idTransaccion)+'&token='+encodeURIComponent(API_TOKEN)+'&_t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.ok && res.esAprobada) mostrarExito();
+      else mostrarError((res.estado||res.error||'El pago no pudo ser verificado.'));
+    }).catch(function(){ mostrarError('No se pudo verificar el pago.'); });
   }
 })();
 </script>

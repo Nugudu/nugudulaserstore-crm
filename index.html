@@ -1038,7 +1038,7 @@ function guardarConfigOpenWa(){
 // ── WOMPI CONFIG ──
 function cargarConfigWompi(){
   var xhr=new XMLHttpRequest();
-  xhr.open('GET',GAS+'?action=getConfigWompi&token='+encodeURIComponent(API_TOKEN));
+  xhr.open('GET',GAS+'?action=getConfigWompi&token='+encodeURIComponent(API_TOKEN)+'&_t='+Date.now());
   xhr.onload=function(){
     try{
       var d=JSON.parse(xhr.responseText);
@@ -1046,8 +1046,9 @@ function cargarConfigWompi(){
         document.getElementById('wompi-app-id').value=d.appId||'';
         document.getElementById('wompi-api-secret').value=d.apiSecret||'';
       }
-    }catch(e){}
+    }catch(e){console.error('cargarConfigWompi parse error',e,xhr.responseText);}
   };
+  xhr.onerror=function(){console.error('cargarConfigWompi network error');};
   xhr.send();
 }
 
@@ -1064,7 +1065,9 @@ function guardarConfigWompi(){
     .then(function(d){
       btn.textContent='¡Guardado!';
       setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
-    }).catch(function(){
+      cargarConfigWompi();
+    }).catch(function(err){
+      console.error('guardarConfigWompi error',err);
       btn.textContent='Error';
       setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
     });

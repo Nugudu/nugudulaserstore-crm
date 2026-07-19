@@ -27,8 +27,8 @@ var LOCATIONIQ_KEY   = 'pk.566487b350cf28d6d4744b6bb40266aa';
 var CODIGOS_VENDEDORAS_WEB = ['N1', 'N2', 'N4'];
 
 // WOMPI — credenciales (obtenidas de panel.wompi.sv → tu negocio → App ID / API Secret)
-var WOMPPI_APP_ID     = '1548f01b4b-1ee8-4f98-8613-2acbd81d8021';
-var WOMPPI_API_SECRET = '48f01b4b-1ee8-4f98-8613-2acbd81d8021';
+var WOMPPI_APP_ID     = '48f01b4b-1ee8-4f98-8613-2acbd81d8021';
+var WOMPPI_API_SECRET = 'f440289f-48aa-4b4d-9d3d-a854b2ec4395';
 // URLs fijas de la API — el modo sandbox/producción se controla desde
 // panel.wompi.sv (flag "estaProductivo" del negocio), NO con la URL.
 var WOMPI_AUTH_URL = 'https://id.wompi.sv/connect/token';

@@ -529,6 +529,7 @@ window.addEventListener('DOMContentLoaded',function(){
       }
     }).catch(function(){});
   // Mostrar pantalla — restaurar sesión o ir a inicio
+  if(window._wompiReturn) return; // retorno Wompi ya manejó la UI
   if(!restaurarSesion()) showScreen('s-phone');
 });
 
@@ -1200,6 +1201,8 @@ function enviarDatosPorCorreo(orden){
   var qs=new URLSearchParams(window.location.search);
   var idTransaccion=qs.get('idTransaccion');
   if(!idTransaccion) return;
+  try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}
+  window._wompiReturn=true;
 
   var orden=qs.get('identificadorEnlaceComercio')||'';
   var hash=qs.get('hash')||'';

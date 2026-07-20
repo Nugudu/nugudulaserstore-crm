@@ -139,6 +139,7 @@ function doPost(e) {
     if (action === 'saveConfigWompi') { return respond(saveConfigWompi(payload)); }
     if (action === 'enviarComprobante'){ return respond(enviarComprobante(payload)); }
     if (action === 'validarHashWompi') return respond(validarHashWompi(payload.params || payload));
+    if (action === 'notificarPagoConfirmado') return respond(notificarPagoConfirmado(payload));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -929,6 +930,33 @@ function validarHashWompi(params) {
     }
 
     return { ok: true, esAprobada: esAprobada === 'true', esReal: params.esReal === 'true' };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// Notifica al admin (nugudulasersv@gmail.com) cuando un pago llega al paso final
+function notificarPagoConfirmado(payload) {
+  try {
+    var ordenId = payload.ordenId || '';
+    if (!ordenId) return { ok: false, error: 'Falta ordenId' };
+    var ordenes = leerOrdenes();
+    var orden = null;
+    for (var i = 0; i < ordenes.length; i++) {
+      if (ordenes[i].orden === ordenId) { orden = ordenes[i]; break; }
+    }
+    if (!orden) return { ok: false, error: 'Orden no encontrada: ' + ordenId };
+    var asunto = '💳 Pago confirmado - ' + orden.orden;
+    var cuerpo =
+      'Pago confirmado para el pedido ' + orden.orden + '\n\n' +
+      'Cliente: ' + (orden.nombre   || '-') + '\n' +
+      'Contacto: ' + (orden.contacto || '-') + '\n' +
+      'Método de pago: ' + (orden.metodoPago || orden.canal || '-') + '\n' +
+      'Total: $' + Number(orden.total || 0).toFixed(2) + '\n' +
+      (orden.email ? ('Correo: ' + orden.email + '\n') : '') +
+      '\nRevisa el CRM para mas detalles.';
+    MailApp.sendEmail(NOTIFY_EMAIL, asunto, cuerpo);
+    return { ok: true };
   } catch (err) {
     return { ok: false, error: err.message };
   }

@@ -352,7 +352,21 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div class="hint">Lo usaremos para enviarte tu factura y estado del pedido. Si no tienes, lo recibirás por WhatsApp.</div>
     </div>
 
-    <button class="btn-main" id="btn-conf" onclick="confirmarPedido()">✓ Confirmar pedido</button>
+    <!-- Datos bancarios (se muestra al seleccionar Transferencia) -->
+    <div id="bancario-info" style="display:none">
+      <div class="card">
+        <div class="card-ttl">Datos para transferencia</div>
+        <div class="bc-card">
+          <div class="bc-banco">Banco Agrícola</div>
+          <div class="bc-tipo">Cuenta de ahorro</div>
+          <div class="bc-cuenta">3008410011</div>
+          <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
+        </div>
+        <div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante.</div>
+      </div>
+    </div>
+
+    <button class="btn-main" id="btn-conf" onclick="confirmarPedido()">Continuar →</button>
     <button class="btn-sec" onclick="goP2()">← Editar mis datos</button>
   </div>
 
@@ -431,6 +445,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </a>
     </div>
 
+    <!-- Recordatorio de tracking -->
+    <div id="ex-tracking" style="display:none;margin-top:12px;padding:12px;background:#f8f6ff;border-radius:10px;border:1px solid #e8e5f0;font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
+      📱 Podés consultar el estado de tu pedido ingresando tu número de contacto o número de orden en <strong>nugudulaser.com</strong>
+    </div>
+
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
     <button class="btn-sec" onclick="salir()">Salir</button>
   </div>
@@ -444,7 +463,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 </div>
 
 <script>
-var GAS='https://script.google.com/macros/s/AKfycbzxMxcpSZoLPliETeWCqyFqprZ3D7Tc4tSJA7AWkpO_c0gdeQjCy0oW4DdpQrV6k5K4/exec';
+var GAS='https://script.google.com/macros/s/AKfycbxaCevhl7hojrnhlrGAizweHI-JF9RD6YxnyAONFPLSJNooWtsTE64fO4jDdMvsMhwf/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
@@ -905,6 +924,8 @@ function selMetodoPago(m){
   ['mp-tarjeta','mp-transferencia'].forEach(function(id){
     document.getElementById(id).classList.toggle('sel',id==='mp-'+m);
   });
+  var bcDiv=document.getElementById('bancario-info');
+  if(bcDiv) bcDiv.style.display=(m==='transferencia')?'block':'none';
 }
 
 function selComprobanteVia(v){
@@ -1008,8 +1029,8 @@ function confirmarPedido(){
           showErr('form','Error de conexión con Wompi. Intenta de nuevo.');
         });
       }else{
-        // Transferencia bancaria → paso 4
-        goP4();
+        // Transferencia bancaria → éxito directo
+        irAExitoTransferencia();
       }
     }).catch(function(){
       if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;
@@ -1024,8 +1045,14 @@ function goP4(){
   setPaso(4);window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function irAExito(){
+function irAExitoTransferencia(){
   mostrarExito();
+}
+
+function notificarAdmin(orden){
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'notificarPagoConfirmado',token:API_TOKEN,ordenId:orden})
+  }).catch(function(){});
 }
 
 function mostrarExito(){
@@ -1041,28 +1068,17 @@ function mostrarExito(){
   document.getElementById('orden-mini').style.display='block';
 
   if(o.metodoPago==='tarjeta'){
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago procesado con éxito. Te enviaremos la confirmación a tu correo.</div>';
-    document.getElementById('ex-accion-comprobante').style.display='block';
-    var waMsg=encodeURIComponent('Hola! Ya pagué mi pedido '+o.orden+' con tarjeta. Quiero recibir los datos de mi orden.');
-    document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+waMsg;
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago procesado con éxito. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
+    document.getElementById('ex-accion-comprobante').style.display='none';
   }else{
-    document.getElementById('ex-pago-info').innerHTML=
-      '<div class="bc-card" style="margin-bottom:0">'+
-      '<div class="bc-banco">Banco Agrícola</div>'+
-      '<div class="bc-tipo">Cuenta de ahorro</div>'+
-      '<div class="bc-cuenta">3008410011</div>'+
-      '<div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>'+
-      '<div class="bc-monto">Monto: <strong>$'+o.total+'</strong></div></div>'+
-      '<div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante.</div>';
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pedido registrado. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
     document.getElementById('ex-accion-comprobante').style.display='block';
-    // WhatsApp link
-    var waNum=o.tel.replace(/\D/g,'');
-    if(waNum.length<8)waNum=WA;
     var msg=encodeURIComponent('Hola! Adjunto comprobante de pago de mi pedido '+o.orden+'.');
     document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+msg;
   }
-
+  document.getElementById('ex-tracking').style.display='block';
   showScreen('s-exito');window.scrollTo({top:0,behavior:'smooth'});
+  if(o.orden) notificarAdmin(o.orden);
 }
 
 // Reinicia el formulario para hacer otro pedido
@@ -1084,6 +1100,8 @@ function nuevoP(){
   document.getElementById('orden-mini').style.display='none';
   document.getElementById('ex-accion-comprobante').style.display='none';
   document.getElementById('ex-pago-info').innerHTML='';
+  document.getElementById('ex-tracking').style.display='none';
+  var bcDiv=document.getElementById('bancario-info');if(bcDiv)bcDiv.style.display='none';
   if(_catCargado)renderCat();
   showScreen('s-phone');hideErr('phone');hideErr('form');
 }
@@ -1248,22 +1266,20 @@ function enviarDatosPorCorreo(orden){
   document.getElementById('orden-mini').style.display='block';
   document.getElementById('om-contenido').innerHTML='<div style="color:var(--muted);font-size:13px">Orden <strong>'+esc(orden)+'</strong> — verificando…</div>';
   document.getElementById('ex-accion-comprobante').style.display='none';
+  document.getElementById('ex-tracking').style.display='none';
   document.querySelector('#s-exito .btn-outline-teal').style.display='none';
   document.querySelector('#s-exito .btn-sec').style.display='none';
 
   function mostrarExito(){
     if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
+    document.getElementById('orden-mini').style.display='none';
     document.getElementById('ex-pago-info').innerHTML=
-      '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Orden <strong>'+esc(orden)+'</strong>.</div>'+
-      '<div style="margin-top:14px;text-align:center">'+
-      '<p style="font-size:13px;color:var(--muted);margin-bottom:10px">¿Cómo querés recibir los datos de tu orden?</p>'+
-      '<a class="btn-wa" id="btn-wa-confirm" href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola, quiero recibir los datos de mi orden '+orden)+'" target="_blank" style="margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px">'+
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>'+
-      'Enviar datos por WhatsApp</a>'+
-      '<button class="btn-outline-teal" onclick="enviarDatosPorCorreo(\''+esc(orden)+'\')" style="margin-top:0;width:100%">📧 Enviar datos por correo</button>'+
-      '</div>';
+      '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Orden <strong>'+esc(orden)+'</strong>.</div>';
+    document.getElementById('ex-accion-comprobante').style.display='none';
+    document.getElementById('ex-tracking').style.display='block';
     document.querySelector('#s-exito .btn-outline-teal').style.display='';
     document.querySelector('#s-exito .btn-sec').style.display='';
+    if(orden) notificarAdmin(orden);
   }
   function mostrarError(msg){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';

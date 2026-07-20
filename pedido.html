@@ -346,10 +346,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-ttl">Recibir comprobante</div>
-      <div class="fg"><label>Tu correo electrónico</label><input type="email" id="f-email" placeholder="correo@ejemplo.com" autocomplete="email"></div>
-      <div class="hint">Lo usaremos para enviarte tu factura y estado del pedido. Si no tienes, lo recibirás por WhatsApp.</div>
+    <div id="email-card-wrap">
+      <div class="card">
+        <div class="card-ttl">Recibir comprobante</div>
+        <div class="fg"><label>Tu correo electrónico</label><input type="email" id="f-email" placeholder="correo@ejemplo.com" autocomplete="email"></div>
+        <div class="hint">Lo usaremos para enviarte la confirmación de tu pedido registrado.</div>
+      </div>
     </div>
 
     <!-- Datos bancarios (se muestra al seleccionar Transferencia) -->
@@ -395,13 +397,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
             <div class="mp-desc">Envía la foto desde tu WhatsApp</div>
           </div>
         </label>
-        <label class="mp-opt" id="cp-email" onclick="selComprobanteVia('email')">
-          <div class="mp-radio"></div>
-          <div class="mp-info">
-            <div class="mp-nombre">Correo electrónico</div>
-            <div class="mp-desc" id="cp-email-desc">Envía a nugudulasersv@gmail.com</div>
-          </div>
-        </label>
       </div>
       <div id="cp-accion">
         <a class="btn-wa" id="btn-wa-comprobante" href="#" target="_blank">
@@ -413,7 +408,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
     <div class="card" style="text-align:center">
       <p style="font-size:13px;color:var(--muted);line-height:1.6">¿Ya realizaste la transferencia?<br>Confirma tu pedido y te notificaremos cuando lo recibamos.</p>
-      <button class="btn-outline-teal" onclick="irAExito()" style="margin-top:8px;width:100%">✓ Ya transferí — Confirmar</button>
+      <button class="btn-outline-teal" onclick="irAExitoTransferencia()" style="margin-top:8px;width:100%">✓ Ya transferí — Confirmar</button>
     </div>
 
     <button class="btn-sec" onclick="goP3()">← Volver a método de pago</button>
@@ -447,7 +442,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
     <!-- Recordatorio de tracking -->
     <div id="ex-tracking" style="display:none;margin-top:12px;padding:12px;background:#f8f6ff;border-radius:10px;border:1px solid #e8e5f0;font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
-      📱 Podés consultar el estado de tu pedido ingresando tu número de contacto o número de orden en <strong>nugudulaser.com</strong>
+      📱 Podés consultar el estado de tu pedido ingresando tu número de contacto o número de orden para iniciar sesión
     </div>
 
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
@@ -926,6 +921,8 @@ function selMetodoPago(m){
   });
   var bcDiv=document.getElementById('bancario-info');
   if(bcDiv) bcDiv.style.display=(m==='transferencia')?'block':'none';
+  var ecDiv=document.getElementById('email-card-wrap');
+  if(ecDiv) ecDiv.style.display=(m==='tarjeta')?'block':'none';
 }
 
 function selComprobanteVia(v){
@@ -1102,6 +1099,7 @@ function nuevoP(){
   document.getElementById('ex-pago-info').innerHTML='';
   document.getElementById('ex-tracking').style.display='none';
   var bcDiv=document.getElementById('bancario-info');if(bcDiv)bcDiv.style.display='none';
+  var ecDiv=document.getElementById('email-card-wrap');if(ecDiv)ecDiv.style.display='none';
   if(_catCargado)renderCat();
   showScreen('s-phone');hideErr('phone');hideErr('form');
 }

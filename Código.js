@@ -586,7 +586,6 @@ function notificarPedidoNuevo(orden) {
       'Canal: '      + (orden.canal    || '-') + '\n' +
       (orden.notas ? ('Notas: ' + orden.notas + '\n') : '') +
       '\nRevisa el CRM para mas detalles.';
-    var linkBoton = ScriptApp.getService().getUrl() + '?action=irWhatsAppBancario&token=' + encodeURIComponent(API_TOKEN) + '&id=' + encodeURIComponent(orden.id);
     var cuerpoHtml =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.6;max-width:480px">' +
       '<p>Ha llegado un nuevo pedido a <b>Nugudu Laser Store</b>.</p>' +
@@ -602,7 +601,6 @@ function notificarPedidoNuevo(orden) {
         '<b>Canal:</b> ' + escHtml(orden.canal || '-') +
         (orden.notas ? ('<br><b>Notas:</b> ' + escHtml(orden.notas)) : '') +
       '</p>' +
-      '<p><a href="' + linkBoton + '" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:bold">📲 Enviar datos bancarios por WhatsApp</a></p>' +
       '<p style="color:#666;font-size:12px">Revisa el CRM para mas detalles.</p>' +
       '</div>';
     MailApp.sendEmail(NOTIFY_EMAIL, asunto, cuerpo, { htmlBody: cuerpoHtml });

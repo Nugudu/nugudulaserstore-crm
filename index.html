@@ -163,6 +163,21 @@ tbody tr:last-child td{border-bottom:none}
   .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
   .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
 }
+/* Responsive: tabla de Órdenes */
+@media (max-width:1100px){
+  #tbl-ordenes table th:nth-child(5),
+  #tbl-ordenes table td:nth-child(5),
+  #tbl-ordenes table th:nth-child(7),
+  #tbl-ordenes table td:nth-child(7),
+  #tbl-ordenes table th:nth-child(9),
+  #tbl-ordenes table td:nth-child(9){display:none}
+}
+@media (max-width:768px){
+  #tbl-ordenes table th:nth-child(3),
+  #tbl-ordenes table td:nth-child(3){display:none}
+  #tbl-ordenes table th,
+  #tbl-ordenes table td{padding:6px 5px;font-size:11px}
+}
 .sd{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .sd.green{background:#2e7d52}.sd.yellow{background:var(--gold)}.sd.red{background:#a32d2d}
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -793,7 +808,7 @@ var PANELS  = {
   wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
 };
 var KEY  = 'ngd_crm_v10';
-var GAS  = 'https://script.google.com/macros/s/AKfycbxcmiq5S4wPDY8TmF_lCUOga6B865o1gNOqDPRYMfTIZKF6DkHcK_1Iv-415Ld4dt5l/exec';
+var GAS  = 'https://script.google.com/macros/s/AKfycbz1pwd35H8toQQXIFgVY9_Or5Dfdrfty9JdUDZiv75t7D8MxZbvm4hIE7kpivrqivGQ/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 // Cierra el acceso publico anonimo a los datos de clientes.
 var API_TOKEN = '20448e06ce5e6d46b0c829be92dd00bcd8d521cd';

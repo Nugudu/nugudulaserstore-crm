@@ -1231,8 +1231,8 @@ function renderSkuColor(productos, conFoto){
         foto='<img src="imagenes/'+cand[0]+'" alt="" loading="lazy" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallbackMini(this)" onclick="event.stopPropagation();verFotoAmpliada(this.src)" title="Ver foto más grande" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px;border:1px solid var(--border);cursor:pointer">';
       }
     }
-    return '<span style="font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
-  }).join('<br>');
+    return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
+  }).join('');
 }
 function badgeConsumoInterno(o){
   if (!o.consumoInterno) return '';

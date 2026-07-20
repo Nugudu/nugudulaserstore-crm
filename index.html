@@ -163,21 +163,8 @@ tbody tr:last-child td{border-bottom:none}
   .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
   .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
 }
-/* Responsive: tabla de Órdenes */
-@media (max-width:1100px){
-  #tbl-ordenes table th:nth-child(5),
-  #tbl-ordenes table td:nth-child(5),
-  #tbl-ordenes table th:nth-child(7),
-  #tbl-ordenes table td:nth-child(7),
-  #tbl-ordenes table th:nth-child(9),
-  #tbl-ordenes table td:nth-child(9){display:none}
-}
-@media (max-width:768px){
-  #tbl-ordenes table th:nth-child(3),
-  #tbl-ordenes table td:nth-child(3){display:none}
-  #tbl-ordenes table th,
-  #tbl-ordenes table td{padding:6px 5px;font-size:11px}
-}
+/* Scroll horizontal para toda la info de la tabla de órdenes */
+#tbl-ordenes table{min-width:1100px}
 .sd{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .sd.green{background:#2e7d52}.sd.yellow{background:var(--gold)}.sd.red{background:#a32d2d}
 ::-webkit-scrollbar{width:5px;height:5px}

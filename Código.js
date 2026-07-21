@@ -117,6 +117,7 @@ function doGet(e) {
     if (action === 'enviarComprobante') return respond(enviarComprobante(p));
     if (action === 'validarHashWompi')   return respond(validarHashWompi(p));
     if (action === 'verificarTransaccion') return respond(verificarTransaccionWompi(p.idTransaccion || ''));
+    if (action === 'leerEventos') return respond(leerEventos(p));
     return respond({ error: 'Accion desconocida: ' + action });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -1149,6 +1150,38 @@ function guardarEventos(payload) {
       sheet.getRange(sheet.getLastRow() + 1, 1, lote.length, HOJA_EVENTOS_HEADER.length).setValues(lote);
     }
     return { ok: true, escritos: eventos.length };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+function leerEventos(p) {
+  try {
+    var sheet = getHojaEventos();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { ok: true, eventos: [] };
+    var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+    var eventos = [];
+    var filtroContacto = (p.contacto || '').replace(/\D/g, '');
+    var limite = parseInt(p.limite) || 5000;
+    for (var i = 0; i < datos.length && eventos.length < limite; i++) {
+      var row = datos[i];
+      var ev = {
+        ts:         String(row[0] || ''),
+        session_id: String(row[1] || ''),
+        contacto:   String(row[2] || ''),
+        evento:     String(row[3] || ''),
+        data:       row[4] || '{}',
+        url_ref:    String(row[5] || '')
+      };
+      try { ev.data = JSON.parse(ev.data); } catch(e) { ev.data = {}; }
+      if (filtroContacto) {
+        var evTel = ev.contacto.replace(/\D/g, '');
+        if (evTel.indexOf(filtroContacto) < 0) continue;
+      }
+      eventos.push(ev);
+    }
+    return { ok: true, eventos: eventos };
   } catch (err) {
     return { ok: false, error: err.message };
   }

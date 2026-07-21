@@ -567,33 +567,19 @@ function volverDesdeForm(){
 
 // ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
 window.addEventListener('DOMContentLoaded',function(){
-  // Muestra fallback inmediatamente para que el paso 1 sea instantáneo
   _cat=fallback(); _catCargado=true;
-  // Siempre busca datos frescos de Google Sheets — garantiza actualizaciones
+  renderCat();
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok&&d.productos&&d.productos.length){
-        // Solo reconstruye las tarjetas si algo VISUAL realmente cambió
-        // (sku, nombre, color, precio). El STOCK se excluye a propósito de
-        // esta comparación: casi siempre es distinto al del catálogo de
-        // respaldo (cada venta real lo baja), así que compararlo tal cual
-        // hacía que esto disparara una reconstrucción completa prácticamente
-        // siempre — y esa reconstrucción es la causa del parpadeo. El stock
-        // sigue quedando 100% actualizado en _cat para la selección de color
-        // y cantidad (elDis/elCol lo leen en el momento, no del render viejo),
-        // solo se evita repintar la cuadrícula de tarjetas sin necesidad.
         var claveVisual=function(arr){return JSON.stringify((arr||[]).map(function(p){return p.sku+'|'+p.nombre+'|'+p.coleccion+'|'+p.color+'|'+p.hex+'|'+p.precio;}));};
         var cambioVisual=claveVisual(d.productos)!==claveVisual(_cat);
         _cat=d.productos;
-        if(cambioVisual){
-          var p1=document.getElementById('p1');
-          if(p1&&p1.style.display!=='none') renderCat();
-        }
+        if(cambioVisual) renderCat();
       }
     }).catch(function(){});
-  // Mostrar pantalla — restaurar sesión o ir a inicio
-  if(window._wompiReturn) return; // retorno Wompi ya manejó la UI
+  if(window._wompiReturn) return;
   if(!restaurarSesion()) showScreen('s-catalogo');
 });
 
@@ -957,9 +943,7 @@ function irAConsultar(){
   document.getElementById('p-tel').focus();
 }
 function cancelarConsulta(){
-  document.getElementById('phone-bienvenida').style.display='block';
-  document.getElementById('phone-consulta').style.display='none';
-  document.getElementById('err-consulta').style.display='none';
+  showScreen('s-catalogo');
 }
 
 // ── PASO 2 ──

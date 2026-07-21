@@ -193,10 +193,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- CATALOGO INICIAL — pantalla #1 -->
 <div class="screen" id="s-catalogo">
-  <div class="hdr">
-    <div class="hdr-logo"><img src="logo-nugudu.png" alt="N" onerror="this.style.display='none'"></div>
-    <div><h1>Nugudú Láser Store</h1><p>Elegí tus productos</p></div>
-  </div>
   <div style="padding:16px">
     <div id="cat-inicio-wrap"><div class="cat-spin"><div class="spinner"></div><p style="color:var(--muted);font-size:13px">Cargando coleccion…</p></div></div>
     <div class="color-sel" id="ci-color-sel">
@@ -239,8 +235,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="ce-box" id="ce-box" style="display:none"><div class="ce-name" id="ce-name"></div><div class="ce-info" id="ce-info"></div></div>
         <div id="err-phone" class="err-box" style="display:none"></div>
         <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
-        <div style="text-align:center;margin-top:14px">
-          <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--muted);text-decoration:none">Consultar mi pedido</a>
+        <div style="text-align:center;margin-top:10px">
+          <a href="#" onclick="showScreen('s-catalogo');return false" style="font-size:12px;color:var(--muted);text-decoration:none">← Volver</a>
         </div>
         <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
       </div>
@@ -572,12 +568,7 @@ window.addEventListener('DOMContentLoaded',function(){
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok&&d.productos&&d.productos.length){
-        var claveVisual=function(arr){return JSON.stringify((arr||[]).map(function(p){return p.sku+'|'+p.nombre+'|'+p.coleccion+'|'+p.color+'|'+p.hex+'|'+p.precio;}));};
-        var cambioVisual=claveVisual(d.productos)!==claveVisual(_cat);
-        _cat=d.productos;
-        if(cambioVisual) renderCat();
-      }
+      if(d.ok&&d.productos&&d.productos.length) _cat=d.productos;
     }).catch(function(){});
   if(window._wompiReturn) return;
   if(!restaurarSesion()) showScreen('s-catalogo');
@@ -1199,6 +1190,7 @@ function mostrarExito(){
     document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+msg;
   }
   document.getElementById('ex-tracking').style.display='block';
+  guardarSesion('s-exito',0);
   showScreen('s-exito');window.scrollTo({top:0,behavior:'smooth'});
   if(o.orden) notificarAdmin(o.orden);
 }

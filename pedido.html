@@ -518,6 +518,25 @@ var _refV = (function(){
 })();
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null;
 
+// ── CDP: EVENTOS DE COMPORTAMIENTO ──
+var _sessionId=(function(){try{var s=sessionStorage.getItem('ngd_session');if(!s){s=Date.now()+'-'+Math.random().toString(36).slice(2,8);sessionStorage.setItem('ngd_session',s);}return s;}catch(e){return Date.now()+'-x';}})();
+var _eventQueue=[],_eventContacto='',_flushTimer=null;
+function track(evento,data){
+  _eventQueue.push({ts:new Date().toISOString(),session_id:_sessionId,contacto:_eventContacto,evento:evento,data:data||{},url_ref:_refV});
+  if(!_flushTimer)_flushTimer=setTimeout(flushEvents,10000);
+}
+function setContacto(v){_eventContacto=v||'';}
+function flushEvents(){
+  _flushTimer=null;
+  if(!_eventQueue.length)return;
+  var batch=_eventQueue.slice();_eventQueue=[];
+  try{
+    var x=new XMLHttpRequest();x.open('POST',GAS,true);x.setRequestHeader('Content-Type','text/plain');
+    x.send(JSON.stringify({action:'trackEvent',token:API_TOKEN,eventos:batch}));
+  }catch(e){}
+}
+window.addEventListener('beforeunload',function(){if(_eventQueue.length)flushEvents();});
+
 var SESSION_KEY='ngd_pedido_v1';
 // Catálogo siempre fresco de Sheets — sin caché local
 
@@ -533,12 +552,14 @@ function restaurarSesion(){
     if(!r) return false;
     if(r.screen==='s-cliente'&&r.cli){
       _cli=r.cli;_dirs=r.dirs||[];
+      setContacto(_cli.contacto||'');
       mostrarPantallaCliente(r.cli);
       return true;
     }
     if(r.screen==='s-form'){
       // Restaura el formulario en el paso donde estaba
       _cli=r.cli;_dirs=r.dirs||[];
+      if(r.cli)setContacto(r.cli.contacto||'');
       if(!_catCargado){_cat=fallback();_catCargado=true;}
       renderCat();
       showScreen('s-form');
@@ -553,7 +574,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];hideErr('phone');hideErr('form');showScreen('s-catalogo');}
+function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];setContacto('');hideErr('phone');hideErr('form');showScreen('s-catalogo');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -597,6 +618,7 @@ function buscarTel(){
       if(spin)spin.style.display='none';
       if(d.ok&&d.encontrado){
         _cli=d;_dirs=d.direcciones||[];
+        setContacto(d.contacto||'');
         mostrarPantallaCliente(d);
       }else{
         showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
@@ -604,7 +626,7 @@ function buscarTel(){
     }).catch(function(){if(spin)spin.style.display='none';nuevoCli();});
 }
 function nuevoCli(){
-  limpiarSesion();_cli=null;_dirs=[];
+  limpiarSesion();_cli=null;_dirs=[];setContacto('');
   if(_carrito.length>0){
     if(!_catCargado){_cat=fallback();_catCargado=true;}
     renderCat();
@@ -798,6 +820,7 @@ function elDis(nomEnc){
   document.getElementById('color-sel').classList.add('show');
   document.getElementById('qty-card').style.display='none';
   setTimeout(function(){document.getElementById('color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+  track('product_click',{nombre:nombre});
 }
 function elCol(sku){
   var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
@@ -810,6 +833,7 @@ function elCol(sku){
   document.getElementById('qty-card').style.display='block';
   document.getElementById('btn-agregar-otro').style.display='flex';
   setTimeout(function(){document.getElementById('qty-card').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+  track('color_select',{sku:sku,color:v.color});
 }
 // ── CARRITO (varios productos por pedido) ──
 // Antes solo se podia pedir un producto a la vez. Ahora se puede agregar mas
@@ -833,7 +857,9 @@ function agregarSeleccionAlCarrito(){
   return true;
 }
 function agregarOtroProducto(){
+  var it=_color?{sku:_color.sku,diseno:_diseno,color:_color.color,cantidad:_qty}:null;
   if(!agregarSeleccionAlCarrito()) return;
+  if(it)track('add_to_cart',it);
   renderCarrito();
   document.getElementById('cat-wrap').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -885,6 +911,7 @@ function elDisInicio(nomEnc){
   document.getElementById('ci-color-sel').classList.add('show');
   document.getElementById('ci-qty-card').style.display='none';
   setTimeout(function(){document.getElementById('ci-color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+  track('product_click',{nombre:nombre});
 }
 function elColInicio(sku){
   var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
@@ -896,6 +923,7 @@ function elColInicio(sku){
   document.getElementById('ci-qty-t').textContent='$'+v.precio.toFixed(2);
   document.getElementById('ci-qty-card').style.display='block';
   document.getElementById('ci-btn-agregar-otro').style.display='flex';
+  track('color_select',{sku:sku,color:v.color});
 }
 function actualizarFotoPreviewInicio(sku,nombreDiseno){
   var img=document.getElementById('ci-cs-foto');
@@ -914,8 +942,10 @@ function ciChgQty(d){
   document.getElementById('ci-qty-t').textContent='$'+(_color?(_color.precio*_qty).toFixed(2):'0.00');
 }
 function ciAgregarOtro(){
+  var it=_color?{sku:_color.sku,diseno:_diseno,color:_color.color,cantidad:_qty}:null;
   agregarSeleccionAlCarrito();
   renderCarrito();
+  if(it)track('add_to_cart',it);
   _diseno=null;_color=null;
   document.getElementById('ci-color-sel').classList.remove('show');
   document.getElementById('ci-qty-card').style.display='none';
@@ -926,6 +956,7 @@ function continuarCatalogo(){
   renderCarrito();
   if(_carrito.length===0){showErr('form','Elige un diseno y un color antes de continuar.');return;}
   hideErr('form');
+  track('checkout_start',{items:_carrito.length,total:totalCarrito().toFixed(2)});
   if(_cli){
     guardarSesion('s-form',2);
     showScreen('s-form');setPaso(2);
@@ -1199,6 +1230,8 @@ function mostrarExito(){
   guardarSesion('s-exito',0);
   showScreen('s-exito');window.scrollTo({top:0,behavior:'smooth'});
   if(o.orden) notificarAdmin(o.orden);
+  if(o.orden) setContacto(o.contacto||'');
+  track('purchase',{orden:o.orden,total:o.total,items:(o.items||[]).length});
 }
 
 // Reinicia el formulario para hacer otro pedido
@@ -1260,6 +1293,7 @@ function showScreen(id){
     document.getElementById('phone-bienvenida').style.display='block';
     document.getElementById('phone-consulta').style.display='none';
   }
+  track('page_view',{screen:id});
 }
 function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
 function hideErr(c){document.getElementById('err-'+c).style.display='none';}

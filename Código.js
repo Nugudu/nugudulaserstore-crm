@@ -9,6 +9,7 @@ var SHEET_CATALOGO   = '1yENHn7y1DTrDlk0-yYfP1yVLzcgdhewtONwefvK613E';
 var HOJA_DATOS       = 'datos';
 var HOJA_BORRADOS    = 'borrados_ts';
 var HOJA_CATALOGO    = 'Catalogo';
+var HOJA_EVENTOS     = 'eventos_usuario';
 var NOTIFY_EMAIL     = 'nugudulasersv@gmail.com';
 // Token compartido: index.html y pedido.html deben mandarlo en cada llamada.
 // Cierra el acceso publico anonimo al endpoint (antes cualquiera con la URL
@@ -140,6 +141,7 @@ function doPost(e) {
     if (action === 'enviarComprobante'){ return respond(enviarComprobante(payload)); }
     if (action === 'validarHashWompi') return respond(validarHashWompi(payload.params || payload));
     if (action === 'notificarPagoConfirmado') return respond(notificarPagoConfirmado(payload));
+    if (action === 'trackEvent')  return respond(guardarEventos(payload));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -1101,6 +1103,52 @@ function enviarComprobante(payload) {
     }
 
     return { ok: false, error: 'Medio no soportado' };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CDP — EVENTOS DE COMPORTAMIENTO (tracking desde pedido.html)
+// ══════════════════════════════════════════════════════════════════
+// Cada fila en eventos_usuario = un evento atomic (page_view,
+// product_click, add_to_cart, etc.). Sin lock porque es append-
+// only y nunca interfiere con la escritura de ordenes.
+// ══════════════════════════════════════════════════════════════════
+var HOJA_EVENTOS_HEADER = ['ts','session_id','contacto','evento','data','url_ref'];
+
+function getHojaEventos() {
+  var ss = abrirSS(SHEET_ORDENES);
+  var sheet = ss.getSheetByName(HOJA_EVENTOS);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(HOJA_EVENTOS);
+  sheet.getRange(1, 1, 1, HOJA_EVENTOS_HEADER.length).setValues([HOJA_EVENTOS_HEADER]);
+  sheet.setFrozenRows(1);
+  return sheet;
+}
+
+function guardarEventos(payload) {
+  try {
+    var eventos = payload.eventos;
+    if (!Array.isArray(eventos) || !eventos.length)
+      return { ok: false, error: 'No hay eventos' };
+    var sheet = getHojaEventos();
+    var filas = eventos.map(function(e) {
+      return [
+        e.ts || new Date().toISOString(),
+        String(e.session_id || ''),
+        String(e.contacto || ''),
+        String(e.evento || ''),
+        typeof e.data === 'string' ? e.data : JSON.stringify(e.data || {}),
+        String(e.url_ref || '')
+      ];
+    });
+    // Append en lotes de 50 para respetar limites de Google Sheets
+    while (filas.length) {
+      var lote = filas.splice(0, 50);
+      sheet.getRange(sheet.getLastRow() + 1, 1, lote.length, HOJA_EVENTOS_HEADER.length).setValues(lote);
+    }
+    return { ok: true, escritos: eventos.length };
   } catch (err) {
     return { ok: false, error: err.message };
   }

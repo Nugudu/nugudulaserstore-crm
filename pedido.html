@@ -191,23 +191,72 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
   <div><h1>Nugudú Láser Store</h1><p>Gorras con parche de cuero grabado a láser</p></div>
 </div>
 
-<!-- PHONE CHECK — se muestra inmediatamente, sin esperar el catálogo -->
+<!-- CATALOGO INICIAL — pantalla #1 -->
+<div class="screen" id="s-catalogo">
+  <div class="hdr">
+    <div class="hdr-logo"><img src="logo-nugudu.png" alt="N" onerror="this.style.display='none'"></div>
+    <div><h1>Nugudú Láser Store</h1><p>Elegí tus productos</p></div>
+  </div>
+  <div style="padding:16px">
+    <div id="cat-inicio-wrap"><div class="cat-spin"><div class="spinner"></div><p style="color:var(--muted);font-size:13px">Cargando coleccion…</p></div></div>
+    <div class="color-sel" id="ci-color-sel">
+      <img class="cs-foto" id="ci-cs-foto" alt="" style="display:none">
+      <div class="cs-ttl">Elige el color para <strong id="ci-cs-nom"></strong></div>
+      <div class="color-opts" id="ci-color-opts"></div>
+    </div>
+    <div class="card" id="ci-qty-card" style="display:none">
+      <div class="card-ttl">Cantidad</div>
+      <div class="qty-row">
+        <button class="qty-btn" onclick="ciChgQty(-1)">−</button>
+        <div class="qty-num" id="ci-qty-n">1</div>
+        <button class="qty-btn" onclick="ciChgQty(1)">+</button>
+        <div class="qty-total">Total: <strong id="ci-qty-t">$0.00</strong></div>
+      </div>
+      <button type="button" class="btn-outline-teal" id="ci-btn-agregar-otro" style="display:none;margin-top:10px" onclick="ciAgregarOtro()">+ Agregar otro producto</button>
+    </div>
+    <div class="card" id="ci-carrito-wrap" style="display:none">
+      <div class="card-ttl">Tu pedido</div>
+      <div id="ci-carrito-items"></div>
+      <div class="res-total"><span>Total</span><span id="ci-carrito-total">$0.00</span></div>
+    </div>
+    <button class="btn-main" onclick="continuarCatalogo()">Continuar →</button>
+    <div style="text-align:center;margin-top:10px">
+      <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px">Consultar mi pedido</a>
+    </div>
+    <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
+  </div>
+</div>
+
+<!-- PHONE CHECK — bienvenida -->
 <div class="screen" id="s-phone">
   <div style="padding-top:8px">
     <div class="phone-card">
-      <div class="phone-icon">👋</div>
-      <div class="phone-brand">Nugudú Láser Store</div>
-      <div class="phone-welcome">te da la bienvenida</div>
-      <h2>¿Ya pediste con nosotros?</h2>
-      <p>Ingresa tu WhatsApp o número de orden y tus datos se completan automáticamente. Si es tu primera vez, continúa como nuevo.</p>
-      <div class="ce-box" id="ce-box"><div class="ce-name" id="ce-name"></div><div class="ce-info" id="ce-info"></div></div>
-      <div id="err-phone" class="err-box"></div>
-      <div class="phone-row">
-        <input id="p-tel" type="text" placeholder="WhatsApp o número de orden (ORD-...)" onkeydown="if(event.key==='Enter')buscarTel()">
-        <button onclick="buscarTel()">Buscar</button>
+      <div id="phone-bienvenida">
+        <div class="phone-brand">Nugudú Láser Store</div>
+        <div class="phone-welcome">la diferencia se lleva</div>
+        <h2>Bienvenido a Nugudú Láser Store</h2>
+        <p style="font-size:15px;color:var(--navy);font-weight:600;margin-bottom:24px">¿Ya eres parte de Nugudú?</p>
+        <div class="ce-box" id="ce-box" style="display:none"><div class="ce-name" id="ce-name"></div><div class="ce-info" id="ce-info"></div></div>
+        <div id="err-phone" class="err-box" style="display:none"></div>
+        <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
+        <div style="text-align:center;margin-top:14px">
+          <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--muted);text-decoration:none">Consultar mi pedido</a>
+        </div>
+        <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
       </div>
-      <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
-      <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
+      <div id="phone-consulta" style="display:none">
+        <div style="margin-bottom:20px">
+          <div style="font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px">Consultar mi pedido</div>
+          <p style="font-size:13px;color:var(--muted)">Ingresa tu WhatsApp o numero de orden</p>
+        </div>
+        <div id="err-consulta" class="err-box" style="display:none"></div>
+        <div class="phone-row">
+          <input id="p-tel" type="text" placeholder="WhatsApp o numero de orden (ORD-...)" onkeydown="if(event.key==='Enter')buscarTel()">
+          <button onclick="buscarTel()">Buscar</button>
+        </div>
+        <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
+        <button style="background:none;border:none;color:var(--hint);font-size:12px;cursor:pointer;margin-top:10px;width:100%;padding:8px" onclick="cancelarConsulta()">← Volver</button>
+      </div>
     </div>
   </div>
 </div>
@@ -216,7 +265,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <div class="screen" id="s-cliente">
   <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
   <div class="cli-greeting">
-    <div class="cli-ico">👋</div>
+    <div class="cli-ico" style="display:none"></div>
     <h2 id="cli-nombre-ttl">¡Hola!</h2>
     <p id="cli-sub">Aquí están tus pedidos recientes</p>
   </div>
@@ -226,7 +275,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Nuevo pedido
     </button>
-    <button class="btn-accion primary" onclick="showScreen('s-phone')">
+    <button class="btn-accion primary" onclick="irAConsultar()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       Buscar otro
     </button>
@@ -292,7 +341,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <label>Dirección *</label>
           <div style="display:flex;gap:6px">
             <input id="f-dir" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDirInp()" style="flex:1">
-            <button type="button" onclick="fijarDireccion()" style="padding:0 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap;display:none" title="Oculto temporalmente">📍 Fijar</button>
+            <button type="button" onclick="fijarDireccion()" style="padding:0 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap;display:none" title="Fijar ubicacion">Fijar</button>
           </div>
         </div>
         <div class="fg">
@@ -305,7 +354,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…"></div>
         <div class="fg">
-          <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">📍 Puedes mover el mapa, hacer zoom y cambiar a vista Satélite tocando el ícono dentro del mapa</span></div>
+          <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">Puedes mover el mapa, hacer zoom y cambiar a vista Satelite tocando el icono dentro del mapa</span></div>
         </div>
         <!-- Leaflet mapa interactivo -->
         <div class="leaflet-map-wrap" id="leaflet-map-wrap" style="display:none">
@@ -314,7 +363,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
             <div class="fg" style="flex:1;margin-bottom:0"><label>Latitud</label><input id="latitud" type="text" readonly placeholder="—"></div>
             <div class="fg" style="flex:1;margin-bottom:0"><label>Longitud</label><input id="longitud" type="text" readonly placeholder="—"></div>
           </div>
-          <button type="button" id="btn-mi-ubicacion" onclick="obtenerMiUbicacion()">📍 Usar mi ubicación actual</button>
+          <button type="button" id="btn-mi-ubicacion" onclick="obtenerMiUbicacion()">Usar mi ubicacion actual</button>
         </div>
       </div>
       <div class="fg"><label>Notas adicionales</label><textarea id="f-notas" placeholder="Referencias, instrucciones especiales, horario disponible…"></textarea></div>
@@ -418,7 +467,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
-    <div class="ico">🎉</div>
+    <div class="ico" style="display:none"></div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
     <div class="orden-pill" id="ex-orden">—</div>
@@ -442,11 +491,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
     <!-- Recordatorio de tracking -->
     <div id="ex-tracking" style="display:none;margin-top:12px;padding:12px;background:#f8f6ff;border-radius:10px;border:1px solid #e8e5f0;font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
-      📱 Podés consultar el estado de tu pedido ingresando tu número de contacto o número de orden para iniciar sesión
+      Podes consultar el estado de tu pedido ingresando tu numero de contacto o numero de orden para iniciar sesion
     </div>
 
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
     <button class="btn-sec" onclick="salir()">Salir</button>
+    <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
   </div>
 </div>
 
@@ -508,7 +558,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];document.getElementById('p-tel').value='';hideErr('phone');hideErr('form');showScreen('s-phone');}
+function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];hideErr('phone');hideErr('form');showScreen('s-catalogo');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -544,7 +594,7 @@ window.addEventListener('DOMContentLoaded',function(){
     }).catch(function(){});
   // Mostrar pantalla — restaurar sesión o ir a inicio
   if(window._wompiReturn) return; // retorno Wompi ya manejó la UI
-  if(!restaurarSesion()) showScreen('s-phone');
+  if(!restaurarSesion()) showScreen('s-catalogo');
 });
 
 function fallback(){
@@ -557,8 +607,10 @@ function fallback(){
 // ── PHONE CHECK ──
 function buscarTel(){
   var val=(document.getElementById('p-tel').value||'').trim();
-  if(!val){showErr('phone','Ingresa tu número de WhatsApp o tu número de orden.');return;}
-  hideErr('phone');
+  var consMode=document.getElementById('phone-consulta').style.display==='block';
+  var errId=consMode?'consulta':'phone';
+  if(!val){showErr(errId,'Ingresa tu numero de WhatsApp o tu numero de orden.');return;}
+  hideErr(errId);
   var spin=document.getElementById('search-spin');
   if(spin)spin.style.display='block';
   var esOrden=/^ORD-/i.test(val);
@@ -571,17 +623,27 @@ function buscarTel(){
         _cli=d;_dirs=d.direcciones||[];
         mostrarPantallaCliente(d);
       }else{
-        showErr('phone','No encontramos ese número u orden. Continúa como cliente nuevo.');
+        showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
       }
     }).catch(function(){if(spin)spin.style.display='none';nuevoCli();});
 }
-function nuevoCli(){limpiarSesion();_cli=null;_dirs=[];iniciar();}
+function nuevoCli(){
+  limpiarSesion();_cli=null;_dirs=[];
+  if(_carrito.length>0){
+    if(!_catCargado){_cat=fallback();_catCargado=true;}
+    renderCat();
+    guardarSesion('s-form',2);
+    showScreen('s-form');setPaso(2);
+  }else{
+    iniciar();
+  }
+}
 
 function mostrarPantallaCliente(d){
   document.getElementById('cli-nombre-ttl').textContent='¡Hola, '+d.nombre+'!';
   var ords=d.ordenesRecientes||[];
   var ESTADOS_CLI=['Nueva orden','En proceso','En empaque','En camino','Entregado'];
-  var ICONS_CLI=['📋','⚙️','📦','🚚','✅'];
+  var ICONS_CLI=['1','2','3','4','5'];
 
   // Separa pedidos activos de entregados
   var activos=ords.filter(function(o){return parseInt(o.estado||0)<4;});
@@ -603,12 +665,12 @@ function mostrarPantallaCliente(d){
     progreso+='</div>';
     var footer='<div class="ot-footer">';
     if(est===2&&o.fechaEntrega){
-      footer+='<span class="ot-entrega" style="background:#e8f5ee;padding:4px 12px;border-radius:10px;font-size:13px;font-weight:600">📅 Entrega estimada: <strong>'+formatFecha(o.fechaEntrega)+'</strong></span>';
+      footer+='<span class="ot-entrega" style="background:#e8f5ee;padding:4px 12px;border-radius:10px;font-size:13px;font-weight:600">Entrega estimada: <strong>'+formatFecha(o.fechaEntrega)+'</strong></span>';
     }else if(o.fechaEntrega&&est>0&&est<4){
-      footer+='<span class="ot-entrega">📅 Entrega est. '+formatFecha(o.fechaEntrega)+'</span>';
+      footer+='<span class="ot-entrega">Entrega est. '+formatFecha(o.fechaEntrega)+'</span>';
     }
-    if(est===4) footer+='<span class="ot-entrega">✅ Entregado el '+o.fecha+'</span>';
-    if(o.pendientePago) footer+='<span class="ot-pend">⏳ Pendiente de pago</span>';
+    if(est===4) footer+='<span class="ot-entrega">Entregado el '+o.fecha+'</span>';
+    if(o.pendientePago) footer+='<span class="ot-pend">Pendiente de pago</span>';
     footer+='</div>';
     return '<div class="orden-track">'+
       '<div class="ot-header"><div class="ot-num">'+o.orden+'</div><div class="ot-fecha">'+o.fecha+'</div></div>'+
@@ -618,7 +680,7 @@ function mostrarPantallaCliente(d){
 
   var html='';
   if(!activos.length){
-    html='<div style="text-align:center;padding:24px 0 8px;color:var(--muted);font-size:13px">✅ No tienes pedidos activos en este momento.</div>';
+    html='<div style="text-align:center;padding:24px 0 8px;color:var(--muted);font-size:13px">No tienes pedidos activos en este momento.</div>';
   } else {
     activos.forEach(function(o){ html+=renderOrden(o); });
   }
@@ -697,6 +759,8 @@ function renderCat(){
     html+='</div>';
   });
   document.getElementById('cat-wrap').innerHTML=html;
+  var ci=document.getElementById('cat-inicio-wrap');
+  if(ci)ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');
 }
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
 // Construye la lista de archivos a probar, en orden de prioridad:
@@ -819,6 +883,83 @@ function chgQty(d){
   _qty=Math.max(1,Math.min(mx,_qty+d));
   document.getElementById('qty-n').textContent=_qty;
   document.getElementById('qty-t').textContent='$'+(_color?(_color.precio*_qty).toFixed(2):'0.00');
+}
+
+// ── CATALOGO INICIAL (pantalla #1) ──
+function elDisInicio(nomEnc){
+  var nombre=_cat.find(function(p){return encodeId(p.nombre)===nomEnc;});
+  if(!nombre)return;
+  nombre=nombre.nombre;
+  document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
+  var el=document.getElementById('pc-'+encodeId(nombre)); if(el)el.classList.add('sel');
+  _diseno=nombre;_color=null;
+  var vs=_cat.filter(function(p){return p.nombre===nombre;});
+  document.getElementById('ci-cs-nom').textContent=nombre;
+  var opts=vs.map(function(v){
+    var agot=v.stock<=0;
+    var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Ultimas '+v.stock:'';
+    return '<div class="copt'+(agot?' agotado':'')+'" id="ci-co-'+v.sku+'" '+(agot?'style="opacity:.4;pointer-events:none"':'')+' onclick="elColInicio(\''+v.sku+'\')">'+
+      '<div class="cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
+    '</div>';
+  }).join('');
+  document.getElementById('ci-color-opts').innerHTML=opts;
+  actualizarFotoPreviewInicio(vs[0].sku,nombre);
+  document.getElementById('ci-color-sel').classList.add('show');
+  document.getElementById('ci-qty-card').style.display='none';
+  setTimeout(function(){document.getElementById('ci-color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+}
+function elColInicio(sku){
+  var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
+  _color=v;_qty=1;
+  document.querySelectorAll('.copt').forEach(function(c){c.classList.remove('sel');});
+  document.getElementById('ci-co-'+sku).classList.add('sel');
+  actualizarFotoPreviewInicio(sku,_diseno);
+  document.getElementById('ci-qty-n').textContent=1;
+  document.getElementById('ci-qty-t').textContent='$'+v.precio.toFixed(2);
+  document.getElementById('ci-qty-card').style.display='block';
+  document.getElementById('ci-btn-agregar-otro').style.display='flex';
+}
+function actualizarFotoPreviewInicio(sku,nombreDiseno){
+  var img=document.getElementById('ci-cs-foto');
+  if(!img) return;
+  var candidatos=candidatosFoto(sku,nombreDiseno);
+  img.setAttribute('data-candidatos',JSON.stringify(candidatos));
+  img.dataset.idx='0';
+  img.onerror=function(){imgFallback(img);};
+  img.style.display='block';
+  img.src='imagenes/'+candidatos[0];
+}
+function ciChgQty(d){
+  var mx=_color?Math.min(_color.stock||10,10):10;
+  _qty=Math.max(1,Math.min(mx,_qty+d));
+  document.getElementById('ci-qty-n').textContent=_qty;
+  document.getElementById('ci-qty-t').textContent='$'+(_color?(_color.precio*_qty).toFixed(2):'0.00');
+}
+function ciAgregarOtro(){
+  agregarSeleccionAlCarrito();
+  renderCarrito();
+  _diseno=null;_color=null;
+  document.getElementById('ci-color-sel').classList.remove('show');
+  document.getElementById('ci-qty-card').style.display='none';
+  document.getElementById('ci-btn-agregar-otro').style.display='none';
+}
+function continuarCatalogo(){
+  agregarSeleccionAlCarrito();
+  renderCarrito();
+  if(_carrito.length===0){showErr('form','Elige un diseno y un color antes de continuar.');return;}
+  hideErr('form');
+  showScreen('s-phone');
+}
+function irAConsultar(){
+  showScreen('s-phone');
+  document.getElementById('phone-bienvenida').style.display='none';
+  document.getElementById('phone-consulta').style.display='block';
+  document.getElementById('p-tel').focus();
+}
+function cancelarConsulta(){
+  document.getElementById('phone-bienvenida').style.display='block';
+  document.getElementById('phone-consulta').style.display='none';
+  document.getElementById('err-consulta').style.display='none';
 }
 
 // ── PASO 2 ──
@@ -1065,10 +1206,10 @@ function mostrarExito(){
   document.getElementById('orden-mini').style.display='block';
 
   if(o.metodoPago==='tarjeta'){
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago procesado con éxito. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago procesado con exito. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
     document.getElementById('ex-accion-comprobante').style.display='none';
   }else{
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pedido registrado. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pedido registrado. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
     document.getElementById('ex-accion-comprobante').style.display='block';
     var msg=encodeURIComponent('Hola! Adjunto comprobante de pago de mi pedido '+o.orden+'.');
     document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+msg;
@@ -1083,7 +1224,7 @@ function nuevoP(){
   limpiarSesion();
   _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];
   _metodoPago='transferencia';_comprobanteVia='wa';
-  document.getElementById('p-tel').value='';
+  var pt=document.getElementById('p-tel');if(pt)pt.value='';
   document.getElementById('ce-box').style.display='none';
   document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';
   document.getElementById('f-dir').value='';document.getElementById('f-zona').value='';
@@ -1101,7 +1242,7 @@ function nuevoP(){
   var bcDiv=document.getElementById('bancario-info');if(bcDiv)bcDiv.style.display='none';
   var ecDiv=document.getElementById('email-card-wrap');if(ecDiv)ecDiv.style.display='none';
   if(_catCargado)renderCat();
-  showScreen('s-phone');hideErr('phone');hideErr('form');
+  showScreen('s-catalogo');hideErr('phone');hideErr('form');
 }
 
 // ── NAVEGACIÓN ──
@@ -1125,7 +1266,7 @@ function setPaso(n){
   document.getElementById('p4').style.display=n===4?'block':'none';
 }
 function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'smooth'});}
-function showScreen(id){['s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){var el=document.getElementById(sid);if(el)el.style.display='none';});var t=document.getElementById(id);if(t)t.style.display='block';window.scrollTo({top:0});if(id==='s-form'){document.getElementById('steps').style.display='flex';}else{var st=document.getElementById('steps');if(st)st.style.display='none';}}
+function showScreen(id){['s-catalogo','s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){var el=document.getElementById(sid);if(el)el.style.display='none';});var t=document.getElementById(id);if(t)t.style.display='block';window.scrollTo({top:0});if(id==='s-form'){document.getElementById('steps').style.display='flex';}else{var st=document.getElementById('steps');if(st)st.style.display='none';}}
 function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
 function hideErr(c){document.getElementById('err-'+c).style.display='none';}
 // ── LEAFLET MAPA INTERACTIVO ──
@@ -1207,7 +1348,7 @@ function enviarDatosPorCorreo(orden){
     body:JSON.stringify({action:'enviarComprobante',token:API_TOKEN,ordenId:orden,via:'email',email:email})
   }).then(function(r){return r.json();})
   .then(function(res){
-    if(res.ok) alert('✅ Datos enviados a '+email);
+    if(res.ok) alert('Datos enviados a '+email);
     else alert('❌ Error: '+(res.error||'No se pudo enviar'));
   }).catch(function(){alert('❌ Error de conexión');});
 }
@@ -1272,7 +1413,7 @@ function enviarDatosPorCorreo(orden){
     if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
     document.getElementById('orden-mini').style.display='none';
     document.getElementById('ex-pago-info').innerHTML=
-      '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">✅ Pago verificado con éxito. Orden <strong>'+esc(orden)+'</strong>.</div>';
+      '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago verificado con exito. Orden <strong>'+esc(orden)+'</strong>.</div>';
     document.getElementById('ex-accion-comprobante').style.display='none';
     document.getElementById('ex-tracking').style.display='block';
     document.querySelector('#s-exito .btn-outline-teal').style.display='';

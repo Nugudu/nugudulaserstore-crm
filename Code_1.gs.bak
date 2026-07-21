@@ -1,0 +1,321 @@
+// ═══════════════════════════════════════════════════════════════
+// NUGUDÚ CRM — Apps Script v6
+// ═══════════════════════════════════════════════════════════════
+
+var SHEET_ORDENES    = '1yENHn7y1DTrDlk0-yYfP1yVLzcgdhewtONwefvK613E';
+var SHEET_VENDEDORES = '1bPZg1JXef2yWGeSMEWj62Zs37jJuCjtm6uxJ8Ca-yB0';
+var SHEET_REPARTIDOR = '1jrdJhCOzmeWDyNFlYjJun1bKdg-Tiajy44f0V5UvTb4';
+var SHEET_CATALOGO   = '1yENHn7y1DTrDlk0-yYfP1yVLzcgdhewtONwefvK613E';
+var HOJA_DATOS       = 'datos';
+var HOJA_BORRADOS    = 'borrados_ts';
+var HOJA_CATALOGO    = 'Catalogo';
+
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'read';
+  if (action === 'read')          return respond(leerOrdenes());
+  if (action === 'sync')          return respond(sincronizar());
+  if (action === 'catalogo')      return respond(leerCatalogo());
+  if (action === 'buscarCliente') return respond(buscarClienteGAS(e.parameter.tel, e.parameter.orden));
+  return respond({ error: 'Accion desconocida: ' + action });
+}
+
+function doPost(e) {
+  var payload = JSON.parse(e.postData.contents);
+  var action  = payload.action || 'save';
+  if (action === 'save')            { guardarOrdenes(payload.data); return respond({ ok: true }); }
+  if (action === 'update')          { actualizarOrden(payload.id, payload.fields); return respond({ ok: true }); }
+  if (action === 'registrarBorrado'){ registrarBorrado(payload.ts); return respond({ ok: true }); }
+  if (action === 'resolverLink')    { return respond(resolverLink(payload.url)); }
+  if (action === 'pedidoWeb')       { return respond(guardarPedidoWeb(payload)); }
+  return respond({ error: 'Accion desconocida' });
+}
+
+function leerOrdenes() {
+  var sheet = getHojaDatos();
+  var raw   = sheet.getRange('A1').getValue();
+  try { var d = JSON.parse(raw || '[]'); return Array.isArray(d) ? d : []; } catch(e) { return []; }
+}
+
+function guardarOrdenes(data) {
+  getHojaDatos().getRange('A1').setValue(JSON.stringify(data));
+}
+
+function actualizarOrden(id, fields) {
+  var ordenes = leerOrdenes();
+  for (var i = 0; i < ordenes.length; i++) {
+    if (String(ordenes[i].id) === String(id)) {
+      var keys = Object.keys(fields);
+      for (var k = 0; k < keys.length; k++) ordenes[i][keys[k]] = fields[keys[k]];
+      break;
+    }
+  }
+  guardarOrdenes(ordenes);
+}
+
+function sincronizar() {
+  var ordenes      = leerOrdenes();
+  var nuevas       = importarVendedores(ordenes);
+  var actualizadas = importarRepartidor(ordenes);
+  if (nuevas > 0 || actualizadas > 0) guardarOrdenes(ordenes);
+  return { ok: true, ordenes: ordenes, nuevasVentas: nuevas, entregasActualizadas: actualizadas };
+}
+
+function importarVendedores(ordenes) {
+  try {
+    var sheet = SpreadsheetApp.openById(SHEET_VENDEDORES).getSheets()[0];
+    var data  = sheet.getDataRange().getValues();
+    if (data.length < 2) return 0;
+    var yaImportados = {};
+    for (var i = 0; i < ordenes.length; i++) {
+      if (ordenes[i]._ts) yaImportados[ordenes[i]._ts] = true;
+    }
+    var borrados = leerBorrados();
+    for (var b = 0; b < borrados.length; b++) { yaImportados[borrados[b]] = true; }
+    var count = 0;
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      var ts  = String(row[0]);
+      if (yaImportados[ts]) continue;
+      var nombre   = String(row[2] || '').trim();
+      var contacto = String(row[3] || '').trim();
+      if (!nombre || !contacto) continue;
+      var vendedor  = String(row[1]  || '').trim();
+      var direccion = String(row[4]  || '').trim();
+      var skuRaw    = String(row[5]  || '').trim();
+      var cantidad  = parseInt(row[6]) || 1;
+      var precio    = parseFloat(String(row[7]).replace(/[^0-9.]/g, '')) || 0;
+      var pago      = String(row[8]  || 'Transferencia').trim();
+      var zona      = String(row[9]  || '').trim();
+      var canal     = String(row[10] || 'Fuerza de ventas').trim();
+      var notas     = String(row[11] || '').trim();
+      var skus = skuRaw.split(/[,;]+/).map(function(s) { return s.trim().toUpperCase(); }).filter(Boolean);
+      var id    = new Date(row[0]).getTime() + r;
+      var d     = new Date();
+      var orden = 'ORD-' + String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(id).slice(-4);
+      var fecha = new Date().toISOString();
+      ordenes.unshift({
+        id: id, orden: orden, nombre: nombre, contacto: contacto,
+        direccion: direccion, zona: zona, vendedor: vendedor || 'FORM',
+        precio: precio, cantidad: cantidad, total: cantidad * precio,
+        canal: canal, pago: pago, productos: skus, estado: '0',
+        notas: notas, fecha: fecha, _ts: ts,
+        historial: [{ estado: '0', fecha: fecha, fuente: 'Google Forms' }]
+      });
+      yaImportados[ts] = true;
+      count++;
+    }
+    return count;
+  } catch(err) { Logger.log('importarVendedores: ' + err.message); return 0; }
+}
+
+function importarRepartidor(ordenes) {
+  try {
+    var sheet = SpreadsheetApp.openById(SHEET_REPARTIDOR).getSheets()[0];
+    var data  = sheet.getDataRange().getValues();
+    if (data.length < 2) return 0;
+    var count = 0;
+    for (var r = 1; r < data.length; r++) {
+      var row       = data[r];
+      var ts        = String(row[0]);
+      var repCodigo = String(row[1] || '').trim();
+      var nOrden    = String(row[2] || '').trim().toUpperCase();
+      var entregado = String(row[4] || '').toLowerCase().charAt(0) === 's';
+      var obs       = String(row[5] || '').trim();
+      if (!nOrden) continue;
+      for (var i = 0; i < ordenes.length; i++) {
+        if ((ordenes[i].orden || '').toUpperCase() !== nOrden) continue;
+        var yaProc = (ordenes[i].historial || []).some(function(h) { return h._repTs === ts; });
+        if (yaProc) break;
+        var nuevoEstado = entregado ? '4' : ordenes[i].estado;
+        ordenes[i].estado = nuevoEstado;
+        if (!ordenes[i].historial) ordenes[i].historial = [];
+        ordenes[i].historial.push({
+          estado: nuevoEstado, fecha: new Date().toISOString(),
+          rep: repCodigo, obs: obs, fuente: 'Google Forms Repartidor', _repTs: ts
+        });
+        count++;
+        break;
+      }
+    }
+    return count;
+  } catch(err) { Logger.log('importarRepartidor: ' + err.message); return 0; }
+}
+
+function getHojaDatos() {
+  var ss    = SpreadsheetApp.openById(SHEET_ORDENES);
+  var sheet = ss.getSheetByName(HOJA_DATOS);
+  if (!sheet) { sheet = ss.insertSheet(HOJA_DATOS); sheet.getRange('A1').setValue('[]'); }
+  return sheet;
+}
+
+function getHojaBorrados() {
+  var ss    = SpreadsheetApp.openById(SHEET_ORDENES);
+  var sheet = ss.getSheetByName(HOJA_BORRADOS);
+  if (!sheet) { sheet = ss.insertSheet(HOJA_BORRADOS); sheet.getRange('A1').setValue('[]'); }
+  return sheet;
+}
+function leerBorrados() {
+  var raw = getHojaBorrados().getRange('A1').getValue();
+  try { var d = JSON.parse(raw || '[]'); return Array.isArray(d) ? d : []; } catch(e) { return []; }
+}
+function guardarBorrados(lista) { getHojaBorrados().getRange('A1').setValue(JSON.stringify(lista)); }
+function registrarBorrado(ts) {
+  if (!ts) return;
+  var lista = leerBorrados();
+  if (lista.indexOf(ts) < 0) { lista.push(ts); guardarBorrados(lista); }
+}
+
+function leerCatalogo() {
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_CATALOGO);
+    var sheet = ss.getSheetByName(HOJA_CATALOGO);
+    if (!sheet) return { ok: false, error: 'Hoja Catalogo no encontrada' };
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) return { ok: true, productos: [] };
+    var headers = data[0].map(function(h) { return String(h).toUpperCase().trim().replace(/\s+/g,'_'); });
+    var productos = [];
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      var obj = {};
+      headers.forEach(function(h, i) { obj[h] = row[i]; });
+      var activo = String(obj['ACTIVO'] || '').toUpperCase().trim();
+      if (activo !== 'SI') continue;
+      var sku = String(obj['SKU_BASE'] || obj['SKU'] || '').trim();
+      if (!sku) continue;
+      productos.push({
+        sku:       sku,
+        nombre:    String(obj['NOMBRE']    || '').trim(),
+        coleccion: String(obj['COLECCION'] || '').trim(),
+        color:     String(obj['COLOR']     || '').trim(),
+        hex:       String(obj['HEX']       || '#333333').trim(),
+        precio:    parseFloat(obj['PRECIO'])  || 0,
+        stock:     parseInt(obj['STOCK'])     || 0
+      });
+    }
+    return { ok: true, productos: productos };
+  } catch(err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+function buscarClienteGAS(tel, orden) {
+  try {
+    var ordenes = leerOrdenes();
+    var match   = [];
+    if (orden) {
+      var ordenNorm = String(orden).trim().toUpperCase();
+      var oMatch = ordenes.find(function(o) { return (o.orden || '').toUpperCase() === ordenNorm; });
+      if (oMatch) {
+        var telRef = String(oMatch.contacto || '').replace(/\D/g, '');
+        match = ordenes.filter(function(o) { return String(o.contacto || '').replace(/\D/g, '') === telRef; });
+      }
+    }
+    if (!match.length && tel) {
+      var telNorm = String(tel).replace(/\D/g, '');
+      if (telNorm.length < 4) return { ok: true, encontrado: false };
+      match = ordenes.filter(function(o) {
+        return String(o.contacto || '').replace(/\D/g, '').indexOf(telNorm) >= 0;
+      });
+    }
+    if (!match.length) return { ok: true, encontrado: false };
+    match.sort(function(a, b) { return new Date(b.fecha) - new Date(a.fecha); });
+    var reciente = match[0];
+    var dirsVistas = {}, dirs = [];
+    match.forEach(function(o) {
+      var key = (o.direccion || '').trim().toLowerCase();
+      if (key && !dirsVistas[key]) {
+        dirsVistas[key] = true;
+        dirs.push({ direccion: o.direccion || '', zona: o.zona || '', mapaLink: o.mapaLink || '' });
+      }
+    });
+    var ordenesRecientes = match.slice(0, 5).map(function(o) {
+      return {
+        orden:         o.orden        || '',
+        estado:        o.estado       || '0',
+        productos:     o.productos    || [],
+        fecha:         (o.fecha || '').slice(0, 10),
+        fechaEntrega:  o.fechaEntrega || '',
+        cantidad:      o.cantidad     || 1,
+        precio:        o.precio       || 0,
+        pendientePago: o.pendientePago || false
+      };
+    });
+    return {
+      ok: true, encontrado: true,
+      nombre:           reciente.nombre,
+      contacto:         reciente.contacto,
+      direcciones:      dirs,
+      totalPedidos:     match.length,
+      ordenesRecientes: ordenesRecientes
+    };
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+function guardarPedidoWeb(payload) {
+  try {
+    var ordenes = leerOrdenes();
+    var d   = new Date();
+    var id  = d.getTime();
+    var orden = 'ORD-' + String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(id).slice(-4);
+    var fecha = d.toISOString();
+    var fe = new Date(d), dias = 0;
+    while (dias < 3) { fe.setDate(fe.getDate() + 1); if (fe.getDay() !== 0) dias++; }
+    var nuevaOrden = {
+      id: id, orden: orden,
+      nombre:        String(payload.nombre    || '').trim(),
+      contacto:      String(payload.contacto  || '').trim(),
+      direccion:     String(payload.direccion || '').trim(),
+      zona:          String(payload.zona      || 'Canal Digital').trim(),
+      vendedor:      'WEB',
+      precio:        parseFloat(payload.precio)  || 0,
+      cantidad:      parseInt(payload.cantidad)  || 1,
+      total:         (parseFloat(payload.precio) || 0) * (parseInt(payload.cantidad) || 1),
+      canal:         'Canal Digital',
+      pago:          'Transferencia',
+      productos:     [String(payload.sku || '')],
+      estado:        '0',
+      notas:         String(payload.notas || '').trim(),
+      fecha:         fecha,
+      fechaEntrega:  fe.toISOString().slice(0, 10),
+      mapaLink:      String(payload.mapaLink || ''),
+      pendientePago: true,
+      pendienteDesde: fecha,
+      consumoInterno: false,
+      historial: [{ estado: '0', fecha: fecha, fuente: 'Canal Digital Web' }]
+    };
+    ordenes.unshift(nuevaOrden);
+    guardarOrdenes(ordenes);
+    return { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10) };
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+function resolverLink(url) {
+  try {
+    var r1  = UrlFetchApp.fetch(url, { followRedirects: false, muteHttpExceptions: true });
+    var loc = String(r1.getHeaders()['Location'] || r1.getHeaders()['location'] || '');
+    if (loc) { var c1 = extraerCoordenadasGAS(loc); if (c1) return { ok: true, lat: c1.lat, lng: c1.lng }; }
+    var r2 = UrlFetchApp.fetch(url, {
+      followRedirects: true, muteHttpExceptions: true,
+      headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' }
+    });
+    var body = r2.getContentText().substring(0, 30000);
+    var c2   = extraerCoordenadasGAS(body);
+    if (c2) return { ok: true, lat: c2.lat, lng: c2.lng };
+    return { ok: false, error: 'No se encontraron coordenadas' };
+  } catch(e) { return { ok: false, error: e.message }; }
+}
+
+function extraerCoordenadasGAS(texto) {
+  var m;
+  m = texto.match(/@(-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})/);                            if (m) return { lat: m[1], lng: m[2] };
+  m = texto.match(/[?&]q=(-?\d{1,3}\.\d{3,}),(-?\d{1,3}\.\d{3,})/);                       if (m) return { lat: m[1], lng: m[2] };
+  m = texto.match(/"lat"\s*:\s*(-?\d{1,3}\.\d{4,})[^}]*"lng"\s*:\s*(-?\d{1,3}\.\d{4,})/); if (m) return { lat: m[1], lng: m[2] };
+  m = texto.match(/\[(-?\d{1,2}\.\d{5,}),(-?\d{2,3}\.\d{5,})\]/);                          if (m) return { lat: m[1], lng: m[2] };
+  m = texto.match(/ll=(-?\d{1,3}\.\d{3,}),(-?\d{1,3}\.\d{3,})/);                           if (m) return { lat: m[1], lng: m[2] };
+  m = texto.match(/!3d(-?\d{1,3}\.\d{4,})!4d(-?\d{1,3}\.\d{4,})/);                         if (m) return { lat: m[1], lng: m[2] };
+  return null;
+}
+
+function respond(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}

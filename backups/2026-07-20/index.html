@@ -163,8 +163,6 @@ tbody tr:last-child td{border-bottom:none}
   .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
   .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
 }
-/* Scroll horizontal para toda la info de la tabla de órdenes */
-#tbl-ordenes{overflow-x:auto;max-width:100%}#tbl-ordenes table{min-width:1400px}
 .sd{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .sd.green{background:#2e7d52}.sd.yellow{background:var(--gold)}.sd.red{background:#a32d2d}
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -224,7 +222,6 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('inventario')" id="nav-inventario"><i class="fa-solid fa-boxes-stacked"></i> Inventario</div>
   <div class="nav" onclick="go('analytics')" id="nav-analytics"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
   <div class="nav" onclick="go('reportes')" id="nav-reportes"><i class="fa-solid fa-calendar-days"></i> Reportes</div>
-  <div class="nav" onclick="go('cdp');cargarCDP()" id="nav-cdp"><i class="fa-solid fa-database"></i> CDP</div>
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
   <div class="sb-sec">Configuración</div>
   <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
@@ -555,47 +552,6 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
-    <!-- CDP — CUSTOMER DATA PLATFORM -->
-    <div id="panel-cdp" class="panel">
-      <div style="display:flex;gap:8px;margin-bottom:1.1rem;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm sel" id="cdp-tab-360" onclick="cdpTab('360')" style="border-color:var(--navy);background:var(--navy);color:#fff">Customer 360</button>
-        <button class="btn btn-outline btn-sm" id="cdp-tab-funnel" onclick="cdpTab('funnel')">Embudo de conversión</button>
-        <button class="btn btn-outline btn-sm" id="cdp-tab-segmentos" onclick="cdpTab('segmentos')">Segmentos</button>
-        <button class="btn btn-outline btn-sm" onclick="cargarCDP()" style="margin-left:auto"><i class="fa-solid fa-rotate"></i> Actualizar</button>
-      </div>
-
-      <!-- Customer 360 -->
-      <div id="cdp-360">
-        <div class="ph-row" style="margin-bottom:1rem">
-          <div><h2>Customer 360</h2><p>Busca un cliente por nombre o WhatsApp para ver su timeline completo</p></div>
-        </div>
-        <div style="display:flex;gap:10px;margin-bottom:1.1rem">
-          <input id="cdp-buscar" type="text" placeholder="Nombre o WhatsApp…" style="flex:1;border:1px solid var(--bmd);border-radius:var(--rs);padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none" onkeydown="if(event.key==='Enter')cdpBuscar()">
-          <button class="btn btn-outline btn-sm" onclick="cdpBuscar()"><i class="fa-solid fa-magnifying-glass"></i></button>
-        </div>
-        <div id="cdp-timeline"><div class="empty"><i class="fa-solid fa-users"></i><p>Busca un cliente para ver su actividad.</p></div></div>
-      </div>
-
-      <!-- Embudo de conversión -->
-      <div id="cdp-funnel" style="display:none">
-        <div class="ph-row">
-          <div><h2>Embudo de conversión</h2><p>De catálogo a compra — últimas visitas</p></div>
-          <div class="fg" style="min-width:120px"><label>Período</label><select id="cdp-funnel-periodo" onchange="cdpRenderFunnel()"><option value="7">7 días</option><option value="30" selected>30 días</option><option value="90">90 días</option></select></div>
-        </div>
-        <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Flujo de conversión</div><div style="position:relative;height:240px"><canvas id="chartFunnel"></canvas></div></div>
-        <div class="g4" id="cdp-funnel-metrics"></div>
-      </div>
-
-      <!-- Segmentos -->
-      <div id="cdp-segmentos" style="display:none">
-        <div class="ph-row">
-          <div><h2>Segmentos de clientes</h2><p>Agrupación automática según comportamiento de compra</p></div>
-          <button class="btn btn-outline btn-sm" onclick="exportarSegmentosCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button>
-        </div>
-        <div class="g3" id="cdp-segmentos-grid"></div>
-      </div>
-    </div>
-
     <!-- REGISTRO DE VENTA -->
     <div id="panel-registroventa" class="panel">
       <div class="ph-row">
@@ -832,13 +788,12 @@ var PANELS  = {
   inventario:   ['Inventario','Productos vendidos por SKU'],
   analytics:    ['Analytics','Productos más vendidos y canales'],
   reportes:     ['Reportes','Análisis por rango de fechas'],
-  cdp:          ['CDP','Customer Data Platform — comportamiento y segmentos'],
   registroventa:['Registro de venta','Genera y comparte con tus clientes'],
   openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes'],
   wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
 };
 var KEY  = 'ngd_crm_v10';
-var GAS  = 'https://script.google.com/macros/s/AKfycbyodUZIMmwgxWGHCVWZjz9R8H0vVj6Wv-cNDfJriInCXOcAiCsITqCw4YkKm2TXR-JW/exec';
+var GAS  = 'https://script.google.com/macros/s/AKfycbzxMxcpSZoLPliETeWCqyFqprZ3D7Tc4tSJA7AWkpO_c0gdeQjCy0oW4DdpQrV6k5K4/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 // Cierra el acceso publico anonimo a los datos de clientes.
 var API_TOKEN = '20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
@@ -852,7 +807,6 @@ var _clientesData = null;
 
 // STORAGE — local first, GAS sync in background
 function getOrd(){ return _ordenes; }
-function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function saveLocal(){
   localStorage.setItem(KEY, JSON.stringify(_ordenes));
@@ -1033,7 +987,6 @@ function go(name){
   if(name==='repartidor' && _repCodigo){ renderRepDash(); }
   if(name==='openwa'){ cargarConfigOpenWa(); }
   if(name==='wompi'){ cargarConfigWompi(); }
-  if(name==='cdp'){ cargarCDP(); }
 }
 
 // ── OPENWA CONFIG ──
@@ -1258,9 +1211,9 @@ function imgFallbackMini(img){
 // 6 fotos se descargan una sola vez y el navegador las reusa en cada fila).
 function renderSkuColor(productos, conFoto){
   if(!productos||!productos.length) return '–';
-  var html='<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
-  productos.forEach(function(sku){
+  return productos.map(function(sku){
     var parts=sku.split('-');
+    // El color está en el último segmento (ej. RSV-KA-NG → NG)
     var sufijo=parts[parts.length-1];
     var color=COLOR_MAP[sufijo];
     var dot=color?'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+color.hex+';border:1px solid rgba(0,0,0,.15);margin-right:4px;vertical-align:middle"></span>':'';
@@ -1276,9 +1229,8 @@ function renderSkuColor(productos, conFoto){
         foto='<img src="imagenes/'+cand[0]+'" alt="" loading="lazy" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallbackMini(this)" onclick="event.stopPropagation();verFotoAmpliada(this.src)" title="Ver foto más grande" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px;border:1px solid var(--border);cursor:pointer">';
       }
     }
-    html+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
-  });
-  return html+'</div>';
+    return '<span style="font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
+  }).join('<br>');
 }
 function badgeConsumoInterno(o){
   if (!o.consumoInterno) return '';
@@ -2866,213 +2818,6 @@ function generarPdfReporteSku(data, sku, foto){
     cells.forEach(function(v,i){doc.text(String(v).slice(0,Math.floor(cw[i]/2)),x,y+4.2);x+=cw[i];});y+=6;
   });
   doc.save('nugudú_reporte_sku_'+sku+'_'+new Date().toISOString().slice(0,10)+'.pdf');
-}
-
-// ══════════════════════════════════════════════════════════════════
-// CDP — CUSTOMER DATA PLATFORM
-// ══════════════════════════════════════════════════════════════════
-var _cdpEventos = [];
-
-function cargarCDP(){
-  fetch(GAS+'?action=leerEventos&limite=10000&token='+encodeURIComponent(API_TOKEN))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.ok) _cdpEventos = d.eventos || [];
-      else _cdpEventos = [];
-      cdpTab('360');
-    }).catch(function(){ _cdpEventos = []; });
-}
-
-function cdpTab(tab){
-  var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos' };
-  ['360','funnel','segmentos'].forEach(function(t){
-    var el = document.getElementById(secciones[t]); if(el) el.style.display = t === tab ? 'block' : 'none';
-    var btn = document.getElementById('cdp-tab-'+t);
-    if(btn){
-      if(t === tab){ btn.style.borderColor = 'var(--navy)'; btn.style.background = 'var(--navy)'; btn.style.color = '#fff'; }
-      else{ btn.style.borderColor = ''; btn.style.background = ''; btn.style.color = ''; }
-    }
-  });
-  if(tab === 'funnel') cdpRenderFunnel();
-  if(tab === 'segmentos') cdpRenderSegmentos();
-}
-
-// ── Customer 360 ──
-function cdpBuscar(){
-  var q = (document.getElementById('cdp-buscar').value || '').trim().toLowerCase();
-  if(!q) return;
-  var byTel = q.replace(/\D/g, '');
-  var clientes = {};
-  _cdpEventos.forEach(function(e){
-    if(!e.contacto) return;
-    var nom = (e.data && e.data.nombre) || '';
-    var tel = e.contacto.replace(/\D/g, '');
-    if(tel.indexOf(byTel) < 0 && nom.toLowerCase().indexOf(q) < 0) return;
-    if(!clientes[tel]) clientes[tel] = { contacto: e.contacto, nombre: nom, eventos: [] };
-    clientes[tel].eventos.push(e);
-  });
-  var lista = Object.keys(clientes);
-  if(!lista.length){ document.getElementById('cdp-timeline').innerHTML = '<div class="empty"><i class="fa-solid fa-user-xmark"></i><p>No se encontraron clientes con ese criterio.</p></div>'; return; }
-  cdpRender360(clientes);
-}
-
-function cdpRender360(clientes){
-  var html = '';
-  Object.keys(clientes).forEach(function(tel){
-    var c = clientes[tel];
-    c.eventos.sort(function(a,b){ return a.ts < b.ts ? 1 : -1; });
-    var compras = c.eventos.filter(function(e){ return e.evento === 'purchase'; });
-    var visitas = c.eventos.filter(function(e){ return e.evento === 'page_view' && e.data && e.data.screen === 's-catalogo'; });
-    html += '<div class="card" style="margin-bottom:1rem">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    html += '<div><strong style="font-size:15px">' + escHtml(c.nombre || tel) + '</strong><br><span style="font-size:12px;color:var(--muted)">' + escHtml(c.contacto) + '</span></div>';
-    html += '<div style="text-align:right;font-size:11px;color:var(--muted)">' + visitas.length + ' visitas · ' + compras.length + ' compras</div>';
-    html += '</div>';
-    html += '<div style="max-height:260px;overflow-y:auto;font-size:12px">';
-    c.eventos.slice(0, 50).forEach(function(e){
-      var ico = 'fa-circle';
-      var color = 'var(--hint)';
-      if(e.evento === 'purchase'){ ico = 'fa-cart-shopping'; color = 'var(--green)'; }
-      else if(e.evento === 'add_to_cart'){ ico = 'fa-cart-plus'; color = 'var(--navy)'; }
-      else if(e.evento === 'product_click'){ ico = 'fa-hand-pointer'; color = 'var(--teal)'; }
-      else if(e.evento === 'checkout_start'){ ico = 'fa-arrow-right-to-bracket'; color = 'var(--amber)'; }
-      else if(e.evento === 'page_view'){ ico = 'fa-eye'; color = 'var(--hint)'; }
-      var lbl = e.evento;
-      if(e.evento === 'purchase' && e.data) lbl = 'Compra ' + (e.data.orden || '');
-      else if(e.evento === 'product_click' && e.data) lbl = 'Vio ' + (e.data.nombre || '');
-      else if(e.evento === 'add_to_cart' && e.data) lbl = 'Agregó ' + (e.data.diseno || '') + ' ' + (e.data.color || '');
-      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><i class="fa-solid ' + ico + '" style="color:' + color + ';width:14px;text-align:center;margin-top:2px"></i><div style="flex:1">' + escHtml(lbl) + '</div><div style="color:var(--hint);white-space:nowrap">' + (e.ts ? e.ts.slice(0, 16).replace('T',' ') : '') + '</div></div>';
-    });
-    html += '</div></div>';
-  });
-  document.getElementById('cdp-timeline').innerHTML = html;
-}
-
-// ── Embudo de conversión ──
-function cdpRenderFunnel(){
-  var dias = parseInt(document.getElementById('cdp-funnel-periodo').value) || 30;
-  var corte = new Date(Date.now() - dias * 86400000).toISOString();
-  var eventos = _cdpEventos.filter(function(e){ return e.ts >= corte; });
-  var paso = {};
-  ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'].forEach(function(p){ paso[p] = {}; });
-  eventos.forEach(function(e){
-    if(paso[e.evento]) paso[e.evento][e.session_id] = (paso[e.evento][e.session_id] || 0) + 1;
-  });
-  var labels = ['Visitaron catálogo','Vieron producto','Eligieron color','Agregaron al carrito','Iniciaron checkout','Completaron compra'];
-  var keys = ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'];
-  var vals = keys.map(function(k){ return Object.keys(paso[k]).length; });
-  var maxV = Math.max(1, vals[0]);
-  var pcts = vals.map(function(v){ return (v / maxV * 100).toFixed(1); });
-  var ctx = document.getElementById('chartFunnel');
-  if(ctx && ctx.chart) ctx.chart.destroy();
-  if(ctx){
-    ctx.chart = new Chart(ctx, {
-      type: 'bar',
-      data: { labels: labels, datasets: [{ label: 'Sesiones', data: vals, backgroundColor: ['#2D2460','#1a9e8f','#F5A623','#2e7d52','#d97706','#0d7377'], borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-      }
-    });
-  }
-  var mhtml = '';
-  keys.forEach(function(k, i){
-    mhtml += '<div class="mc"><div class="ml">' + labels[i] + '</div><div class="mv" style="font-size:22px;color:var(--navy)">' + vals[i] + '</div><div style="font-size:11px;color:var(--muted)">' + pcts[i] + '% del total</div></div>';
-  });
-  document.getElementById('cdp-funnel-metrics').innerHTML = mhtml;
-}
-
-// ── Segmentos ──
-function cdpRenderSegmentos(){
-  var ordenes = _ordenes || [];
-  var contactoCompras = {};
-  var contactoSinCompra = {};
-  var ahora = Date.now();
-  var corteVisto = new Date(ahora - 30 * 86400000).toISOString();
-  var compradores = {};
-  _cdpEventos.forEach(function(e){
-    if(!e.contacto) return;
-    var tel = e.contacto.replace(/\D/g, '');
-    if(!tel) return;
-    if(e.evento === 'purchase') compradores[tel] = true;
-    if(e.evento === 'page_view' && e.ts >= corteVisto && !compradores[tel])
-      contactoSinCompra[tel] = { contacto: e.contacto, ts: e.ts };
-  });
-  ordenes.forEach(function(o){
-    var tel = (o.contacto || '').replace(/\D/g, '');
-    if(!tel) return;
-    if(!contactoCompras[tel]) contactoCompras[tel] = { nombre: o.nombre || '', contacto: o.contacto || '', ordenes: [], total: 0, fechas: [] };
-    contactoCompras[tel].ordenes.push(o);
-    contactoCompras[tel].total += parseFloat(o.total || o.precio * o.cantidad || 0);
-    contactoCompras[tel].fechas.push(o.fecha);
-    contactoCompras[tel].nombre = o.nombre || contactoCompras[tel].nombre;
-  });
-  var vistos = [];
-  Object.keys(contactoSinCompra).forEach(function(tel){ vistos.push(contactoSinCompra[tel]); });
-  var segmentos = { nuevos: [], activos: [], riesgo: [], perdidos: [] };
-  Object.keys(contactoCompras).forEach(function(tel){
-    var c = contactoCompras[tel];
-    var ultima = c.fechas.sort().pop() || '';
-    var diasUlt = ultima ? (ahora - new Date(ultima).getTime()) / 86400000 : 999;
-    var count = c.ordenes.length;
-    if(diasUlt <= 90 && count >= 2) segmentos.activos.push(c);
-    else if(diasUlt <= 90) segmentos.nuevos.push(c);
-    else if(diasUlt <= 180) segmentos.riesgo.push(c);
-    else segmentos.perdidos.push(c);
-  });
-  var top = [];
-  Object.keys(contactoCompras).forEach(function(tel){
-    var c = contactoCompras[tel];
-    top.push({ tel: tel, nombre: c.nombre, contacto: c.contacto, total: c.total, count: c.ordenes.length });
-  });
-  top.sort(function(a,b){ return b.total - a.total; });
-  var topN = Math.max(1, Math.ceil(top.length * 0.2));
-  var topSet = {};
-  top.slice(0, topN).forEach(function(t){ topSet[t.tel] = true; });
-  var topList = top.slice(0, topN);
-
-  var segmentosDef = [
-    { id: 'vistos', lbl: 'Visto recientemente', ico: 'fa-eye', color: 'var(--teal)', data: vistos, desc: 'Visitaron el catálogo en los últimos 30 días sin comprar', det: function(d){ return d.contacto; } },
-    { id: 'nuevos', lbl: 'Nuevos', ico: 'fa-seedling', color: 'var(--green)', data: segmentos.nuevos, desc: '1ra compra en los últimos 90 días', det: function(d){ return d.ordenes.length + ' pedido(s)'; } },
-    { id: 'activos', lbl: 'Activos', ico: 'fa-fire', color: 'var(--amber)', data: segmentos.activos, desc: '2+ compras en los últimos 90 días', det: function(d){ return '$' + d.total.toFixed(2); } },
-    { id: 'riesgo', lbl: 'En riesgo', ico: 'fa-triangle-exclamation', color: 'var(--coral)', data: segmentos.riesgo, desc: 'Sin compra en 90+ días', det: function(d){ return '$' + d.total.toFixed(2); } },
-    { id: 'perdidos', lbl: 'Perdidos', ico: 'fa-face-frown', color: 'var(--hint)', data: segmentos.perdidos, desc: 'Sin compra en 180+ días', det: function(d){ return '$' + d.total.toFixed(2); } },
-    { id: 'top', lbl: 'Alto valor', ico: 'fa-crown', color: 'var(--gold)', data: topList, desc: 'Top 20% por gasto total', det: function(d){ return '$' + d.total.toFixed(2) + ' · ' + d.count + ' pedido(s)'; } }
-  ];
-
-  var html = '';
-  segmentosDef.forEach(function(s){
-    var listHtml = '';
-    s.data.slice(0, 5).forEach(function(d){
-      var nom = d.nombre || d.contacto || '—';
-      listHtml += '<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>' + escHtml(nom) + '</span><span style="color:var(--muted)">' + s.det(d) + '</span></div>';
-    });
-    if(!listHtml) listHtml = '<div style="font-size:12px;color:var(--hint);padding:6px 0">Sin clientes en este segmento</div>';
-    html += '<div class="sc" style="border-left:4px solid ' + s.color + '">';
-    html += '<div class="sc-badge" style="background:transparent;color:' + s.color + ';padding:0;margin-bottom:6px;font-size:12px"><i class="fa-solid ' + s.ico + '"></i> ' + s.lbl + '</div>';
-    html += '<div class="sc-num" style="color:' + s.color + ';font-size:28px">' + s.data.length + '</div>';
-    html += '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">' + s.desc + '</div>';
-    html += listHtml;
-    html += '</div>';
-  });
-  document.getElementById('cdp-segmentos-grid').innerHTML = html;
-}
-
-function exportarSegmentosCSV(){
-  var contactoUnico = {};
-  (_ordenes || []).forEach(function(o){
-    var tel = (o.contacto || '').replace(/\D/g, '');
-    if(!tel || contactoUnico[tel]) return;
-    contactoUnico[tel] = { nombre: o.nombre, contacto: o.contacto, total: parseFloat(o.total || 0), ordenes: 1, ultima: o.fecha };
-  });
-  var lines = ['Nombre,Contacto,Total gastado,Órdenes,Última compra'];
-  Object.keys(contactoUnico).forEach(function(tel){
-    var c = contactoUnico[tel];
-    var ult = c.ultima ? c.ultima.slice(0, 10) : '';
-    lines.push('"' + (c.nombre || '') + '","' + (c.contacto || '') + '",$' + (c.total || 0).toFixed(2) + ',' + (c.ordenes || 1) + ',' + ult);
-  });
-  var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'segmentos_clientes.csv'; a.click();
-  URL.revokeObjectURL(a.href);
 }
 </script>
 <div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>

@@ -163,8 +163,6 @@ tbody tr:last-child td{border-bottom:none}
   .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
   .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
 }
-/* Scroll horizontal para toda la info de la tabla de órdenes */
-#tbl-ordenes{overflow-x:auto;max-width:100%}#tbl-ordenes table{min-width:1400px}
 .sd{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .sd.green{background:#2e7d52}.sd.yellow{background:var(--gold)}.sd.red{background:#a32d2d}
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -224,11 +222,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('inventario')" id="nav-inventario"><i class="fa-solid fa-boxes-stacked"></i> Inventario</div>
   <div class="nav" onclick="go('analytics')" id="nav-analytics"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
   <div class="nav" onclick="go('reportes')" id="nav-reportes"><i class="fa-solid fa-calendar-days"></i> Reportes</div>
-  <div class="nav" onclick="go('cdp');cargarCDP()" id="nav-cdp"><i class="fa-solid fa-database"></i> CDP</div>
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
-  <div class="sb-sec">Configuración</div>
-  <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
-  <div class="nav" onclick="go('wompi')" id="nav-wompi"><i class="fa-solid fa-credit-card"></i> Wompi / Pagos</div>
   <div class="sb-pdf"><button class="btn btn-gold" style="width:100%;justify-content:center" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button></div>
   <div class="sb-foot">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
@@ -299,16 +293,16 @@ tbody tr:last-child td{border-bottom:none}
           <div class="fg full">
             <label>Dirección de entrega *</label>
             <input id="f-direccion" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDireccionInput()">
-            <label style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;margin-top:10px;display:block">O pega coordenadas / enlace del mapa</label>
+            <label style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;margin-top:10px;display:block">O pega coordenadas / enlace de Google Maps</label>
             <div style="display:flex;gap:6px;margin-top:4px">
-              <input id="f-gps" type="text" placeholder="Ej. 13.682673,-89.144279  o  enlace de OpenStreetMap, Google Maps, Waze" style="flex:1;font-size:13px" oninput="onGPSInput()">
+              <input id="f-gps" type="text" placeholder="Ej. 13.682673,-89.144279  o  https://maps.google.com/?q=13.682673,-89.144279" style="flex:1;font-size:13px" oninput="onGPSInput()">
               <button type="button" class="btn btn-outline btn-sm" onclick="aplicarGPS(document.getElementById('f-gps').value.trim())" style="white-space:nowrap"><i class="fa-solid fa-location-dot" style="color:#e74c3c"></i> Fijar</button>
             </div>
-            <span class="hint">Acepta: coordenadas (lat,lng), enlace de OpenStreetMap, Google Maps, Waze o WhatsApp</span>
+            <span class="hint">Acepta: coordenadas (lat,lng), enlace de Google Maps o enlace compartido desde el teléfono</span>
             <div id="map-wrap" style="display:none;margin-top:8px">
               <div style="position:relative;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">
                 <iframe id="map-frame" width="100%" height="220" style="border:0;display:block" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                <a id="map-abrir" href="#" target="_blank" style="position:absolute;top:8px;left:8px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.15)"><i class="fa-solid fa-up-right-from-square" style="margin-right:5px"></i>Ver mapa</a>
+                <a id="map-abrir" href="#" target="_blank" style="position:absolute;top:8px;left:8px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.15)"><i class="fa-solid fa-up-right-from-square" style="margin-right:5px"></i>Abrir en Maps</a>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
                 <span class="hint" id="map-status">Ubicación aproximada según la dirección escrita.</span>
@@ -555,47 +549,6 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
-    <!-- CDP — CUSTOMER DATA PLATFORM -->
-    <div id="panel-cdp" class="panel">
-      <div style="display:flex;gap:8px;margin-bottom:1.1rem;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm sel" id="cdp-tab-360" onclick="cdpTab('360')" style="border-color:var(--navy);background:var(--navy);color:#fff">Customer 360</button>
-        <button class="btn btn-outline btn-sm" id="cdp-tab-funnel" onclick="cdpTab('funnel')">Embudo de conversión</button>
-        <button class="btn btn-outline btn-sm" id="cdp-tab-segmentos" onclick="cdpTab('segmentos')">Segmentos</button>
-        <button class="btn btn-outline btn-sm" onclick="cargarCDP()" style="margin-left:auto"><i class="fa-solid fa-rotate"></i> Actualizar</button>
-      </div>
-
-      <!-- Customer 360 -->
-      <div id="cdp-360">
-        <div class="ph-row" style="margin-bottom:1rem">
-          <div><h2>Customer 360</h2><p>Busca un cliente por nombre o WhatsApp para ver su timeline completo</p></div>
-        </div>
-        <div style="display:flex;gap:10px;margin-bottom:1.1rem">
-          <input id="cdp-buscar" type="text" placeholder="Nombre o WhatsApp…" style="flex:1;border:1px solid var(--bmd);border-radius:var(--rs);padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none" onkeydown="if(event.key==='Enter')cdpBuscar()">
-          <button class="btn btn-outline btn-sm" onclick="cdpBuscar()"><i class="fa-solid fa-magnifying-glass"></i></button>
-        </div>
-        <div id="cdp-timeline"><div class="empty"><i class="fa-solid fa-users"></i><p>Busca un cliente para ver su actividad.</p></div></div>
-      </div>
-
-      <!-- Embudo de conversión -->
-      <div id="cdp-funnel" style="display:none">
-        <div class="ph-row">
-          <div><h2>Embudo de conversión</h2><p>De catálogo a compra — últimas visitas</p></div>
-          <div class="fg" style="min-width:120px"><label>Período</label><select id="cdp-funnel-periodo" onchange="cdpRenderFunnel()"><option value="7">7 días</option><option value="30" selected>30 días</option><option value="90">90 días</option></select></div>
-        </div>
-        <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Flujo de conversión</div><div style="position:relative;height:240px"><canvas id="chartFunnel"></canvas></div></div>
-        <div class="g4" id="cdp-funnel-metrics"></div>
-      </div>
-
-      <!-- Segmentos -->
-      <div id="cdp-segmentos" style="display:none">
-        <div class="ph-row">
-          <div><h2>Segmentos de clientes</h2><p>Agrupación automática según comportamiento de compra</p></div>
-          <button class="btn btn-outline btn-sm" onclick="exportarSegmentosCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button>
-        </div>
-        <div class="g3" id="cdp-segmentos-grid"></div>
-      </div>
-    </div>
-
     <!-- REGISTRO DE VENTA -->
     <div id="panel-registroventa" class="panel">
       <div class="ph-row">
@@ -611,89 +564,9 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
-    <!-- OpenWa Config -->
-    <div id="panel-openwa" class="panel">
-      <div class="ph-row">
-        <div><h2>OpenWa / WhatsApp</h2><p>Configuración del envío automático de comprobantes por WhatsApp.</p></div>
-        <button class="btn btn-primary btn-sm" onclick="guardarConfigOpenWa()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
-      </div>
-
-      <div class="card" style="margin-bottom:1rem">
-        <div class="card-ttl">Estado</div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:600">Envío automático por API</div>
-            <div style="font-size:12px;color:var(--muted)">Al activarlo, los comprobantes de pago se enviarán automáticamente desde una API de WhatsApp. Si está desactivado, se usará un enlace manual de wa.me.</div>
-          </div>
-          <label class="toggle-wrap">
-            <input type="checkbox" id="openwa-activo" onchange="onToggleOpenWa()">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div id="openwa-fields" style="opacity:.5;pointer-events:none">
-        <div class="card">
-          <div class="card-ttl">API OpenWa</div>
-          <div class="fg"><label>URL de la API</label><input type="url" id="openwa-api-url" placeholder="https://tuservicio.com/api"></div>
-          <div class="fg"><label>API Key</label><input type="password" id="openwa-api-key" placeholder="••••••••"></div>
-          <div class="fg"><label>Número de la tienda (receptor)</label><input type="text" id="openwa-numero" placeholder="503XXXXXXXXX"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-ttl">Información</div>
-          <div style="font-size:13px;color:var(--muted);line-height:1.7">
-            <p>OpenWa permite enviar mensajes de WhatsApp automáticamente desde el servidor sin necesidad de que nadie abra WhatsApp. Cuando un cliente sube su comprobante de pago:</p>
-            <ul style="padding-left:18px;margin-top:8px">
-              <li><strong>Si OpenWa está activo</strong> — el comprobante se envía automáticamente a tu WhatsApp vía API.</li>
-              <li><strong>Si está inactivo</strong> — el cliente ve un botón manual <code>wa.me</code> para enviarlo él mismo.</li>
-            </ul>
-            <p style="margin-top:10px">Plataformas gratuitas recomendadas (ver <code>CONTEXTO_NUGUDU_CRM.md</code>):</p>
-            <ul style="padding-left:18px;margin-top:4px">
-              <li><a href="https://whatsapp.com/business" target="_blank">WhatsApp Business API</a> (oficial)</li>
-              <li><a href="https://evolution-api.com" target="_blank">Evolution API</a> (self-hosted)</li>
-              <li><a href="https://whatsapp-chat-api.com" target="_blank">whatsapp-chat-api.com</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Wompi Config -->
-    <div id="panel-wompi" class="panel">
-      <div class="ph-row">
-        <div><h2>Wompi / Pagos con Tarjeta</h2><p>Credenciales del aplicativo de Wompi para pagos con tarjeta.</p></div>
-        <button class="btn btn-primary btn-sm" onclick="guardarConfigWompi()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
-      </div>
-
-      <div class="card" style="margin-bottom:1rem">
-        <div class="card-ttl">Credenciales</div>
-        <div class="fg"><label>App ID (client_id)</label><input type="text" id="wompi-app-id" placeholder="UUID del aplicativo"></div>
-        <div class="fg"><label>API Secret (client_secret)</label><input type="password" id="wompi-api-secret" placeholder="••••••••"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-ttl">Información</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.7">
-          <p>Obtén estas credenciales desde <a href="https://panel.wompi.sv" target="_blank">panel.wompi.sv</a> → Tu negocio → App ID / API Secret.</p>
-          <p style="margin-top:8px">Las URLs de autenticación y API son fijas y NO necesitan cambios. El modo sandbox/producción se controla directamente desde el panel de Wompi.</p>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 </div>
-
-<style>
-/* Toggle switch */
-.toggle-wrap{position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0}
-.toggle-wrap input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:26px;transition:.3s}
-.toggle-slider:before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
-.toggle-wrap input:checked+.toggle-slider{background:var(--teal)}
-.toggle-wrap input:checked+.toggle-slider:before{transform:translateX(22px)}
-</style>
 
 <script>
 // ═══════════════════════════════════════════════
@@ -832,13 +705,10 @@ var PANELS  = {
   inventario:   ['Inventario','Productos vendidos por SKU'],
   analytics:    ['Analytics','Productos más vendidos y canales'],
   reportes:     ['Reportes','Análisis por rango de fechas'],
-  cdp:          ['CDP','Customer Data Platform — comportamiento y segmentos'],
-  registroventa:['Registro de venta','Genera y comparte con tus clientes'],
-  openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes'],
-  wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
+  registroventa:['Registro de venta','Genera y comparte con tus clientes']
 };
 var KEY  = 'ngd_crm_v10';
-var GAS  = 'https://script.google.com/macros/s/AKfycbyodUZIMmwgxWGHCVWZjz9R8H0vVj6Wv-cNDfJriInCXOcAiCsITqCw4YkKm2TXR-JW/exec';
+var GAS  = 'https://script.google.com/macros/s/AKfycbxXSFbECrtrRPohWOfmU3ZShV5DUEhC2xIlFGWEPL4ur60qpvzYRi7FT1neL1qoFT_m/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 // Cierra el acceso publico anonimo a los datos de clientes.
 var API_TOKEN = '20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
@@ -852,7 +722,6 @@ var _clientesData = null;
 
 // STORAGE — local first, GAS sync in background
 function getOrd(){ return _ordenes; }
-function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function saveLocal(){
   localStorage.setItem(KEY, JSON.stringify(_ordenes));
@@ -1031,93 +900,6 @@ function go(name){
   if(name==='registroventa'){ cerrarInv(); renderInvList(); }
   if(name==='tracking')  { document.getElementById('track-list').innerHTML=''; document.getElementById('track-detail').style.display='none'; document.getElementById('track-q').value=''; }
   if(name==='repartidor' && _repCodigo){ renderRepDash(); }
-  if(name==='openwa'){ cargarConfigOpenWa(); }
-  if(name==='wompi'){ cargarConfigWompi(); }
-  if(name==='cdp'){ cargarCDP(); }
-}
-
-// ── OPENWA CONFIG ──
-function onToggleOpenWa(){
-  var active=document.getElementById('openwa-activo').checked;
-  document.getElementById('openwa-fields').style.opacity=active?'1':'.5';
-  document.getElementById('openwa-fields').style.pointerEvents=active?'':'none';
-}
-
-function cargarConfigOpenWa(){
-  var xhr=new XMLHttpRequest();
-  xhr.open('GET',GAS+'?action=getConfigOpenWa&token='+encodeURIComponent(API_TOKEN));
-  xhr.onload=function(){
-    try{
-      var d=JSON.parse(xhr.responseText);
-      if(d.ok){
-        document.getElementById('openwa-activo').checked=d.activo;
-        document.getElementById('openwa-api-url').value=d.apiUrl||'';
-        document.getElementById('openwa-api-key').value=d.apiKey||'';
-        document.getElementById('openwa-numero').value=d.numeroTienda||'';
-        onToggleOpenWa();
-      }
-    }catch(e){}
-  };
-  xhr.send();
-}
-
-function guardarConfigOpenWa(){
-  var payload={
-    action:'saveConfigOpenWa',token:API_TOKEN,
-    activo:document.getElementById('openwa-activo').checked,
-    apiUrl:document.getElementById('openwa-api-url').value.trim(),
-    apiKey:document.getElementById('openwa-api-key').value.trim(),
-    numeroTienda:document.getElementById('openwa-numero').value.trim()
-  };
-  var btn=document.querySelector('#panel-openwa .btn-primary');
-  btn.textContent='Guardando…';btn.disabled=true;
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      btn.textContent='¡Guardado!';
-      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
-    }).catch(function(){
-      btn.textContent='Error';
-      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
-    });
-}
-
-// ── WOMPI CONFIG ──
-function cargarConfigWompi(){
-  var xhr=new XMLHttpRequest();
-  xhr.open('GET',GAS+'?action=getConfigWompi&token='+encodeURIComponent(API_TOKEN)+'&_t='+Date.now());
-  xhr.onload=function(){
-    try{
-      var d=JSON.parse(xhr.responseText);
-      if(d.ok){
-        document.getElementById('wompi-app-id').value=d.appId||'';
-        document.getElementById('wompi-api-secret').value=d.apiSecret||'';
-      }
-    }catch(e){console.error('cargarConfigWompi parse error',e,xhr.responseText);}
-  };
-  xhr.onerror=function(){console.error('cargarConfigWompi network error');};
-  xhr.send();
-}
-
-function guardarConfigWompi(){
-  var payload={
-    action:'saveConfigWompi',token:API_TOKEN,
-    appId:document.getElementById('wompi-app-id').value.trim(),
-    apiSecret:document.getElementById('wompi-api-secret').value.trim()
-  };
-  var btn=document.querySelector('#panel-wompi .btn-primary');
-  btn.textContent='Guardando…';btn.disabled=true;
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      btn.textContent='¡Guardado!';
-      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
-      cargarConfigWompi();
-    }).catch(function(err){
-      console.error('guardarConfigWompi error',err);
-      btn.textContent='Error';
-      setTimeout(function(){btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Guardar';btn.disabled=false;},2000);
-    });
 }
 
 // Lleva a "Nueva Venta" con el foco listo en el campo de SKU,
@@ -1258,9 +1040,9 @@ function imgFallbackMini(img){
 // 6 fotos se descargan una sola vez y el navegador las reusa en cada fila).
 function renderSkuColor(productos, conFoto){
   if(!productos||!productos.length) return '–';
-  var html='<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">';
-  productos.forEach(function(sku){
+  return productos.map(function(sku){
     var parts=sku.split('-');
+    // El color está en el último segmento (ej. RSV-KA-NG → NG)
     var sufijo=parts[parts.length-1];
     var color=COLOR_MAP[sufijo];
     var dot=color?'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+color.hex+';border:1px solid rgba(0,0,0,.15);margin-right:4px;vertical-align:middle"></span>':'';
@@ -1276,9 +1058,8 @@ function renderSkuColor(productos, conFoto){
         foto='<img src="imagenes/'+cand[0]+'" alt="" loading="lazy" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallbackMini(this)" onclick="event.stopPropagation();verFotoAmpliada(this.src)" title="Ver foto más grande" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px;border:1px solid var(--border);cursor:pointer">';
       }
     }
-    html+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
-  });
-  return html+'</div>';
+    return '<span style="font-size:11px">'+foto+dot+'<span style="color:var(--navy);font-weight:500">'+esc(sku)+'</span>'+label+'</span>';
+  }).join('<br>');
 }
 function badgeConsumoInterno(o){
   if (!o.consumoInterno) return '';
@@ -1334,19 +1115,6 @@ function enviarDatosBancarios(id){
     'Monto a transferir: $'+total+'\n\n'+
     'Cuando realices la transferencia, envianos el comprobante por este mismo chat y confirmamos tu pedido. Gracias.';
   window.open('https://wa.me/'+waNum+'?text='+encodeURIComponent(msg),'_blank');
-  // Marca (y sincroniza) que los datos bancarios de esta orden ya se
-  // enviaron -- persiste con la orden, no solo en este navegador, para que
-  // si alguien abre el mismo pedido desde otro dispositivo sepa que ya se
-  // mando antes en vez de reenviarlo sin darse cuenta.
-  if (!o.datosBancariosEnviados) {
-    var idxDB=-1;
-    for (var i=0;i<_ordenes.length;i++){ if(_ordenes[i].id===id){idxDB=i;break;} }
-    if (idxDB>=0) {
-      _ordenes[idxDB].datosBancariosEnviados = true;
-      saveLocal();
-      updateGASField(id, {datosBancariosEnviados:true});
-    }
-  }
 }
 
 // MAPA — se integra automáticamente al escribir la dirección.
@@ -1368,53 +1136,22 @@ function onDireccionInput(){
     }
   }, 700); // espera a que termine de escribir
 }
-function osmLinkURL(lat,lng){
-  lat=parseFloat(lat);lng=parseFloat(lng);
-  return 'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lng+'#map=15/'+lat+'/'+lng;
-}
-function osmEmbedURL(lat,lng){
-  lat=parseFloat(lat);lng=parseFloat(lng);
-  var o=0.01;
-  return 'https://www.openstreetmap.org/export/embed.html?bbox='+(lng-o)+','+(lat-o)+','+(lng+o)+','+(lat+o)+'&layer=mapnik&marker='+lat+','+lng;
-}
-// Geocodifica con LocationIQ (via Code_1.gs) para centrar el mapa en un
-// punto preciso -- si no hay resultado (o la llave de LocationIQ no esta
-// configurada), cae de vuelta a la busqueda de texto simple que ya
-// funcionaba, para que el mapa nunca se quede vacio. La caja de "pega
-// coordenadas / enlace del mapa" (f-gps) sigue igual, sin tocar.
 function actualizarMapa(direccionTexto){
+  var query  = encodeURIComponent(direccionTexto + ', El Salvador');
   var frame  = document.getElementById('map-frame');
   var abrir  = document.getElementById('map-abrir');
   var wrap   = document.getElementById('map-wrap');
   var status = document.getElementById('map-status');
   if (!frame) return;
-  gasCall({method:'POST', body:{action:'geocodificar', direccion:direccionTexto}}, function(err, res){
-    if (!err && res && res.ok && res.lat && res.lng) {
-      var q = res.lat + ',' + res.lng;
-      frame.src = osmEmbedURL(res.lat, res.lng);
-      abrir.href = osmLinkURL(res.lat, res.lng);
-      status.textContent = 'Ubicación precisa (LocationIQ).';
-      // Autocompleta la caja "pega coordenadas" SOLO si esta vacia, para no
-      // pisar una coordenada que la persona ya haya pegado a mano -- sigue
-      // siendo 100% editable despues, esto solo la completa por defecto.
-      var gpsBoxAuto = document.getElementById('f-gps');
-      if (gpsBoxAuto && !(gpsBoxAuto.value||'').trim()) {
-        gpsBoxAuto.value = res.lat + ', ' + res.lng;
-        window._mapaLinkGPS = osmLinkURL(res.lat, res.lng);
-      }
-    } else {
-      var query = encodeURIComponent(direccionTexto + ', El Salvador');
-      frame.src = '';
-      abrir.href = 'https://www.openstreetmap.org/search?query=' + query;
-      status.textContent = 'Ubicación aproximada según la dirección escrita.';
-    }
-    wrap.style.display = 'block';
-  });
+  frame.src = 'https://maps.google.com/maps?q=' + query + '&output=embed';
+  abrir.href = 'https://www.google.com/maps/search/?api=1&query=' + query;
+  status.textContent = 'Ubicación aproximada según la dirección escrita.';
+  wrap.style.display = 'block';
 }
 
-// Extrae coordenadas lat,lng de formatos de link conocidos:
+// Extrae coordenadas lat,lng de cualquier formato de link de Google Maps:
 // https://maps.google.com/?q=13.667,-89.247
-// https://www.openstreetmap.org/?mlat=13.667&mlon=-89.247
+// https://www.google.com/maps?q=13.667,-89.247
 // https://maps.app.goo.gl/... (links acortados — no se pueden resolver sin API, se informa)
 // Extrae coordenadas de cualquier formato conocido directamente en el cliente.
 function extraerCoordenadas(link){
@@ -1471,18 +1208,17 @@ function aplicarGPS(link){
     });
     return;
   }
-  status.textContent = 'Formato no reconocido — pega coordenadas (13.68,-89.24), un link de OpenStreetMap, Google Maps, Waze o WhatsApp.';
+  status.textContent = 'Formato no reconocido — pega coordenadas (13.68,-89.24), un link de Google Maps, Waze o WhatsApp.';
   wrap.style.display = 'block';
   document.getElementById('map-frame').src = '';
 }
 function mostrarCoordsMapa(coords){
-  document.getElementById('map-frame').src = osmEmbedURL(coords.lat, coords.lng);
-  document.getElementById('map-abrir').href = osmLinkURL(coords.lat, coords.lng);
+  var q = coords.lat + ',' + coords.lng;
+  document.getElementById('map-frame').src = 'https://maps.google.com/maps?q=' + q + '&output=embed';
+  document.getElementById('map-abrir').href = 'https://www.google.com/maps?q=' + q;
   document.getElementById('map-status').textContent = '📍 ' + coords.lat + ', ' + coords.lng + ' — Ubicación GPS fijada.';
   document.getElementById('map-wrap').style.display = 'block';
-  window._mapaLinkGPS = osmLinkURL(coords.lat, coords.lng);
-  var gpsBoxSync = document.getElementById('f-gps');
-  if (gpsBoxSync) gpsBoxSync.value = coords.lat + ', ' + coords.lng;
+  window._mapaLinkGPS = 'https://www.google.com/maps?q=' + q;
   // Auto-llenar el campo de dirección con las coordenadas si está vacío,
   // y luego intentar reverse geocoding con Nominatim para obtener una dirección legible.
   var campoDir = document.getElementById('f-direccion');
@@ -1512,11 +1248,11 @@ function quitarMapa(){
   document.getElementById('map-frame').src = '';
   window._mapaLinkGPS = null;
 }
-// Construye el link de OpenStreetMap para guardarlo con la orden (compartir con repartidor).
+// Construye el link de Google Maps para guardarlo con la orden (compartir con repartidor).
 function linkMapaDesdeDireccion(direccionTexto, zona){
   if (!direccionTexto) return '';
   var query = encodeURIComponent(direccionTexto + (zona ? ', ' + zona : '') + ', El Salvador');
-  return 'https://www.openstreetmap.org/search?query=' + query;
+  return 'https://www.google.com/maps/search/?api=1&query=' + query;
 }
 
 // CLIENTES RECURRENTES — el dashboard ya es una base de datos de órdenes;
@@ -1898,16 +1634,16 @@ function abrirEditarOrden(id){
     '<div class="fg" style="margin-bottom:10px"><label>Cantidad</label><input id="ed-cantidad" type="number" min="1" value="'+(o.cantidad||1)+'"></div>'+
     '<div class="fg" style="margin-bottom:10px"><label>Notas</label><input id="ed-notas" type="text" value="'+esc(o.notas||'')+'"></div>'+
     '<div class="fg" style="margin-bottom:4px">'+
-      '<label style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase">O pega coordenadas / enlace del mapa</label>'+
+      '<label style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase">O pega coordenadas / enlace de Google Maps</label>'+
       '<div style="display:flex;gap:6px;margin-top:4px">'+
-        '<input id="ed-gps" type="text" placeholder="Ej. 13.682673,-89.144279  o  enlace de OpenStreetMap, Google Maps, Waze" style="flex:1;font-size:13px" oninput="onGPSInputEdit()">'+
+        '<input id="ed-gps" type="text" placeholder="Ej. 13.682673,-89.144279  o  https://maps.google.com/?q=13.682673,-89.144279" style="flex:1;font-size:13px" oninput="onGPSInputEdit()">'+
         '<button type="button" class="btn btn-outline btn-sm" onclick="aplicarGPSEdit(document.getElementById(\'ed-gps\').value.trim())" style="white-space:nowrap"><i class="fa-solid fa-location-dot" style="color:#e74c3c"></i> Fijar</button>'+
       '</div>'+
-      '<span class="hint">Acepta: coordenadas (lat,lng), enlace de OpenStreetMap, Google Maps, Waze o WhatsApp</span>'+
+      '<span class="hint">Acepta: coordenadas (lat,lng), enlace de Google Maps o enlace compartido desde el teléfono</span>'+
       '<div id="ed-map-wrap" style="display:none;margin-top:8px">'+
         '<div style="position:relative;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden">'+
           '<iframe id="ed-map-frame" width="100%" height="180" style="border:0;display:block" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'+
-          '<a id="ed-map-abrir" href="#" target="_blank" style="position:absolute;top:8px;left:8px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.15)"><i class="fa-solid fa-up-right-from-square" style="margin-right:5px"></i>Ver mapa</a>'+
+          '<a id="ed-map-abrir" href="#" target="_blank" style="position:absolute;top:8px;left:8px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--navy);text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.15)"><i class="fa-solid fa-up-right-from-square" style="margin-right:5px"></i>Abrir en Maps</a>'+
         '</div>'+
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">'+
           '<span class="hint" id="ed-map-status">Ubicación aproximada según la dirección escrita.</span>'+
@@ -1922,19 +1658,9 @@ function abrirEditarOrden(id){
   overlay.innerHTML=html;
   overlay.style.display='flex';
   window._edMapaLink=o.mapaLink||null;
-  var coordsPrevias = o.mapaLink ? extraerCoordenadas(o.mapaLink) : null;
-  if(coordsPrevias){
-    mostrarCoordsMapaEdit(coordsPrevias);
-  } else if (o.direccion) {
-    // La orden no trae coordenadas guardadas (ej. vino de pedido.html con
-    // solo texto de direccion, sin que LocationIQ encontrara un resultado
-    // exacto en su momento) -- se geocodifica automaticamente al abrir el
-    // modal para completar la caja, pero el campo sigue 100% editable.
-    gasCall({method:'POST', body:{action:'geocodificar', direccion:o.direccion}}, function(err,res){
-      if(!err && res && res.ok && res.lat && res.lng && document.getElementById('ed-gps')){
-        mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng});
-      }
-    });
+  if(o.mapaLink){
+    var coordsPrevias=extraerCoordenadas(o.mapaLink);
+    if(coordsPrevias) mostrarCoordsMapaEdit(coordsPrevias);
   }
 }
 function cerrarEditarOrden(){
@@ -2000,19 +1726,17 @@ function aplicarGPSEdit(link){
     });
     return;
   }
-  status.textContent='Formato no reconocido — pega coordenadas (13.68,-89.24), un link de OpenStreetMap, Google Maps, Waze o WhatsApp.';
+  status.textContent='Formato no reconocido — pega coordenadas (13.68,-89.24), un link de Google Maps, Waze o WhatsApp.';
   wrap.style.display='block';
   document.getElementById('ed-map-frame').src='';
 }
 function mostrarCoordsMapaEdit(coords){
-  var edGpsFrame=document.getElementById('ed-map-frame'); if(!edGpsFrame) return;
-  edGpsFrame.src=osmEmbedURL(coords.lat, coords.lng);
-  document.getElementById('ed-map-abrir').href=osmLinkURL(coords.lat, coords.lng);
+  var q=coords.lat+','+coords.lng;
+  document.getElementById('ed-map-frame').src='https://maps.google.com/maps?q='+q+'&output=embed';
+  document.getElementById('ed-map-abrir').href='https://www.google.com/maps?q='+q;
   document.getElementById('ed-map-status').textContent='📍 '+coords.lat+', '+coords.lng+' — Ubicación GPS fijada.';
   document.getElementById('ed-map-wrap').style.display='block';
-  window._edMapaLink=osmLinkURL(coords.lat, coords.lng);
-  var edGpsBox=document.getElementById('ed-gps');
-  if(edGpsBox) edGpsBox.value = coords.lat + ', ' + coords.lng;
+  window._edMapaLink='https://www.google.com/maps?q='+q;
 }
 function quitarMapaEdit(){
   window._edMapaLink=null;
@@ -2042,10 +1766,6 @@ function construirMensajeWA(o, est){
   return base + ' Gracias por tu compra.';
 }
 
-// Recuerda, solo en memoria (se reinicia al recargar la pagina), para que
-// el WhatsApp de datos bancarios no se vuelva a abrir solo cada vez que se
-// refresca/reabre el detalle de la misma orden -- una vez por sesion basta.
-var _waAutoAbiertoIds = {};
 function abrirTrack(id){
   var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
   var est=parseInt(o.estado)||0;
@@ -2063,21 +1783,6 @@ function abrirTrack(id){
   var pendBlock = o.pendientePago ? '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+badgePendientePago(o)+'<button class="btn btn-outline btn-xs" onclick="confirmarPago('+id+')" style="color:var(--green);border-color:#bfe2cc"><i class="fa-solid fa-check"></i> Confirmar pago</button><button class="btn btn-outline btn-xs" onclick="enviarDatosBancarios('+id+')" style="color:var(--teal);border-color:#b2e0db"><i class="fa-solid fa-building-columns"></i> Enviar datos bancarios</button></div>' : '';
   var ciBlock = badgeConsumoInterno(o);
   det.innerHTML='<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1rem"><div><div class="mono" style="font-size:15px">'+esc(o.orden)+'</div><div style="font-weight:600;font-size:15px;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · <span class="zona-pill">'+esc(o.zona)+'</span></div><div style="font-size:12px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>'+esc(o.direccion||'')+' <a href="'+mapaUrl+'" target="_blank" style="color:var(--navy);font-weight:600;margin-left:6px">Ver mapa</a></div>'+pendBlock+ciBlock+'</div><span class="status '+SCLS[est]+'" style="font-size:13px;padding:5px 13px">'+ESTADOS[est]+'</span></div><div class="tl">'+steps+'</div><div style="margin-top:1.25rem;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.5rem">Actualizar estado</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="estado-opts">'+ESTADOS.map(function(label,i){return '<button class="ss-opt '+(i===est?'sel':'')+'" onclick="actualizarEstado('+id+','+i+',this)">'+EICONS[i]+' '+label+'</button>';}).join('')+'</div><div style="margin-top:1.1rem;padding:.85rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs)"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:6px"><i class="fa-solid fa-calendar-check" style="margin-right:5px;color:var(--teal)"></i>Fecha de entrega estimada</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="track-fecha-entrega" value="'+fechaVal+'" style="border:1px solid var(--bmd);border-radius:var(--rs);padding:7px 10px;font-size:13px;font-family:\'DM Sans\',sans-serif"><button class="btn btn-teal btn-sm" onclick="guardarFechaEntrega('+id+')"><i class="fa-solid fa-floppy-disk"></i> Guardar fecha</button><span class="hint">Se incluye en el WhatsApp cuando el pedido está "En empaque".</span></div></div><div style="display:flex;gap:8px;margin-top:1.25rem;flex-wrap:wrap"><a class="btn btn-wa" href="https://wa.me/'+waNum+'?text='+waMsg+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar</a><button class="btn btn-outline" onclick="cpMsg('+id+')"><i class="fa-solid fa-copy"></i> Copiar mensaje</button><a class="btn btn-outline" href="'+mapaUrl+'" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Abrir en Maps</a><button class="btn btn-outline" onclick="imprimirFichaQR('+id+')"><i class="fa-solid fa-print"></i> Imprimir ficha</button></div></div>';
-  // Punto medio pedido por Nuria: si la orden esta recien llegada (estado
-  // "Nueva orden") y el pago sigue pendiente, se abre sola la conversacion
-  // de WhatsApp con los datos bancarios ya escritos -- solo falta tocar
-  // "Enviar". No se repite en la misma sesion para la misma orden (ver
-  // _waAutoAbiertoIds), asi no molesta si se vuelve a abrir el mismo
-  // detalle o se refresca despues de otra accion.
-  if (est === 0 && o.pendientePago && !_waAutoAbiertoIds[id]) {
-    _waAutoAbiertoIds[id] = true;
-    if (!o.datosBancariosEnviados) {
-      // Primera vez que se ve esta orden (en cualquier dispositivo) -- se abre sola.
-      enviarDatosBancarios(id);
-    } else if (confirm('Los datos bancarios de este pedido ya se enviaron antes (desde este u otro dispositivo). ¿Deseas enviarlos de nuevo?')) {
-      enviarDatosBancarios(id);
-    }
-  }
 }
 
 function guardarFechaEntrega(id){
@@ -2866,213 +2571,6 @@ function generarPdfReporteSku(data, sku, foto){
     cells.forEach(function(v,i){doc.text(String(v).slice(0,Math.floor(cw[i]/2)),x,y+4.2);x+=cw[i];});y+=6;
   });
   doc.save('nugudú_reporte_sku_'+sku+'_'+new Date().toISOString().slice(0,10)+'.pdf');
-}
-
-// ══════════════════════════════════════════════════════════════════
-// CDP — CUSTOMER DATA PLATFORM
-// ══════════════════════════════════════════════════════════════════
-var _cdpEventos = [];
-
-function cargarCDP(){
-  fetch(GAS+'?action=leerEventos&limite=10000&token='+encodeURIComponent(API_TOKEN))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.ok) _cdpEventos = d.eventos || [];
-      else _cdpEventos = [];
-      cdpTab('360');
-    }).catch(function(){ _cdpEventos = []; });
-}
-
-function cdpTab(tab){
-  var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos' };
-  ['360','funnel','segmentos'].forEach(function(t){
-    var el = document.getElementById(secciones[t]); if(el) el.style.display = t === tab ? 'block' : 'none';
-    var btn = document.getElementById('cdp-tab-'+t);
-    if(btn){
-      if(t === tab){ btn.style.borderColor = 'var(--navy)'; btn.style.background = 'var(--navy)'; btn.style.color = '#fff'; }
-      else{ btn.style.borderColor = ''; btn.style.background = ''; btn.style.color = ''; }
-    }
-  });
-  if(tab === 'funnel') cdpRenderFunnel();
-  if(tab === 'segmentos') cdpRenderSegmentos();
-}
-
-// ── Customer 360 ──
-function cdpBuscar(){
-  var q = (document.getElementById('cdp-buscar').value || '').trim().toLowerCase();
-  if(!q) return;
-  var byTel = q.replace(/\D/g, '');
-  var clientes = {};
-  _cdpEventos.forEach(function(e){
-    if(!e.contacto) return;
-    var nom = (e.data && e.data.nombre) || '';
-    var tel = e.contacto.replace(/\D/g, '');
-    if(tel.indexOf(byTel) < 0 && nom.toLowerCase().indexOf(q) < 0) return;
-    if(!clientes[tel]) clientes[tel] = { contacto: e.contacto, nombre: nom, eventos: [] };
-    clientes[tel].eventos.push(e);
-  });
-  var lista = Object.keys(clientes);
-  if(!lista.length){ document.getElementById('cdp-timeline').innerHTML = '<div class="empty"><i class="fa-solid fa-user-xmark"></i><p>No se encontraron clientes con ese criterio.</p></div>'; return; }
-  cdpRender360(clientes);
-}
-
-function cdpRender360(clientes){
-  var html = '';
-  Object.keys(clientes).forEach(function(tel){
-    var c = clientes[tel];
-    c.eventos.sort(function(a,b){ return a.ts < b.ts ? 1 : -1; });
-    var compras = c.eventos.filter(function(e){ return e.evento === 'purchase'; });
-    var visitas = c.eventos.filter(function(e){ return e.evento === 'page_view' && e.data && e.data.screen === 's-catalogo'; });
-    html += '<div class="card" style="margin-bottom:1rem">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    html += '<div><strong style="font-size:15px">' + escHtml(c.nombre || tel) + '</strong><br><span style="font-size:12px;color:var(--muted)">' + escHtml(c.contacto) + '</span></div>';
-    html += '<div style="text-align:right;font-size:11px;color:var(--muted)">' + visitas.length + ' visitas · ' + compras.length + ' compras</div>';
-    html += '</div>';
-    html += '<div style="max-height:260px;overflow-y:auto;font-size:12px">';
-    c.eventos.slice(0, 50).forEach(function(e){
-      var ico = 'fa-circle';
-      var color = 'var(--hint)';
-      if(e.evento === 'purchase'){ ico = 'fa-cart-shopping'; color = 'var(--green)'; }
-      else if(e.evento === 'add_to_cart'){ ico = 'fa-cart-plus'; color = 'var(--navy)'; }
-      else if(e.evento === 'product_click'){ ico = 'fa-hand-pointer'; color = 'var(--teal)'; }
-      else if(e.evento === 'checkout_start'){ ico = 'fa-arrow-right-to-bracket'; color = 'var(--amber)'; }
-      else if(e.evento === 'page_view'){ ico = 'fa-eye'; color = 'var(--hint)'; }
-      var lbl = e.evento;
-      if(e.evento === 'purchase' && e.data) lbl = 'Compra ' + (e.data.orden || '');
-      else if(e.evento === 'product_click' && e.data) lbl = 'Vio ' + (e.data.nombre || '');
-      else if(e.evento === 'add_to_cart' && e.data) lbl = 'Agregó ' + (e.data.diseno || '') + ' ' + (e.data.color || '');
-      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><i class="fa-solid ' + ico + '" style="color:' + color + ';width:14px;text-align:center;margin-top:2px"></i><div style="flex:1">' + escHtml(lbl) + '</div><div style="color:var(--hint);white-space:nowrap">' + (e.ts ? e.ts.slice(0, 16).replace('T',' ') : '') + '</div></div>';
-    });
-    html += '</div></div>';
-  });
-  document.getElementById('cdp-timeline').innerHTML = html;
-}
-
-// ── Embudo de conversión ──
-function cdpRenderFunnel(){
-  var dias = parseInt(document.getElementById('cdp-funnel-periodo').value) || 30;
-  var corte = new Date(Date.now() - dias * 86400000).toISOString();
-  var eventos = _cdpEventos.filter(function(e){ return e.ts >= corte; });
-  var paso = {};
-  ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'].forEach(function(p){ paso[p] = {}; });
-  eventos.forEach(function(e){
-    if(paso[e.evento]) paso[e.evento][e.session_id] = (paso[e.evento][e.session_id] || 0) + 1;
-  });
-  var labels = ['Visitaron catálogo','Vieron producto','Eligieron color','Agregaron al carrito','Iniciaron checkout','Completaron compra'];
-  var keys = ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'];
-  var vals = keys.map(function(k){ return Object.keys(paso[k]).length; });
-  var maxV = Math.max(1, vals[0]);
-  var pcts = vals.map(function(v){ return (v / maxV * 100).toFixed(1); });
-  var ctx = document.getElementById('chartFunnel');
-  if(ctx && ctx.chart) ctx.chart.destroy();
-  if(ctx){
-    ctx.chart = new Chart(ctx, {
-      type: 'bar',
-      data: { labels: labels, datasets: [{ label: 'Sesiones', data: vals, backgroundColor: ['#2D2460','#1a9e8f','#F5A623','#2e7d52','#d97706','#0d7377'], borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-      }
-    });
-  }
-  var mhtml = '';
-  keys.forEach(function(k, i){
-    mhtml += '<div class="mc"><div class="ml">' + labels[i] + '</div><div class="mv" style="font-size:22px;color:var(--navy)">' + vals[i] + '</div><div style="font-size:11px;color:var(--muted)">' + pcts[i] + '% del total</div></div>';
-  });
-  document.getElementById('cdp-funnel-metrics').innerHTML = mhtml;
-}
-
-// ── Segmentos ──
-function cdpRenderSegmentos(){
-  var ordenes = _ordenes || [];
-  var contactoCompras = {};
-  var contactoSinCompra = {};
-  var ahora = Date.now();
-  var corteVisto = new Date(ahora - 30 * 86400000).toISOString();
-  var compradores = {};
-  _cdpEventos.forEach(function(e){
-    if(!e.contacto) return;
-    var tel = e.contacto.replace(/\D/g, '');
-    if(!tel) return;
-    if(e.evento === 'purchase') compradores[tel] = true;
-    if(e.evento === 'page_view' && e.ts >= corteVisto && !compradores[tel])
-      contactoSinCompra[tel] = { contacto: e.contacto, ts: e.ts };
-  });
-  ordenes.forEach(function(o){
-    var tel = (o.contacto || '').replace(/\D/g, '');
-    if(!tel) return;
-    if(!contactoCompras[tel]) contactoCompras[tel] = { nombre: o.nombre || '', contacto: o.contacto || '', ordenes: [], total: 0, fechas: [] };
-    contactoCompras[tel].ordenes.push(o);
-    contactoCompras[tel].total += parseFloat(o.total || o.precio * o.cantidad || 0);
-    contactoCompras[tel].fechas.push(o.fecha);
-    contactoCompras[tel].nombre = o.nombre || contactoCompras[tel].nombre;
-  });
-  var vistos = [];
-  Object.keys(contactoSinCompra).forEach(function(tel){ vistos.push(contactoSinCompra[tel]); });
-  var segmentos = { nuevos: [], activos: [], riesgo: [], perdidos: [] };
-  Object.keys(contactoCompras).forEach(function(tel){
-    var c = contactoCompras[tel];
-    var ultima = c.fechas.sort().pop() || '';
-    var diasUlt = ultima ? (ahora - new Date(ultima).getTime()) / 86400000 : 999;
-    var count = c.ordenes.length;
-    if(diasUlt <= 90 && count >= 2) segmentos.activos.push(c);
-    else if(diasUlt <= 90) segmentos.nuevos.push(c);
-    else if(diasUlt <= 180) segmentos.riesgo.push(c);
-    else segmentos.perdidos.push(c);
-  });
-  var top = [];
-  Object.keys(contactoCompras).forEach(function(tel){
-    var c = contactoCompras[tel];
-    top.push({ tel: tel, nombre: c.nombre, contacto: c.contacto, total: c.total, count: c.ordenes.length });
-  });
-  top.sort(function(a,b){ return b.total - a.total; });
-  var topN = Math.max(1, Math.ceil(top.length * 0.2));
-  var topSet = {};
-  top.slice(0, topN).forEach(function(t){ topSet[t.tel] = true; });
-  var topList = top.slice(0, topN);
-
-  var segmentosDef = [
-    { id: 'vistos', lbl: 'Visto recientemente', ico: 'fa-eye', color: 'var(--teal)', data: vistos, desc: 'Visitaron el catálogo en los últimos 30 días sin comprar', det: function(d){ return d.contacto; } },
-    { id: 'nuevos', lbl: 'Nuevos', ico: 'fa-seedling', color: 'var(--green)', data: segmentos.nuevos, desc: '1ra compra en los últimos 90 días', det: function(d){ return d.ordenes.length + ' pedido(s)'; } },
-    { id: 'activos', lbl: 'Activos', ico: 'fa-fire', color: 'var(--amber)', data: segmentos.activos, desc: '2+ compras en los últimos 90 días', det: function(d){ return '$' + d.total.toFixed(2); } },
-    { id: 'riesgo', lbl: 'En riesgo', ico: 'fa-triangle-exclamation', color: 'var(--coral)', data: segmentos.riesgo, desc: 'Sin compra en 90+ días', det: function(d){ return '$' + d.total.toFixed(2); } },
-    { id: 'perdidos', lbl: 'Perdidos', ico: 'fa-face-frown', color: 'var(--hint)', data: segmentos.perdidos, desc: 'Sin compra en 180+ días', det: function(d){ return '$' + d.total.toFixed(2); } },
-    { id: 'top', lbl: 'Alto valor', ico: 'fa-crown', color: 'var(--gold)', data: topList, desc: 'Top 20% por gasto total', det: function(d){ return '$' + d.total.toFixed(2) + ' · ' + d.count + ' pedido(s)'; } }
-  ];
-
-  var html = '';
-  segmentosDef.forEach(function(s){
-    var listHtml = '';
-    s.data.slice(0, 5).forEach(function(d){
-      var nom = d.nombre || d.contacto || '—';
-      listHtml += '<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>' + escHtml(nom) + '</span><span style="color:var(--muted)">' + s.det(d) + '</span></div>';
-    });
-    if(!listHtml) listHtml = '<div style="font-size:12px;color:var(--hint);padding:6px 0">Sin clientes en este segmento</div>';
-    html += '<div class="sc" style="border-left:4px solid ' + s.color + '">';
-    html += '<div class="sc-badge" style="background:transparent;color:' + s.color + ';padding:0;margin-bottom:6px;font-size:12px"><i class="fa-solid ' + s.ico + '"></i> ' + s.lbl + '</div>';
-    html += '<div class="sc-num" style="color:' + s.color + ';font-size:28px">' + s.data.length + '</div>';
-    html += '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">' + s.desc + '</div>';
-    html += listHtml;
-    html += '</div>';
-  });
-  document.getElementById('cdp-segmentos-grid').innerHTML = html;
-}
-
-function exportarSegmentosCSV(){
-  var contactoUnico = {};
-  (_ordenes || []).forEach(function(o){
-    var tel = (o.contacto || '').replace(/\D/g, '');
-    if(!tel || contactoUnico[tel]) return;
-    contactoUnico[tel] = { nombre: o.nombre, contacto: o.contacto, total: parseFloat(o.total || 0), ordenes: 1, ultima: o.fecha };
-  });
-  var lines = ['Nombre,Contacto,Total gastado,Órdenes,Última compra'];
-  Object.keys(contactoUnico).forEach(function(tel){
-    var c = contactoUnico[tel];
-    var ult = c.ultima ? c.ultima.slice(0, 10) : '';
-    lines.push('"' + (c.nombre || '') + '","' + (c.contacto || '') + '",$' + (c.total || 0).toFixed(2) + ',' + (c.ordenes || 1) + ',' + ult);
-  });
-  var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'segmentos_clientes.csv'; a.click();
-  URL.revokeObjectURL(a.href);
 }
 </script>
 <div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>

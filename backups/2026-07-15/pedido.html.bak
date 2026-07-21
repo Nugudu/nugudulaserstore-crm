@@ -6,8 +6,6 @@
 <title>Nugudú Láser Store — Hacer pedido</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#2D2460;--teal:#1a9e8f;--green:#2e7d52;--amber:#d97706;--coral:#e05c40;--bg:#f4f3fa;--surface:#fff;--border:#e4e1ee;--text:#18152e;--muted:#6b6585;--hint:#9b96b0;--r:14px;--rs:10px}
@@ -69,7 +67,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-nombre{font-size:14px;font-weight:700;margin-bottom:4px}
 .p-dots{display:flex;gap:5px;justify-content:center;margin:5px 0 3px}
 .cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12)}
-.p-precio{font-size:15px;font-weight:700;color:var(--navy)}
+.p-precio{font-size:13px;font-weight:700;color:var(--teal)}
 .p-stock{font-size:10px;margin-top:2px}
 .sok{color:var(--green)}.slow{color:var(--amber)}.sno{color:var(--coral)}
 .pcheck{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(45,36,96,.35)}
@@ -98,7 +96,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .do-dir{font-size:13px;font-weight:600}
 .do-zona{font-size:11px;color:var(--muted);margin-top:2px}
 .btn-ndir{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--rs);color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px}
-.map-mini{margin-top:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);display:none!important}/* oculto a pedido de Nuria hasta nuevo aviso -- !important para que ningun JS lo pueda mostrar mientras tanto, sin tocar esa logica */
+.map-mini{margin-top:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);display:none}
 .map-mini iframe{display:block;width:100%;height:200px;border:0}
 .map-mini .hint-mapa{display:block;font-size:11px;color:var(--hint);padding:6px 8px;background:var(--bg)}
 .res-fila{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -111,25 +109,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .pago-card{background:#fef6e4;border:1px solid #f5d88a;border-radius:var(--rs);padding:13px;margin-bottom:12px}
 .pago-card h4{font-size:13px;font-weight:700;color:#92400e;margin-bottom:5px}
 .pago-card p{font-size:13px;color:#78350f;line-height:1.6}
-/* Método de pago */
-.mp-opts{display:flex;flex-direction:column;gap:8px}
-.mp-opt{display:flex;align-items:center;gap:12px;padding:12px;border:2px solid var(--border);border-radius:var(--rs);cursor:pointer;background:#fff;transition:all .15s}
-.mp-opt.sel{border-color:var(--navy);background:#f0eefb}
-.mp-opt .mp-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.mp-opt.sel .mp-radio{border-color:var(--navy)}
-.mp-opt.sel .mp-radio.chk:after,.mp-opt.sel .mp-radio:after{content:'';width:10px;height:10px;border-radius:50%;background:var(--navy)}
-.mp-info{flex:1}
-.mp-nombre{font-size:14px;font-weight:600}
-.mp-desc{font-size:11px;color:var(--muted);margin-top:1px}
-/* Banco card */
-.bc-card{background:var(--surface);border:2px solid var(--teal);border-radius:var(--rs);padding:16px;margin-bottom:12px;text-align:center}
-.bc-banco{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.bc-tipo{font-size:12px;color:var(--muted);margin-top:2px}
-.bc-cuenta{font-size:22px;font-weight:800;color:var(--navy);margin:8px 0;letter-spacing:3px;font-family:'DM Mono',monospace}
-.bc-titular{font-size:13px;color:var(--text);font-weight:600}
-.bc-monto{font-size:15px;color:var(--navy);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.alert-info{background:#eef2ff;border:1px solid #c7d2fe;border-radius:var(--rs);padding:12px;font-size:13px;color:#312e81;line-height:1.6;margin-bottom:12px}
-.hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .btn-main:disabled{opacity:.5;cursor:not-allowed}
 .btn-sec{width:100%;padding:12px;background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;cursor:pointer;margin-top:8px}
@@ -175,14 +154,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .om-fila{display:flex;gap:8px;font-size:13px;margin-bottom:4px}
 .om-fila span:first-child{color:var(--muted);min-width:80px}
 .om-fila span:last-child{font-weight:600}
-/* Leaflet mapa interactivo */
-.leaflet-map-wrap{margin-top:6px}
-.leaflet-map-wrap .fg label{font-size:11px;color:var(--hint)}
-.leaflet-map-wrap .fg input{font-size:12px!important;background:#f4f3fa!important;cursor:default!important;padding:8px 10px!important}
-#leaflet-map{border-radius:10px;overflow:hidden;border:1.5px solid var(--border);z-index:1}
-#btn-mi-ubicacion{transition:transform .12s ease,opacity .15s}
-#btn-mi-ubicacion:active{transform:scale(.97)}
-#btn-mi-ubicacion:hover{opacity:.9}
 </style>
 </head>
 <body>
@@ -191,67 +162,23 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
   <div><h1>Nugudú Láser Store</h1><p>Gorras con parche de cuero grabado a láser</p></div>
 </div>
 
-<!-- CATALOGO INICIAL — pantalla #1 -->
-<div class="screen" id="s-catalogo">
-  <div style="padding:16px">
-    <div id="cat-inicio-wrap"><div class="cat-spin"><div class="spinner"></div><p style="color:var(--muted);font-size:13px">Cargando coleccion…</p></div></div>
-    <div class="color-sel" id="ci-color-sel">
-      <img class="cs-foto" id="ci-cs-foto" alt="" style="display:none">
-      <div class="cs-ttl">Elige el color para <strong id="ci-cs-nom"></strong></div>
-      <div class="color-opts" id="ci-color-opts"></div>
-    </div>
-    <div class="card" id="ci-qty-card" style="display:none">
-      <div class="card-ttl">Cantidad</div>
-      <div class="qty-row">
-        <button class="qty-btn" onclick="ciChgQty(-1)">−</button>
-        <div class="qty-num" id="ci-qty-n">1</div>
-        <button class="qty-btn" onclick="ciChgQty(1)">+</button>
-        <div class="qty-total">Total: <strong id="ci-qty-t">$0.00</strong></div>
-      </div>
-      <button type="button" class="btn-outline-teal" id="ci-btn-agregar-otro" style="display:none;margin-top:10px" onclick="ciAgregarOtro()">+ Agregar otro producto</button>
-    </div>
-    <div class="card" id="ci-carrito-wrap" style="display:none">
-      <div class="card-ttl">Tu pedido</div>
-      <div id="ci-carrito-items"></div>
-      <div class="res-total"><span>Total</span><span id="ci-carrito-total">$0.00</span></div>
-    </div>
-    <button class="btn-main" onclick="continuarCatalogo()">Continuar →</button>
-    <div style="text-align:center;margin-top:10px">
-      <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px">Consultar mi pedido</a>
-    </div>
-  </div>
-</div>
-
-<!-- PHONE CHECK — bienvenida -->
+<!-- PHONE CHECK — se muestra inmediatamente, sin esperar el catálogo -->
 <div class="screen" id="s-phone">
   <div style="padding-top:8px">
     <div class="phone-card">
-      <div id="phone-bienvenida">
-        <div class="phone-brand">Nugudú Láser Store</div>
-        <div class="phone-welcome">la diferencia se lleva</div>
-        <h2>Bienvenido a Nugudú Láser Store</h2>
-        <p style="font-size:15px;color:var(--navy);font-weight:600;margin-bottom:24px">¿Ya eres parte de Nugudú?</p>
-        <div class="ce-box" id="ce-box" style="display:none"><div class="ce-name" id="ce-name"></div><div class="ce-info" id="ce-info"></div></div>
-        <div id="err-phone" class="err-box" style="display:none"></div>
-        <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
-        <div style="text-align:center;margin-top:10px">
-          <a href="#" onclick="showScreen('s-catalogo');return false" style="font-size:12px;color:var(--muted);text-decoration:none">← Volver</a>
-        </div>
-        <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
+      <div class="phone-icon">👋</div>
+      <div class="phone-brand">Nugudú Láser Store</div>
+      <div class="phone-welcome">te da la bienvenida</div>
+      <h2>¿Ya pediste con nosotros?</h2>
+      <p>Ingresa tu WhatsApp o número de orden y tus datos se completan automáticamente. Si es tu primera vez, continúa como nuevo.</p>
+      <div class="ce-box" id="ce-box"><div class="ce-name" id="ce-name"></div><div class="ce-info" id="ce-info"></div></div>
+      <div id="err-phone" class="err-box"></div>
+      <div class="phone-row">
+        <input id="p-tel" type="text" placeholder="WhatsApp o número de orden (ORD-...)" onkeydown="if(event.key==='Enter')buscarTel()">
+        <button onclick="buscarTel()">Buscar</button>
       </div>
-      <div id="phone-consulta" style="display:none">
-        <div style="margin-bottom:20px">
-          <div style="font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px">Consultar mi pedido</div>
-          <p style="font-size:13px;color:var(--muted)">Ingresa tu WhatsApp o numero de orden</p>
-        </div>
-        <div id="err-consulta" class="err-box" style="display:none"></div>
-        <div class="phone-row">
-          <input id="p-tel" type="text" placeholder="WhatsApp o numero de orden (ORD-...)" onkeydown="if(event.key==='Enter')buscarTel()">
-          <button onclick="buscarTel()">Buscar</button>
-        </div>
-        <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
-        <button style="background:none;border:none;color:var(--hint);font-size:12px;cursor:pointer;margin-top:10px;width:100%;padding:8px" onclick="cancelarConsulta()">← Volver</button>
-      </div>
+      <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
+      <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
     </div>
   </div>
 </div>
@@ -260,7 +187,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <div class="screen" id="s-cliente">
   <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
   <div class="cli-greeting">
-    <div class="cli-ico" style="display:none"></div>
+    <div class="cli-ico">👋</div>
     <h2 id="cli-nombre-ttl">¡Hola!</h2>
     <p id="cli-sub">Aquí están tus pedidos recientes</p>
   </div>
@@ -270,7 +197,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Nuevo pedido
     </button>
-    <button class="btn-accion primary" onclick="irAConsultar()">
+    <button class="btn-accion primary" onclick="showScreen('s-phone')">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       Buscar otro
     </button>
@@ -285,11 +212,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="step-line" id="sl-1"></div>
     <div class="step"><div class="step-d" id="sd2">2</div><div class="step-l" id="sl2">Mis datos</div></div>
     <div class="step-line" id="sl-2"></div>
-    <div class="step"><div class="step-d" id="sd3">3</div><div class="step-l" id="sl3">Pago</div></div>
-    <div class="step-line" id="sl-3"></div>
-    <div class="step" id="step4-wrap"><div class="step-d" id="sd4">4</div><div class="step-l" id="sl4">Transferencia</div></div>
-    <div class="step-line" id="sl-4"></div>
-    <div class="step"><div class="step-d" id="sd5">5</div><div class="step-l" id="sl5">Confirmar</div></div>
+    <div class="step"><div class="step-d" id="sd3">3</div><div class="step-l" id="sl3">Confirmar</div></div>
   </div>
   <div id="err-form" class="err-box"></div>
 
@@ -308,12 +231,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <button class="qty-btn" onclick="chgQty(1)">+</button>
         <div class="qty-total">Total: <strong id="qty-t">/bin/sh.00</strong></div>
       </div>
-      <button type="button" class="btn-outline-teal" id="btn-agregar-otro" style="display:none;margin-top:10px" onclick="agregarOtroProducto()">+ Agregar otro producto</button>
-    </div>
-    <div class="card" id="carrito-wrap" style="display:none">
-      <div class="card-ttl">Tu pedido</div>
-      <div id="carrito-items"></div>
-      <div class="res-total"><span>Total</span><span id="carrito-total">$0.00</span></div>
     </div>
     <button class="btn-main" onclick="goP2()">Continuar →</button>
   </div>
@@ -336,7 +253,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <label>Dirección *</label>
           <div style="display:flex;gap:6px">
             <input id="f-dir" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDirInp()" style="flex:1">
-            <button type="button" onclick="fijarDireccion()" style="padding:0 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap;display:none" title="Fijar ubicacion">Fijar</button>
+            <button type="button" onclick="fijarDireccion()" style="padding:0 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap">📍 Fijar</button>
           </div>
         </div>
         <div class="fg">
@@ -349,16 +266,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…"></div>
         <div class="fg">
-          <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">Puedes mover el mapa, hacer zoom y cambiar a vista Satelite tocando el icono dentro del mapa</span></div>
-        </div>
-        <!-- Leaflet mapa interactivo -->
-        <div class="leaflet-map-wrap" id="leaflet-map-wrap" style="display:none">
-          <div id="leaflet-map" style="height:260px"></div>
-          <div style="display:flex;gap:8px;margin-bottom:8px">
-            <div class="fg" style="flex:1;margin-bottom:0"><label>Latitud</label><input id="latitud" type="text" readonly placeholder="—"></div>
-            <div class="fg" style="flex:1;margin-bottom:0"><label>Longitud</label><input id="longitud" type="text" readonly placeholder="—"></div>
-          </div>
-          <button type="button" id="btn-mi-ubicacion" onclick="obtenerMiUbicacion()">Usar mi ubicacion actual</button>
+          <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">📍 Puedes mover el mapa, hacer zoom y cambiar a vista Satélite tocando el ícono dentro del mapa</span></div>
         </div>
       </div>
       <div class="fg"><label>Notas adicionales</label><textarea id="f-notas" placeholder="Referencias, instrucciones especiales, horario disponible…"></textarea></div>
@@ -369,100 +277,16 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
   <div id="p3" style="display:none">
     <div class="card"><div class="card-ttl">Resumen de tu pedido</div><div id="resumen"></div></div>
-
-    <div class="card">
-      <div class="card-ttl">Elige cómo pagar</div>
-      <div class="mp-opts">
-        <label class="mp-opt" id="mp-tarjeta" onclick="selMetodoPago('tarjeta')">
-          <div class="mp-radio"></div>
-          <div class="mp-info">
-            <div class="mp-nombre">Pagar con tarjeta</div>
-            <div class="mp-desc">Débito o crédito — Pago seguro vía Wompi</div>
-          </div>
-        </label>
-        <label class="mp-opt" id="mp-transferencia" onclick="selMetodoPago('transferencia')">
-          <div class="mp-radio"></div>
-          <div class="mp-info">
-            <div class="mp-nombre">Transferencia bancaria</div>
-            <div class="mp-desc">Banco Agrícola — Datos en pantalla</div>
-          </div>
-        </label>
-      </div>
-    </div>
-
-    <div id="email-card-wrap">
-      <div class="card">
-        <div class="card-ttl">Recibir comprobante</div>
-        <div class="fg"><label>Tu correo electrónico</label><input type="email" id="f-email" placeholder="correo@ejemplo.com" autocomplete="email"></div>
-        <div class="hint">Lo usaremos para enviarte la confirmación de tu pedido registrado.</div>
-      </div>
-    </div>
-
-    <!-- Datos bancarios (se muestra al seleccionar Transferencia) -->
-    <div id="bancario-info" style="display:none">
-      <div class="card">
-        <div class="card-ttl">Datos para transferencia</div>
-        <div class="bc-card">
-          <div class="bc-banco">Banco Agrícola</div>
-          <div class="bc-tipo">Cuenta de ahorro</div>
-          <div class="bc-cuenta">3008410011</div>
-          <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
-        </div>
-        <div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante.</div>
-      </div>
-    </div>
-
-    <button class="btn-main" id="btn-conf" onclick="confirmarPedido()">Continuar →</button>
+    <div class="pago-card"><h4>📋 ¿Cómo pagar?</h4><p>Al confirmar tu pedido podrás solicitar los datos por WhatsApp para realizar la transferencia.</p></div>
+    <button class="btn-main" id="btn-conf" onclick="enviar()">✓ Confirmar pedido</button>
     <button class="btn-sec" onclick="goP2()">← Editar mis datos</button>
-  </div>
-
-  <!-- P4: Datos bancarios (solo para transferencia) -->
-  <div id="p4" style="display:none">
-    <div class="card">
-      <div class="card-ttl">Datos para transferencia</div>
-      <div class="bc-card">
-        <div class="bc-banco">Banco Agrícola</div>
-        <div class="bc-tipo">Cuenta de ahorro</div>
-        <div class="bc-cuenta">3008410011</div>
-        <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
-        <div class="bc-monto">Monto: <strong id="p4-monto">$0.00</strong></div>
-      </div>
-      <div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante aquí abajo.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-ttl">Enviar comprobante</div>
-      <div class="hint" style="margin-bottom:10px">¿Cómo quieres enviar tu comprobante de pago?</div>
-      <div class="mp-opts">
-        <label class="mp-opt sel" id="cp-wa" onclick="selComprobanteVia('wa')">
-          <div class="mp-radio chk"></div>
-          <div class="mp-info">
-            <div class="mp-nombre">WhatsApp</div>
-            <div class="mp-desc">Envía la foto desde tu WhatsApp</div>
-          </div>
-        </label>
-      </div>
-      <div id="cp-accion">
-        <a class="btn-wa" id="btn-wa-comprobante" href="#" target="_blank">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
-          Enviar comprobante por WhatsApp
-        </a>
-      </div>
-    </div>
-
-    <div class="card" style="text-align:center">
-      <p style="font-size:13px;color:var(--muted);line-height:1.6">¿Ya realizaste la transferencia?<br>Confirma tu pedido y te notificaremos cuando lo recibamos.</p>
-      <button class="btn-outline-teal" onclick="irAExitoTransferencia()" style="margin-top:8px;width:100%">✓ Ya transferí — Confirmar</button>
-    </div>
-
-    <button class="btn-sec" onclick="goP3()">← Volver a método de pago</button>
   </div>
 </div>
 
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
-    <div class="ico" style="display:none"></div>
+    <div class="ico">🎉</div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
     <div class="orden-pill" id="ex-orden">—</div>
@@ -473,25 +297,14 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="om-contenido"></div>
     </div>
 
-    <!-- Información de pago (cambia según método) -->
-    <div id="ex-pago-info"></div>
+    <div class="snote"><strong>Próximo paso:</strong> solicita los datos bancarios por WhatsApp y envíanos el comprobante para confirmar tu pedido.</div>
 
-    <!-- Acción enviar comprobante (solo transferencia) -->
-    <div id="ex-accion-comprobante" style="display:none">
-      <a class="btn-wa" id="btn-wa-exito" href="#" target="_blank">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
-        Enviar comprobante por WhatsApp
-      </a>
-    </div>
-
-    <!-- Recordatorio de tracking -->
-    <div id="ex-tracking" style="display:none;margin-top:12px;padding:12px;background:#f8f6ff;border-radius:10px;border:1px solid #e8e5f0;font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
-      Podes consultar el estado de tu pedido ingresando tu numero de contacto o numero de orden para iniciar sesion
-    </div>
-
+    <!-- Botón principal: solicitar datos bancarios -->
+    <a class="btn-wa" id="btn-solicitar" href="#" target="_blank">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
+      Solicitar datos para transferencia
+    </a>
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
-    <button class="btn-sec" onclick="salir()">Salir</button>
-    <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
   </div>
 </div>
 
@@ -503,39 +316,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 </div>
 
 <script>
-var GAS='https://script.google.com/macros/s/AKfycbyodUZIMmwgxWGHCVWZjz9R8H0vVj6Wv-cNDfJriInCXOcAiCsITqCw4YkKm2TXR-JW/exec';
+var GAS='https://script.google.com/macros/s/AKfycbxXSFbECrtrRPohWOfmU3ZShV5DUEhC2xIlFGWEPL4ur60qpvzYRi7FT1neL1qoFT_m/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
-// Codigo de vendedora que comparte su propio link de pedido.html (ej.
-// pedido.html?v=N1). Se lee una sola vez al cargar la pagina y se manda
-// junto con el pedido -- el cliente no ve ni toca nada de esto. Si no viene
-// en la URL, queda vacio y el pedido se guarda como siempre (canal digital
-// organico, sin vendedora asociada).
-var _refV = (function(){
-  try { return (new URLSearchParams(location.search).get('v') || '').trim().toUpperCase(); }
-  catch(e){ return ''; }
-})();
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null;
-
-// ── CDP: EVENTOS DE COMPORTAMIENTO ──
-var _sessionId=(function(){try{var s=sessionStorage.getItem('ngd_session');if(!s){s=Date.now()+'-'+Math.random().toString(36).slice(2,8);sessionStorage.setItem('ngd_session',s);}return s;}catch(e){return Date.now()+'-x';}})();
-var _eventQueue=[],_eventContacto='',_flushTimer=null;
-function track(evento,data){
-  _eventQueue.push({ts:new Date().toISOString(),session_id:_sessionId,contacto:_eventContacto,evento:evento,data:data||{},url_ref:_refV});
-  if(!_flushTimer)_flushTimer=setTimeout(flushEvents,10000);
-}
-function setContacto(v){_eventContacto=v||'';}
-function flushEvents(){
-  _flushTimer=null;
-  if(!_eventQueue.length)return;
-  var batch=_eventQueue.slice();_eventQueue=[];
-  try{
-    var x=new XMLHttpRequest();x.open('POST',GAS,true);x.setRequestHeader('Content-Type','text/plain');
-    x.send(JSON.stringify({action:'trackEvent',token:API_TOKEN,eventos:batch}));
-  }catch(e){}
-}
-window.addEventListener('beforeunload',function(){if(_eventQueue.length)flushEvents();});
 
 var SESSION_KEY='ngd_pedido_v1';
 // Catálogo siempre fresco de Sheets — sin caché local
@@ -552,14 +337,12 @@ function restaurarSesion(){
     if(!r) return false;
     if(r.screen==='s-cliente'&&r.cli){
       _cli=r.cli;_dirs=r.dirs||[];
-      setContacto(_cli.contacto||'');
       mostrarPantallaCliente(r.cli);
       return true;
     }
     if(r.screen==='s-form'){
       // Restaura el formulario en el paso donde estaba
       _cli=r.cli;_dirs=r.dirs||[];
-      if(r.cli)setContacto(r.cli.contacto||'');
       if(!_catCargado){_cat=fallback();_catCargado=true;}
       renderCat();
       showScreen('s-form');
@@ -574,7 +357,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];setContacto('');hideErr('phone');hideErr('form');showScreen('s-catalogo');}
+function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;document.getElementById('p-tel').value='';hideErr('phone');hideErr('form');showScreen('s-phone');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -583,19 +366,37 @@ function volverDesdeForm(){
 
 // ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
 window.addEventListener('DOMContentLoaded',function(){
+  // Muestra fallback inmediatamente para que el paso 1 sea instantáneo
   _cat=fallback(); _catCargado=true;
-  renderCat();
+  // Siempre busca datos frescos de Google Sheets — garantiza actualizaciones
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok&&d.productos&&d.productos.length) _cat=d.productos;
+      if(d.ok&&d.productos&&d.productos.length){
+        // Solo reconstruye las tarjetas si algo VISUAL realmente cambió
+        // (sku, nombre, color, precio). El STOCK se excluye a propósito de
+        // esta comparación: casi siempre es distinto al del catálogo de
+        // respaldo (cada venta real lo baja), así que compararlo tal cual
+        // hacía que esto disparara una reconstrucción completa prácticamente
+        // siempre — y esa reconstrucción es la causa del parpadeo. El stock
+        // sigue quedando 100% actualizado en _cat para la selección de color
+        // y cantidad (elDis/elCol lo leen en el momento, no del render viejo),
+        // solo se evita repintar la cuadrícula de tarjetas sin necesidad.
+        var claveVisual=function(arr){return JSON.stringify((arr||[]).map(function(p){return p.sku+'|'+p.nombre+'|'+p.coleccion+'|'+p.color+'|'+p.hex+'|'+p.precio;}));};
+        var cambioVisual=claveVisual(d.productos)!==claveVisual(_cat);
+        _cat=d.productos;
+        if(cambioVisual){
+          var p1=document.getElementById('p1');
+          if(p1&&p1.style.display!=='none') renderCat();
+        }
+      }
     }).catch(function(){});
-  if(window._wompiReturn) return;
-  if(!restaurarSesion()) showScreen('s-catalogo');
+  // Mostrar pantalla — restaurar sesión o ir a inicio
+  if(!restaurarSesion()) showScreen('s-phone');
 });
 
 function fallback(){
-  var D=[{n:'GORRA KAAN',s:'RSV-KA'},{n:'GORRA MUUK',s:'RSV-MU'},{n:'GORRA IKAL',s:'RSV-IKA'},{n:'GORRA SAAN',s:'RSV-SA'},{n:'GORRA KIN',s:'RSV-KI'},{n:'GORRA OXAN',s:'RSV-OX'}];
+  var D=[{n:'KAAN',s:'RSV-KA'},{n:'MUUK',s:'RSV-MU'},{n:'IKAL',s:'RSV-IKA'},{n:'SAAN',s:'RSV-SA'},{n:'KIN',s:'RSV-KI'},{n:'OXAN',s:'RSV-OX'}];
   var C=[{color:'Negro',hex:'#1a1a1a',sfx:'NG'},{color:'Gris',hex:'#6b7280',sfx:'GR'}];
   var o=[];D.forEach(function(x){C.forEach(function(c){o.push({sku:x.s+'-'+c.sfx,nombre:x.n,coleccion:'Raíces SV',color:c.color,hex:c.hex,precio:25,stock:10});});});
   return o;
@@ -604,10 +405,8 @@ function fallback(){
 // ── PHONE CHECK ──
 function buscarTel(){
   var val=(document.getElementById('p-tel').value||'').trim();
-  var consMode=document.getElementById('phone-consulta').style.display==='block';
-  var errId=consMode?'consulta':'phone';
-  if(!val){showErr(errId,'Ingresa tu numero de WhatsApp o tu numero de orden.');return;}
-  hideErr(errId);
+  if(!val){showErr('phone','Ingresa tu número de WhatsApp o tu número de orden.');return;}
+  hideErr('phone');
   var spin=document.getElementById('search-spin');
   if(spin)spin.style.display='block';
   var esOrden=/^ORD-/i.test(val);
@@ -618,30 +417,19 @@ function buscarTel(){
       if(spin)spin.style.display='none';
       if(d.ok&&d.encontrado){
         _cli=d;_dirs=d.direcciones||[];
-        setContacto(d.contacto||'');
         mostrarPantallaCliente(d);
       }else{
-        showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
+        showErr('phone','No encontramos ese número u orden. Continúa como cliente nuevo.');
       }
     }).catch(function(){if(spin)spin.style.display='none';nuevoCli();});
 }
-function nuevoCli(){
-  limpiarSesion();_cli=null;_dirs=[];setContacto('');
-  if(_carrito.length>0){
-    if(!_catCargado){_cat=fallback();_catCargado=true;}
-    renderCat();
-    guardarSesion('s-form',2);
-    showScreen('s-form');setPaso(2);
-  }else{
-    iniciar();
-  }
-}
+function nuevoCli(){limpiarSesion();_cli=null;_dirs=[];iniciar();}
 
 function mostrarPantallaCliente(d){
   document.getElementById('cli-nombre-ttl').textContent='¡Hola, '+d.nombre+'!';
   var ords=d.ordenesRecientes||[];
   var ESTADOS_CLI=['Nueva orden','En proceso','En empaque','En camino','Entregado'];
-  var ICONS_CLI=['1','2','3','4','5'];
+  var ICONS_CLI=['📋','⚙️','📦','🚚','✅'];
 
   // Separa pedidos activos de entregados
   var activos=ords.filter(function(o){return parseInt(o.estado||0)<4;});
@@ -663,12 +451,12 @@ function mostrarPantallaCliente(d){
     progreso+='</div>';
     var footer='<div class="ot-footer">';
     if(est===2&&o.fechaEntrega){
-      footer+='<span class="ot-entrega" style="background:#e8f5ee;padding:4px 12px;border-radius:10px;font-size:13px;font-weight:600">Entrega estimada: <strong>'+formatFecha(o.fechaEntrega)+'</strong></span>';
+      footer+='<span class="ot-entrega" style="background:#e8f5ee;padding:4px 12px;border-radius:10px;font-size:13px;font-weight:600">📅 Entrega estimada: <strong>'+formatFecha(o.fechaEntrega)+'</strong></span>';
     }else if(o.fechaEntrega&&est>0&&est<4){
-      footer+='<span class="ot-entrega">Entrega est. '+formatFecha(o.fechaEntrega)+'</span>';
+      footer+='<span class="ot-entrega">📅 Entrega est. '+formatFecha(o.fechaEntrega)+'</span>';
     }
-    if(est===4) footer+='<span class="ot-entrega">Entregado el '+o.fecha+'</span>';
-    if(o.pendientePago) footer+='<span class="ot-pend">Pendiente de pago</span>';
+    if(est===4) footer+='<span class="ot-entrega">✅ Entregado el '+o.fecha+'</span>';
+    if(o.pendientePago) footer+='<span class="ot-pend">⏳ Pendiente de pago</span>';
     footer+='</div>';
     return '<div class="orden-track">'+
       '<div class="ot-header"><div class="ot-num">'+o.orden+'</div><div class="ot-fecha">'+o.fecha+'</div></div>'+
@@ -678,7 +466,7 @@ function mostrarPantallaCliente(d){
 
   var html='';
   if(!activos.length){
-    html='<div style="text-align:center;padding:24px 0 8px;color:var(--muted);font-size:13px">No tienes pedidos activos en este momento.</div>';
+    html='<div style="text-align:center;padding:24px 0 8px;color:var(--muted);font-size:13px">✅ No tienes pedidos activos en este momento.</div>';
   } else {
     activos.forEach(function(o){ html+=renderOrden(o); });
   }
@@ -715,7 +503,7 @@ function formatFecha(iso){
   return dias[d.getDay()]+' '+p[2]+'/'+p[1];
 }
 
-function iniciarNuevoPedido(){_cli_guardado=_cli;_dirs_guardados=_dirs;_carrito=[];if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();showScreen('s-catalogo');}
+function iniciarNuevoPedido(){_cli_guardado=_cli;_dirs_guardados=_dirs;iniciar();}
 var _cli_guardado=null,_dirs_guardados=[];
 function iniciar(){
   if(_cli_guardado){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];}
@@ -738,9 +526,7 @@ function renderCat(){
   Object.keys(cols).forEach(function(col){
     var prods=cols[col],dis={};
     prods.forEach(function(p){if(!dis[p.nombre])dis[p.nombre]=[];dis[p.nombre].push(p);});
-    html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div>';
-    html+='<div style="font-size:11px;color:var(--hint);margin:0 0 14px;letter-spacing:.3px">la diferencia se lleva</div>';
-    html+='<div class="prod-grid">';
+    html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div><div class="prod-grid">';
     Object.keys(dis).forEach(function(nom){
       var vs=dis[nom];
       var agot=vs.every(function(v){return v.stock<=0;});
@@ -759,8 +545,6 @@ function renderCat(){
     html+='</div>';
   });
   document.getElementById('cat-wrap').innerHTML=html;
-  var ci=document.getElementById('cat-inicio-wrap');
-  if(ci)ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');
 }
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
 // Construye la lista de archivos a probar, en orden de prioridad:
@@ -820,7 +604,6 @@ function elDis(nomEnc){
   document.getElementById('color-sel').classList.add('show');
   document.getElementById('qty-card').style.display='none';
   setTimeout(function(){document.getElementById('color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
-  track('product_click',{nombre:nombre});
 }
 function elCol(sku){
   var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
@@ -831,56 +614,7 @@ function elCol(sku){
   document.getElementById('qty-n').textContent=1;
   document.getElementById('qty-t').textContent='$'+v.precio.toFixed(2);
   document.getElementById('qty-card').style.display='block';
-  document.getElementById('btn-agregar-otro').style.display='flex';
   setTimeout(function(){document.getElementById('qty-card').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
-  track('color_select',{sku:sku,color:v.color});
-}
-// ── CARRITO (varios productos por pedido) ──
-// Antes solo se podia pedir un producto a la vez. Ahora se puede agregar mas
-// de uno al mismo pedido (ej. un gorro para la pareja, otro para un hijo)
-// sin salir de este flujo -- pensado para el consumidor B2C de hoy; un
-// formato aparte para B2B (por volumen) se puede armar mas adelante, esto no
-// le cierra la puerta a ninguno de los dos.
-var _carrito=[];
-// Suma la seleccion actual (diseno+color+cantidad) al carrito y limpia la
-// seleccion para poder elegir otro producto. Devuelve false si no hay nada
-// seleccionado todavia (nada que agregar).
-function agregarSeleccionAlCarrito(){
-  if(!_color) return false;
-  _carrito.push({sku:_color.sku,diseno:_diseno,color:_color.color,hex:_color.hex,precio:_color.precio,cantidad:_qty});
-  _color=null;_qty=1;
-  document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
-  document.querySelectorAll('.copt').forEach(function(c){c.classList.remove('sel');});
-  document.getElementById('color-sel').classList.remove('show');
-  document.getElementById('qty-card').style.display='none';
-  document.getElementById('btn-agregar-otro').style.display='none';
-  return true;
-}
-function agregarOtroProducto(){
-  var it=_color?{sku:_color.sku,diseno:_diseno,color:_color.color,cantidad:_qty}:null;
-  if(!agregarSeleccionAlCarrito()) return;
-  if(it)track('add_to_cart',it);
-  renderCarrito();
-  document.getElementById('cat-wrap').scrollIntoView({behavior:'smooth',block:'start'});
-}
-function quitarDelCarrito(idx){
-  _carrito.splice(idx,1);
-  renderCarrito();
-}
-function totalCarrito(){
-  return _carrito.reduce(function(sum,it){return sum+it.precio*it.cantidad;},0);
-}
-function renderCarrito(){
-  var wrap=document.getElementById('carrito-wrap');
-  if(_carrito.length===0){wrap.style.display='none';return;}
-  wrap.style.display='block';
-  document.getElementById('carrito-items').innerHTML=_carrito.map(function(it,i){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
-      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong><br><span style="color:var(--muted)">x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>'+
-      '<button type="button" onclick="quitarDelCarrito('+i+')" style="background:none;border:none;color:var(--coral);font-size:18px;cursor:pointer;padding:4px 8px" title="Quitar">✕</button>'+
-    '</div>';
-  }).join('');
-  document.getElementById('carrito-total').textContent='$'+totalCarrito().toFixed(2);
 }
 function chgQty(d){
   var mx=_color?Math.min(_color.stock||10,10):10;
@@ -889,96 +623,9 @@ function chgQty(d){
   document.getElementById('qty-t').textContent='$'+(_color?(_color.precio*_qty).toFixed(2):'0.00');
 }
 
-// ── CATALOGO INICIAL (pantalla #1) ──
-function elDisInicio(nomEnc){
-  var nombre=_cat.find(function(p){return encodeId(p.nombre)===nomEnc;});
-  if(!nombre)return;
-  nombre=nombre.nombre;
-  document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
-  var el=document.getElementById('pc-'+encodeId(nombre)); if(el)el.classList.add('sel');
-  _diseno=nombre;_color=null;
-  var vs=_cat.filter(function(p){return p.nombre===nombre;});
-  document.getElementById('ci-cs-nom').textContent=nombre;
-  var opts=vs.map(function(v){
-    var agot=v.stock<=0;
-    var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Ultimas '+v.stock:'';
-    return '<div class="copt'+(agot?' agotado':'')+'" id="ci-co-'+v.sku+'" '+(agot?'style="opacity:.4;pointer-events:none"':'')+' onclick="elColInicio(\''+v.sku+'\')">'+
-      '<div class="cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
-    '</div>';
-  }).join('');
-  document.getElementById('ci-color-opts').innerHTML=opts;
-  actualizarFotoPreviewInicio(vs[0].sku,nombre);
-  document.getElementById('ci-color-sel').classList.add('show');
-  document.getElementById('ci-qty-card').style.display='none';
-  setTimeout(function(){document.getElementById('ci-color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
-  track('product_click',{nombre:nombre});
-}
-function elColInicio(sku){
-  var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
-  _color=v;_qty=1;
-  document.querySelectorAll('.copt').forEach(function(c){c.classList.remove('sel');});
-  document.getElementById('ci-co-'+sku).classList.add('sel');
-  actualizarFotoPreviewInicio(sku,_diseno);
-  document.getElementById('ci-qty-n').textContent=1;
-  document.getElementById('ci-qty-t').textContent='$'+v.precio.toFixed(2);
-  document.getElementById('ci-qty-card').style.display='block';
-  document.getElementById('ci-btn-agregar-otro').style.display='flex';
-  track('color_select',{sku:sku,color:v.color});
-}
-function actualizarFotoPreviewInicio(sku,nombreDiseno){
-  var img=document.getElementById('ci-cs-foto');
-  if(!img) return;
-  var candidatos=candidatosFoto(sku,nombreDiseno);
-  img.setAttribute('data-candidatos',JSON.stringify(candidatos));
-  img.dataset.idx='0';
-  img.onerror=function(){imgFallback(img);};
-  img.style.display='block';
-  img.src='imagenes/'+candidatos[0];
-}
-function ciChgQty(d){
-  var mx=_color?Math.min(_color.stock||10,10):10;
-  _qty=Math.max(1,Math.min(mx,_qty+d));
-  document.getElementById('ci-qty-n').textContent=_qty;
-  document.getElementById('ci-qty-t').textContent='$'+(_color?(_color.precio*_qty).toFixed(2):'0.00');
-}
-function ciAgregarOtro(){
-  var it=_color?{sku:_color.sku,diseno:_diseno,color:_color.color,cantidad:_qty}:null;
-  agregarSeleccionAlCarrito();
-  renderCarrito();
-  if(it)track('add_to_cart',it);
-  _diseno=null;_color=null;
-  document.getElementById('ci-color-sel').classList.remove('show');
-  document.getElementById('ci-qty-card').style.display='none';
-  document.getElementById('ci-btn-agregar-otro').style.display='none';
-}
-function continuarCatalogo(){
-  agregarSeleccionAlCarrito();
-  renderCarrito();
-  if(_carrito.length===0){showErr('form','Elige un diseno y un color antes de continuar.');return;}
-  hideErr('form');
-  track('checkout_start',{items:_carrito.length,total:totalCarrito().toFixed(2)});
-  if(_cli){
-    guardarSesion('s-form',2);
-    showScreen('s-form');setPaso(2);
-  }else{
-    showScreen('s-phone');
-  }
-}
-function irAConsultar(){
-  showScreen('s-phone');
-  document.getElementById('phone-bienvenida').style.display='none';
-  document.getElementById('phone-consulta').style.display='block';
-  document.getElementById('p-tel').focus();
-}
-function cancelarConsulta(){
-  showScreen('s-catalogo');
-}
-
 // ── PASO 2 ──
 function goP2(){
-  agregarSeleccionAlCarrito(); // si hay una seleccion sin agregar todavia, se suma sola -- no se pierde nada
-  renderCarrito();
-  if(_carrito.length===0){showErr('form','Elige un diseño y un color antes de continuar.');return;}
+  if(!_color){showErr('form','Elige un diseño y un color antes de continuar.');return;}
   hideErr('form');
   if(_cli){document.getElementById('f-nom').value=_cli.nombre||'';document.getElementById('f-tel').value=_cli.contacto||'';}
   if(_dirs.length>0){
@@ -999,7 +646,8 @@ function elDir(i){
     var coords=extraerLatLngDeLink(_dirSel.mapaLink);
     if(coords){ mostrarMapaEnPunto(coords.lat,coords.lng); }
     else{
-      document.getElementById('map-fr').src='';
+      var q=encodeURIComponent(_dirSel.direccion+', El Salvador');
+      document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
       document.getElementById('map-mini').style.display='block';
     }
   }
@@ -1018,29 +666,21 @@ function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
   _dt=setTimeout(fijarDireccion,800);
 }
-// Geocodifica la dirección escrita con LocationIQ (vía Code_1.gs) para
-// centrar el mapa en un punto preciso — antes se probó Nominatim (bloqueaba
-// las peticiones automáticas) y Google Maps sin API (no da coordenadas sin
-// JavaScript), ninguno funcionó de forma confiable. Si LocationIQ no
-// encuentra nada (o la llave no está configurada todavía en Code_1.gs), cae
-// de vuelta a la búsqueda de texto simple de Google, para que el mapa nunca
-// se quede vacío. Se dispara sola al escribir (onDirInp, 800ms de espera) y
-// también al tocar el botón "Fijar".
+// Mapa de Google (iframe gratuito, sin llave) — se arma directo con el texto
+// de la dirección tal cual lo escribe el cliente, sin pasar por ningún
+// buscador de coordenadas externo (se probaron Nominatim del lado del
+// navegador y del servidor y ninguno resultó confiable — siempre terminaban
+// en el mismo punto por defecto). Google resuelve el texto puertas adentro
+// del propio mapa embebido, igual que en la búsqueda simple de siempre. Se
+// dispara sola al escribir (onDirInp, 800ms de espera) y también al tocar el
+// botón "Fijar".
 function fijarDireccion(){
   var v=(document.getElementById('f-dir').value||'').trim();
   if(v.length<5) return;
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:v})})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d&&d.ok&&d.lat&&d.lng){ mostrarMapaEnPunto(d.lat,d.lng); }
-      else{ mostrarBusquedaTexto(v); }
-    }).catch(function(){ mostrarBusquedaTexto(v); });
-}
-function mostrarBusquedaTexto(v){
   var q=encodeURIComponent(v+', El Salvador');
-  document.getElementById('map-fr').src='';
+  document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
   document.getElementById('map-mini').style.display='block';
-  _mapa='https://www.openstreetmap.org/search?query='+q;
+  _mapa='https://www.google.com/maps/search/?api=1&query='+q;
 }
 // Extrae lat,lng de un link guardado (formato "?q=LAT,LNG"), por si alguna
 // dirección anterior se guardó con coordenadas en vez de texto.
@@ -1049,52 +689,17 @@ function extraerLatLngDeLink(link){
   var m=String(link).match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   return m ? {lat:m[1],lng:m[2]} : null;
 }
-function osmEmbed(lat,lng){
-  lat=parseFloat(lat);lng=parseFloat(lng);
-  var o=0.01;
-  return 'https://www.openstreetmap.org/export/embed.html?bbox='+(lng-o)+','+(lat-o)+','+(lng+o)+','+(lat+o)+'&layer=mapnik&marker='+lat+','+lng;
-}
 function mostrarMapaEnPunto(lat,lng){
   lat=parseFloat(lat);lng=parseFloat(lng);
-  document.getElementById('map-fr').src=osmEmbed(lat,lng);
+  var q=lat+','+lng;
+  document.getElementById('map-fr').src='https://maps.google.com/maps?q='+q+'&output=embed';
   document.getElementById('map-mini').style.display='block';
-  _mapa=osmLink(lat,lng);
+  _mapa='https://www.google.com/maps?q='+q;
 }
 // (el link de GPS pegado se removió de este archivo — el mapa se arma
 // siempre desde la dirección escrita a mano, ver onDirInp más abajo)
 
-// ── PASO 3: REVISAR + MÉTODO DE PAGO ──
-var _metodoPago='transferencia'; // 'transferencia' | 'tarjeta'
-var _comprobanteVia='wa'; // 'wa' | 'email'
-
-function selMetodoPago(m){
-  _metodoPago=m;
-  ['mp-tarjeta','mp-transferencia'].forEach(function(id){
-    document.getElementById(id).classList.toggle('sel',id==='mp-'+m);
-  });
-  var bcDiv=document.getElementById('bancario-info');
-  if(bcDiv) bcDiv.style.display=(m==='transferencia')?'block':'none';
-  var ecDiv=document.getElementById('email-card-wrap');
-  if(ecDiv) ecDiv.style.display=(m==='tarjeta')?'block':'none';
-}
-
-function selComprobanteVia(v){
-  _comprobanteVia=v;
-  ['cp-wa','cp-email'].forEach(function(id){
-    document.getElementById(id).classList.toggle('sel',id==='cp-'+v);
-  });
-  var btnWrap=document.getElementById('cp-accion');
-  if(v==='wa'){
-    btnWrap.innerHTML='<a class="btn-wa" id="btn-wa-comprobante" href="#" target="_blank">'+
-      '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>'+
-      'Enviar comprobante por WhatsApp</a>';
-  }else{
-    btnWrap.innerHTML='<p style="font-size:13px;color:var(--muted);margin-bottom:8px">Envía tu comprobante a:</p>'+
-      '<p style="font-size:14px;font-weight:600;color:var(--navy)">nugudulasersv@gmail.com</p>'+
-      '<p style="font-size:12px;color:var(--muted);margin-top:4px">Indica tu número de orden en el asunto.</p>';
-  }
-}
-
+// ── PASO 3 ──
 function goP3(){
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim();
@@ -1107,21 +712,23 @@ function goP3(){
   if(!zona){showErr('form','Selecciona la zona de entrega.');return;}
   hideErr('form');
   var notas=(document.getElementById('f-notas').value||'').trim();
-  var total=totalCarrito().toFixed(2);
-  var prodsHtml=_carrito.map(function(it){
-    return rf(it.diseno+' · '+it.color,'x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2));
-  }).join('');
+  var total=(_color.precio*_qty).toFixed(2);
   document.getElementById('resumen').innerHTML=
-    prodsHtml+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
+    rf('Diseño',_color.nombre+' · '+_color.color)+rf('SKU','<span style="font-family:monospace;font-size:12px">'+esc(_color.sku)+'</span>')+
+    rf('Cantidad',_qty+' unidad(es)')+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
   setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'smooth'});
 }
 function rf(l,v){return '<div class="res-fila"><span class="res-lbl">'+l+'</span><span class="res-val">'+v+'</span></div>';}
 
-// ── CONFIRMAR PEDIDO ──
-function confirmarPedido(){
-  var email=(document.getElementById('f-email').value||'').trim();
+// ── ENVIAR ──
+function enviar(){
+  var btn=document.getElementById('btn-conf');btn.textContent='Enviando…';btn.disabled=true;
+  // Reacción inmediata al toque: se muestra el overlay de "confirmando" al
+  // instante, sin esperar la respuesta del servidor, para que se sienta
+  // instantáneo aunque el guardado real tome uno o dos segundos más.
+  var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
@@ -1129,352 +736,72 @@ function confirmarPedido(){
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_dirSel&&_dirSel.mapaLink?_dirSel.mapaLink:_mapa;
-  var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
-  var total=totalCarrito().toFixed(2);
-
-  if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}
-  hideErr('form');
-
-  var btn=document.getElementById('btn-conf');btn.textContent='Procesando…';btn.disabled=true;
-  var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
-
-  var payload={
-    action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,
-    direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
-    vendedorRef:_refV,email:email,metodoPago:_metodoPago
-  };
-
+  var payload={action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,direccion:dir,zona:zona,sku:_color.sku,precio:_color.precio,cantidad:_qty,notas:notas,mapaLink:mapa};
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(!d.ok){
-        if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-        showErr('form','Error al registrar. Intenta de nuevo.');
-        return;
-      }
-      _ultimaOrden={
-        orden:d.orden,nombre:nom,tel:tel,email:email,
-        items:_carrito.slice(),total:total,metodoPago:_metodoPago
-      };
-      if(ov)ov.style.display='none';
-
-      if(_metodoPago==='tarjeta'){
-        btn.textContent='Redirigiendo a Wompi…';
-        fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-          body:JSON.stringify({
-            action:'crearEnlacePago',token:API_TOKEN,
-            orden:d.orden,monto:total,nombre:nom,email:email,telefono:tel,
-            urlRetorno:window.location.href.split('?')[0]
-          })
-        }).then(function(r2){return r2.json();})
-        .then(function(wd){
-          if(wd.ok&&wd.urlEnlace){
-            window.location.href=wd.urlEnlace;
-          }else{
-            btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-            showErr('form','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));
-          }
-        }).catch(function(){
-          btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-          showErr('form','Error de conexión con Wompi. Intenta de nuevo.');
-        });
-      }else{
-        // Transferencia bancaria → éxito directo
-        irAExitoTransferencia();
-      }
-    }).catch(function(){
-      if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-      showErr('form','Error de conexión. Verifica tu internet.');
-    });
-}
-
-// ── PASO 4: DATOS BANCARIOS ──
-function goP4(){
-  var o=_ultimaOrden;
-  document.getElementById('p4-monto').textContent='$'+o.total;
-  setPaso(4);window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function irAExitoTransferencia(){
-  mostrarExito();
-}
-
-function notificarAdmin(orden){
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'notificarPagoConfirmado',token:API_TOKEN,ordenId:orden})
-  }).catch(function(){});
+      if(d.ok){
+        _ultimaOrden={orden:d.orden,nombre:nom,tel:tel,sku:_color.sku,diseno:_color.nombre+' · '+_color.color,cantidad:_qty,total:(_color.precio*_qty).toFixed(2)};
+        if(ov)ov.style.display='none';
+        mostrarExito();
+      }else{if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error al registrar. Intenta de nuevo.');}
+    }).catch(function(){if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;showErr('form','Error de conexión. Verifica tu internet.');});
 }
 
 function mostrarExito(){
   var o=_ultimaOrden;
   document.getElementById('ex-orden').textContent=o.orden;
+  // Mini resumen de la orden
   document.getElementById('om-contenido').innerHTML=
-    o.items.map(function(it){
-      return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
-    }).join('')+
-    '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
-    '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
-    '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':'Transferencia bancaria')+'</span></div>';
+    '<div class="om-fila"><span>Producto</span><span>'+esc(o.diseno)+'</span></div>'+
+    '<div class="om-fila"><span>Cantidad</span><span>'+o.cantidad+' unidad(es)</span></div>'+
+    '<div class="om-fila"><span>Total</span><span>$'+o.total+'</span></div>'+
+    '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>';
   document.getElementById('orden-mini').style.display='block';
-
-  if(o.metodoPago==='tarjeta'){
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago procesado con exito. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
-    document.getElementById('ex-accion-comprobante').style.display='none';
-  }else{
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pedido registrado. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
-    document.getElementById('ex-accion-comprobante').style.display='block';
-    var msg=encodeURIComponent('Hola! Adjunto comprobante de pago de mi pedido '+o.orden+'.');
-    document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+msg;
-  }
-  document.getElementById('ex-tracking').style.display='block';
-  guardarSesion('s-exito',0);
+  // Botón: solicitar datos bancarios (no comprobante — todavía no ha pagado)
+  var waNum=o.tel.replace(/\D/g,'');
+  if(waNum.length<8)waNum=WA; // fallback al número de la tienda
+  var msg=encodeURIComponent('Hola! Acabo de registrar mi pedido '+o.orden+' y quisiera los datos para realizar la transferencia. Gracias.');
+  document.getElementById('btn-solicitar').href='https://wa.me/'+WA+'?text='+msg;
   showScreen('s-exito');window.scrollTo({top:0,behavior:'smooth'});
-  if(o.orden) notificarAdmin(o.orden);
-  if(o.orden) setContacto(o.contacto||'');
-  track('purchase',{orden:o.orden,total:o.total,items:(o.items||[]).length});
 }
 
 // Reinicia el formulario para hacer otro pedido
 function nuevoP(){
   limpiarSesion();
-  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];
-  _metodoPago='transferencia';_comprobanteVia='wa';
-  var pt=document.getElementById('p-tel');if(pt)pt.value='';
+  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];
+  document.getElementById('p-tel').value='';
   document.getElementById('ce-box').style.display='none';
   document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';
   document.getElementById('f-dir').value='';document.getElementById('f-zona').value='';
   document.getElementById('f-notas').value='';
-  document.getElementById('f-email').value='';
   document.getElementById('map-mini').style.display='none';
   document.getElementById('qty-card').style.display='none';
-  document.getElementById('btn-agregar-otro').style.display='none';
-  document.getElementById('carrito-wrap').style.display='none';
   document.getElementById('color-sel').classList.remove('show');
   document.getElementById('orden-mini').style.display='none';
-  document.getElementById('ex-accion-comprobante').style.display='none';
-  document.getElementById('ex-pago-info').innerHTML='';
-  document.getElementById('ex-tracking').style.display='none';
-  var bcDiv=document.getElementById('bancario-info');if(bcDiv)bcDiv.style.display='none';
-  var ecDiv=document.getElementById('email-card-wrap');if(ecDiv)ecDiv.style.display='none';
   if(_catCargado)renderCat();
-  showScreen('s-catalogo');hideErr('phone');hideErr('form');
+  showScreen('s-phone');hideErr('phone');hideErr('form');
 }
 
 // ── NAVEGACIÓN ──
 function setPaso(n){
-  var maxPaso=_metodoPago==='tarjeta'?4:5;
-  [1,2,3,4,5].forEach(function(i){
-    var d=document.getElementById('sd'+i);if(!d)return;
-    var l=document.getElementById('sl'+i);
-    d.className='step-d';if(l)l.className='step-l';
+  [1,2,3].forEach(function(i){
+    var d=document.getElementById('sd'+i),l=document.getElementById('sl'+i);
+    d.className='step-d';l.className='step-l';
     if(i<n){d.classList.add('done');d.textContent='✓';}
-    else if(i===n){d.classList.add('act');d.textContent=i;if(l)l.classList.add('act');}
+    else if(i===n){d.classList.add('act');d.textContent=i;l.classList.add('act');}
     else{d.textContent=i;}
-    if(l&&i<maxPaso){
-      var ln=document.getElementById('sl-'+i);
-      if(ln){if(i<n)ln.classList.add('done');else ln.classList.remove('done');}
-    }
+    if(i<3){var ln=document.getElementById('sl-'+i);if(i<n)ln.classList.add('done');else ln.classList.remove('done');}
   });
   document.getElementById('p1').style.display=n===1?'block':'none';
   document.getElementById('p2').style.display=n===2?'block':'none';
   document.getElementById('p3').style.display=n===3?'block':'none';
-  document.getElementById('p4').style.display=n===4?'block':'none';
 }
 function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'smooth'});}
-function showScreen(id){
-  ['s-catalogo','s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){
-    var el=document.getElementById(sid);if(el)el.style.display='none';
-  });
-  var t=document.getElementById(id);if(t)t.style.display='block';
-  window.scrollTo({top:0});
-  if(id==='s-form'){document.getElementById('steps').style.display='flex';}
-  else{var st=document.getElementById('steps');if(st)st.style.display='none';}
-  if(id==='s-phone'){
-    document.getElementById('phone-bienvenida').style.display='block';
-    document.getElementById('phone-consulta').style.display='none';
-  }
-  track('page_view',{screen:id});
-}
+function showScreen(id){['s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){var el=document.getElementById(sid);if(el)el.style.display='none';});var t=document.getElementById(id);if(t)t.style.display='block';window.scrollTo({top:0});}
 function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
 function hideErr(c){document.getElementById('err-'+c).style.display='none';}
-// ── LEAFLET MAPA INTERACTIVO ──
-var _leafletMap=null,_leafletMarker=null,_leafletInit=false;
-
-function esperarL(){
-  if(typeof L==='undefined'){setTimeout(esperarL,200);return;}
-  iniciarLeaflet();
-}
-function iniciarLeaflet(){
-  if(_leafletInit) return;
-  var wrap=document.getElementById('leaflet-map-wrap');
-  if(!wrap) return;
-  wrap.style.display='block';
-  _leafletInit=true;
-  _leafletMap=L.map('leaflet-map',{zoomControl:true}).setView([13.6929,-89.2182],13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom:19
-  }).addTo(_leafletMap);
-  _leafletMarker=L.marker([13.6929,-89.2182],{draggable:true}).addTo(_leafletMap);
-  _leafletMarker.on('dragend',function(e){
-    var p=e.target.getLatLng();
-    actualizarCoordenadasLeaflet(p.lat,p.lng);
-  });
-  _leafletMap.on('click',function(e){
-    _leafletMarker.setLatLng(e.latlng);
-    actualizarCoordenadasLeaflet(e.latlng.lat,e.latlng.lng);
-  });
-  setTimeout(function(){_leafletMap.invalidateSize();},300);
-}
-function osmLink(lat,lng){
-  lat=parseFloat(lat);lng=parseFloat(lng);
-  return 'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lng+'#map=15/'+lat+'/'+lng;
-}
-function actualizarCoordenadasLeaflet(lat,lng){
-  lat=parseFloat(lat).toFixed(6);
-  lng=parseFloat(lng).toFixed(6);
-  document.getElementById('latitud').value=lat;
-  document.getElementById('longitud').value=lng;
-  _mapa=osmLink(lat,lng);
-}
-function actualizarPinLeaflet(lat,lng){
-  if(!_leafletInit) iniciarLeaflet();
-  if(_leafletMap){
-    _leafletMap.setView([lat,lng],15);
-    if(_leafletMarker) _leafletMarker.setLatLng([lat,lng]);
-    actualizarCoordenadasLeaflet(lat,lng);
-  }
-}
-function obtenerMiUbicacion(){
-  if(!navigator.geolocation){showErr('form','Tu navegador no soporta geolocalizaci\u00f3n.');return;}
-  navigator.geolocation.getCurrentPosition(
-    function(pos){
-      var lat=pos.coords.latitude,lng=pos.coords.longitude;
-      if(!_leafletInit) iniciarLeaflet();
-      if(_leafletMap){
-        _leafletMap.setView([lat,lng],16);
-        if(_leafletMarker) _leafletMarker.setLatLng([lat,lng]);
-        actualizarCoordenadasLeaflet(lat,lng);
-      }
-    },
-    function(){showErr('form','No se pudo obtener tu ubicaci\u00f3n. Verifica los permisos en tu navegador.');},
-    {enableHighAccuracy:true,timeout:10000}
-  );
-}
-// Hooks en el flujo existente — envuelven funciones originales sin alterarlas
-var _goP2Orig=goP2;goP2=function(){_goP2Orig();setTimeout(function(){if(document.getElementById('nueva-dir').style.display!=='none')esperarL();},250);};
-var _showNuevaDirOrig=showNuevaDir;showNuevaDir=function(){_showNuevaDirOrig();setTimeout(esperarL,250);};
-var _mostrarMapaOrig=mostrarMapaEnPunto;mostrarMapaEnPunto=function(lat,lng){_mostrarMapaOrig(lat,lng);if(typeof actualizarPinLeaflet==='function')actualizarPinLeaflet(lat,lng);};
-
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-function enviarDatosPorCorreo(orden){
-  var email=prompt('Ingresá tu correo para recibir los datos de tu orden '+orden+':');
-  if(!email||!email.includes('@')) return alert('Correo inválido');
-  document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Enviando datos de la orden…</p></div>';
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'enviarComprobante',token:API_TOKEN,ordenId:orden,via:'email',email:email})
-  }).then(function(r){return r.json();})
-  .then(function(res){
-    if(res.ok) alert('Datos enviados a '+email);
-    else alert('❌ Error: '+(res.error||'No se pudo enviar'));
-  }).catch(function(){alert('❌ Error de conexión');});
-}
-
-// ── INICIO: detectar retorno de Wompi ──
-(function(){
-  var qs=new URLSearchParams(window.location.search);
-  var idTransaccion=qs.get('idTransaccion');
-  if(!idTransaccion) return;
-  try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}
-  window._wompiReturn=true;
-
-  var orden=qs.get('identificadorEnlaceComercio')||'';
-  var hash=qs.get('hash')||'';
-  var params={
-    identificadorEnlaceComercio: orden,
-    idTransaccion: idTransaccion,
-    idEnlace: qs.get('idEnlace')||'',
-    monto: qs.get('monto')||'',
-    esAprobada: qs.get('esAprobada')||'',
-    esReal: qs.get('esReal')||'',
-    hash: hash
-  };
-
-  showScreen('s-form');
-  document.getElementById('steps').style.display='flex';
-
-  [1,2,3].forEach(function(i){
-    var d=document.getElementById('sd'+i);
-    var l=document.getElementById('sl'+i);
-    if(d){d.className='step-d done';d.textContent='✓';}
-    if(l){l.className='step-l';}
-    var ln=document.getElementById('sl-'+i);
-    if(ln)ln.classList.add('done');
-  });
-
-  var s4=document.getElementById('step4-wrap');
-  var sl4=document.getElementById('sl-4');
-  if(s4)s4.style.display='none';
-  if(sl4)sl4.style.display='none';
-
-  var sd5=document.getElementById('sd5');
-  var sl5=document.getElementById('sl5');
-  if(sd5){sd5.className='step-d act';sd5.textContent='4';}
-  if(sl5)sl5.className='step-l act';
-
-  ['p1','p2','p3','p4'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.style.display='none';
-  });
-
-  document.getElementById('s-exito').style.display='block';
-  document.getElementById('ex-orden').textContent=orden||'...';
-  document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Verificando pago…</p></div>';
-  document.getElementById('orden-mini').style.display='block';
-  document.getElementById('om-contenido').innerHTML='<div style="color:var(--muted);font-size:13px">Orden <strong>'+esc(orden)+'</strong> — verificando…</div>';
-  document.getElementById('ex-accion-comprobante').style.display='none';
-  document.getElementById('ex-tracking').style.display='none';
-  document.querySelector('#s-exito .btn-outline-teal').style.display='none';
-  document.querySelector('#s-exito .btn-sec').style.display='none';
-
-  function mostrarExito(){
-    if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
-    document.getElementById('orden-mini').style.display='none';
-    document.getElementById('ex-pago-info').innerHTML=
-      '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago verificado con exito. Orden <strong>'+esc(orden)+'</strong>.</div>';
-    document.getElementById('ex-accion-comprobante').style.display='none';
-    document.getElementById('ex-tracking').style.display='block';
-    document.querySelector('#s-exito .btn-outline-teal').style.display='';
-    document.querySelector('#s-exito .btn-sec').style.display='';
-    if(orden) notificarAdmin(orden);
-  }
-  function mostrarError(msg){
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';
-    document.querySelector('#s-exito .btn-outline-teal').style.display='';
-    document.querySelector('#s-exito .btn-sec').style.display='';
-  }
-
-  function verificarTransaccionWompi(){
-    fetch(GAS+'?action=verificarTransaccion&idTransaccion='+encodeURIComponent(idTransaccion)+'&token='+encodeURIComponent(API_TOKEN)+'&_t='+Date.now())
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.ok && res.esAprobada) mostrarExito();
-      else mostrarError((res.estado||res.error||'El pago no pudo ser verificado con Wompi.'));
-    }).catch(function(){ mostrarError('No se pudo verificar el pago con Wompi.'); });
-  }
-
-  if(hash){
-    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'validarHashWompi',token:API_TOKEN,params:params})
-    }).then(function(r){return r.json();})
-    .then(function(res){
-      if(res.ok) verificarTransaccionWompi();
-      else mostrarError(res.error||'El hash no pudo ser validado.');
-    }).catch(function(){ mostrarError('No se pudo verificar el pago.'); });
-  }else{
-    verificarTransaccionWompi();
-  }
-})();
 </script>
 </body>
 </html>

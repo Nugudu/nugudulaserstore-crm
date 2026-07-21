@@ -584,6 +584,19 @@ tbody tr:last-child td{border-bottom:none}
         </div>
         <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Flujo de conversión</div><div style="position:relative;height:240px"><canvas id="chartFunnel"></canvas></div></div>
         <div class="g4" id="cdp-funnel-metrics"></div>
+        <div class="g4" id="cdp-funnel-summary" style="margin-bottom:1.4rem"></div>
+        <div class="card" style="margin-bottom:1.1rem">
+          <div class="card-ttl"><i class="fa-solid fa-ranking-star" style="color:var(--gold)"></i> Rendimiento por producto</div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="border-bottom:2px solid var(--border);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+              <th style="text-align:left;padding:8px 6px">Producto</th>
+              <th style="text-align:center;padding:8px 6px">Vistas</th>
+              <th style="text-align:center;padding:8px 6px">Conversión</th>
+            </tr></thead>
+            <tbody id="cdp-funnel-productos"></tbody>
+          </table></div>
+        </div>
+        <div class="g4" id="cdp-funnel-steps"></div>
       </div>
 
       <!-- Segmentos -->
@@ -2955,10 +2968,20 @@ function cdpRenderFunnel(){
   var eventos = _cdpEventos.filter(function(e){ return e.ts >= corte; });
   var paso = {};
   ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'].forEach(function(p){ paso[p] = {}; });
+  var prodVistas = {};
+  var prodSessions = {};
+  var sessionsCompra = {};
   eventos.forEach(function(e){
     if(paso[e.evento]) paso[e.evento][e.session_id] = (paso[e.evento][e.session_id] || 0) + 1;
+    if(e.evento === 'purchase') sessionsCompra[e.session_id] = true;
+    if(e.evento === 'product_click' && e.data && e.data.nombre){
+      var nom = e.data.nombre;
+      if(!prodVistas[nom]) prodVistas[nom] = { vistas: 0, sessions: {} };
+      prodVistas[nom].vistas++;
+      prodVistas[nom].sessions[e.session_id] = true;
+    }
   });
-  var labels = ['Visitaron catálogo','Vieron producto','Eligieron color','Agregaron al carrito','Iniciaron checkout','Completaron compra'];
+  var labels = ['Visitas al catálogo','Vieron producto','Eligieron color','Agregaron al carrito','Iniciaron checkout','Completaron compra'];
   var keys = ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'];
   var vals = keys.map(function(k){ return Object.keys(paso[k]).length; });
   var maxV = Math.max(1, vals[0]);
@@ -2974,11 +2997,48 @@ function cdpRenderFunnel(){
       }
     });
   }
+
+  // Summary metrics
+  var pv = vals[0] || 1;
+  var cc = vals[4] || 0;
+  var pu = vals[5] || 0;
+  var convTotal = (pu / pv * 100).toFixed(1);
+  var abandono = cc > 0 ? ((cc - pu) / cc * 100).toFixed(1) : '0.0';
+  var checkoutPago = cc > 0 ? (pu / cc * 100).toFixed(1) : '0.0';
+  var drops = [];
+  for(var i = 1; i < vals.length; i++){
+    drops.push({ from: labels[i-1], to: labels[i], drop: vals[i-1] - vals[i], pct: vals[i-1] > 0 ? ((vals[i-1] - vals[i]) / vals[i-1] * 100).toFixed(1) : 0 });
+  }
+  drops.sort(function(a,b){ return b.drop - a.drop; });
+  var mayorAbandono = drops.length > 0 ? drops[0].from + ' → ' + drops[0].to + ' (' + drops[0].pct + '%)' : '—';
+
+  var sh = '';
+  sh += '<div class="mc"><div class="ml">Conversión total</div><div class="mv" style="color:var(--green)">' + convTotal + '%</div><div style="font-size:11px;color:var(--muted)">visitas → compra</div></div>';
+  sh += '<div class="mc"><div class="ml">Abandono</div><div class="mv" style="color:var(--coral)">' + abandono + '%</div><div style="font-size:11px;color:var(--muted)">iniciaron checkout pero no pagaron</div></div>';
+  sh += '<div class="mc"><div class="ml">Mayor abandono</div><div class="mv" style="font-size:16px;color:var(--navy)">' + mayorAbandono + '</div><div style="font-size:11px;color:var(--muted)">etapa con más caída</div></div>';
+  sh += '<div class="mc"><div class="ml">Checkout → Pago</div><div class="mv" style="color:var(--teal)">' + checkoutPago + '%</div><div style="font-size:11px;color:var(--muted)">de checkout a compra completada</div></div>';
+  document.getElementById('cdp-funnel-summary').innerHTML = sh;
+
+  // Product performance
+  var prodHtml = '';
+  var prodNombres = Object.keys(prodVistas).sort();
+  prodNombres.forEach(function(nom){
+    var p = prodVistas[nom];
+    var sesView = Object.keys(p.sessions).length;
+    var sesConv = 0;
+    Object.keys(p.sessions).forEach(function(sid){ if(sessionsCompra[sid]) sesConv++; });
+    var tasa = sesView > 0 ? (sesConv / sesView * 100).toFixed(1) : '0.0';
+    prodHtml += '<tr><td style="padding:6px;font-weight:500">' + escHtml(nom) + '</td><td style="text-align:center;padding:6px">' + p.vistas + '</td><td style="text-align:center;padding:6px;font-weight:600;color:' + (parseFloat(tasa) > 0 ? 'var(--green)' : 'var(--hint)') + '">' + tasa + '%</td></tr>';
+  });
+  if(!prodHtml) prodHtml = '<tr><td colspan="3" style="text-align:center;padding:12px;color:var(--hint);font-size:12px">Sin datos de productos en este período</td></tr>';
+  document.getElementById('cdp-funnel-productos').innerHTML = prodHtml;
+
+  // Step metrics (moved below)
   var mhtml = '';
   keys.forEach(function(k, i){
     mhtml += '<div class="mc"><div class="ml">' + labels[i] + '</div><div class="mv" style="font-size:22px;color:var(--navy)">' + vals[i] + '</div><div style="font-size:11px;color:var(--muted)">' + pcts[i] + '% del total</div></div>';
   });
-  document.getElementById('cdp-funnel-metrics').innerHTML = mhtml;
+  document.getElementById('cdp-funnel-steps').innerHTML = mhtml;
 }
 
 // ── Segmentos ──
@@ -3031,7 +3091,7 @@ function cdpRenderSegmentos(){
   var topList = top.slice(0, topN);
 
   var segmentosDef = [
-    { id: 'vistos', lbl: 'Visto recientemente', ico: 'fa-eye', color: 'var(--teal)', data: vistos, desc: 'Visitaron el catálogo en los últimos 30 días sin comprar', det: function(d){ return d.contacto; } },
+    { id: 'vistos', lbl: 'Visto recientemente', ico: 'fa-eye', color: 'var(--teal)', data: vistos, desc: 'Visitas al catálogo en los últimos 30 días sin comprar', det: function(d){ return d.contacto; } },
     { id: 'nuevos', lbl: 'Nuevos', ico: 'fa-seedling', color: 'var(--green)', data: segmentos.nuevos, desc: '1ra compra en los últimos 90 días', det: function(d){ return d.ordenes.length + ' pedido(s)'; } },
     { id: 'activos', lbl: 'Activos', ico: 'fa-fire', color: 'var(--amber)', data: segmentos.activos, desc: '2+ compras en los últimos 90 días', det: function(d){ return '$' + d.total.toFixed(2); } },
     { id: 'riesgo', lbl: 'En riesgo', ico: 'fa-triangle-exclamation', color: 'var(--coral)', data: segmentos.riesgo, desc: 'Sin compra en 90+ días', det: function(d){ return '$' + d.total.toFixed(2); } },

@@ -717,7 +717,7 @@ function renderCat(){
     var prods=cols[col],dis={};
     prods.forEach(function(p){if(!dis[p.nombre])dis[p.nombre]=[];dis[p.nombre].push(p);});
     html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div>';
-    html+='<div style="text-align:center;font-size:11px;color:var(--hint);margin:0 0 14px;letter-spacing:.3px">la diferencia se lleva</div>';
+    html+='<div style="font-size:11px;color:var(--hint);margin:0 0 14px;letter-spacing:.3px">la diferencia se lleva</div>';
     html+='<div class="prod-grid">';
     Object.keys(dis).forEach(function(nom){
       var vs=dis[nom];

@@ -224,7 +224,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('inventario')" id="nav-inventario"><i class="fa-solid fa-boxes-stacked"></i> Inventario</div>
   <div class="nav" onclick="go('analytics')" id="nav-analytics"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
   <div class="nav" onclick="go('reportes')" id="nav-reportes"><i class="fa-solid fa-calendar-days"></i> Reportes</div>
-  <div class="nav" onclick="go('cdp');cargarCDP()" id="nav-cdp"><i class="fa-solid fa-database"></i> CDP</div>
+  <div class="nav" onclick="go('cdp')" id="nav-cdp"><i class="fa-solid fa-database"></i> CDP</div>
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
   <div class="sb-sec">Configuración</div>
   <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
@@ -583,7 +583,19 @@ tbody tr:last-child td{border-bottom:none}
           <div class="fg" style="min-width:120px"><label>Período</label><select id="cdp-funnel-periodo" onchange="cdpRenderFunnel()"><option value="7">7 días</option><option value="30" selected>30 días</option><option value="90">90 días</option></select></div>
         </div>
         <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Flujo de conversión</div><div style="position:relative;height:240px"><canvas id="chartFunnel"></canvas></div></div>
-        <div class="g4" id="cdp-funnel-metrics"></div>
+        <div class="g4" id="cdp-funnel-summary" style="margin-bottom:1.4rem"></div>
+        <div class="card" style="margin-bottom:1.1rem">
+          <div class="card-ttl"><i class="fa-solid fa-ranking-star" style="color:var(--gold)"></i> Rendimiento por producto</div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="border-bottom:2px solid var(--border);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+              <th style="text-align:left;padding:8px 6px">Producto</th>
+              <th style="text-align:center;padding:8px 6px">Vistas</th>
+              <th style="text-align:center;padding:8px 6px">Conversión</th>
+            </tr></thead>
+            <tbody id="cdp-funnel-productos"></tbody>
+          </table></div>
+        </div>
+        <div class="g4" id="cdp-funnel-steps"></div>
       </div>
 
       <!-- Segmentos -->
@@ -2060,7 +2072,7 @@ function abrirTrack(id){
   var waMsg=encodeURIComponent(construirMensajeWA(o, est));
   var fechaVal = o.fechaEntrega || '';
   var mapaUrl = o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona);
-  var pendBlock = o.pendientePago ? '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+badgePendientePago(o)+'<button class="btn btn-outline btn-xs" onclick="confirmarPago('+id+')" style="color:var(--green);border-color:#bfe2cc"><i class="fa-solid fa-check"></i> Confirmar pago</button><button class="btn btn-outline btn-xs" onclick="enviarDatosBancarios('+id+')" style="color:var(--teal);border-color:#b2e0db"><i class="fa-solid fa-building-columns"></i> Enviar datos bancarios</button></div>' : '';
+  var pendBlock = '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+(o.pendientePago ? badgePendientePago(o) : '')+'<button class="btn btn-outline btn-xs" onclick="confirmarPago('+id+')" style="color:var(--green);border-color:#bfe2cc"><i class="fa-solid fa-check"></i> Confirmar pago</button><button class="btn btn-outline btn-xs" onclick="enviarDatosBancarios('+id+')" style="color:var(--teal);border-color:#b2e0db"><i class="fa-solid fa-building-columns"></i> Enviar datos bancarios</button></div>';
   var ciBlock = badgeConsumoInterno(o);
   det.innerHTML='<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1rem"><div><div class="mono" style="font-size:15px">'+esc(o.orden)+'</div><div style="font-weight:600;font-size:15px;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · <span class="zona-pill">'+esc(o.zona)+'</span></div><div style="font-size:12px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>'+esc(o.direccion||'')+' <a href="'+mapaUrl+'" target="_blank" style="color:var(--navy);font-weight:600;margin-left:6px">Ver mapa</a></div>'+pendBlock+ciBlock+'</div><span class="status '+SCLS[est]+'" style="font-size:13px;padding:5px 13px">'+ESTADOS[est]+'</span></div><div class="tl">'+steps+'</div><div style="margin-top:1.25rem;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.5rem">Actualizar estado</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="estado-opts">'+ESTADOS.map(function(label,i){return '<button class="ss-opt '+(i===est?'sel':'')+'" onclick="actualizarEstado('+id+','+i+',this)">'+EICONS[i]+' '+label+'</button>';}).join('')+'</div><div style="margin-top:1.1rem;padding:.85rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs)"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:6px"><i class="fa-solid fa-calendar-check" style="margin-right:5px;color:var(--teal)"></i>Fecha de entrega estimada</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="track-fecha-entrega" value="'+fechaVal+'" style="border:1px solid var(--bmd);border-radius:var(--rs);padding:7px 10px;font-size:13px;font-family:\'DM Sans\',sans-serif"><button class="btn btn-teal btn-sm" onclick="guardarFechaEntrega('+id+')"><i class="fa-solid fa-floppy-disk"></i> Guardar fecha</button><span class="hint">Se incluye en el WhatsApp cuando el pedido está "En empaque".</span></div></div><div style="display:flex;gap:8px;margin-top:1.25rem;flex-wrap:wrap"><a class="btn btn-wa" href="https://wa.me/'+waNum+'?text='+waMsg+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar</a><button class="btn btn-outline" onclick="cpMsg('+id+')"><i class="fa-solid fa-copy"></i> Copiar mensaje</button><a class="btn btn-outline" href="'+mapaUrl+'" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Abrir en Maps</a><button class="btn btn-outline" onclick="imprimirFichaQR('+id+')"><i class="fa-solid fa-print"></i> Imprimir ficha</button></div></div>';
   // Punto medio pedido por Nuria: si la orden esta recien llegada (estado
@@ -2069,15 +2081,15 @@ function abrirTrack(id){
   // "Enviar". No se repite en la misma sesion para la misma orden (ver
   // _waAutoAbiertoIds), asi no molesta si se vuelve a abrir el mismo
   // detalle o se refresca despues de otra accion.
-  if (est === 0 && o.pendientePago && !_waAutoAbiertoIds[id]) {
-    _waAutoAbiertoIds[id] = true;
-    if (!o.datosBancariosEnviados) {
+  // [OCULTO] if (est === 0 && o.pendientePago && !_waAutoAbiertoIds[id]) {
+  // [OCULTO] _waAutoAbiertoIds[id] = true;
+  // [OCULTO] if (!o.datosBancariosEnviados) {
       // Primera vez que se ve esta orden (en cualquier dispositivo) -- se abre sola.
-      enviarDatosBancarios(id);
-    } else if (confirm('Los datos bancarios de este pedido ya se enviaron antes (desde este u otro dispositivo). ¿Deseas enviarlos de nuevo?')) {
-      enviarDatosBancarios(id);
-    }
-  }
+  // [OCULTO] enviarDatosBancarios(id);
+  // [OCULTO] } else if (confirm('Los datos bancarios de este pedido ya se enviaron antes (desde este u otro dispositivo). ¿Deseas enviarlos de nuevo?')) {
+  // [OCULTO] enviarDatosBancarios(id);
+  // [OCULTO] }
+  // [OCULTO] }
 }
 
 function guardarFechaEntrega(id){
@@ -2873,17 +2885,20 @@ function generarPdfReporteSku(data, sku, foto){
 // ══════════════════════════════════════════════════════════════════
 var _cdpEventos = [];
 
+var _cdpTabActual = '360';
+
 function cargarCDP(){
   fetch(GAS+'?action=leerEventos&limite=10000&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok) _cdpEventos = d.eventos || [];
       else _cdpEventos = [];
-      cdpTab('360');
+      cdpTab(_cdpTabActual);
     }).catch(function(){ _cdpEventos = []; });
 }
 
 function cdpTab(tab){
+  _cdpTabActual = tab;
   var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos' };
   ['360','funnel','segmentos'].forEach(function(t){
     var el = document.getElementById(secciones[t]); if(el) el.style.display = t === tab ? 'block' : 'none';
@@ -2955,10 +2970,20 @@ function cdpRenderFunnel(){
   var eventos = _cdpEventos.filter(function(e){ return e.ts >= corte; });
   var paso = {};
   ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'].forEach(function(p){ paso[p] = {}; });
+  var prodVistas = {};
+  var prodSessions = {};
+  var sessionsCompra = {};
   eventos.forEach(function(e){
     if(paso[e.evento]) paso[e.evento][e.session_id] = (paso[e.evento][e.session_id] || 0) + 1;
+    if(e.evento === 'purchase') sessionsCompra[e.session_id] = true;
+    if(e.evento === 'product_click' && e.data && e.data.nombre){
+      var nom = e.data.nombre;
+      if(!prodVistas[nom]) prodVistas[nom] = { vistas: 0, sessions: {} };
+      prodVistas[nom].vistas++;
+      prodVistas[nom].sessions[e.session_id] = true;
+    }
   });
-  var labels = ['Visitaron catálogo','Vieron producto','Eligieron color','Agregaron al carrito','Iniciaron checkout','Completaron compra'];
+  var labels = ['Visitas al catálogo','Vieron producto','Eligieron color','Agregaron al carrito','Iniciaron checkout','Completaron compra'];
   var keys = ['page_view','product_click','color_select','add_to_cart','checkout_start','purchase'];
   var vals = keys.map(function(k){ return Object.keys(paso[k]).length; });
   var maxV = Math.max(1, vals[0]);
@@ -2974,11 +2999,48 @@ function cdpRenderFunnel(){
       }
     });
   }
+
+  // Summary metrics
+  var pv = vals[0] || 1;
+  var cc = vals[4] || 0;
+  var pu = vals[5] || 0;
+  var convTotal = (pu / pv * 100).toFixed(1);
+  var abandono = cc > 0 ? ((cc - pu) / cc * 100).toFixed(1) : '0.0';
+  var checkoutPago = cc > 0 ? (pu / cc * 100).toFixed(1) : '0.0';
+  var drops = [];
+  for(var i = 1; i < vals.length; i++){
+    drops.push({ from: labels[i-1], to: labels[i], drop: vals[i-1] - vals[i], pct: vals[i-1] > 0 ? ((vals[i-1] - vals[i]) / vals[i-1] * 100).toFixed(1) : 0 });
+  }
+  drops.sort(function(a,b){ return b.drop - a.drop; });
+  var mayorAbandono = drops.length > 0 ? drops[0].from + ' → ' + drops[0].to + ' (' + drops[0].pct + '%)' : '—';
+
+  var sh = '';
+  sh += '<div class="mc"><div class="ml">Conversión total</div><div class="mv" style="color:var(--green)">' + convTotal + '%</div><div style="font-size:11px;color:var(--muted)">visitas → compra</div></div>';
+  sh += '<div class="mc"><div class="ml">Abandono</div><div class="mv" style="color:var(--coral)">' + abandono + '%</div><div style="font-size:11px;color:var(--muted)">iniciaron checkout pero no pagaron</div></div>';
+  sh += '<div class="mc"><div class="ml">Mayor abandono</div><div class="mv" style="font-size:16px;color:var(--navy)">' + mayorAbandono + '</div><div style="font-size:11px;color:var(--muted)">etapa con más caída</div></div>';
+  sh += '<div class="mc"><div class="ml">Checkout → Pago</div><div class="mv" style="color:var(--teal)">' + checkoutPago + '%</div><div style="font-size:11px;color:var(--muted)">de checkout a compra completada</div></div>';
+  document.getElementById('cdp-funnel-summary').innerHTML = sh;
+
+  // Product performance
+  var prodHtml = '';
+  var prodNombres = Object.keys(prodVistas).sort();
+  prodNombres.forEach(function(nom){
+    var p = prodVistas[nom];
+    var sesView = Object.keys(p.sessions).length;
+    var sesConv = 0;
+    Object.keys(p.sessions).forEach(function(sid){ if(sessionsCompra[sid]) sesConv++; });
+    var tasa = sesView > 0 ? (sesConv / sesView * 100).toFixed(1) : '0.0';
+    prodHtml += '<tr><td style="padding:6px;font-weight:500">' + escHtml(nom) + '</td><td style="text-align:center;padding:6px">' + p.vistas + '</td><td style="text-align:center;padding:6px;font-weight:600;color:' + (parseFloat(tasa) > 0 ? 'var(--green)' : 'var(--hint)') + '">' + tasa + '%</td></tr>';
+  });
+  if(!prodHtml) prodHtml = '<tr><td colspan="3" style="text-align:center;padding:12px;color:var(--hint);font-size:12px">Sin datos de productos en este período</td></tr>';
+  document.getElementById('cdp-funnel-productos').innerHTML = prodHtml;
+
+  // Step metrics (moved below)
   var mhtml = '';
   keys.forEach(function(k, i){
     mhtml += '<div class="mc"><div class="ml">' + labels[i] + '</div><div class="mv" style="font-size:22px;color:var(--navy)">' + vals[i] + '</div><div style="font-size:11px;color:var(--muted)">' + pcts[i] + '% del total</div></div>';
   });
-  document.getElementById('cdp-funnel-metrics').innerHTML = mhtml;
+  document.getElementById('cdp-funnel-steps').innerHTML = mhtml;
 }
 
 // ── Segmentos ──
@@ -3031,7 +3093,7 @@ function cdpRenderSegmentos(){
   var topList = top.slice(0, topN);
 
   var segmentosDef = [
-    { id: 'vistos', lbl: 'Visto recientemente', ico: 'fa-eye', color: 'var(--teal)', data: vistos, desc: 'Visitaron el catálogo en los últimos 30 días sin comprar', det: function(d){ return d.contacto; } },
+    { id: 'vistos', lbl: 'Visto recientemente', ico: 'fa-eye', color: 'var(--teal)', data: vistos, desc: 'Visitas al catálogo en los últimos 30 días sin comprar', det: function(d){ return d.contacto; } },
     { id: 'nuevos', lbl: 'Nuevos', ico: 'fa-seedling', color: 'var(--green)', data: segmentos.nuevos, desc: '1ra compra en los últimos 90 días', det: function(d){ return d.ordenes.length + ' pedido(s)'; } },
     { id: 'activos', lbl: 'Activos', ico: 'fa-fire', color: 'var(--amber)', data: segmentos.activos, desc: '2+ compras en los últimos 90 días', det: function(d){ return '$' + d.total.toFixed(2); } },
     { id: 'riesgo', lbl: 'En riesgo', ico: 'fa-triangle-exclamation', color: 'var(--coral)', data: segmentos.riesgo, desc: 'Sin compra en 90+ días', det: function(d){ return '$' + d.total.toFixed(2); } },

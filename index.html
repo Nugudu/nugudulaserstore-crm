@@ -224,7 +224,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('inventario')" id="nav-inventario"><i class="fa-solid fa-boxes-stacked"></i> Inventario</div>
   <div class="nav" onclick="go('analytics')" id="nav-analytics"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
   <div class="nav" onclick="go('reportes')" id="nav-reportes"><i class="fa-solid fa-calendar-days"></i> Reportes</div>
-  <div class="nav" onclick="go('cdp');cargarCDP()" id="nav-cdp"><i class="fa-solid fa-database"></i> CDP</div>
+  <div class="nav" onclick="go('cdp')" id="nav-cdp"><i class="fa-solid fa-database"></i> CDP</div>
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
   <div class="sb-sec">Configuración</div>
   <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
@@ -583,7 +583,6 @@ tbody tr:last-child td{border-bottom:none}
           <div class="fg" style="min-width:120px"><label>Período</label><select id="cdp-funnel-periodo" onchange="cdpRenderFunnel()"><option value="7">7 días</option><option value="30" selected>30 días</option><option value="90">90 días</option></select></div>
         </div>
         <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Flujo de conversión</div><div style="position:relative;height:240px"><canvas id="chartFunnel"></canvas></div></div>
-        <div class="g4" id="cdp-funnel-metrics"></div>
         <div class="g4" id="cdp-funnel-summary" style="margin-bottom:1.4rem"></div>
         <div class="card" style="margin-bottom:1.1rem">
           <div class="card-ttl"><i class="fa-solid fa-ranking-star" style="color:var(--gold)"></i> Rendimiento por producto</div>

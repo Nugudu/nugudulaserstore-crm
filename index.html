@@ -2886,17 +2886,20 @@ function generarPdfReporteSku(data, sku, foto){
 // ══════════════════════════════════════════════════════════════════
 var _cdpEventos = [];
 
+var _cdpTabActual = '360';
+
 function cargarCDP(){
   fetch(GAS+'?action=leerEventos&limite=10000&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok) _cdpEventos = d.eventos || [];
       else _cdpEventos = [];
-      cdpTab('360');
+      cdpTab(_cdpTabActual);
     }).catch(function(){ _cdpEventos = []; });
 }
 
 function cdpTab(tab){
+  _cdpTabActual = tab;
   var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos' };
   ['360','funnel','segmentos'].forEach(function(t){
     var el = document.getElementById(secciones[t]); if(el) el.style.display = t === tab ? 'block' : 'none';

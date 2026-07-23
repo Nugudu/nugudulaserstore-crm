@@ -629,6 +629,7 @@ function buscarTel(){
 function nuevoCli(){
   limpiarSesion();_cli=null;_dirs=[];setContacto('');
   if(_carrito.length>0){
+    if(_cli_guardado){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];setContacto(_cli.contacto||'');}
     if(!_catCargado){_cat=fallback();_catCargado=true;}
     renderCat();
     guardarSesion('s-form',2);
@@ -958,10 +959,9 @@ function continuarCatalogo(){
   if(_carrito.length===0){showErr('form','Elige un diseno y un color antes de continuar.');return;}
   hideErr('form');
   track('checkout_start',{items:_carrito.length,total:totalCarrito().toFixed(2)});
-  var cliActual=_cli||_cli_guardado;
-  if(cliActual){
-    if(!_cli&&_cli_guardado){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];}
-    goP2();
+  if(_cli){
+    guardarSesion('s-form',2);
+    showScreen('s-form');setPaso(2);
   }else{
     showScreen('s-phone');
   }
@@ -1293,6 +1293,20 @@ function setPaso(n){
   document.getElementById('p2').style.display=n===2?'block':'none';
   document.getElementById('p3').style.display=n===3?'block':'none';
   document.getElementById('p4').style.display=n===4?'block':'none';
+  if(n===2&&_cli){
+    document.getElementById('f-nom').value=_cli.nombre||'';
+    document.getElementById('f-tel').value=_cli.contacto||'';
+    document.getElementById('f-nac').value=_cli.fechaNac||'';
+    if(_dirs.length){
+      var dh=_dirs.map(function(d,i){return '<div class="dir-opt'+(i===0?' sel':'')+'" id="dop-'+i+'" onclick="elDir('+i+')"><div class="do-dir">'+esc(d.direccion)+'</div><div class="do-zona">'+esc(d.zona)+'</div></div>';}).join('');
+      document.getElementById('dirs-prev').innerHTML=dh;
+      document.getElementById('dirs-prev-wrap').style.display='block';
+      _dirSel=_dirs[0];
+      document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
+      var fd=document.getElementById('dop-0');if(fd)fd.classList.add('sel');
+      document.getElementById('nueva-dir').style.display='none';
+    }
+  }
 }
 function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'smooth'});}
 function showScreen(id){

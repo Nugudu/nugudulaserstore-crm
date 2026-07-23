@@ -1178,8 +1178,7 @@ function confirmarPedido(){
   var payload={
     action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
-    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac,
-    urlRetorno:window.location.href.split('?')[0]
+    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac
   };
 
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
@@ -1198,12 +1197,25 @@ function confirmarPedido(){
       if(ov)ov.style.display='none';
 
       if(_metodoPago==='tarjeta'){
-        if(d.urlEnlace){
-          window.location.href=d.urlEnlace;
-        }else{
+        btn.textContent='Redirigiendo a Wompi…';
+        fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+          body:JSON.stringify({
+            action:'crearEnlacePago',token:API_TOKEN,
+            orden:d.orden,monto:total,nombre:nom,email:email,telefono:tel,
+            urlRetorno:window.location.href.split('?')[0]
+          })
+        }).then(function(r2){return r2.json();})
+        .then(function(wd){
+          if(wd.ok&&wd.urlEnlace){
+            window.location.href=wd.urlEnlace;
+          }else{
+            btn.textContent='✓ Confirmar pedido';btn.disabled=false;
+            showErr('form','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));
+          }
+        }).catch(function(){
           btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-          showErr('form','Error al crear enlace de pago. Intenta de nuevo.');
-        }
+          showErr('form','Error de conexión con Wompi. Intenta de nuevo.');
+        });
       }else{
         irAExitoTransferencia();
       }

@@ -165,6 +165,10 @@ tbody tr:last-child td{border-bottom:none}
 }
 /* Scroll horizontal para toda la info de la tabla de órdenes */
 #tbl-ordenes{overflow-x:auto;max-width:100%}#tbl-ordenes table{min-width:1400px}
+#tbl-ordenes td,#tbl-ordenes th{padding:4px 6px;font-size:12px;line-height:1.3}
+#tbl-ordenes td>div{font-size:11px;line-height:1.25}
+.bdg-pago{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;line-height:1.3;white-space:nowrap}
+.bdg-pago.verde{background:#e8f5ee;color:#14532d}.bdg-pago.naranja{background:#fef3c7;color:#92400e}.bdg-pago.ambar{background:#fef6e4;color:var(--amber)}.bdg-pago.rojo{background:#fde2e2;color:#a32d2d}
 .sd{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .sd.green{background:#2e7d52}.sd.yellow{background:var(--gold)}.sd.red{background:#a32d2d}
 ::-webkit-scrollbar{width:5px;height:5px}
@@ -1224,17 +1228,28 @@ function formatoFechaCorta(iso){
   return dias[d.getDay()] + ' ' + partes[2] + '/' + partes[1];
 }
 
-// Construye la etiqueta visual de "Pendiente de pago".
-// Pasadas 12 horas cambia a color de alerta — pero nunca se borra ni cambia nada solo.
-function badgePendientePago(o){
-  if (!o.pendientePago) return '';
-  var horas = 0;
-  if (o.pendienteDesde) { horas = (Date.now() - new Date(o.pendienteDesde).getTime()) / 36e5; }
-  var vencido = horas >= 12;
-  var bg = vencido ? '#fde2e2' : 'var(--gold-pale)';
-  var fg = vencido ? '#a32d2d' : 'var(--amber)';
-  var txt = vencido ? '⏳ Pendiente de pago · +12h' : '⏳ Pendiente de pago';
-  return '<div style="margin-top:4px"><span style="display:inline-block;font-size:11px;font-weight:600;background:'+bg+';color:'+fg+';padding:2px 8px;border-radius:10px">'+txt+'</span></div>';
+// Etiqueta de estado de pago — 3 estados: confirmado (verde), comprobante enviado (naranja),
+// pendiente (ámbar/rojo). El parámetro clickable=true hace que las etiquetas naranja/ámbar
+// llamen a confirmarPago(id) al hacer clic (usado en Órdenes, no en Tracking).
+function badgePago(o, clickable){
+  if (o.pagoConfirmado) {
+    var esTarjeta = o.pago === 'Tarjeta';
+    return '<span class="bdg-pago verde">' + (esTarjeta ? '\u2713 Pago Tarjeta (Wompi)' : '\u2713 Pago Transferencia') + '</span>';
+  }
+  if (o.datosBancariosEnviados && o.pendientePago) {
+    var attr = clickable ? ' onclick="confirmarPago(' + o.id + ')" style="cursor:pointer" title="Click para confirmar pago"' : '';
+    return '<span class="bdg-pago naranja"' + attr + '>\u2713 Pago Transferencia</span>';
+  }
+  if (o.pendientePago) {
+    var horas = 0;
+    if (o.pendienteDesde) { horas = (Date.now() - new Date(o.pendienteDesde).getTime()) / 36e5; }
+    var vencido = horas >= 12;
+    var cls = vencido ? 'rojo' : 'ambar';
+    var txt = vencido ? '\u23f3 Pendiente de pago \u00b7 +12h' : '\u23f3 Pendiente de pago';
+    var attr = clickable ? ' onclick="confirmarPago(' + o.id + ')" style="cursor:pointer" title="Click para confirmar pago"' : '';
+    return '<span class="bdg-pago ' + cls + '"' + attr + '>' + txt + '</span>';
+  }
+  return '';
 }
 // Etiqueta para pedidos de consumo interno/patrocinio — no se cobra,
 // se cuenta aparte en Reportes e Inventario, nunca como ingreso real.
@@ -1326,8 +1341,10 @@ function confirmarPago(id){
   if(idx<0) return;
   _ordenes[idx].pendientePago = false;
   _ordenes[idx].pendienteDesde = null;
+  _ordenes[idx].pagoConfirmado = true;
+  _ordenes[idx].pagoFecha = new Date().toISOString();
   saveLocal(); updateOverview();
-  setTimeout(function(){ updateGASField(id, {pendientePago:false, pendienteDesde:null}); }, 0);
+  setTimeout(function(){ updateGASField(id, {pendientePago:false, pendienteDesde:null, pagoConfirmado:true, pagoFecha:_ordenes[idx].pagoFecha}); }, 0);
   showToast('Pago confirmado ✓');
   var active = document.querySelector('.panel.active');
   if (active && active.id === 'panel-ordenes') renderOrdenes();
@@ -1852,11 +1869,10 @@ function buildTable(data,cid,deletable){
   c.innerHTML='<table><thead><tr><th>Nº Orden</th><th>Fecha</th><th>Entrega est.</th><th>Cliente</th><th>Contacto</th><th>Zona</th><th>Canal</th><th>Cant.</th><th>P.Unit</th><th>Total</th><th>SKU</th><th>Estado</th>'+(deletable?'<th style="text-align:center">Track</th><th></th>':'')+'</tr></thead><tbody>'+data.map(function(o){
     var tot=((o.precio||0)*(o.cantidad||1)).toFixed(2);
     var fe=o.fechaEntrega?'<span style="font-weight:500;color:var(--teal)">'+formatoFechaCorta(o.fechaEntrega)+'</span>':'<span style="color:var(--hint)">–</span>';
-    var pendBadge = badgePendientePago(o);
+    var pendBadge = badgePago(o, true);
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
-    var pendBtn = o.pendientePago ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+o.id+')" style="margin-top:4px;color:var(--green);border-color:#bfe2cc" title="Marcar como pagado"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '';
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+pendBtn+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button> <button class="btn btn-outline btn-xs" onclick="abrirEditarOrden('+o.id+')" title="Editar orden"><i class="fa-solid fa-pen" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button> <button class="btn btn-outline btn-xs" onclick="abrirEditarOrden('+o.id+')" title="Editar orden"><i class="fa-solid fa-pen" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){
@@ -2072,7 +2088,7 @@ function abrirTrack(id){
   var waMsg=encodeURIComponent(construirMensajeWA(o, est));
   var fechaVal = o.fechaEntrega || '';
   var mapaUrl = o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona);
-  var pendBlock = '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+(o.pendientePago ? badgePendientePago(o) : '')+'<button class="btn btn-outline btn-xs" onclick="confirmarPago('+id+')" style="color:var(--green);border-color:#bfe2cc"><i class="fa-solid fa-check"></i> Confirmar pago</button><button class="btn btn-outline btn-xs" onclick="enviarDatosBancarios('+id+')" style="color:var(--teal);border-color:#b2e0db"><i class="fa-solid fa-building-columns"></i> Enviar datos bancarios</button></div>';
+  var pendBlock = '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+badgePago(o, false)+(o.pendientePago && !o.datosBancariosEnviados ? '<button class="btn btn-outline btn-xs" onclick="confirmarPago('+id+')" style="color:var(--green);border-color:#bfe2cc"><i class="fa-solid fa-check"></i> Confirmar pago</button>' : '')+'<button class="btn btn-outline btn-xs" onclick="enviarDatosBancarios('+id+')" style="color:var(--teal);border-color:#b2e0db"><i class="fa-solid fa-building-columns"></i> Enviar datos bancarios</button></div>';
   var ciBlock = badgeConsumoInterno(o);
   det.innerHTML='<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1rem"><div><div class="mono" style="font-size:15px">'+esc(o.orden)+'</div><div style="font-weight:600;font-size:15px;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · <span class="zona-pill">'+esc(o.zona)+'</span></div><div style="font-size:12px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>'+esc(o.direccion||'')+' <a href="'+mapaUrl+'" target="_blank" style="color:var(--navy);font-weight:600;margin-left:6px">Ver mapa</a></div>'+pendBlock+ciBlock+'</div><span class="status '+SCLS[est]+'" style="font-size:13px;padding:5px 13px">'+ESTADOS[est]+'</span></div><div class="tl">'+steps+'</div><div style="margin-top:1.25rem;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:.5rem">Actualizar estado</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="estado-opts">'+ESTADOS.map(function(label,i){return '<button class="ss-opt '+(i===est?'sel':'')+'" onclick="actualizarEstado('+id+','+i+',this)">'+EICONS[i]+' '+label+'</button>';}).join('')+'</div><div style="margin-top:1.1rem;padding:.85rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs)"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:6px"><i class="fa-solid fa-calendar-check" style="margin-right:5px;color:var(--teal)"></i>Fecha de entrega estimada</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="track-fecha-entrega" value="'+fechaVal+'" style="border:1px solid var(--bmd);border-radius:var(--rs);padding:7px 10px;font-size:13px;font-family:\'DM Sans\',sans-serif"><button class="btn btn-teal btn-sm" onclick="guardarFechaEntrega('+id+')"><i class="fa-solid fa-floppy-disk"></i> Guardar fecha</button><span class="hint">Se incluye en el WhatsApp cuando el pedido está "En empaque".</span></div></div><div style="display:flex;gap:8px;margin-top:1.25rem;flex-wrap:wrap"><a class="btn btn-wa" href="https://wa.me/'+waNum+'?text='+waMsg+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar</a><button class="btn btn-outline" onclick="cpMsg('+id+')"><i class="fa-solid fa-copy"></i> Copiar mensaje</button><a class="btn btn-outline" href="'+mapaUrl+'" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Abrir en Maps</a><button class="btn btn-outline" onclick="imprimirFichaQR('+id+')"><i class="fa-solid fa-print"></i> Imprimir ficha</button></div></div>';
   // Punto medio pedido por Nuria: si la orden esta recien llegada (estado

@@ -36,6 +36,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .step-d.done{background:var(--teal);border-color:var(--teal);color:#fff}
 .step-l{font-size:10px;color:var(--hint);font-weight:500}
 .step-l.act{color:var(--navy);font-weight:700}
+.nac-btn{display:inline-block;font-size:11px;font-weight:600;color:var(--teal);cursor:pointer;margin-left:6px;transition:color .15s}.nac-btn:hover{color:#158a7d}
 .step-line{height:2px;flex:1;background:var(--border);margin-bottom:14px;transition:background .2s}
 .step-line.done{background:var(--teal)}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
@@ -247,7 +248,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div id="err-consulta" class="err-box" style="display:none"></div>
         <div class="phone-row">
           <input id="p-tel" type="text" placeholder="WhatsApp o numero de orden (ORD-...)" onkeydown="if(event.key==='Enter')buscarTel()">
-          <button onclick="buscarTel()">Buscar</button>
+          <button onclick="buscarTel(this)">Buscar</button>
         </div>
         <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
         <button style="background:none;border:none;color:var(--hint);font-size:12px;cursor:pointer;margin-top:10px;width:100%;padding:8px" onclick="cancelarConsulta()">← Volver</button>
@@ -322,7 +323,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="card">
       <div class="card-ttl">Datos de contacto</div>
       <div class="fg"><label>Nombre completo *</label><input id="f-nom" type="text" placeholder="Ej. María García"></div>
-      <div class="fg"><label>Fecha de nacimiento</label><input id="f-nac" type="text" placeholder="DD/MM/AA" maxlength="8" inputmode="numeric" oninput="fmtNac(this)"><span class="hint">Opcional — solo números (ej. 15/03/98)</span></div>
+      <div class="fg"><label>Fecha de nacimiento</label><input id="f-nac" type="text" placeholder="DD/MM/AA" maxlength="8" inputmode="numeric" oninput="onNacInput(this)"><span class="hint">Opcional — solo números (ej. 15/03/98)</span><span id="nac-btn" class="nac-btn" style="display:none" onclick="guardarNac()">+ Guardar</span></div>
       <div class="fg"><label>WhatsApp *</label><input id="f-tel" type="tel" placeholder="+503 7000-0000"><span class="hint">Te notificamos cuando tu pedido esté listo</span></div>
     </div>
     <div class="card">
@@ -603,11 +604,12 @@ function fallback(){
 }
 
 // ── PHONE CHECK ──
-function buscarTel(){
+function buscarTel(btn){
+  if(btn)btn.disabled=true;
   var val=(document.getElementById('p-tel').value||'').trim();
   var consMode=document.getElementById('phone-consulta').style.display==='block';
   var errId=consMode?'consulta':'phone';
-  if(!val){showErr(errId,'Ingresa tu numero de WhatsApp o tu numero de orden.');return;}
+  if(!val){showErr(errId,'Ingresa tu numero de WhatsApp o tu numero de orden.');if(btn)btn.disabled=false;return;}
   hideErr(errId);
   var spin=document.getElementById('search-spin');
   if(spin)spin.style.display='block';
@@ -616,7 +618,7 @@ function buscarTel(){
   fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
-      if(spin)spin.style.display='none';
+      if(spin)spin.style.display='none';if(btn)btn.disabled=false;
       if(d.ok&&d.encontrado){
         _cli=d;_dirs=d.direcciones||[];
         setContacto(d.contacto||'');
@@ -624,7 +626,7 @@ function buscarTel(){
       }else{
         showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
       }
-    }).catch(function(){if(spin)spin.style.display='none';nuevoCli();});
+    }).catch(function(){if(spin)spin.style.display='none';if(btn)btn.disabled=false;nuevoCli();});
 }
 function nuevoCli(){
   limpiarSesion();_cli=null;_dirs=[];setContacto('');
@@ -978,12 +980,26 @@ function cancelarConsulta(){
   showScreen('s-catalogo');
 }
 
-// ── FORMATO FECHA NACIMIENTO DD/MM/AA ──
-function fmtNac(el){
+// ── FORMATO FECHA NACIMIENTO DD/MM/AA + GUARDAR ──
+function onNacInput(el){
   var v=el.value.replace(/[^0-9]/g,'').slice(0,6);
   if(v.length>4)v=v.slice(0,4)+'/'+v.slice(4);
   if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);
   el.value=v;
+  var btn=document.getElementById('nac-btn');
+  if(btn)btn.style.display=(v.length>0&&_cli)?'inline':'none';
+}
+function guardarNac(){
+  var nac=document.getElementById('f-nac').value.trim();
+  if(!nac||!_cli)return;
+  _cli.fechaNac=nac;
+  var btn=document.getElementById('nac-btn');
+  if(btn){btn.textContent='\u2713 Guardado';btn.style.color='var(--green)';setTimeout(function(){btn.textContent='+ Guardar';btn.style.color='';},2000);}
+  if(_cli.contacto){
+    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'guardarFechaNac',token:API_TOKEN,contacto:_cli.contacto,fechaNac:nac})
+    }).catch(function(){});
+  }
 }
 
 // ── PASO 2 ──
@@ -1254,8 +1270,9 @@ function mostrarExito(){
 
 // Reinicia el formulario para hacer otro pedido
 function nuevoP(){
+  _cli_guardado=_cli;_dirs_guardados=_dirs;
   limpiarSesion();
-  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];
+  _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];
   _metodoPago='transferencia';_comprobanteVia='wa';
   var pt=document.getElementById('p-tel');if(pt)pt.value='';
   document.getElementById('ce-box').style.display='none';
@@ -1268,6 +1285,10 @@ function nuevoP(){
   document.getElementById('btn-agregar-otro').style.display='none';
   document.getElementById('carrito-wrap').style.display='none';
   document.getElementById('color-sel').classList.remove('show');
+  document.getElementById('ci-qty-card').style.display='none';
+  document.getElementById('ci-btn-agregar-otro').style.display='none';
+  document.getElementById('ci-carrito-wrap').style.display='none';
+  document.getElementById('ci-color-sel').classList.remove('show');
   document.getElementById('orden-mini').style.display='none';
   document.getElementById('ex-accion-comprobante').style.display='none';
   document.getElementById('ex-pago-info').innerHTML='';

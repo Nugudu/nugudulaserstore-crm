@@ -143,6 +143,7 @@ function doPost(e) {
     if (action === 'validarHashWompi') return respond(validarHashWompi(payload.params || payload));
     if (action === 'notificarPagoConfirmado') return respond(notificarPagoConfirmado(payload));
     if (action === 'trackEvent')  return respond(guardarEventos(payload));
+    if (action === 'guardarFechaNac') return respond(guardarFechaNac(payload));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -455,6 +456,27 @@ function buscarClienteGAS(tel, orden) {
       totalPedidos:     match.length,
       ordenesRecientes: ordenesRecientes
     };
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+function guardarFechaNac(payload){
+  try {
+    var contacto = String(payload.contacto || '').trim().replace(/\D/g, '');
+    var fechaNac = String(payload.fechaNac || '').trim();
+    if (!contacto || !fechaNac) return { ok: false, error: 'Faltan datos' };
+    var ordenes = leerOrdenes();
+    var match = ordenes.filter(function(o) {
+      return String(o.contacto || '').replace(/\D/g, '') === contacto;
+    });
+    if (!match.length) return { ok: false, error: 'No se encontraron pedidos para este contacto' };
+    match.sort(function(a, b) { return new Date(b.fecha) - new Date(a.fecha); });
+    var masReciente = match[0];
+    var ordenesActualizadas = ordenes.map(function(o) {
+      if (String(o.id) === String(masReciente.id)) o.fechaNac = fechaNac;
+      return o;
+    });
+    guardarOrdenes(ordenesActualizadas);
+    return { ok: true };
   } catch(err) { return { ok: false, error: err.message }; }
 }
 

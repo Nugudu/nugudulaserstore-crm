@@ -164,9 +164,9 @@ tbody tr:last-child td{border-bottom:none}
   .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
 }
 /* Scroll horizontal para toda la info de la tabla de órdenes */
-#tbl-ordenes{overflow-x:auto;max-width:100%}#tbl-ordenes table{min-width:1400px}
-#tbl-ordenes td,#tbl-ordenes th{padding:4px 6px;font-size:12px;line-height:1.3}
-#tbl-ordenes td>div{font-size:11px;line-height:1.25}
+#tbl-ordenes{overflow-x:auto;max-width:100%}#tbl-ordenes table{min-width:1520px}
+#tbl-ordenes td{padding:5px 7px;font-size:12px;line-height:1.4}
+#tbl-ordenes td>div{font-size:12px;line-height:1.35}
 .bdg-pago{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;line-height:1.3;white-space:nowrap}
 .bdg-pago.verde{background:#e8f5ee;color:#14532d}.bdg-pago.naranja{background:#fef3c7;color:#92400e}.bdg-pago.ambar{background:#fef6e4;color:var(--amber)}.bdg-pago.rojo{background:#fde2e2;color:#a32d2d}
 .sd{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -1234,11 +1234,11 @@ function formatoFechaCorta(iso){
 function badgePago(o, clickable){
   if (o.pagoConfirmado) {
     var esTarjeta = o.pago === 'Tarjeta';
-    return '<span class="bdg-pago verde">' + (esTarjeta ? '\u2713 Pago Tarjeta (Wompi)' : '\u2713 Pago Transferencia') + '</span>';
+    return '<span class="bdg-pago verde">' + (esTarjeta ? '\u2713 Pago Tarjeta (Wompi)' : '\u2713 confirmar Pago Transferencia') + '</span>';
   }
   if (o.datosBancariosEnviados && o.pendientePago) {
     var attr = clickable ? ' onclick="confirmarPago(' + o.id + ')" style="cursor:pointer" title="Click para confirmar pago"' : '';
-    return '<span class="bdg-pago naranja"' + attr + '>\u2713 Pago Transferencia</span>';
+    return '<span class="bdg-pago naranja"' + attr + '>\u2713 comprobante enviado</span>';
   }
   if (o.pendientePago) {
     var horas = 0;
@@ -1866,13 +1866,15 @@ function horaLocal(iso){
 function buildTable(data,cid,deletable){
   var c=document.getElementById(cid);
   if(!data.length){ c.innerHTML='<div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin resultados.</p></div>'; return; }
-  c.innerHTML='<table><thead><tr><th>Nº Orden</th><th>Fecha</th><th>Entrega est.</th><th>Cliente</th><th>Contacto</th><th>Zona</th><th>Canal</th><th>Cant.</th><th>P.Unit</th><th>Total</th><th>SKU</th><th>Estado</th>'+(deletable?'<th style="text-align:center">Track</th><th></th>':'')+'</tr></thead><tbody>'+data.map(function(o){
+  c.innerHTML='<table><thead><tr><th>Nº Orden</th><th>Fecha</th><th>Entrega est.</th><th>Cliente</th><th>Contacto</th><th>Zona</th><th>Canal</th><th>Pago</th><th>Cant.</th><th>P.Unit</th><th>Total</th><th>SKU</th><th>Estado</th>'+(deletable?'<th style="text-align:center">Track</th><th></th>':'')+'</tr></thead><tbody>'+data.map(function(o){
     var tot=((o.precio||0)*(o.cantidad||1)).toFixed(2);
     var fe=o.fechaEntrega?'<span style="font-weight:500;color:var(--teal)">'+formatoFechaCorta(o.fechaEntrega)+'</span>':'<span style="color:var(--hint)">–</span>';
     var pendBadge = badgePago(o, true);
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
-    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button> <button class="btn btn-outline btn-xs" onclick="abrirEditarOrden('+o.id+')" title="Editar orden"><i class="fa-solid fa-pen" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
+    var pagoMetodo = o.pago || 'Transferencia';
+    var pagoBadge = o.pagoConfirmado ? '<span class="bdg-pago verde" style="font-size:9px">'+pagoMetodo+'</span>' : '<span style="font-size:11px;font-weight:500">'+pagoMetodo+'</span>';
+    return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-size:11px">'+pagoBadge+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button> <button class="btn btn-outline btn-xs" onclick="abrirEditarOrden('+o.id+')" title="Editar orden"><i class="fa-solid fa-pen" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
 }
 function eliminar(id){

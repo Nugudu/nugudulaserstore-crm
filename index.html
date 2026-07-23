@@ -2938,9 +2938,21 @@ function cdpRender360(clientes){
     c.eventos.sort(function(a,b){ return a.ts < b.ts ? 1 : -1; });
     var compras = c.eventos.filter(function(e){ return e.evento === 'purchase'; });
     var visitas = c.eventos.filter(function(e){ return e.evento === 'page_view' && e.data && e.data.screen === 's-catalogo'; });
+    // Buscar fechaNac en órdenes
+    var fechaNac = '';
+    var telNorm = tel.replace(/\D/g,'');
+    for(var oi=0;oi<_ordenes.length;oi++){
+      var oContacto = String(_ordenes[oi].contacto||'').replace(/\D/g,'');
+      var oNombre = (_ordenes[oi].nombre||'').toLowerCase();
+      if((telNorm && oContacto.indexOf(telNorm)>=0) || (c.nombre && oNombre.indexOf(c.nombre.toLowerCase())>=0)){
+        if(_ordenes[oi].fechaNac){ fechaNac = _ordenes[oi].fechaNac; break; }
+      }
+    }
     html += '<div class="card" style="margin-bottom:1rem">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    html += '<div><strong style="font-size:15px">' + escHtml(c.nombre || tel) + '</strong><br><span style="font-size:12px;color:var(--muted)">' + escHtml(c.contacto) + '</span></div>';
+    html += '<div><strong style="font-size:15px">' + escHtml(c.nombre || tel) + '</strong><br><span style="font-size:12px;color:var(--muted)">' + escHtml(c.contacto) + '</span>';
+    if(fechaNac) html += '<br><span style="font-size:11px;color:var(--amber)">🎂 ' + escHtml(fechaNac) + '</span>';
+    html += '</div>';
     html += '<div style="text-align:right;font-size:11px;color:var(--muted)">' + visitas.length + ' visitas · ' + compras.length + ' compras</div>';
     html += '</div>';
     html += '<div style="max-height:260px;overflow-y:auto;font-size:12px">';
@@ -3059,6 +3071,20 @@ function cdpRenderSegmentos(){
     if(e.evento === 'page_view' && e.ts >= corteVisto && !compradores[tel])
       contactoSinCompra[tel] = { contacto: e.contacto, ts: e.ts };
   });
+  // Cumpleañeros del mes
+  var mesActual = new Date().getMonth();
+  var cumpleaneros = {};
+  ordenes.forEach(function(o){
+    if(!o.fechaNac) return;
+    var parts = o.fechaNac.split('/');
+    if(parts.length < 3) return;
+    var mes = parseInt(parts[1]) - 1;
+    if(mes !== mesActual) return;
+    var tel = (o.contacto || '').replace(/\D/g, '');
+    if(!tel || cumpleaneros[tel]) return;
+    cumpleaneros[tel] = { nombre: o.nombre || '', contacto: o.contacto || '', fechaNac: o.fechaNac };
+  });
+  var cumpleLista = Object.keys(cumpleaneros).map(function(t){ return cumpleaneros[t]; });
   ordenes.forEach(function(o){
     var tel = (o.contacto || '').replace(/\D/g, '');
     if(!tel) return;
@@ -3093,6 +3119,7 @@ function cdpRenderSegmentos(){
   var topList = top.slice(0, topN);
 
   var segmentosDef = [
+    { id: 'cumple', lbl: 'Cumpleañeros del mes', ico: 'fa-cake-candles', color: '#d946ef', data: cumpleLista, desc: 'Clientes con cumpleaños este mes', det: function(d){ return d.fechaNac; }, wa: true },
     { id: 'vistos', lbl: 'Visto recientemente', ico: 'fa-eye', color: 'var(--teal)', data: vistos, desc: 'Visitas al catálogo en los últimos 30 días sin comprar', det: function(d){ return d.contacto; } },
     { id: 'nuevos', lbl: 'Nuevos', ico: 'fa-seedling', color: 'var(--green)', data: segmentos.nuevos, desc: '1ra compra en los últimos 90 días', det: function(d){ return d.ordenes.length + ' pedido(s)'; } },
     { id: 'activos', lbl: 'Activos', ico: 'fa-fire', color: 'var(--amber)', data: segmentos.activos, desc: '2+ compras en los últimos 90 días', det: function(d){ return '$' + d.total.toFixed(2); } },
@@ -3106,7 +3133,13 @@ function cdpRenderSegmentos(){
     var listHtml = '';
     s.data.slice(0, 5).forEach(function(d){
       var nom = d.nombre || d.contacto || '—';
-      listHtml += '<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>' + escHtml(nom) + '</span><span style="color:var(--muted)">' + s.det(d) + '</span></div>';
+      var extra = '';
+      if(s.wa && d.contacto){
+        var numWA = (d.contacto || '').replace(/\D/g, '');
+        var msg = encodeURIComponent('¡Hola ' + (d.nombre || '') + '! 🎂 En Nugudú queremos desearte un muy feliz cumpleaños. ¡Que la pases increíble!');
+        extra = ' <a href="https://wa.me/' + numWA + '?text=' + msg + '" target="_blank" style="color:#25D366;font-size:11px;font-weight:600;text-decoration:none;margin-left:6px">Feliciar por WA →</a>';
+      }
+      listHtml += '<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>' + escHtml(nom) + extra + '</span><span style="color:var(--muted)">' + s.det(d) + '</span></div>';
     });
     if(!listHtml) listHtml = '<div style="font-size:12px;color:var(--hint);padding:6px 0">Sin clientes en este segmento</div>';
     html += '<div class="sc" style="border-left:4px solid ' + s.color + '">';

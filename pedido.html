@@ -322,6 +322,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="card">
       <div class="card-ttl">Datos de contacto</div>
       <div class="fg"><label>Nombre completo *</label><input id="f-nom" type="text" placeholder="Ej. María García"></div>
+      <div class="fg"><label>Fecha de nacimiento</label><input id="f-nac" type="text" placeholder="DD/MM/AA" maxlength="8" inputmode="numeric" oninput="fmtNac(this)"><span class="hint">Opcional — solo números (ej. 15/03/98)</span></div>
       <div class="fg"><label>WhatsApp *</label><input id="f-tel" type="tel" placeholder="+503 7000-0000"><span class="hint">Te notificamos cuando tu pedido esté listo</span></div>
     </div>
     <div class="card">
@@ -974,15 +975,25 @@ function cancelarConsulta(){
   showScreen('s-catalogo');
 }
 
+// ── FORMATO FECHA NACIMIENTO DD/MM/AA ──
+function fmtNac(el){
+  var v=el.value.replace(/[^0-9]/g,'').slice(0,6);
+  if(v.length>4)v=v.slice(0,4)+'/'+v.slice(4);
+  if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);
+  el.value=v;
+}
+
 // ── PASO 2 ──
 function goP2(){
   agregarSeleccionAlCarrito(); // si hay una seleccion sin agregar todavia, se suma sola -- no se pierde nada
   renderCarrito();
   if(_carrito.length===0){showErr('form','Elige un diseño y un color antes de continuar.');return;}
   hideErr('form');
-  if(_cli){document.getElementById('f-nom').value=_cli.nombre||'';document.getElementById('f-tel').value=_cli.contacto||'';}
-  if(_dirs.length>0){
-    var html=_dirs.map(function(d,i){return '<div class="dir-opt'+(i===0?' sel':'')+'" id="dop-'+i+'" onclick="elDir('+i+')"><div class="do-dir">'+esc(d.direccion)+'</div><div class="do-zona">'+esc(d.zona)+'</div></div>';}).join('');
+  var cliActivo=_cli||_cli_guardado;
+  var dirsActivo=_dirs.length?_dirs:_dirs_guardados;
+  if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';document.getElementById('f-nac').value=cliActivo.fechaNac||'';}
+  if(dirsActivo.length>0){
+    var html=dirsActivo.map(function(d,i){return '<div class="dir-opt'+(i===0?' sel':'')+'" id="dop-'+i+'" onclick="elDir('+i+')"><div class="do-dir">'+esc(d.direccion)+'</div><div class="do-zona">'+esc(d.zona)+'</div></div>';}).join('');
     document.getElementById('dirs-prev').innerHTML=html;
     document.getElementById('dirs-prev-wrap').style.display='block';
     elDir(0);
@@ -991,7 +1002,8 @@ function goP2(){
   setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'smooth'});
 }
 function elDir(i){
-  _dirSel=_dirs[i];
+  var dirsActivo2=_dirs.length?_dirs:_dirs_guardados;
+  _dirSel=dirsActivo2[i];
   document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
   document.getElementById('dop-'+i).classList.add('sel');
   if(_dirSel.mapaLink){
@@ -1124,6 +1136,7 @@ function confirmarPedido(){
   var email=(document.getElementById('f-email').value||'').trim();
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim();
+  var nac=(document.getElementById('f-nac').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
@@ -1141,7 +1154,7 @@ function confirmarPedido(){
   var payload={
     action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
-    vendedorRef:_refV,email:email,metodoPago:_metodoPago
+    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac
   };
 
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
@@ -1241,7 +1254,7 @@ function nuevoP(){
   _metodoPago='transferencia';_comprobanteVia='wa';
   var pt=document.getElementById('p-tel');if(pt)pt.value='';
   document.getElementById('ce-box').style.display='none';
-  document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';
+  document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';document.getElementById('f-nac').value='';
   document.getElementById('f-dir').value='';document.getElementById('f-zona').value='';
   document.getElementById('f-notas').value='';
   document.getElementById('f-email').value='';

@@ -450,6 +450,7 @@ function buscarClienteGAS(tel, orden) {
       ok: true, encontrado: true,
       nombre:           reciente.nombre,
       contacto:         reciente.contacto,
+      fechaNac:         reciente.fechaNac || '',
       direcciones:      dirs,
       totalPedidos:     match.length,
       ordenesRecientes: ordenesRecientes
@@ -531,6 +532,7 @@ function guardarPedidoWeb(payload) {
       fechaEntrega:  fe.toISOString().slice(0, 10),
       mapaLink:      String(payload.mapaLink || ''),
       email:         String(payload.email || '').trim(),
+      fechaNac:      String(payload.fechaNac || '').trim(),
       metodoPago:    payload.metodoPago || 'transferencia',
       pendientePago: true,
       pendienteDesde: fecha,

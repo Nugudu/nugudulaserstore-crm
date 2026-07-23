@@ -215,7 +215,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="ci-carrito-items"></div>
       <div class="res-total"><span>Total</span><span id="ci-carrito-total">$0.00</span></div>
     </div>
-    <button class="btn-main" onclick="continuarCatalogo()">Continuar →</button>
+    <button class="btn-main" onclick="continuarCatalogo(this)">Continuar →</button>
     <div style="text-align:center;margin-top:10px">
       <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px">Consultar mi pedido</a>
     </div>
@@ -315,7 +315,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="carrito-items"></div>
       <div class="res-total"><span>Total</span><span id="carrito-total">$0.00</span></div>
     </div>
-    <button class="btn-main" onclick="goP2()">Continuar →</button>
+    <button class="btn-main" onclick="goP2(this)">Continuar →</button>
   </div>
 
   <div id="p2" style="display:none">
@@ -821,7 +821,7 @@ function elDis(nomEnc){
   actualizarFotoPreview(vs[0].sku,nombre);
   document.getElementById('color-sel').classList.add('show');
   document.getElementById('qty-card').style.display='none';
-  setTimeout(function(){document.getElementById('color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+  document.getElementById('color-sel').scrollIntoView({behavior:'auto',block:'nearest'});
   track('product_click',{nombre:nombre});
 }
 function elCol(sku){
@@ -834,7 +834,7 @@ function elCol(sku){
   document.getElementById('qty-t').textContent='$'+v.precio.toFixed(2);
   document.getElementById('qty-card').style.display='block';
   document.getElementById('btn-agregar-otro').style.display='flex';
-  setTimeout(function(){document.getElementById('qty-card').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+  document.getElementById('qty-card').scrollIntoView({behavior:'auto',block:'nearest'});
   track('color_select',{sku:sku,color:v.color});
 }
 // ── CARRITO (varios productos por pedido) ──
@@ -912,7 +912,7 @@ function elDisInicio(nomEnc){
   actualizarFotoPreviewInicio(vs[0].sku,nombre);
   document.getElementById('ci-color-sel').classList.add('show');
   document.getElementById('ci-qty-card').style.display='none';
-  setTimeout(function(){document.getElementById('ci-color-sel').scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+  document.getElementById('ci-color-sel').scrollIntoView({behavior:'auto',block:'nearest'});
   track('product_click',{nombre:nombre});
 }
 function elColInicio(sku){
@@ -953,10 +953,11 @@ function ciAgregarOtro(){
   document.getElementById('ci-qty-card').style.display='none';
   document.getElementById('ci-btn-agregar-otro').style.display='none';
 }
-function continuarCatalogo(){
+function continuarCatalogo(btn){
+  if(btn)btn.disabled=true;
   agregarSeleccionAlCarrito();
   renderCarrito();
-  if(_carrito.length===0){showErr('form','Elige un diseno y un color antes de continuar.');return;}
+  if(_carrito.length===0){showErr('form','Elige un diseno y un color antes de continuar.');if(btn)btn.disabled=false;return;}
   hideErr('form');
   track('checkout_start',{items:_carrito.length,total:totalCarrito().toFixed(2)});
   if(_cli_guardado&&!_cli){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];setContacto(_cli.contacto||'');}
@@ -986,10 +987,11 @@ function fmtNac(el){
 }
 
 // ── PASO 2 ──
-function goP2(){
+function goP2(btn){
+  if(btn)btn.disabled=true;
   agregarSeleccionAlCarrito(); // si hay una seleccion sin agregar todavia, se suma sola -- no se pierde nada
   renderCarrito();
-  if(_carrito.length===0){showErr('form','Elige un diseño y un color antes de continuar.');return;}
+  if(_carrito.length===0){showErr('form','Elige un diseño y un color antes de continuar.');if(btn)btn.disabled=false;return;}
   hideErr('form');
   var cliActivo=_cli||_cli_guardado;
   var dirsActivo=_dirs.length?_dirs:_dirs_guardados;
@@ -1171,6 +1173,7 @@ function confirmarPedido(){
         orden:d.orden,nombre:nom,tel:tel,email:email,
         items:_carrito.slice(),total:total,metodoPago:_metodoPago
       };
+      if(_cli&&nac)_cli.fechaNac=nac;
       if(ov)ov.style.display='none';
 
       if(_metodoPago==='tarjeta'){

@@ -464,7 +464,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
-    <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
+    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
     <div class="ico" style="display:none"></div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
@@ -1538,6 +1538,9 @@ function enviarDatosPorCorreo(orden){
     verificarTransaccionWompi();
   }
 })();
+</script>
+<script>
+if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)el.style.display='none';}
 </script>
 </body>
 </html>

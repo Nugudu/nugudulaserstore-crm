@@ -236,7 +236,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div id="err-phone" class="err-box" style="display:none"></div>
         <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
         <div style="text-align:center;margin-top:10px">
-          <a href="#" onclick="showScreen('s-catalogo');return false" style="font-size:12px;color:var(--muted);text-decoration:none">← Volver</a>
+          <a href="#" onclick="cancelarConsulta();return false" style="font-size:12px;color:var(--muted);text-decoration:none">← Volver</a>
         </div>
         <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
       </div>
@@ -464,6 +464,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
+    <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
     <div class="ico" style="display:none"></div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
@@ -578,7 +579,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];setContacto('');hideErr('phone');hideErr('form');showScreen('s-catalogo');}
+function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];setContacto('');hideErr('phone');hideErr('form');var ccBtn=document.querySelector('#s-catalogo .btn-main');if(ccBtn)ccBtn.disabled=false;showScreen('s-catalogo');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -980,6 +981,8 @@ function irAConsultar(){
 }
 function cancelarConsulta(){
   showScreen('s-catalogo');
+  var ccBtn=document.querySelector('#s-catalogo .btn-main');
+  if(ccBtn)ccBtn.disabled=false;
 }
 
 // ── FORMATO FECHA NACIMIENTO DD/MM/AA + GUARDAR ──

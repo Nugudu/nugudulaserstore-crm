@@ -576,7 +576,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];setContacto('');hideErr('phone');hideErr('form');showScreen('s-catalogo');}
+function salir(){limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];setContacto('');hideErr('phone');hideErr('form');showScreen('s-catalogo');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -865,7 +865,7 @@ function agregarOtroProducto(){
   if(!agregarSeleccionAlCarrito()) return;
   if(it)track('add_to_cart',it);
   renderCarrito();
-  document.getElementById('cat-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('cat-wrap').scrollIntoView({behavior:'auto',block:'start'});
 }
 function quitarDelCarrito(idx){
   _carrito.splice(idx,1);
@@ -1019,7 +1019,7 @@ function goP2(btn){
     elDir(0);
     document.getElementById('nueva-dir').style.display='none';
   }else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
-  setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'smooth'});
+  setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'auto'});
 }
 function elDir(i){
   var dirsActivo2=_dirs.length?_dirs:_dirs_guardados;
@@ -1147,7 +1147,7 @@ function goP3(){
     prodsHtml+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
-  setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'smooth'});
+  setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'auto'});
 }
 function rf(l,v){return '<div class="res-fila"><span class="res-lbl">'+l+'</span><span class="res-val">'+v+'</span></div>';}
 
@@ -1226,7 +1226,7 @@ function confirmarPedido(){
 function goP4(){
   var o=_ultimaOrden;
   document.getElementById('p4-monto').textContent='$'+o.total;
-  setPaso(4);window.scrollTo({top:0,behavior:'smooth'});
+  setPaso(4);window.scrollTo({top:0,behavior:'auto'});
 }
 
 function irAExitoTransferencia(){
@@ -1262,10 +1262,11 @@ function mostrarExito(){
   }
   document.getElementById('ex-tracking').style.display='block';
   guardarSesion('s-exito',0);
-  showScreen('s-exito');window.scrollTo({top:0,behavior:'smooth'});
-  if(o.orden) notificarAdmin(o.orden);
+  showScreen('s-exito');window.scrollTo({top:0,behavior:'auto'});
+  if(o.orden&&!o._notificado){o._notificado=true;notificarAdmin(o.orden);}
   if(o.orden) setContacto(o.contacto||'');
   track('purchase',{orden:o.orden,total:o.total,items:(o.items||[]).length});
+  limpiarSesion();
 }
 
 // Reinicia el formulario para hacer otro pedido
@@ -1295,6 +1296,7 @@ function nuevoP(){
   document.getElementById('ex-tracking').style.display='none';
   var bcDiv=document.getElementById('bancario-info');if(bcDiv)bcDiv.style.display='none';
   var ecDiv=document.getElementById('email-card-wrap');if(ecDiv)ecDiv.style.display='none';
+  var bc=document.getElementById('btn-conf');if(bc){bc.disabled=false;bc.textContent='\u2713 Confirmar pedido';}
   if(_catCargado)renderCat();
   showScreen('s-catalogo');hideErr('phone');hideErr('form');
 }
@@ -1333,7 +1335,7 @@ function setPaso(n){
     }
   }
 }
-function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'smooth'});}
+function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'auto'});}
 function showScreen(id){
   ['s-catalogo','s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){
     var el=document.getElementById(sid);if(el)el.style.display='none';
@@ -1348,7 +1350,7 @@ function showScreen(id){
   }
   track('page_view',{screen:id});
 }
-function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'auto',block:'nearest'});}
 function hideErr(c){document.getElementById('err-'+c).style.display='none';}
 // ── LEAFLET MAPA INTERACTIVO ──
 var _leafletMap=null,_leafletMarker=null,_leafletInit=false;

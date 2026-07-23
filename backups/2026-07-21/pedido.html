@@ -617,9 +617,12 @@ function buscarTel(btn){
   if(spin)spin.style.display='block';
   var esOrden=/^ORD-/i.test(val);
   var param=esOrden?'&orden='+encodeURIComponent(val.toUpperCase()):'&tel='+encodeURIComponent(val);
-  fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN))
+  var controller=new AbortController();
+  var timeout=setTimeout(function(){controller.abort();},1000);
+  fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN),{signal:controller.signal})
     .then(function(r){return r.json();})
     .then(function(d){
+      clearTimeout(timeout);
       if(spin)spin.style.display='none';if(btn)btn.disabled=false;
       if(d.ok&&d.encontrado){
         _cli=d;_dirs=d.direcciones||[];
@@ -628,7 +631,12 @@ function buscarTel(btn){
       }else{
         showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
       }
-    }).catch(function(){if(spin)spin.style.display='none';if(btn)btn.disabled=false;nuevoCli();});
+    }).catch(function(e){
+      clearTimeout(timeout);
+      if(spin)spin.style.display='none';if(btn)btn.disabled=false;
+      if(e.name==='AbortError'){showErr(errId,'Tiempo de espera agotado. Continua como cliente nuevo.');nuevoCli();return;}
+      nuevoCli();
+    });
 }
 function nuevoCli(){
   limpiarSesion();_cli=null;_dirs=[];setContacto('');
@@ -1170,7 +1178,9 @@ function confirmarPedido(){
   if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}
   hideErr('form');
 
-  var btn=document.getElementById('btn-conf');btn.textContent='Procesando…';btn.disabled=true;
+  var btn=document.getElementById('btn-conf');
+  btn.textContent=_metodoPago==='tarjeta'?'Redirigiendo a Wompi…':'Procesando…';
+  btn.disabled=true;
   var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
 
   var payload={
@@ -1297,10 +1307,11 @@ function nuevoP(){
   document.getElementById('ex-tracking').style.display='none';
   var bcDiv=document.getElementById('bancario-info');if(bcDiv)bcDiv.style.display='none';
   var ecDiv=document.getElementById('email-card-wrap');if(ecDiv)ecDiv.style.display='none';
-  var bc=document.getElementById('btn-conf');if(bc){bc.disabled=false;bc.textContent='\u2713 Confirmar pedido';}
+  if(!_catCargado){_cat=fallback();_catCargado=true;}
+  renderCat();
   var ccBtn=document.querySelector('#s-catalogo .btn-main');if(ccBtn)ccBtn.disabled=false;
   var fBtn=document.querySelector('#p1 .btn-main');if(fBtn)fBtn.disabled=false;
-  if(_catCargado)renderCat();
+  var bc=document.getElementById('btn-conf');if(bc){bc.disabled=false;bc.textContent='\u2713 Confirmar pedido';}
   showScreen('s-catalogo');hideErr('phone');hideErr('form');
 }
 

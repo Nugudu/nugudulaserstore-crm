@@ -1231,23 +1231,25 @@ function formatoFechaCorta(iso){
 // Etiqueta de estado de pago — 3 estados: confirmado (verde), comprobante enviado (naranja),
 // pendiente (ámbar/rojo). El parámetro clickable=true hace que las etiquetas naranja/ámbar
 // llamen a confirmarPago(id) al hacer clic (usado en Órdenes, no en Tracking).
+var _svgCheck='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>';
+var _svgClock='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm0 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM8 3a.75.75 0 0 1 .75.75v3.5l2.25 1.5a.75.75 0 0 1-.75 1.28l-2.5-1.67a.75.75 0 0 1-.32-.61V3.75A.75.75 0 0 1 8 3z"/></svg>';
 function badgePago(o, clickable){
   if (o.pagoConfirmado) {
     var esTarjeta = o.pago === 'Tarjeta';
-    return '<span class="bdg-pago verde">' + (esTarjeta ? '\u2713 Pago Tarjeta (Wompi)' : '\u2713 confirmar Pago Transferencia') + '</span>';
+    return '<span class="bdg-pago verde">' + _svgCheck + (esTarjeta ? ' Pago Tarjeta (Wompi)' : ' Pago confirmado') + '</span>';
   }
   if (o.datosBancariosEnviados && o.pendientePago) {
     var attr = clickable ? ' onclick="confirmarPago(' + o.id + ')" style="cursor:pointer" title="Click para confirmar pago"' : '';
-    return '<span class="bdg-pago naranja"' + attr + '>\u2713 comprobante enviado</span>';
+    return '<span class="bdg-pago naranja"' + attr + '>' + _svgCheck + ' comprobante enviado</span>';
   }
   if (o.pendientePago) {
     var horas = 0;
     if (o.pendienteDesde) { horas = (Date.now() - new Date(o.pendienteDesde).getTime()) / 36e5; }
     var vencido = horas >= 12;
     var cls = vencido ? 'rojo' : 'ambar';
-    var txt = vencido ? '\u23f3 Pendiente de pago \u00b7 +12h' : '\u23f3 Pendiente de pago';
+    var txt = (vencido ? ' Pendiente de pago \u00b7 +12h' : ' Pendiente de pago');
     var attr = clickable ? ' onclick="confirmarPago(' + o.id + ')" style="cursor:pointer" title="Click para confirmar pago"' : '';
-    return '<span class="bdg-pago ' + cls + '"' + attr + '>' + txt + '</span>';
+    return '<span class="bdg-pago ' + cls + '"' + attr + '>' + _svgClock + txt + '</span>';
   }
   return '';
 }

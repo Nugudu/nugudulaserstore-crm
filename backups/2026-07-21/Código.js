@@ -565,6 +565,14 @@ function guardarPedidoWeb(payload) {
     guardarOrdenes(ordenes);
     itemsValidados.forEach(function(it){ descontarStock(it.sku, it.cantidad); });
     notificarPedidoNuevo(nuevaOrden);
+    if (payload.metodoPago === 'tarjeta' && typeof crearEnlacePago === 'function') {
+      try {
+        var enlace = crearEnlacePago({ orden: orden, monto: totalPedido, email: payload.email, urlRetorno: payload.urlRetorno || '' });
+        if (enlace && enlace.ok && enlace.urlEnlace) {
+          return { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10), urlEnlace: enlace.urlEnlace };
+        }
+      } catch(we) {}
+    }
     return { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10) };
   } catch(err) { return { ok: false, error: err.message }; }
 }

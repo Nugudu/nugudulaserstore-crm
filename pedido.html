@@ -617,12 +617,9 @@ function buscarTel(btn){
   if(spin)spin.style.display='block';
   var esOrden=/^ORD-/i.test(val);
   var param=esOrden?'&orden='+encodeURIComponent(val.toUpperCase()):'&tel='+encodeURIComponent(val);
-  var controller=new AbortController();
-  var timeout=setTimeout(function(){controller.abort();},1000);
-  fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN),{signal:controller.signal})
+  fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
-      clearTimeout(timeout);
       if(spin)spin.style.display='none';if(btn)btn.disabled=false;
       if(d.ok&&d.encontrado){
         _cli=d;_dirs=d.direcciones||[];
@@ -631,12 +628,7 @@ function buscarTel(btn){
       }else{
         showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
       }
-    }).catch(function(e){
-      clearTimeout(timeout);
-      if(spin)spin.style.display='none';if(btn)btn.disabled=false;
-      if(e.name==='AbortError'){showErr(errId,'Tiempo de espera agotado. Continua como cliente nuevo.');nuevoCli();return;}
-      nuevoCli();
-    });
+    }).catch(function(){if(spin)spin.style.display='none';if(btn)btn.disabled=false;nuevoCli();});
 }
 function nuevoCli(){
   limpiarSesion();_cli=null;_dirs=[];setContacto('');
@@ -1186,7 +1178,8 @@ function confirmarPedido(){
   var payload={
     action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
-    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac
+    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac,
+    urlRetorno:window.location.href.split('?')[0]
   };
 
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
@@ -1205,27 +1198,13 @@ function confirmarPedido(){
       if(ov)ov.style.display='none';
 
       if(_metodoPago==='tarjeta'){
-        btn.textContent='Redirigiendo a Wompi…';
-        fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-          body:JSON.stringify({
-            action:'crearEnlacePago',token:API_TOKEN,
-            orden:d.orden,monto:total,nombre:nom,email:email,telefono:tel,
-            urlRetorno:window.location.href.split('?')[0]
-          })
-        }).then(function(r2){return r2.json();})
-        .then(function(wd){
-          if(wd.ok&&wd.urlEnlace){
-            window.location.href=wd.urlEnlace;
-          }else{
-            btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-            showErr('form','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));
-          }
-        }).catch(function(){
+        if(d.urlEnlace){
+          window.location.href=d.urlEnlace;
+        }else{
           btn.textContent='✓ Confirmar pedido';btn.disabled=false;
-          showErr('form','Error de conexión con Wompi. Intenta de nuevo.');
-        });
+          showErr('form','Error al crear enlace de pago. Intenta de nuevo.');
+        }
       }else{
-        // Transferencia bancaria → éxito directo
         irAExitoTransferencia();
       }
     }).catch(function(){

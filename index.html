@@ -333,11 +333,11 @@ tbody tr:last-child td{border-bottom:none}
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
               <label style="flex:1;min-width:240px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500">
                 <input type="checkbox" id="f-pendiente-pago" onchange="onPendienteChange()" style="width:16px;height:16px;cursor:pointer">
-                <span>⏳ Marcar como pendiente de pago</span>
+                <span><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm0 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM5.25 4a.75.75 0 0 1 .75.75v1.5c0 .414.336.75.75.75h1.5a.75.75 0 0 1 0 1.5h-3A.75.75 0 0 1 4.5 7.5v-2.75A.75.75 0 0 1 5.25 4z"/></svg> Marcar como pendiente de pago</span>
               </label>
               <label style="flex:1;min-width:240px;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f3f0fb;border:1px solid #d9d0f0;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500">
                 <input type="checkbox" id="f-consumo-interno" onchange="onConsumoInternoChange()" style="width:16px;height:16px;cursor:pointer">
-                <span>🎁 Consumo interno / Patrocinio (no se cobra)</span>
+                <span><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5zm1.068.5H7v-.5a1 1 0 1 0-2.932 0zM9 3h2.932A1 1 0 0 0 9 2.5V3zm-6 4v7.5a.5.5 0 0 0 .5.5H7V7H3zm6 0v8h3.5a.5.5 0 0 0 .5-.5V7H9z"/></svg> Consumo interno / Patrocinio (no se cobra)</span>
               </label>
             </div>
             <span class="hint">Déjalo sin marcar si ya recibiste el comprobante · el patrocinio se cuenta aparte, no afecta tus ingresos reales.</span>
@@ -375,7 +375,7 @@ tbody tr:last-child td{border-bottom:none}
     <!-- ÓRDENES -->
     <div id="panel-ordenes" class="panel">
       <div class="ph-row">
-        <div><h2>Órdenes</h2><p>Pedidos activos · las entregadas se trasladan a Reportes · 🚚 para ir al tracking de esa orden</p></div>
+        <div><h2>Órdenes</h2><p>Pedidos activos · las entregadas se trasladan a Reportes · <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.75 2a1.5 1.5 0 0 1 .33.937v3.5a1.5 1.5 0 0 1-1.5 1.5h-.17a2.5 2.5 0 0 1-4.66 0H7.17a2.5 2.5 0 0 1-4.66 0H1.5A1.5 1.5 0 0 1 0 13.5V3.5zm2 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0zM1.5 4a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5H7V4H1.5zm8 0v3h3.5v-.5a.5.5 0 0 0-.5-.5H12V4h1.02a.5.5 0 0 1 .39.188l1.75 2a.5.5 0 0 1 .09.312V7h-1.5a.5.5 0 0 0-.5.5V9h-4V4h1.5z"/></svg> para ir al tracking de esa orden</p></div>
         <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportPDFOrdenes()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-primary btn-sm" onclick="go('nueva')"><i class="fa-solid fa-plus"></i> Nueva</button></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.1rem">
@@ -549,8 +549,8 @@ tbody tr:last-child td{border-bottom:none}
         <div class="mc"><div class="ml">Ingresos totales</div><div class="mv" id="rm-rev" style="color:var(--amber)">–</div></div>
       </div>
       <div class="g2">
-        <div class="mc" style="background:#f3f0fb;border-color:#d9d0f0"><div class="ml">🎁 Pedidos patrocinio / consumo interno</div><div class="mv" id="rm-pat-n" style="color:#6d28d9">–</div></div>
-        <div class="mc" style="background:#f3f0fb;border-color:#d9d0f0"><div class="ml">🎁 Valor patrocinado (no cuenta como ingreso)</div><div class="mv" id="rm-pat-rev" style="color:#6d28d9">–</div></div>
+        <div class="mc" style="background:#f3f0fb;border-color:#d9d0f0"><div class="ml"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5zm1.068.5H7v-.5a1 1 0 1 0-2.932 0zM9 3h2.932A1 1 0 0 0 9 2.5V3zm-6 4v7.5a.5.5 0 0 0 .5.5H7V7H3zm6 0v8h3.5a.5.5 0 0 0 .5-.5V7H9z"/></svg> Pedidos patrocinio / consumo interno</div><div class="mv" id="rm-pat-n" style="color:#6d28d9">–</div></div>
+        <div class="mc" style="background:#f3f0fb;border-color:#d9d0f0"><div class="ml"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" style="vertical-align:-2px"><path d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5zm1.068.5H7v-.5a1 1 0 1 0-2.932 0zM9 3h2.932A1 1 0 0 0 9 2.5V3zm-6 4v7.5a.5.5 0 0 0 .5.5H7V7H3zm6 0v8h3.5a.5.5 0 0 0 .5-.5V7H9z"/></svg> Valor patrocinado (no cuenta como ingreso)</div><div class="mv" id="rm-pat-rev" style="color:#6d28d9">–</div></div>
       </div>
       <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-column" style="color:var(--navy)"></i> Ventas por fecha</div><div style="position:relative;height:240px"><canvas id="chartReporte"></canvas></div></div>
       <div class="card">
@@ -830,7 +830,7 @@ function restaurarSesionGate(){
 
 var ESTADOS = ['Nueva orden','En proceso','En empaque','Paquete en tránsito','Entregado'];
 var SCLS    = ['s0','s1','s2','s3','s4'];
-var EICONS  = ['📋','⚙️','📦','🚚','✅'];
+var EICONS  = [_svgClipboard,_svgGear,_svgPackage,_svgTruck,_svgCheckBtn];
 var ZONAS   = ['Antiguo Cuscatlán','Colonia Escalón','Merliot','Santa Tecla'];
 var ZCOLORS = ['#378ADD','#534AB7','#3B6D11','#854F0B'];
 var ECOLORS = ['#378ADD','#534AB7','#EF9F27','#D85A30','#2e7d52'];
@@ -990,9 +990,9 @@ function setSyncUI(state, silent) {
   if (!dot || !lbl) return;
   if (state === 'syncing') {
     dot.className = 'sd yellow'; lbl.textContent = 'Sincronizando…';
-    if (!silent && bar) { bar.textContent = '🔄 Sincronizando con Google Sheets…'; bar.style.display='block'; bar.style.background='var(--gold-pale)'; bar.style.color='#633806'; }
+    if (!silent && bar) { bar.innerHTML = _svgRefresh + ' Sincronizando con Google Sheets…'; bar.style.display='block'; bar.style.background='var(--gold-pale)'; bar.style.color='#633806'; }
   } else if (state === 'ok') {
-    dot.className = 'sd green'; lbl.textContent = 'Sincronizado ✓';
+    dot.className = 'sd green'; lbl.innerHTML = 'Sincronizado ' + _svgCheck;
     if (bar) bar.style.display='none';
   } else {
     dot.className = 'sd red'; lbl.textContent = 'Sin conexión · local';
@@ -1003,7 +1003,7 @@ function setSyncUI(state, silent) {
 function showToast(msg) {
   var t = document.getElementById('toast');
   if (!t) return;
-  t.textContent = '✅ ' + msg;
+  t.innerHTML = _svgCheckBtn + ' ' + msg;
   t.style.display = 'block';
   setTimeout(function(){ t.style.display='none'; }, 4000);
 }
@@ -1231,8 +1231,20 @@ function formatoFechaCorta(iso){
 // Etiqueta de estado de pago — 3 estados: confirmado (verde), comprobante enviado (naranja),
 // pendiente (ámbar/rojo). El parámetro clickable=true hace que las etiquetas naranja/ámbar
 // llamen a confirmarPago(id) al hacer clic (usado en Órdenes, no en Tracking).
+var _svgH='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm0 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM8 3a.75.75 0 0 1 .75.75v3.5l2.25 1.5a.75.75 0 0 1-.75 1.28l-2.5-1.67a.75.75 0 0 1-.32-.61V3.75A.75.75 0 0 1 8 3z"/></svg>';
 var _svgCheck='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>';
 var _svgClock='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm0 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM8 3a.75.75 0 0 1 .75.75v3.5l2.25 1.5a.75.75 0 0 1-.75 1.28l-2.5-1.67a.75.75 0 0 1-.32-.61V3.75A.75.75 0 0 1 8 3z"/></svg>';
+var _svgGift='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5zm1.068.5H7v-.5a1 1 0 1 0-2.932 0zM9 3h2.932A1 1 0 0 0 9 2.5V3zm-6 4v7.5a.5.5 0 0 0 .5.5H7V7H3zm6 0v8h3.5a.5.5 0 0 0 .5-.5V7H9z"/></svg>';
+var _svgCake='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 1a2 2 0 0 0-2 2c0 .552.448 1 1 1h2a1 1 0 0 0 1-1 2 2 0 0 0-2-2zm3 3.5a1.5 1.5 0 0 1 3 0V6h-3V4.5zm-9 0a1.5 1.5 0 0 1 3 0V6H2V4.5zM1 7.5A1.5 1.5 0 0 1 2.5 6h11A1.5 1.5 0 0 1 15 7.5V8H1v-.5zM1 9.5A1.5 1.5 0 0 1 2.5 8h11A1.5 1.5 0 0 1 15 9.5v.5H1v-.5zM1 12c0-.552.448-1 1-1h12a1 1 0 0 1 1 1v.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5V12z"/></svg>';
+var _svgHeart='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 14.25s-6-4.5-6-7.75a3.75 3.75 0 0 1 6-2.97A3.75 3.75 0 0 1 14 6.5c0 3.25-6 7.75-6 7.75z"/></svg>';
+var _svgTruck='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.563l1.75 2a1.5 1.5 0 0 1 .33.937v3.5a1.5 1.5 0 0 1-1.5 1.5h-.17a2.5 2.5 0 0 1-4.66 0H7.17a2.5 2.5 0 0 1-4.66 0H1.5A1.5 1.5 0 0 1 0 13.5V3.5zm2 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0zM1.5 4a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5H7V4H1.5zm8 0v3h3.5v-.5a.5.5 0 0 0-.5-.5H12V4h1.02a.5.5 0 0 1 .39.188l1.75 2a.5.5 0 0 1 .09.312V7h-1.5a.5.5 0 0 0-.5.5V9h-4V4h1.5z"/></svg>';
+var _svgClipboard='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M5.5 0A1.5 1.5 0 0 0 4 1.5v1A1.5 1.5 0 0 0 5.5 4h5A1.5 1.5 0 0 0 12 2.5v-1A1.5 1.5 0 0 0 10.5 0h-5zM5 1.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-1z"/><path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v11A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 12.5 2h-1a.5.5 0 0 1 0 1h1a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1z"/></svg>';
+var _svgGear='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/></svg>';
+var _svgPackage='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9zM2.5 3a.5.5 0 0 0-.5.5V4h12v-.5a.5.5 0 0 0-.5-.5h-11zM14 5H2v7.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V5z"/><path d="M5.5 8a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/></svg>';
+var _svgCheckBtn='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M0 4a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4zm13.78 1.22a.75.75 0 0 0-1.06 0L7 10.94 5.28 9.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.06 0l6.25-6.25a.75.75 0 0 0 0-1.06z"/></svg>';
+var _svgRefresh='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>';
+var _svgPushpin='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8 0a6 6 0 0 0-6 6c0 4 6 10 6 10s6-6 6-10a6 6 0 0 0-6-6zm0 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>';
+var _svgWarning='<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" style="vertical-align:-1px"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5a.905.905 0 0 1 .9.95l-.35 3.5a.555.555 0 0 1-1.1 0l-.35-3.5A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>';
 function badgePago(o, clickable){
   if (o.pagoConfirmado) {
     var esTarjeta = o.pago === 'Tarjeta';
@@ -1311,7 +1323,7 @@ function renderSkuColor(productos, conFoto){
 }
 function badgeConsumoInterno(o){
   if (!o.consumoInterno) return '';
-  return '<div style="margin-top:4px"><span style="display:inline-block;font-size:11px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 8px;border-radius:10px">🎁 Consumo interno</span></div>';
+  return '<div style="margin-top:4px"><span style="display:inline-block;font-size:11px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 8px;border-radius:10px">' + _svgGift + ' Consumo interno</span></div>';
 }
 
 // Switch de producción — dos botones tipo pastilla: naranja "En producción" y verde "Listo".
@@ -1321,8 +1333,8 @@ function renderProdSwitch(o){
   var clsProd = est === 'produccion' ? 'prod-opt activo-prod' : 'prod-opt';
   var clsListo = est === 'listo' ? 'prod-opt activo-listo' : 'prod-opt';
   return '<div class="prod-switch">' +
-    '<span class="'+clsProd+'" onclick="toggleProd('+o.id+',\'produccion\')" title="En producción">⚙️ Prod.</span>' +
-    '<span class="'+clsListo+'" onclick="toggleProd('+o.id+',\'listo\')" title="Listo para empacar">✅ Listo</span>' +
+    '<span class="'+clsProd+'" onclick="toggleProd('+o.id+',\'produccion\')" title="En producción">' + _svgGear + ' Prod.</span>' +
+    '<span class="'+clsListo+'" onclick="toggleProd('+o.id+',\'listo\')" title="Listo para empacar">' + _svgCheckBtn + ' Listo</span>' +
   '</div>';
 }
 function toggleProd(id, nuevoEst){
@@ -1347,7 +1359,7 @@ function confirmarPago(id){
   _ordenes[idx].pagoFecha = new Date().toISOString();
   saveLocal(); updateOverview();
   setTimeout(function(){ updateGASField(id, {pendientePago:false, pendienteDesde:null, pagoConfirmado:true, pagoFecha:_ordenes[idx].pagoFecha}); }, 0);
-  showToast('Pago confirmado ✓');
+  showToast('Pago confirmado');
   var active = document.querySelector('.panel.active');
   if (active && active.id === 'panel-ordenes') renderOrdenes();
   if (active && active.id === 'panel-tracking') { var det=document.getElementById('track-detail'); if(det.style.display==='block') abrirTrack(id); }
@@ -1481,11 +1493,11 @@ function aplicarGPS(link){
     // Si es maps.app.goo.gl — avisa de inmediato con instrucción clara mientras intenta GAS
     if (esLinkAcortado(link)) {
       wrap.style.display = 'block';
-      status.textContent = '🔄 Resolviendo enlace acortado… (puede tardar 2-3 seg)';
+      status.innerHTML = _svgRefresh + ' Resolviendo enlace acortado… (puede tardar 2-3 seg)';
       document.getElementById('map-abrir').href = link;
     } else {
       wrap.style.display = 'block';
-      status.textContent = '🔄 Resolviendo enlace…';
+      status.innerHTML = _svgRefresh + ' Resolviendo enlace…';
     }
     document.getElementById('map-frame').src = '';
     gasCall({method:'POST', body:{action:'resolverLink', url:link}}, function(err, res){
@@ -1493,8 +1505,7 @@ function aplicarGPS(link){
         mostrarCoordsMapa({lat:res.lat, lng:res.lng});
       } else {
         // GAS no pudo resolver — da instrucción práctica al usuario
-        status.innerHTML =
-          '⚠️ No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, ' +
+        status.innerHTML = _svgWarning + ' No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, ' +
           'copia la URL completa de la barra de direcciones del navegador y pégala aquí. ' +
           '<a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>';
         document.getElementById('map-abrir').href = link;
@@ -1509,7 +1520,7 @@ function aplicarGPS(link){
 function mostrarCoordsMapa(coords){
   document.getElementById('map-frame').src = osmEmbedURL(coords.lat, coords.lng);
   document.getElementById('map-abrir').href = osmLinkURL(coords.lat, coords.lng);
-  document.getElementById('map-status').textContent = '📍 ' + coords.lat + ', ' + coords.lng + ' — Ubicación GPS fijada.';
+  document.getElementById('map-status').innerHTML = _svgPushpin + ' ' + coords.lat + ', ' + coords.lng + ' — Ubicación GPS fijada.';
   document.getElementById('map-wrap').style.display = 'block';
   window._mapaLinkGPS = osmLinkURL(coords.lat, coords.lng);
   var gpsBoxSync = document.getElementById('f-gps');
@@ -1647,7 +1658,7 @@ function elegirDireccionCliente(i, j){
     document.getElementById('f-zona-especial').value = d.zona;
   }
   if (d.direccion) actualizarMapa(d.direccion);
-  showToast('Cliente conocido — dirección seleccionada ✓');
+  showToast('Cliente conocido — dirección seleccionada');
 }
 // El cliente quiere recibir en un lugar distinto a los que ya tiene guardados.
 // Solo rellena nombre/contacto y deja la dirección lista para escribirla — esa
@@ -1773,7 +1784,7 @@ function guardar(){
   if(!nombre||!contacto||!dir||!zona||!vend){ showErr('Completa todos los campos obligatorios (*).'); return; }
   if(!precio||isNaN(precio)){ showErr('Ingresa un precio unitario válido.'); return; }
   if(!canal){ showErr('Selecciona el canal de venta.'); return; }
-  if(getOrd().filter(function(o){return o.orden===orden;}).length){ showErr('Nº de orden duplicado — presiona 🔄 para regenerar.'); return; }
+  if(getOrd().filter(function(o){return o.orden===orden;}).length){ showErr('Nº de orden duplicado — presiona ' + _svgRefresh + ' para regenerar.'); return; }
   var cantidad=parseInt(vf('f-cantidad'))||1;
   var fechaEntrega=vf('f-fecha-entrega');
   // Si el usuario pegó un link GPS, ese tiene prioridad sobre el derivado de la dirección de texto.
@@ -2015,18 +2026,18 @@ function aplicarGPSEdit(link){
   if(link.indexOf('http')===0){
     if(esLinkAcortado(link)){
       wrap.style.display='block';
-      status.textContent='🔄 Resolviendo enlace acortado… (puede tardar 2-3 seg)';
+      status.innerHTML = _svgRefresh + ' Resolviendo enlace acortado… (puede tardar 2-3 seg)';
       document.getElementById('ed-map-abrir').href=link;
     }else{
       wrap.style.display='block';
-      status.textContent='🔄 Resolviendo enlace…';
+      status.innerHTML = _svgRefresh + ' Resolviendo enlace…';
     }
     document.getElementById('ed-map-frame').src='';
     gasCall({method:'POST', body:{action:'resolverLink', url:link}}, function(err,res){
       if(!err && res && res.ok && res.lat && res.lng){
         mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng});
       }else{
-        status.innerHTML='⚠️ No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, copia la URL completa de la barra de direcciones y pégala aquí. <a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>';
+        status.innerHTML=_svgWarning+' No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, copia la URL completa de la barra de direcciones y pégala aquí. <a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>';
         document.getElementById('ed-map-abrir').href=link;
       }
     });
@@ -2040,7 +2051,7 @@ function mostrarCoordsMapaEdit(coords){
   var edGpsFrame=document.getElementById('ed-map-frame'); if(!edGpsFrame) return;
   edGpsFrame.src=osmEmbedURL(coords.lat, coords.lng);
   document.getElementById('ed-map-abrir').href=osmLinkURL(coords.lat, coords.lng);
-  document.getElementById('ed-map-status').textContent='📍 '+coords.lat+', '+coords.lng+' — Ubicación GPS fijada.';
+  document.getElementById('ed-map-status').innerHTML=_svgPushpin+' '+coords.lat+', '+coords.lng+' — Ubicación GPS fijada.';
   document.getElementById('ed-map-wrap').style.display='block';
   window._edMapaLink=osmLinkURL(coords.lat, coords.lng);
   var edGpsBox=document.getElementById('ed-gps');
@@ -2129,7 +2140,7 @@ function guardarFechaEntrega(id){
     waBtn.href = 'https://wa.me/'+_ordenes[idx].contacto.replace(/\D/g,'')+'?text='+waMsg;
   }
   setTimeout(function(){ updateGASField(id, {fechaEntrega: nuevaFecha}); }, 0);
-  showToast('Fecha de entrega actualizada ✓');
+  showToast('Fecha de entrega actualizada');
 }
 
 function volverTrack(){ document.getElementById('track-detail').style.display='none'; buscarTrack(); }
@@ -2180,7 +2191,7 @@ function cpMsg(id){
   var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
   var est=parseInt(o.estado)||0;
   var msg=construirMensajeWA(o, est);
-  navigator.clipboard.writeText(msg).then(function(){alert('Copiado ✓');}).catch(function(){alert(msg);});
+  navigator.clipboard.writeText(msg).then(function(){alert('Copiado \u2713');}).catch(function(){alert(msg);});
 }
 
 // REPARTIDOR
@@ -2245,7 +2256,7 @@ function imprimirListaDia(){
     var entregado = parseInt(o.estado) === 4;
     var dirCorta = (o.direccion || '') + (o.zona ? ' · ' + o.zona : '');
     return '<tr class="'+(entregado?'fila-ent':'')+'">' +
-      '<td class="chk">' + (entregado ? '<span class="check">✓</span>' : '<span class="box"></span>') + '</td>' +
+      '<td class="chk">' + (entregado ? '<span class="check">' + _svgCheck + '</span>' : '<span class="box"></span>') + '</td>' +
       '<td class="num">' + (i+1) + '</td>' +
       '<td class="orden">' + esc(o.orden) + '</td>' +
       '<td class="nombre">' + esc(o.nombre) + '</td>' +
@@ -2609,7 +2620,7 @@ function renderInvList(){
   if(!d.length){wrap.innerHTML='<div class="empty"><i class="fa-regular fa-file-lines"></i><p>No hay órdenes.</p></div>';return;}
   wrap.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-bottom:1.4rem">'+d.map(function(o){
     var tot=((o.precio||0)*(o.cantidad||1)).toFixed(2);
-    var ciTag = o.consumoInterno ? '<span style="display:inline-block;font-size:10px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 7px;border-radius:9px;margin-left:6px">🎁 Patrocinio</span>' : '';
+    var ciTag = o.consumoInterno ? '<span style="display:inline-block;font-size:10px;font-weight:600;background:#f3f0fb;color:#6d28d9;padding:2px 7px;border-radius:9px;margin-left:6px">' + _svgGift + ' Patrocinio</span>' : '';
     return '<div class="inv-card" onclick="abrirInv('+o.id+')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--navy);font-weight:500">'+esc(o.orden)+ciTag+'</span><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span></div><div style="font-weight:600;font-size:14px;margin:4px 0 2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · '+esc(o.zona)+'</div><div style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+'</div><div style="font-size:20px;font-weight:700;color:'+(o.consumoInterno?'#6d28d9':'var(--green)')+';margin-top:8px">$'+tot+(o.consumoInterno?' <span style="font-size:11px;font-weight:500">(sin costo)</span>':'')+'</div></div>';
   }).join('')+'</div>';
 }
@@ -2620,9 +2631,9 @@ function abrirInv(id){
   var total=((o.precio||0)*(o.cantidad||1)).toFixed(2);
   var invNum='RV-'+String(o.id).slice(-6);
   var fe=new Date().toLocaleDateString('es-SV',{year:'numeric',month:'long',day:'numeric'});
-  var ciTag = o.consumoInterno ? '<span style="display:inline-block;font-size:11px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;padding:3px 10px;border-radius:11px;margin-left:10px;vertical-align:middle">🎁 PATROCINIO / CONSUMO INTERNO</span>' : '';
+  var ciTag = o.consumoInterno ? '<span style="display:inline-block;font-size:11px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;padding:3px 10px;border-radius:11px;margin-left:10px;vertical-align:middle">' + _svgGift + ' PATROCINIO / CONSUMO INTERNO</span>' : '';
   var totalLineLabel = o.consumoInterno ? 'TOTAL (sin costo — patrocinio)' : 'TOTAL';
-  document.getElementById('inv-prev-content').innerHTML='<div class="inv-hdr"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem"><div><div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Nugudú'+ciTag+'</div><div style="font-size:11px;opacity:.5;letter-spacing:.8px;margin-top:1px">LÁSER STORE</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:700;letter-spacing:1px;color:var(--gold)">'+invNum+'</div><div style="font-size:10px;opacity:.5;margin-top:3px;letter-spacing:.5px">REGISTRO DE VENTA</div></div></div><div style="display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap"><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Fecha</div><div style="font-size:13px">'+fe+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Orden</div><div style="font-size:13px;font-family:\'DM Mono\',monospace">'+esc(o.orden)+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Pago</div><div style="font-size:13px">'+(o.consumoInterno?'Sin costo':esc(o.pago||'Transferencia'))+'</div></div></div></div><div class="inv-body"><div class="inv-parties"><div><div class="inv-pt">Emitido por</div><div class="inv-pv"><strong>Nugudú Láser Store</strong><br>El Salvador<br>Vendedor: '+esc(o.vendedor)+'</div></div><div><div class="inv-pt">Registrado a</div><div class="inv-pv"><strong>'+esc(o.nombre)+'</strong><br>'+esc(o.contacto)+'<br>'+esc(o.direccion||'')+'</div></div><div><div class="inv-pt">Envío</div><div class="inv-pv"><strong>'+esc(o.zona)+'</strong><br>'+(o.notas?esc(o.notas):'Sin notas')+'</div></div></div><table class="inv-tbl"><thead><tr><th>SKU(s)</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">P.Unit</th><th style="text-align:right">Total</th></tr></thead><tbody><tr><td style="font-family:\'DM Mono\',monospace;font-size:12px">'+(o.productos||[]).join(', ')+'</td><td>Producto(s) Nugudú Láser Store</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:700">$'+total+'</td></tr></tbody></table><div class="inv-totals"><div class="itr"><span class="l">Subtotal</span><span class="v">$'+total+'</span></div><div class="itr"><span class="l">Envío</span><span class="v" style="color:var(--green)">Incluido</span></div><div class="itr grand"><span class="l">'+totalLineLabel+'</span><span class="v" style="'+(o.consumoInterno?'color:#6d28d9':'')+'">$'+total+'</span></div></div><div class="inv-fnote">'+(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso 🎁':'¡Gracias por tu compra en Nugudú Láser Store! 💛')+'</div></div>';
+  document.getElementById('inv-prev-content').innerHTML='<div class="inv-hdr"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem"><div><div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Nugudú'+ciTag+'</div><div style="font-size:11px;opacity:.5;letter-spacing:.8px;margin-top:1px">LÁSER STORE</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:700;letter-spacing:1px;color:var(--gold)">'+invNum+'</div><div style="font-size:10px;opacity:.5;margin-top:3px;letter-spacing:.5px">REGISTRO DE VENTA</div></div></div><div style="display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap"><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Fecha</div><div style="font-size:13px">'+fe+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Orden</div><div style="font-size:13px;font-family:\'DM Mono\',monospace">'+esc(o.orden)+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Pago</div><div style="font-size:13px">'+(o.consumoInterno?'Sin costo':esc(o.pago||'Transferencia'))+'</div></div></div></div><div class="inv-body"><div class="inv-parties"><div><div class="inv-pt">Emitido por</div><div class="inv-pv"><strong>Nugudú Láser Store</strong><br>El Salvador<br>Vendedor: '+esc(o.vendedor)+'</div></div><div><div class="inv-pt">Registrado a</div><div class="inv-pv"><strong>'+esc(o.nombre)+'</strong><br>'+esc(o.contacto)+'<br>'+esc(o.direccion||'')+'</div></div><div><div class="inv-pt">Envío</div><div class="inv-pv"><strong>'+esc(o.zona)+'</strong><br>'+(o.notas?esc(o.notas):'Sin notas')+'</div></div></div><table class="inv-tbl"><thead><tr><th>SKU(s)</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">P.Unit</th><th style="text-align:right">Total</th></tr></thead><tbody><tr><td style="font-family:\'DM Mono\',monospace;font-size:12px">'+(o.productos||[]).join(', ')+'</td><td>Producto(s) Nugudú Láser Store</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:700">$'+total+'</td></tr></tbody></table><div class="inv-totals"><div class="itr"><span class="l">Subtotal</span><span class="v">$'+total+'</span></div><div class="itr"><span class="l">Envío</span><span class="v" style="color:var(--green)">Incluido</span></div><div class="itr grand"><span class="l">'+totalLineLabel+'</span><span class="v" style="'+(o.consumoInterno?'color:#6d28d9':'')+'">$'+total+'</span></div></div><div class="inv-fnote">'+(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso ' + _svgGift:'¡Gracias por tu compra en Nugudú Láser Store! ' + _svgHeart)+'</div></div>';
   var waNum=o.contacto.replace(/\D/g,'');
   var waMsg = o.consumoInterno
     ? encodeURIComponent('Hola '+o.nombre+', registro de patrocinio/consumo interno de Nugudú:\nRegistro '+invNum+' | Orden: '+o.orden+'\nSKU: '+(o.productos||[]).join(', ')+' x '+(o.cantidad||1)+'\nValor patrocinado: $'+total+' (sin costo)\nZona: '+o.zona+'\nGracias.')
@@ -2721,14 +2732,14 @@ function generarPdfRegistroVenta(o, fotoUrl, natW, natH){
 function cpInv(id){
   var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
   var total=((o.precio||0)*(o.cantidad||1)).toFixed(2), invNum='RV-'+String(o.id).slice(-6);
-  var txt='REGISTRO DE VENTA — NUGUDÚ LÁSER STORE\nN° '+invNum+' | Orden: '+o.orden+'\nFecha: '+new Date().toLocaleDateString('es-SV')+'\nCliente: '+o.nombre+' | '+o.contacto+'\nDirección: '+(o.direccion||'')+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+' | P.Unit: $'+(o.precio||0).toFixed(2)+'\nTOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+' · Zona: '+o.zona+'\n¡Gracias por tu compra! 💛';
-  navigator.clipboard.writeText(txt).then(function(){alert('Copiado ✓');}).catch(function(){alert(txt);});
+  var txt='REGISTRO DE VENTA — NUGUDÚ LÁSER STORE\nN° '+invNum+' | Orden: '+o.orden+'\nFecha: '+new Date().toLocaleDateString('es-SV')+'\nCliente: '+o.nombre+' | '+o.contacto+'\nDirección: '+(o.direccion||'')+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+' | P.Unit: $'+(o.precio||0).toFixed(2)+'\nTOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+' · Zona: '+o.zona+'\n¡Gracias por tu compra! \u2665';
+  navigator.clipboard.writeText(txt).then(function(){alert('Copiado \u2713');}).catch(function(){alert(txt);});
 }
 
 // FORM HELPERS
 function cpLink(id){
   var el=document.getElementById(id); if(!el)return;
-  navigator.clipboard.writeText(el.value).then(function(){alert('Link copiado ✓');}).catch(function(){el.select();document.execCommand('copy');alert('Link copiado ✓');});
+  navigator.clipboard.writeText(el.value).then(function(){alert('Link copiado \u2713');}).catch(function(){el.select();document.execCommand('copy');alert('Link copiado \u2713');});
 }
 
 // PDF GENERAL
@@ -2971,7 +2982,7 @@ function cdpRender360(clientes){
     html += '<div class="card" style="margin-bottom:1rem">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
     html += '<div><strong style="font-size:15px">' + escHtml(c.nombre || tel) + '</strong><br><span style="font-size:12px;color:var(--muted)">' + escHtml(c.contacto) + '</span>';
-    if(fechaNac) html += '<br><span style="font-size:11px;color:var(--amber)">🎂 ' + escHtml(fechaNac) + '</span>';
+    if(fechaNac) html += '<br><span style="font-size:11px;color:var(--amber)">' + _svgCake + ' ' + escHtml(fechaNac) + '</span>';
     html += '</div>';
     html += '<div style="text-align:right;font-size:11px;color:var(--muted)">' + visitas.length + ' visitas · ' + compras.length + ' compras</div>';
     html += '</div>';
@@ -3156,7 +3167,7 @@ function cdpRenderSegmentos(){
       var extra = '';
       if(s.wa && d.contacto){
         var numWA = (d.contacto || '').replace(/\D/g, '');
-        var msg = encodeURIComponent('¡Hola ' + (d.nombre || '') + '! 🎂 En Nugudú queremos desearte un muy feliz cumpleaños. ¡Que la pases increíble!');
+        var msg = encodeURIComponent('¡Hola ' + (d.nombre || '') + '! En Nugudú queremos desearte un muy feliz cumpleaños. ¡Que la pases increíble!');
         extra = ' <a href="https://wa.me/' + numWA + '?text=' + msg + '" target="_blank" style="color:#25D366;font-size:11px;font-weight:600;text-decoration:none;margin-left:6px">Feliciar por WA →</a>';
       }
       listHtml += '<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>' + escHtml(nom) + extra + '</span><span style="color:var(--muted)">' + s.det(d) + '</span></div>';

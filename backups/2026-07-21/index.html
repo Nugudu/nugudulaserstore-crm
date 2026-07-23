@@ -2032,8 +2032,12 @@ function quitarMapaEdit(){
   document.getElementById('ed-map-frame').src='';
 }
 
+var _trackTimer=null;
+
 // TRACKING
 function buscarTrack(){
+  clearTimeout(_trackTimer);
+  _trackTimer=setTimeout(function(){
   var q=(document.getElementById('track-q').value||'').toLowerCase().trim();
   var list=document.getElementById('track-list');
   document.getElementById('track-detail').style.display='none';
@@ -2043,6 +2047,7 @@ function buscarTrack(){
   list.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem">'+res.map(function(o){
     return '<div class="card" style="cursor:pointer" onclick="abrirTrack('+o.id+')"><div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap"><div><div class="mono">'+esc(o.orden)+'</div><div style="font-weight:500;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted)">'+esc(o.contacto)+' · '+esc(o.zona)+'</div></div><div style="display:flex;align-items:center;gap:10px"><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span><i class="fa-solid fa-chevron-right" style="color:var(--hint);font-size:12px"></i></div></div></div>';
   }).join('')+'</div>';
+  },200);
 }
 // Construye el mensaje de WhatsApp/copiar según el estado.
 // Si el estado es "En empaque" (índice 2), incluye la fecha de entrega estimada.

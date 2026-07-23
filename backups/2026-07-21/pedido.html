@@ -569,6 +569,8 @@ function restaurarSesion(){
       return true;
     }
     if(r.screen==='s-exito'&&r.ultimaOrden){
+      _cli=r.cli||null;_dirs=r.dirs||[];
+      if(_cli)setContacto(_cli.contacto||'');
       _ultimaOrden=r.ultimaOrden;
       mostrarExito();
       return true;
@@ -1266,7 +1268,6 @@ function mostrarExito(){
   if(o.orden&&!o._notificado){o._notificado=true;notificarAdmin(o.orden);}
   if(o.orden) setContacto(o.contacto||'');
   track('purchase',{orden:o.orden,total:o.total,items:(o.items||[]).length});
-  limpiarSesion();
 }
 
 // Reinicia el formulario para hacer otro pedido
@@ -1297,6 +1298,8 @@ function nuevoP(){
   var bcDiv=document.getElementById('bancario-info');if(bcDiv)bcDiv.style.display='none';
   var ecDiv=document.getElementById('email-card-wrap');if(ecDiv)ecDiv.style.display='none';
   var bc=document.getElementById('btn-conf');if(bc){bc.disabled=false;bc.textContent='\u2713 Confirmar pedido';}
+  var ccBtn=document.querySelector('#s-catalogo .btn-main');if(ccBtn)ccBtn.disabled=false;
+  var fBtn=document.querySelector('#p1 .btn-main');if(fBtn)fBtn.disabled=false;
   if(_catCargado)renderCat();
   showScreen('s-catalogo');hideErr('phone');hideErr('form');
 }

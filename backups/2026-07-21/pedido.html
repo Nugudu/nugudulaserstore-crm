@@ -589,6 +589,8 @@ function volverDesdeForm(){
 
 // ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
 window.addEventListener('DOMContentLoaded',function(){
+  var preloadSkus=['RSV-KA-NG','RSV-KA-GR','RSV-MU-NG','RSV-MU-GR','RSV-IKA-NG','RSV-IKA-GR','RSV-SA-NG','RSV-SA-GR','RSV-KI-NG','RSV-KI-GR','RSV-OX-NG','RSV-OX-GR'];
+  for(var pi=0;pi<preloadSkus.length;pi++){(new Image()).src='imagenes/'+preloadSkus[pi]+'.png';}
   _cat=fallback(); _catCargado=true;
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})

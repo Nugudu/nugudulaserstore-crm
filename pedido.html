@@ -589,14 +589,16 @@ function volverDesdeForm(){
 // ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
 window.addEventListener('DOMContentLoaded',function(){
   _cat=fallback(); _catCargado=true;
-  renderCat();
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok&&d.productos&&d.productos.length) _cat=d.productos;
     }).catch(function(){});
   if(window._wompiReturn) return;
-  if(!restaurarSesion()) showScreen('s-catalogo');
+  if(!restaurarSesion()){
+    showScreen('s-catalogo');
+    renderCat();
+  }
 });
 
 function fallback(){
@@ -756,7 +758,7 @@ function renderCat(){
       var candAttr=JSON.stringify(candidatos).replace(/'/g,'&#39;');
       html+='<div class="prod-card'+(agot?' agotado':'')+'" id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
       html+='<div class="pcheck">✓</div>';
-      html+='<img class="p-foto" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" loading="lazy" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
+      html+='<img class="p-foto" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
       html+='<div class="p-dots">'+dots+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';

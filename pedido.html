@@ -520,7 +520,7 @@ var _refV = (function(){
   try { return (new URLSearchParams(location.search).get('v') || '').trim().toUpperCase(); }
   catch(e){ return ''; }
 })();
-var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null;
+var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null,_yaSoyClienteMode=false;
 
 // ── CDP: EVENTOS DE COMPORTAMIENTO ──
 var _sessionId=(function(){try{var s=sessionStorage.getItem('ngd_session');if(!s){s=Date.now()+'-'+Math.random().toString(36).slice(2,8);sessionStorage.setItem('ngd_session',s);}return s;}catch(e){return Date.now()+'-x';}})();

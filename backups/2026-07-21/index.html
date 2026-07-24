@@ -239,11 +239,15 @@ tbody tr:last-child td{border-bottom:none}
       <span class="sd yellow" id="sync-dot"></span>
       <span style="font-size:10px;color:rgba(255,255,255,.4)" id="sync-lbl">Iniciando…</span>
     </div>
+    <div id="sync-range-indicator" style="display:none;font-size:9px;color:rgba(255,255,255,.35);margin-bottom:4px">
+      <span id="sync-range-text"></span>
+      <span style="cursor:pointer;text-decoration:underline;margin-left:4px" onclick="limpiarFiltroSync()">x</span>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
       <span style="font-size:10px;color:rgba(255,255,255,.4)" id="gate-usuario-actual"></span>
       <span style="font-size:10px;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:underline" onclick="cerrarSesionGate()">Cambiar usuario</span>
     </div>
-    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:4px">v10.0 · Nugudú Láser Store</div>
+    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:4px">v10.1 · Nugudú Láser Store</div>
   </div>
 </nav>
 
@@ -945,11 +949,23 @@ function syncFromGAS(silent) {
     _syncing = false;
     if (err || !res || !res.ok) {
       setSyncUI('error', silent);
+      actualizarIndicadorRangoSync();
       return;
     }
     if (res.ordenes) {
       var idsAntes = _ordenes.map(function(o){return o.id;});
       _ordenes = aplicarTumbas(res.ordenes);
+      // Aplicar filtro de rango de sincronización si está configurado
+      var rangeDays = localStorage.getItem('ngd_sync_range_days');
+      if (rangeDays) {
+        var corte = new Date();
+        corte.setDate(corte.getDate() - parseInt(rangeDays, 10));
+        _ordenes = _ordenes.filter(function(o){
+          if (!o.fecha) return false;
+          var f = new Date(o.fecha);
+          return f >= corte;
+        });
+      }
       saveLocal();
       updateOverview();
       // Badge: cuenta órdenes que no existían antes de este sync
@@ -965,6 +981,7 @@ function syncFromGAS(silent) {
       }
     }
     setSyncUI('ok', silent);
+    actualizarIndicadorRangoSync();
     if (res.nuevasVentas > 0 || res.entregasActualizadas > 0) {
       showToast(res.nuevasVentas + ' venta(s) nueva(s) · ' + res.entregasActualizadas + ' entrega(s) actualizada(s)');
     }
@@ -1019,6 +1036,7 @@ window.addEventListener('DOMContentLoaded', function(){
   genOrden();
   updateOverview();
   setTimeout(renderOvCharts, 120);
+  actualizarIndicadorRangoSync();
   // Start sync: immediate + every 30s
   syncFromGAS(true);
   setInterval(function(){ syncFromGAS(true); }, 30000);
@@ -1146,39 +1164,92 @@ function irANuevoProducto(){
   }, 80);
 }
 
-// Borra TODAS las órdenes locales y en Google Sheets, con doble confirmación.
+function actualizarIndicadorRangoSync(){
+  var el = document.getElementById('sync-range-indicator');
+  var txt = document.getElementById('sync-range-text');
+  var days = localStorage.getItem('ngd_sync_range_days');
+  if (days) {
+    var labels = {'1':'1 día','7':'1 semana','15':'15 días','30':'1 mes','90':'3 meses','180':'6 meses','365':'1 año'};
+    el.style.display = 'block';
+    txt.textContent = 'Filtro: ' + (labels[days] || days + ' días');
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function limpiarFiltroSync(){
+  localStorage.removeItem('ngd_sync_range_days');
+  actualizarIndicadorRangoSync();
+  showToast('Filtro de sincronización eliminado. La próxima sincronización cargará todos los datos.');
+}
+
+// Abre el modal de limpiar datos con opciones de alcance y filtro de sincronización.
 function confirmarLimpiarDatos(){
-  if (!confirm('¿Seguro que deseas eliminar TODAS las órdenes registradas?\n\nEsta acción borra el historial completo de Analytics, Reportes, Inventario y Registro de venta. No se puede deshacer.')) return;
-  if (!confirm('Confirmación final: se eliminarán '+_ordenes.length+' orden(es) de forma permanente, incluyendo lo guardado en Google Sheets.\n\n¿Continuar?')) return;
+  document.getElementById('modal-limpiar-overlay').style.display = 'flex';
+  document.getElementById('radio-solo-crm').checked = true;
+  toggleRangeOption();
+}
 
-  // Marcar todas las órdenes actuales como tumbas para que ninguna sincronización las resucite.
-  for (var i=0; i<_ordenes.length; i++) { addTumba(_ordenes[i].id); }
+function toggleRangeOption(){
+  var solo = document.getElementById('radio-solo-crm').checked;
+  document.getElementById('limpiar-range-wrap').style.display = solo ? 'block' : 'none';
+}
 
-  // Las que vinieron de un Formulario de Google también deben registrarse como
-  // borradas permanentemente en el servidor — si no, el siguiente sincronizado
-  // las recrearía leyendo de nuevo las filas originales de los formularios.
-  var tsFormularios = _ordenes.filter(function(o){ return o._ts; }).map(function(o){ return o._ts; });
+function cerrarModalLimpiar(){
+  document.getElementById('modal-limpiar-overlay').style.display = 'none';
+}
 
-  _ordenes = [];
-  saveLocal();
-  updateOverview();
+function ejecutarLimpieza(){
+  var soloCRM = document.getElementById('radio-solo-crm').checked;
+  var rangeVal = document.getElementById('limpiar-range').value;
 
-  pushToGAS(function(success){
-    if (success) {
-      localStorage.setItem(TOMB_KEY, '[]'); // confirmado en el servidor, ya no hacen falta las tumbas
-      setSyncUI('ok', false);
-      showToast('Todos los datos fueron eliminados.');
+  cerrarModalLimpiar();
+
+  if (!soloCRM) {
+    if (!confirm('¿Seguro que deseas eliminar TODAS las órdenes registradas?\n\nEsta acción borra el historial completo de Analytics, Reportes, Inventario y Registro de venta en el CRM y en Google Sheets. No se puede deshacer.')) return;
+    if (!confirm('Confirmación final: se eliminarán '+_ordenes.length+' orden(es) de forma permanente, incluyendo lo guardado en Google Sheets.\n\n¿Continuar?')) return;
+
+    // Marcar todas las órdenes actuales como tumbas
+    for (var i=0; i<_ordenes.length; i++) { addTumba(_ordenes[i].id); }
+
+    var tsFormularios = _ordenes.filter(function(o){ return o._ts; }).map(function(o){ return o._ts; });
+
+    _ordenes = [];
+    saveLocal();
+    updateOverview();
+
+    pushToGAS(function(success){
+      if (success) {
+        localStorage.setItem(TOMB_KEY, '[]');
+        setSyncUI('ok', false);
+        showToast('Todos los datos fueron eliminados.');
+      } else {
+        setSyncUI('error', false);
+        showToast('Eliminado localmente — se sincronizará al recuperar conexión.');
+      }
+    });
+
+    tsFormularios.forEach(function(ts){
+      setTimeout(function(){
+        gasCall({method:'POST', body:{action:'registrarBorrado', ts: ts}}, function(){});
+      }, 0);
+    });
+  } else {
+    // Solo CRM: limpia local, guarda el filtro de rango, NO toca Sheets.
+    if (!confirm('¿Limpiar SOLO el CRM local?\n\nLas órdenes en Google Sheets NO se eliminarán. Al sincronizar, solo se cargarán los pedidos del rango seleccionado.\n\n¿Continuar?')) return;
+
+    // Guardar el filtro de rango para el próximo sync
+    if (rangeVal !== '') {
+      localStorage.setItem('ngd_sync_range_days', rangeVal);
     } else {
-      setSyncUI('error', false);
-      showToast('Eliminado localmente — se sincronizará al recuperar conexión.');
+      localStorage.removeItem('ngd_sync_range_days');
     }
-  });
 
-  tsFormularios.forEach(function(ts){
-    setTimeout(function(){
-      gasCall({method:'POST', body:{action:'registrarBorrado', ts: ts}}, function(){});
-    }, 0);
-  });
+    _ordenes = [];
+    saveLocal();
+    updateOverview();
+    showToast('CRM limpiado. Se sincronizarán solo los pedidos del rango seleccionado.');
+  }
 
   // Refrescar la vista actual
   var active = document.querySelector('.panel.active');
@@ -3210,6 +3281,44 @@ function exportarSegmentosCSV(){
      Funciona igual en mobile (tap) y desktop (click); tocar en cualquier parte cierra. -->
 <div id="modal-imagen-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.82);z-index:999;align-items:center;justify-content:center;padding:1rem" onclick="cerrarFotoAmpliada()">
   <img id="modal-imagen-img" src="" alt="" style="max-width:92vw;max-height:88vh;border-radius:14px;box-shadow:0 12px 46px rgba(0,0,0,.5)">
+</div>
+<!-- Modal limpiar datos -->
+<div id="modal-limpiar-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)cerrarModalLimpiar()">
+  <div style="background:var(--surface);border-radius:var(--r);padding:1.5rem;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:.3rem">Limpiar datos</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:1.1rem">Selecciona el alcance de la limpieza y el filtro de sincronización.</p>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1.1rem">
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border:2px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500;transition:all .12s" onclick="document.getElementById('radio-solo-crm').checked=true;toggleRangeOption()">
+        <input type="radio" name="limpiar-opcion" id="radio-solo-crm" value="solo-crm" checked style="width:16px;height:16px;cursor:pointer;margin-top:2px" onchange="toggleRangeOption()">
+        <span><strong>Solo CRM</strong><br><span style="font-size:11.5px;color:var(--muted);font-weight:400">Limpia solo el dashboard local. Google Sheets queda intacto.</span></span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border:2px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500;transition:all .12s" onclick="document.getElementById('radio-crm-sheets').checked=true;toggleRangeOption()">
+        <input type="radio" name="limpiar-opcion" id="radio-crm-sheets" value="crm-sheets" style="width:16px;height:16px;cursor:pointer;margin-top:2px" onchange="toggleRangeOption()">
+        <span><strong>CRM + Sheets</strong><br><span style="font-size:11.5px;color:var(--muted);font-weight:400">Elimina todo: dashboard local y datos en Google Sheets. No se puede deshacer.</span></span>
+      </label>
+    </div>
+
+    <div id="limpiar-range-wrap" style="margin-bottom:1.1rem">
+      <label style="font-size:11.5px;font-weight:500;color:var(--muted);display:block;margin-bottom:4px">Sincronizar solo pedidos de los últimos:</label>
+      <select id="limpiar-range" style="width:100%;border:1px solid var(--bmd);border-radius:var(--rs);padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);outline:none">
+        <option value="1">1 día</option>
+        <option value="7">1 semana</option>
+        <option value="15">15 días</option>
+        <option value="30" selected>1 mes</option>
+        <option value="90">3 meses</option>
+        <option value="180">6 meses</option>
+        <option value="365">1 año</option>
+        <option value="">Todo (sin filtro)</option>
+      </select>
+      <p style="font-size:11px;color:var(--hint);margin-top:4px">Las órdenes anteriores a este período se quedan en Sheets pero no se cargan en el CRM.</p>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:1rem">
+      <button class="btn btn-outline" onclick="cerrarModalLimpiar()">Cancelar</button>
+      <button class="btn" onclick="ejecutarLimpieza()" style="background:#a32d2d;color:#fff;border-color:#a32d2d;font-weight:600"><i class="fa-solid fa-trash-can"></i> Confirmar</button>
+    </div>
+  </div>
 </div>
 </body>
 </html>

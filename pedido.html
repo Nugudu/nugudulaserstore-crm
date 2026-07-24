@@ -237,9 +237,21 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
         <div style="display:flex;justify-content:space-between;margin-top:10px">
           <a href="#" onclick="cancelarConsulta();return false" style="font-size:12px;color:var(--muted);text-decoration:none">← Volver</a>
-          <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:600">Ya soy cliente →</a>
+          <a href="#" onclick="yaSoyCliente();return false" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:600">Ya soy cliente →</a>
         </div>
         <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
+      </div>
+      <div id="phone-ya-cliente" style="display:none">
+        <div style="margin-bottom:20px">
+          <div style="font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px">Ya soy cliente</div>
+          <p style="font-size:13px;color:var(--muted)">Ingresa tu WhatsApp para continuar</p>
+        </div>
+        <div id="err-ya-cliente" class="err-box" style="display:none"></div>
+        <div class="phone-row">
+          <input id="p-tel-ya" type="text" placeholder="WhatsApp" onkeydown="if(event.key==='Enter')buscarYaCliente()">
+          <button onclick="buscarYaCliente(this)">Buscar</button>
+        </div>
+        <button style="background:none;border:none;color:var(--hint);font-size:12px;cursor:pointer;margin-top:10px;width:100%;padding:8px" onclick="cancelarYaCliente()">← Volver</button>
       </div>
       <div id="phone-consulta" style="display:none">
         <div style="margin-bottom:20px">
@@ -977,6 +989,42 @@ function continuarCatalogo(btn){
   }else{
     showScreen('s-phone');
   }
+}
+function yaSoyCliente(){
+  showScreen('s-phone');
+  document.getElementById('phone-bienvenida').style.display='none';
+  document.getElementById('phone-ya-cliente').style.display='block';
+  document.getElementById('p-tel-ya').focus();
+}
+function cancelarYaCliente(){
+  showScreen('s-phone');
+  document.getElementById('phone-ya-cliente').style.display='none';
+  document.getElementById('phone-bienvenida').style.display='block';
+}
+function buscarYaCliente(btn){
+  if(btn)btn.disabled=true;
+  var val=(document.getElementById('p-tel-ya').value||'').trim();
+  hideErr('ya-cliente');
+  if(!val){showErr('ya-cliente','Ingresa tu numero de WhatsApp.');if(btn)btn.disabled=false;return;}
+  var telNorm=val.replace(/[^0-9]/g,'');
+  if(telNorm.length<8){showErr('ya-cliente','El numero debe tener al menos 8 digitos.');if(btn)btn.disabled=false;return;}
+  fetch(GAS+'?action=buscarCliente&tel='+encodeURIComponent(val)+'&token='+encodeURIComponent(API_TOKEN))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(btn)btn.disabled=false;
+      if(d.ok&&d.encontrado){
+        _cli=d;_dirs=d.direcciones||[];
+        setContacto(d.contacto||'');
+        if(_carrito.length>0){
+          guardarSesion('s-form',2);
+          showScreen('s-form');setPaso(2);
+        }else{
+          iniciar();
+        }
+      }else{
+        showErr('ya-cliente','No encontramos ese numero. ¿Eres cliente nuevo?');
+      }
+    }).catch(function(){if(btn)btn.disabled=false;showErr('ya-cliente','Error de conexion. Intenta de nuevo.');});
 }
 function irAConsultar(){
   showScreen('s-phone');

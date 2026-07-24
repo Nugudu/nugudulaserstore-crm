@@ -235,14 +235,15 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="ce-box" id="ce-box" style="display:none"><div class="ce-name" id="ce-name"></div><div class="ce-info" id="ce-info"></div></div>
         <div id="err-phone" class="err-box" style="display:none"></div>
         <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
-        <div style="text-align:center;margin-top:10px">
+        <div style="display:flex;justify-content:space-between;margin-top:10px">
           <a href="#" onclick="cancelarConsulta();return false" style="font-size:12px;color:var(--muted);text-decoration:none">← Volver</a>
+          <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:600">Ya soy cliente →</a>
         </div>
         <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
       </div>
       <div id="phone-consulta" style="display:none">
         <div style="margin-bottom:20px">
-          <div style="font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px">Consultar mi pedido</div>
+          <div style="font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px">Consultar o realizar un nuevo pedido</div>
           <p style="font-size:13px;color:var(--muted)">Ingresa tu WhatsApp o numero de orden</p>
         </div>
         <div id="err-consulta" class="err-box" style="display:none"></div>

@@ -589,8 +589,6 @@ function volverDesdeForm(){
 
 // ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
 window.addEventListener('DOMContentLoaded',function(){
-  var preloadSkus=['RSV-KA-NG','RSV-KA-GR','RSV-MU-NG','RSV-MU-GR','RSV-IKA-NG','RSV-IKA-GR','RSV-SA-NG','RSV-SA-GR','RSV-KI-NG','RSV-KI-GR','RSV-OX-NG','RSV-OX-GR'];
-  for(var pi=0;pi<preloadSkus.length;pi++){(new Image()).src='imagenes/'+preloadSkus[pi]+'.png';}
   _cat=fallback(); _catCargado=true;
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
@@ -615,7 +613,6 @@ function fallback(){
 function buscarTel(btn){
   if(btn)btn.disabled=true;
   var desdeYaCliente=_yaSoyClienteMode===true;
-  _yaSoyClienteMode=false;
   var val=(document.getElementById('p-tel').value||'').trim();
   var consMode=document.getElementById('phone-consulta').style.display==='block';
   var errId=consMode?'consulta':'phone';
@@ -633,6 +630,7 @@ function buscarTel(btn){
         _cli=d;_dirs=d.direcciones||[];
         setContacto(d.contacto||'');
         if(desdeYaCliente){
+          _yaSoyClienteMode=false;
           if(_carrito.length>0){
             guardarSesion('s-form',2);
             showScreen('s-form');setPaso(2);
@@ -645,7 +643,7 @@ function buscarTel(btn){
       }else{
         showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
       }
-    }).catch(function(){if(spin)spin.style.display='none';if(btn)btn.disabled=false;nuevoCli();});
+    }).catch(function(){_yaSoyClienteMode=false;if(spin)spin.style.display='none';if(btn)btn.disabled=false;nuevoCli();});
 }
 function nuevoCli(){
   limpiarSesion();_cli=null;_dirs=[];setContacto('');

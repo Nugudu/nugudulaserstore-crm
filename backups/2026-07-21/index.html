@@ -784,6 +784,7 @@ var NAV_POR_ROL = {
   repartidor: ['repartidor']
 };
 var GATE_SESSION_KEY = 'ngd_gate_sesion';
+var REP_SESSION_KEY = 'ngd_rep_sesion';
 function concederAcceso(rol, nombre){
   document.getElementById('access-gate').style.display = 'none';
   document.getElementById('app-shell').style.display = 'block';
@@ -828,7 +829,13 @@ function restaurarSesionGate(){
     var raw = sessionStorage.getItem(GATE_SESSION_KEY);
     if (!raw) return;
     var s = JSON.parse(raw);
-    if (s && s.rol) concederAcceso(s.rol, s.nombre);
+    if (s && s.rol) {
+      if(s.rol==='repartidor'){
+        var repRaw=sessionStorage.getItem(REP_SESSION_KEY);
+        if(repRaw) _repCodigo=repRaw;
+      }
+      concederAcceso(s.rol, s.nombre);
+    }
   } catch(e){}
 }
 
@@ -2270,13 +2277,14 @@ function loginRep(){
   var cod=(document.getElementById('rep-codigo').value||'').trim().toUpperCase();
   if(!cod){ var e=document.getElementById('rep-err'); e.textContent='Ingresa tu código.'; e.style.display='flex'; setTimeout(function(){e.style.display='none';},3000); return; }
   _repCodigo=cod;
+  try{sessionStorage.setItem(REP_SESSION_KEY,cod);}catch(e){}
   document.getElementById('rep-login-wrap').style.display='none';
   document.getElementById('rep-dash-wrap').style.display='block';
   document.getElementById('rep-nombre').textContent=cod;
   document.getElementById('rep-fecha').textContent=new Date().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   renderRepDash();
 }
-function logoutRep(){ _repCodigo=null; document.getElementById('rep-login-wrap').style.display='block'; document.getElementById('rep-dash-wrap').style.display='none'; document.getElementById('rep-codigo').value=''; }
+function logoutRep(){ _repCodigo=null; try{sessionStorage.removeItem(REP_SESSION_KEY);}catch(e){} document.getElementById('rep-login-wrap').style.display='block'; document.getElementById('rep-dash-wrap').style.display='none'; document.getElementById('rep-codigo').value=''; }
 function renderRepDash(){
   if(!_repCodigo)return;
   var hoy=new Date().toISOString().slice(0,10);

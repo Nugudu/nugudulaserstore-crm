@@ -2183,7 +2183,7 @@ function abrirTrack(id){
   var det=document.getElementById('track-detail'); det.style.display='block';
   var steps=ESTADOS.map(function(label,i){
     var cls=i<est?'done':i===est?'cur':'';
-    var dot=cls==='done'?'<i class="fa-solid fa-check"></i>':cls==='cur'?EICONS[i]:'<span style="color:var(--hint);font-size:12px">'+(i+1)+'</span>';
+    var dot=cls==='done'?_svgCheckBtn:cls==='cur'?EICONS[i]:EICONS[i];
     return '<div class="ts '+cls+'"><div class="dot">'+dot+'</div><div class="lbl">'+label+'</div></div>';
   }).join('');
   var waNum=o.contacto.replace(/\D/g,'');

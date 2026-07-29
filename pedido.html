@@ -219,6 +219,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <button class="btn-main" onclick="continuarCatalogo(this)">Continuar →</button>
     <div style="text-align:center;margin-top:10px">
       <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px">Consultar mi pedido</a>
+      <span style="font-size:12px;color:var(--hint);margin:0 4px">|</span>
+      <a href="#" onclick="mostrarMiDiseno();return false" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:1px">Mi diseño →</a>
     </div>
   </div>
 </div>
@@ -496,6 +498,90 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
     <button class="btn-sec" onclick="salir()">Salir</button>
     <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
+  </div>
+</div>
+
+<!-- MI DISEÑO — buscar por número de orden y ver detalle -->
+<div class="screen" id="s-midiseno" style="display:none">
+  <div style="text-align:right;padding:6px 0 0"><button onclick="salir();return false" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
+  <div id="md-paso1">
+    <h2 style="font-size:20px;margin:16px 0 4px;color:var(--navy)">Mi diseño</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Ingresá el número de orden para ver los detalles de tu diseño.</p>
+    <div class="card">
+      <div class="fg">
+        <label>Número de orden</label>
+        <input id="md-orden" type="text" placeholder="Ej. ORD-XXXXX" onkeydown="if(event.key==='Enter')midisenoBuscar()">
+      </div>
+      <div id="err-midiseno" class="err-box" style="display:none"></div>
+      <div id="md-spin" style="display:none;text-align:center;padding:12px"><div class="spinner"></div></div>
+      <button class="btn-main" onclick="midisenoBuscar()">Buscar diseño →</button>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <a href="#" onclick="salir();return false" style="font-size:12px;color:var(--hint);text-decoration:none">← Volver al catálogo</a>
+    </div>
+  </div>
+  <div id="md-paso2" style="display:none">
+    <div class="card">
+      <div class="card-ttl">Detalle del diseño</div>
+      <div id="md-info"></div>
+    </div>
+    <div class="card" id="md-card-entrega">
+      <div class="card-ttl">Datos de entrega</div>
+      <div id="md-entrega-info"></div>
+      <button class="btn-outline-teal" id="md-btn-editar" onclick="midisenoToggleEditar()" style="margin-top:10px;width:100%">✏️ Editar datos de entrega</button>
+      <div id="md-entrega-edit" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+        <div class="fg"><label>Nombre completo</label><input id="md-f-nom" type="text"></div>
+        <div class="fg"><label>WhatsApp</label><input id="md-f-tel" type="tel"></div>
+        <div class="fg"><label>Dirección</label><input id="md-f-dir" type="text"></div>
+        <div class="fg"><label>Zona de envío</label>
+          <select id="md-f-zona" onchange="document.getElementById('md-otra-zona').style.display=this.value==='otra'?'block':'none'">
+            <option value="">Seleccionar zona…</option>
+            <option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option>
+            <option value="otra">Otra zona…</option>
+          </select>
+        </div>
+        <div class="fg" id="md-otra-zona" style="display:none"><label>Especifica la zona</label><input id="md-f-zonaot" type="text"></div>
+        <div class="fg"><label>Notas adicionales</label><textarea id="md-f-notas"></textarea></div>
+        <button class="btn-main" onclick="midisenoGuardarEntrega()">Guardar cambios</button>
+        <div id="err-md-entrega" class="err-box" style="display:none"></div>
+      </div>
+    </div>
+    <div class="card" id="md-card-pago">
+      <div class="card-ttl">Elige cómo pagar</div>
+      <div class="mp-opts">
+        <label class="mp-opt" id="md-mp-tarjeta" onclick="midisenoSelMetodo('tarjeta')">
+          <div class="mp-radio"></div>
+          <div class="mp-info">
+            <div class="mp-nombre">Pagar con tarjeta</div>
+            <div class="mp-desc">Débito o crédito — Pago seguro vía Wompi</div>
+          </div>
+        </label>
+        <label class="mp-opt" id="md-mp-transferencia" onclick="midisenoSelMetodo('transferencia')">
+          <div class="mp-radio"></div>
+          <div class="mp-info">
+            <div class="mp-nombre">Transferencia bancaria</div>
+            <div class="mp-desc">Banco Agrícola — Datos en pantalla</div>
+          </div>
+        </label>
+      </div>
+      <div id="md-bancario-info" style="display:none">
+        <div class="card" style="margin-top:8px">
+          <div class="card-ttl">Datos para transferencia</div>
+          <div class="bc-card">
+            <div class="bc-banco">Banco Agrícola</div>
+            <div class="bc-tipo">Cuenta de ahorro</div>
+            <div class="bc-cuenta">3008410011</div>
+            <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
+          </div>
+          <div class="alert-info">Realiza la transferencia por el monto exacto y luego enviá tu comprobante.</div>
+        </div>
+      </div>
+      <button class="btn-main" id="md-btn-pagar" onclick="midisenoPagar()" style="margin-top:16px">Pagar ahora</button>
+      <div id="err-md-pago" class="err-box" style="display:none"></div>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <a href="#" onclick="midisenoPaso1();return false" style="font-size:12px;color:var(--hint);text-decoration:none">← Buscar otro diseño</a>
+    </div>
   </div>
 </div>
 
@@ -1375,7 +1461,7 @@ function setPaso(n){
 }
 function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'auto'});}
 function showScreen(id){
-  ['s-catalogo','s-phone','s-cliente','s-form','s-exito'].forEach(function(sid){
+  ['s-catalogo','s-phone','s-cliente','s-form','s-exito','s-midiseno'].forEach(function(sid){
     var el=document.getElementById(sid);if(el)el.style.display='none';
   });
   var t=document.getElementById(id);if(t)t.style.display='block';
@@ -1568,6 +1654,175 @@ function enviarDatosPorCorreo(orden){
     verificarTransaccionWompi();
   }
 })();
+// ── MI DISEÑO: buscar orden existente y pagar ──
+var _midiseno = null;
+var _mdMetodo = 'transferencia';
+
+function mostrarMiDiseno(){
+  _midiseno = null;
+  document.getElementById('md-orden').value = '';
+  document.getElementById('md-paso1').style.display = 'block';
+  document.getElementById('md-paso2').style.display = 'none';
+  hideErr('midiseno');
+  showScreen('s-midiseno');
+  setTimeout(function(){document.getElementById('md-orden').focus();},300);
+}
+
+function midisenoBuscar(){
+  var ord = document.getElementById('md-orden').value.trim();
+  if(!ord){ showErr('midiseno','Ingresa tu número de orden.'); return; }
+  hideErr('midiseno');
+  document.getElementById('md-spin').style.display = 'block';
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'buscarOrdenWeb',token:API_TOKEN,orden:ord})
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    document.getElementById('md-spin').style.display = 'none';
+    if(res.ok && res.orden){
+      _midiseno = res.orden;
+      midisenoMostrarPaso2();
+    } else {
+      showErr('midiseno',res.error||'No se encontró ninguna orden con ese número.');
+    }
+  }).catch(function(){
+    document.getElementById('md-spin').style.display = 'none';
+    showErr('midiseno','Error de conexión. Verifica tu internet.');
+  });
+}
+
+function midisenoMostrarPaso2(){
+  var o = _midiseno;
+  document.getElementById('md-paso1').style.display = 'none';
+  document.getElementById('md-paso2').style.display = 'block';
+  var items = o.items || [];
+  if(!items.length && o.productos && o.cantidad) items = [{sku:o.productos[0]||'', cantidad:o.cantidad, precio:o.precio}];
+  document.getElementById('md-info').innerHTML =
+    '<div style="margin-bottom:8px"><strong>Orden:</strong> '+esc(o.orden)+'</div>'+
+    (o.fecha?'<div style="margin-bottom:8px;font-size:12px;color:var(--muted)">'+esc(o.fecha.slice(0,10))+'</div>':'')+
+    items.map(function(it){
+      var nom = it.diseno || it.sku || '';
+      var col = it.color ? ' · '+it.color : '';
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span>'+esc(nom)+esc(col)+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';
+    }).join('')+
+    '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;margin-top:4px"><span>Total</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>';
+  document.getElementById('md-entrega-info').innerHTML =
+    '<div style="font-size:13px;line-height:1.7"><strong>Nombre:</strong> '+esc(o.nombre||'—')+'</div>'+
+    '<div style="font-size:13px;line-height:1.7"><strong>WhatsApp:</strong> '+esc(o.contacto||'—')+'</div>'+
+    '<div style="font-size:13px;line-height:1.7"><strong>Dirección:</strong> '+esc(o.direccion||'—')+'</div>'+
+    '<div style="font-size:13px;line-height:1.7"><strong>Zona:</strong> '+esc(o.zona||'—')+'</div>'+
+    (o.notas?'<div style="font-size:13px;line-height:1.7"><strong>Notas:</strong> '+esc(o.notas)+'</div>':'');
+  document.getElementById('md-f-nom').value = o.nombre||'';
+  document.getElementById('md-f-tel').value = o.contacto||'';
+  document.getElementById('md-f-dir').value = o.direccion||'';
+  document.getElementById('md-f-zona').value = o.zona||'';
+  var zonasConocidas = ['Antiguo Cuscatlán','Colonia Escalón','Merliot','Santa Tecla'];
+  document.getElementById('md-otra-zona').style.display = o.zona && zonasConocidas.indexOf(o.zona)<0 ? 'block' : 'none';
+  document.getElementById('md-f-zonaot').value = o.zona && zonasConocidas.indexOf(o.zona)<0 ? o.zona : '';
+  document.getElementById('md-f-notas').value = o.notas||'';
+  _mdMetodo = 'transferencia';
+  midisenoSelMetodo('transferencia');
+  document.getElementById('md-paso2').scrollIntoView({behavior:'auto',block:'start'});
+  track('midiseno_view',{orden:o.orden});
+}
+
+function midisenoPaso1(){
+  document.getElementById('md-paso2').style.display = 'none';
+  document.getElementById('md-paso1').style.display = 'block';
+  hideErr('midiseno');
+  document.getElementById('md-orden').focus();
+}
+
+function midisenoToggleEditar(){
+  var ed = document.getElementById('md-entrega-edit');
+  var btn = document.getElementById('md-btn-editar');
+  if(ed.style.display==='none'){ed.style.display='block';btn.textContent='✏️ Ocultar editor';}
+  else{ed.style.display='none';btn.textContent='✏️ Editar datos de entrega';}
+}
+
+function midisenoGuardarEntrega(){
+  var nom = document.getElementById('md-f-nom').value.trim();
+  var tel = document.getElementById('md-f-tel').value.trim();
+  var dir = document.getElementById('md-f-dir').value.trim();
+  var zonaRaw = document.getElementById('md-f-zona').value;
+  var zona = zonaRaw==='otra'?document.getElementById('md-f-zonaot').value.trim():zonaRaw;
+  var notas = document.getElementById('md-f-notas').value.trim();
+  if(!nom){showErr('md-entrega','El nombre es obligatorio.');return;}
+  if(!dir){showErr('md-entrega','La dirección es obligatoria.');return;}
+  if(!zona){showErr('md-entrega','Seleccioná la zona de envío.');return;}
+  hideErr('md-entrega');
+  var edBtn = document.getElementById('md-btn-editar');
+  edBtn.textContent = 'Guardando…';
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'actualizarDatosWeb',token:API_TOKEN,orden:_midiseno.orden,nombre:nom,contacto:tel,direccion:dir,zona:zona,notas:notas})
+  }).then(function(r){return r.json();})
+  .then(function(res){
+    if(res.ok){
+      _midiseno.nombre=nom;_midiseno.contacto=tel;_midiseno.direccion=dir;_midiseno.zona=zona;_midiseno.notas=notas;
+      midisenoMostrarPaso2();
+      alert('Datos actualizados correctamente.');
+    }else{
+      edBtn.textContent='✏️ Editar datos de entrega';
+      showErr('md-entrega',res.error||'No se pudieron guardar los cambios.');
+    }
+  }).catch(function(){
+    edBtn.textContent='✏️ Editar datos de entrega';
+    showErr('md-entrega','Error de conexión.');
+  });
+}
+
+function midisenoSelMetodo(met){
+  _mdMetodo = met;
+  document.querySelectorAll('#md-card-pago .mp-opt').forEach(function(el){el.classList.remove('sel');});
+  document.querySelectorAll('#md-card-pago .mp-radio').forEach(function(el){el.classList.remove('chk');});
+  if(met==='tarjeta'){
+    document.getElementById('md-mp-tarjeta').classList.add('sel');
+    document.querySelector('#md-mp-tarjeta .mp-radio').classList.add('chk');
+    document.getElementById('md-bancario-info').style.display='none';
+  }else{
+    document.getElementById('md-mp-transferencia').classList.add('sel');
+    document.querySelector('#md-mp-transferencia .mp-radio').classList.add('chk');
+    document.getElementById('md-bancario-info').style.display='block';
+  }
+}
+
+function midisenoPagar(){
+  if(!_midiseno) return;
+  var o = _midiseno;
+  var total = o.total!=null?Number(o.total):0;
+  if(_mdMetodo==='tarjeta'){
+    var btn = document.getElementById('md-btn-pagar');
+    btn.textContent='Redirigiendo a Wompi…';btn.disabled=true;
+    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'crearEnlacePago',token:API_TOKEN,orden:o.orden,monto:total,nombre:o.nombre||'',email:o.email||'',telefono:o.contacto||'',urlRetorno:window.location.href.split('?')[0]})
+    }).then(function(r){return r.json();})
+    .then(function(wd){
+      if(wd.ok&&wd.urlEnlace){window.location.href=wd.urlEnlace;}
+      else{btn.textContent='Pagar ahora';btn.disabled=false;showErr('md-pago','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));}
+    }).catch(function(){btn.textContent='Pagar ahora';btn.disabled=false;showErr('md-pago','Error de conexión con Wompi.');});
+  }else{
+    var msg = encodeURIComponent('Hola! Adjunto comprobante de pago de mi diseño '+o.orden+'.');
+    var waLink = 'https://wa.me/'+WA+'?text='+msg;
+    showScreen('s-exito');
+    document.getElementById('ex-orden').textContent = o.orden;
+    var items = o.items||[];
+    if(!items.length&&o.productos&&o.cantidad) items = [{sku:o.productos[0]||'',cantidad:o.cantidad,precio:o.precio}];
+    document.getElementById('orden-mini').style.display='block';
+    document.getElementById('om-contenido').innerHTML =
+      items.map(function(it){return '<div class="om-fila"><span>'+esc(it.diseno||it.sku||'')+' · '+esc(it.color||'')+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';}).join('')+
+      '<div class="om-fila" style="font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span>Total a pagar</span><span>$'+total.toFixed(2)+'</span></div>';
+    document.getElementById('ex-pago-info').innerHTML =
+      '<div class="card" style="margin-top:12px"><div class="card-ttl">Datos para transferencia</div>'+
+      '<div class="bc-card"><div class="bc-banco">Banco Agrícola</div><div class="bc-tipo">Cuenta de ahorro</div><div class="bc-cuenta">3008410011</div><div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div></div>'+
+      '<div class="alert-info">Realiza la transferencia por el monto exacto y luego enviá tu comprobante.</div></div>';
+    document.getElementById('ex-accion-comprobante').style.display='block';
+    document.getElementById('btn-wa-exito').href=waLink;
+    document.getElementById('ex-tracking').style.display='none';
+    var btnOE=document.querySelector('#s-exito .btn-outline-teal');if(btnOE)btnOE.style.display='none';
+    var btnSec=document.querySelector('#s-exito .btn-sec');if(btnSec)btnSec.textContent='Salir';
+    window.scrollTo({top:0});
+    track('midiseno_pago',{orden:o.orden,metodo:'transferencia'});
+  }
+}
 </script>
 <script>
 if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)el.style.display='none';}

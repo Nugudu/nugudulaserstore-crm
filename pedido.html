@@ -350,7 +350,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
             <option value="otra">Otra zona…</option>
           </select>
         </div>
-        <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…"></div>
+        <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…" list="md-zonas-sugeridas"><datalist id="md-zonas-sugeridas"><option value="Zaragoza, La Libertad"><option value="San José Villa Nueva, La Libertad"><option value="Lourdes, Libertad Central"><option value="Mejicanos, San Salvador"><option value="Soyapango, San Salvador"><option value="Bernal, San Salvador"><option value="Constitución, San Salvador"><option value="San Marcos, San Salvador"></datalist></div>
         <div class="fg">
           <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">Puedes mover el mapa, hacer zoom y cambiar a vista Satelite tocando el icono dentro del mapa</span></div>
         </div>
@@ -521,6 +521,9 @@ var _refV = (function(){
   catch(e){ return ''; }
 })();
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null,_yaSoyClienteMode=false;
+var RECARGO_ENVIO=3;
+var ZONAS_ESPECIALES=['Zaragoza, La Libertad','San José Villa Nueva, La Libertad','Lourdes, Libertad Central','Mejicanos, San Salvador','Soyapango, San Salvador','Bernal, San Salvador','Constitución, San Salvador','San Marcos, San Salvador'];
+function esZonaEspecial(z){return ZONAS_ESPECIALES.some(function(ze){return ze.toLowerCase()===z.toLowerCase();});}
 
 // ── CDP: EVENTOS DE COMPORTAMIENTO ──
 var _sessionId=(function(){try{var s=sessionStorage.getItem('ngd_session');if(!s){s=Date.now()+'-'+Math.random().toString(36).slice(2,8);sessionStorage.setItem('ngd_session',s);}return s;}catch(e){return Date.now()+'-x';}})();
@@ -1159,12 +1162,14 @@ function goP3(){
   if(!zona){showErr('form','Selecciona la zona de entrega.');return;}
   hideErr('form');
   var notas=(document.getElementById('f-notas').value||'').trim();
-  var total=totalCarrito().toFixed(2);
+  var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
+  var total=(totalCarrito()+recargo).toFixed(2);
   var prodsHtml=_carrito.map(function(it){
     return rf(it.diseno+' · '+it.color,'x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2));
   }).join('');
   document.getElementById('resumen').innerHTML=
     prodsHtml+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
+    (recargo?rf('Cargo por zona de envío','+$'+recargo.toFixed(2)):'')+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
   setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'auto'});
@@ -1183,7 +1188,8 @@ function confirmarPedido(){
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_dirSel&&_dirSel.mapaLink?_dirSel.mapaLink:_mapa;
   var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
-  var total=totalCarrito().toFixed(2);
+  var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
+  var total=(totalCarrito()+recargo).toFixed(2);
 
   if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}
   hideErr('form');
@@ -1196,7 +1202,8 @@ function confirmarPedido(){
   var payload={
     action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
-    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac
+    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac,
+    recargoEnvio:recargo
   };
 
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})

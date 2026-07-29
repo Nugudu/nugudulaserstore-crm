@@ -523,7 +523,9 @@ function guardarPedidoWeb(payload) {
       cantidadTotal += it.cantidad;
       totalPedido += it.precio * it.cantidad;
     });
-    var precioPromedio = cantidadTotal > 0 ? totalPedido / cantidadTotal : 0;
+    var recargoEnvio = parseFloat(payload.recargoEnvio) || 0;
+    totalPedido += recargoEnvio;
+    var precioPromedio = cantidadTotal > 0 ? (totalPedido - recargoEnvio) / cantidadTotal : 0;
 
     var ordenes = leerOrdenes();
     var d   = new Date();
@@ -538,6 +540,7 @@ function guardarPedidoWeb(payload) {
       contacto:      String(payload.contacto  || '').trim(),
       direccion:     String(payload.direccion || '').trim(),
       zona:          String(payload.zona      || 'Canal Digital').trim(),
+      recargoEnvio:  recargoEnvio,
       vendedor:      (function(){
         var vRef = String(payload.vendedorRef || '').trim().toUpperCase();
         return CODIGOS_VENDEDORAS_WEB.indexOf(vRef) >= 0 ? vRef : 'WEB';

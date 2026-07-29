@@ -359,7 +359,7 @@ tbody tr:last-child td{border-bottom:none}
             </select>
             <div id="zona-especial-wrap" style="display:none;margin-top:6px">
               <div style="display:flex;gap:6px">
-                <input id="f-zona-especial" type="text" placeholder="Se sugiere según la dirección — edítalo si hace falta">
+                <input id="f-zona-especial" type="text" placeholder="Se sugiere según la dirección — edítalo si hace falta" list="md-zonas-especiales" oninput="calcTotal()"><datalist id="md-zonas-especiales"><option value="Zaragoza, La Libertad"><option value="San José Villa Nueva, La Libertad"><option value="Lourdes, Libertad Central"><option value="Mejicanos, San Salvador"><option value="Soyapango, San Salvador"><option value="Bernal, San Salvador"><option value="Constitución, San Salvador"><option value="San Marcos, San Salvador"></datalist>
                 <button type="button" class="btn btn-outline btn-sm" onclick="sugerirZonaEspecial()" title="Sugerir de nuevo desde el mapa"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
               </div>
               <span class="hint" id="zona-especial-hint">Escribe primero la dirección para que el sistema sugiera el lugar.</span>
@@ -847,6 +847,9 @@ var ZCOLORS = ['#378ADD','#534AB7','#3B6D11','#854F0B'];
 var ECOLORS = ['#378ADD','#534AB7','#EF9F27','#D85A30','#2e7d52'];
 var CANALES = ['WhatsApp','Instagram','TikTok','Fuerza de ventas'];
 var CCOLORS = ['#25D366','#E1306C','#111111','#2D2460'];
+var RECARGO_ENVIO=3;
+var ZONAS_ESPECIALES=['Zaragoza, La Libertad','San José Villa Nueva, La Libertad','Lourdes, Libertad Central','Mejicanos, San Salvador','Soyapango, San Salvador','Bernal, San Salvador','Constitución, San Salvador','San Marcos, San Salvador'];
+function esZonaEspecial(z){return ZONAS_ESPECIALES.some(function(ze){return ze.toLowerCase()===z.toLowerCase();});}
 var PANELS  = {
   overview:     ['Dashboard','DO · CARE · tiempo real'],
   nueva:        ['Nueva Venta · DO','Registro de conversión'],
@@ -1775,6 +1778,7 @@ function onZonaChange(){
     wrap.style.display = 'none';
     document.getElementById('f-zona-especial').value = '';
   }
+  calcTotal();
 }
 var _zonaReqId = 0;
 function sugerirZonaEspecial(){
@@ -1834,8 +1838,12 @@ function renderSKUs(){
 function calcTotal(){
   var q=parseFloat(document.getElementById('f-cantidad').value)||0;
   var p=parseFloat(document.getElementById('f-precio').value)||0;
-  document.getElementById('total-formula').textContent=q+' × $'+p.toFixed(2)+' =';
-  document.getElementById('total-val').textContent='$'+(q*p).toFixed(2);
+  var base=q*p;
+  var zonaSel=document.getElementById('f-zona').value;
+  var zona=zonaSel==='__especial__'?(document.getElementById('f-zona-especial').value||'').trim():zonaSel;
+  var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
+  document.getElementById('total-formula').textContent=q+' × $'+p.toFixed(2)+(recargo?' + $'+recargo.toFixed(2)+' recargo':'')+' =';
+  document.getElementById('total-val').textContent='$'+(base+recargo).toFixed(2);
 }
 
 // Pendiente de pago = "va a pagar pero todavía no". Consumo interno = "nunca se cobra".
@@ -1856,6 +1864,7 @@ function guardar(){
   var orden=vf('f-orden'), nombre=vf('f-nombre'), contacto=vf('f-contacto');
   var dir=vf('f-direccion'), zonaSel=vf('f-zona'), vend=vf('f-vendedor'), canal=vf('f-canal');
   var zona = zonaSel === '__especial__' ? vf('f-zona-especial') : zonaSel;
+  var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
   var precio=parseFloat(vf('f-precio'));
   var ok=document.getElementById('alrt-ok'), er=document.getElementById('alrt-err');
   ok.style.display='none'; er.style.display='none';
@@ -1871,7 +1880,7 @@ function guardar(){
   var consumoInterno = document.getElementById('f-consumo-interno').checked;
   _ordenes.unshift({
     id:Date.now(), orden:orden, nombre:nombre, contacto:contacto, direccion:dir,
-    zona:zona, vendedor:vend, precio:precio, cantidad:cantidad, total:cantidad*precio, canal:canal,
+    zona:zona, vendedor:vend, precio:precio, cantidad:cantidad, total:cantidad*precio+recargo, recargoEnvio:recargo, canal:canal,
     pago:vf('f-pago'), productos:skus.slice(), estado:vf('f-estado'), notas:vf('f-notas'),
     fecha:new Date().toISOString(), fechaEntrega:fechaEntrega, mapaLink:mapaLink,
     pendientePago: pendientePago, pendienteDesde: pendientePago ? new Date().toISOString() : null,

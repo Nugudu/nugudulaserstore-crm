@@ -1180,7 +1180,10 @@ function fijarDireccion(){
     .then(function(d){
       if(d&&d.ok&&d.lat&&d.lng){ mostrarMapaEnPunto(d.lat,d.lng); }
       else{ mostrarBusquedaTexto(v); }
-    }).catch(function(){ mostrarBusquedaTexto(v); });
+    }).catch(function(e){
+      if(typeof console!=='undefined'&&typeof console.log==='function')console.log('[fijarDireccion] fetch error:',e);
+      mostrarBusquedaTexto(v);
+    });
 }
 function mostrarBusquedaTexto(v){
   var q=encodeURIComponent(v+', El Salvador');
@@ -1207,9 +1210,10 @@ function osmEmbed(lat,lng){
 }
 function mostrarMapaEnPunto(lat,lng){
   lat=parseFloat(lat);lng=parseFloat(lng);
-  document.getElementById('map-fr').src=osmEmbed(lat,lng);
+  var f=document.getElementById('map-fr');if(f)f.src=osmEmbed(lat,lng);
   document.getElementById('map-mini').style.display='block';
   _mapa=osmLink(lat,lng);
+  if(typeof actualizarPinLeaflet==='function')actualizarPinLeaflet(lat,lng);
 }
 // (el link de GPS pegado se removió de este archivo — el mapa se arma
 // siempre desde la dirección escrita a mano, ver onDirInp más abajo)
@@ -1549,7 +1553,6 @@ function obtenerMiUbicacion(){
 // Hooks en el flujo existente — envuelven funciones originales sin alterarlas
 var _goP2Orig=goP2;goP2=function(){_goP2Orig();setTimeout(function(){if(document.getElementById('nueva-dir').style.display!=='none')esperarL();},250);};
 var _showNuevaDirOrig=showNuevaDir;showNuevaDir=function(){_showNuevaDirOrig();setTimeout(esperarL,250);};
-var _mostrarMapaOrig=mostrarMapaEnPunto;mostrarMapaEnPunto=function(lat,lng){_mostrarMapaOrig(lat,lng);if(typeof actualizarPinLeaflet==='function')actualizarPinLeaflet(lat,lng);};
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 

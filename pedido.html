@@ -528,6 +528,10 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div class="card-ttl">Detalles de tu pedido</div>
       <div id="md-info"></div>
     </div>
+    <div class="card">
+      <div class="card-ttl">Datos de entrega</div>
+      <div id="md-entrega-info" style="font-size:13px;line-height:1.7"></div>
+    </div>
     <div class="card" id="md-card-pago">
       <div class="card-ttl">Elige cómo pagar</div>
       <div class="mp-opts">
@@ -1701,10 +1705,11 @@ function midisenoMostrarPaso2(){
       var col = it.color ? ' · '+it.color : '';
       return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span>'+esc(nom)+esc(col)+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';
     }).join('')+
-    '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;margin-top:4px"><span>Total</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>'+
-    '<div style="font-size:13px;line-height:1.7;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><strong>Nombre:</strong> '+esc(o.nombre||'—')+' | <strong>WhatsApp:</strong> '+esc(o.contacto||'—')+'</div>'+
-    '<div style="font-size:13px;line-height:1.7"><strong>Dirección:</strong> '+esc(o.direccion||'—')+' | <strong>Zona:</strong> '+esc(o.zona||'—')+'</div>'+
-    (o.notas?'<div style="font-size:13px;line-height:1.7"><strong>Notas:</strong> '+esc(o.notas)+'</div>':'');
+    '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;margin-top:4px"><span>Total</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>';
+  document.getElementById('md-entrega-info').innerHTML =
+    '<div><strong>Nombre:</strong> '+esc(o.nombre||'—')+'  |  <strong>WhatsApp:</strong> '+esc(o.contacto||'—')+'</div>'+
+    '<div><strong>Dirección:</strong> '+esc(o.direccion||'—')+'  |  <strong>Zona:</strong> '+esc(o.zona||'—')+'</div>'+
+    (o.notas?'<div style="margin-top:6px"><strong>Notas:</strong> '+esc(o.notas)+'</div>':'');
   _mdMetodo = 'transferencia';
   midisenoSelMetodo('transferencia');
   document.getElementById('md-paso2').scrollIntoView({behavior:'auto',block:'start'});
@@ -1767,7 +1772,16 @@ function midisenoIrAExito(){
   document.querySelector('#s-exito h2').textContent='\u00a1Gracias por tu pago!';
   document.querySelector('#s-exito .success-wrap p').textContent='N\u00famero de orden:';
   document.getElementById('ex-orden').textContent = o.orden;
-  document.getElementById('orden-mini').style.display='none';
+  document.getElementById('om-contenido').innerHTML =
+    o.items.map(function(it){
+      var nom = it.diseno || it.sku || '';
+      var col = it.color ? ' \u00b7 '+it.color : '';
+      return '<div class="om-fila"><span>'+esc(nom)+esc(col)+'</span><span>x'+it.cantidad+' \u2014 $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
+    }).join('')+
+    '<div class="om-fila"><span>Total a pagar</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>'+
+    '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre||'')+'</span></div>'+
+    '<div class="om-fila"><span>M\u00e9todo</span><span>Transferencia bancaria</span></div>';
+  document.getElementById('orden-mini').style.display='block';
   document.getElementById('ex-pago-info').innerHTML = '';
   document.getElementById('ex-accion-comprobante').style.display='block';
   var msg = encodeURIComponent('Hola! Adjunto comprobante de pago de mi dise\u00f1o '+o.orden+'.');

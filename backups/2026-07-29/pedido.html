@@ -1200,8 +1200,13 @@ function mostrarBusquedaTexto(v){
 // dirección anterior se guardó con coordenadas en vez de texto.
 function extraerLatLngDeLink(link){
   if(!link) return null;
-  var m=String(link).match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  return m ? {lat:m[1],lng:m[2]} : null;
+  var s=String(link),m;
+  m = s.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/); if(m) return {lat:m[1],lng:m[2]};
+  m = s.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/); if(m) return {lat:m[1],lng:m[2]};
+  m = s.match(/[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/); if(m) return {lat:m[1],lng:m[2]};
+  m = s.match(/[?&]mlat=(-?\d+\.?\d*).*[?&]mlon=(-?\d+\.?\d*)/); if(m) return {lat:m[1],lng:m[2]};
+  m = s.match(/^\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*$/); if(m) return {lat:m[1],lng:m[2]};
+  return null;
 }
 function osmEmbed(lat,lng){
   lat=parseFloat(lat);lng=parseFloat(lng);
@@ -1285,7 +1290,11 @@ function confirmarPedido(){
   var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
-  var mapa=_dirSel&&_dirSel.mapaLink?_dirSel.mapaLink:_mapa;
+  var mapa=_mapa;
+  if(_dirSel&&_dirSel.mapaLink){
+    var dirOk=_dirSel.direccion===dir&&_dirSel.zona===zona;
+    if(dirOk) mapa=_dirSel.mapaLink;
+  }
   var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
   var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);

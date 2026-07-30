@@ -1776,12 +1776,14 @@ function midisenoPagar(){
 
 function midisenoIrAExito(){
   var o = _midiseno;
+  var items = o.items || [];
+  if(!items.length && o.productos && o.cantidad) items = [{sku:o.productos[0]||'', cantidad:o.cantidad, precio:o.precio}];
   showScreen('s-exito');
   document.querySelector('#s-exito h2').textContent='\u00a1Gracias por tu pago!';
   document.querySelector('#s-exito .success-wrap p').textContent='N\u00famero de orden:';
   document.getElementById('ex-orden').textContent = o.orden;
   document.getElementById('om-contenido').innerHTML =
-    o.items.map(function(it){
+    items.map(function(it){
       var nom = it.diseno || it.sku || '';
       var col = it.color ? ' \u00b7 '+it.color : '';
       return '<div class="om-fila"><span>'+esc(nom)+esc(col)+'</span><span>x'+it.cantidad+' \u2014 $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';

@@ -537,6 +537,19 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="card">
       <div class="card-ttl">Datos de entrega</div>
       <div id="md-entrega-info" style="font-size:13px;line-height:1.7"></div>
+      <button class="btn-outline" id="md-btn-editar" onclick="midisenoEditar()" style="margin-top:10px;font-size:12px">✎ Editar</button>
+      <div id="md-edit-form" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:12px">
+        <div class="fg"><label>Nombre completo</label><input id="md-edit-nombre" type="text"></div>
+        <div class="fg"><label>WhatsApp</label><input id="md-edit-contacto" type="text"></div>
+        <div class="fg"><label>Dirección</label><input id="md-edit-direccion" type="text"></div>
+        <div class="fg"><label>Zona de envío</label><input id="md-edit-zona" type="text"></div>
+        <div class="fg"><label>Notas adicionales</label><textarea id="md-edit-notas" rows="2"></textarea></div>
+        <div id="err-md-edit" class="err-box" style="display:none"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-main" onclick="midisenoGuardarEditar()" style="flex:1">Guardar</button>
+          <button class="btn-outline" onclick="midisenoCancelarEditar()" style="flex:1">Cancelar</button>
+        </div>
+      </div>
     </div>
 
     <div class="card" id="md-card-pago">
@@ -1714,10 +1727,7 @@ function midisenoMostrarPaso2(){
       return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span>'+esc(nom)+esc(col)+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';
     }).join('')+
     '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;margin-top:4px"><span>Total</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>';
-  document.getElementById('md-entrega-info').innerHTML =
-    '<div><strong>Nombre:</strong> '+esc(o.nombre||'—')+'  |  <strong>WhatsApp:</strong> '+esc(o.contacto||'—')+'</div>'+
-    '<div><strong>Dirección:</strong> '+esc(o.direccion||'—')+'  |  <strong>Zona:</strong> '+esc(o.zona||'—')+'</div>'+
-    (o.notas?'<div style="margin-top:6px"><strong>Notas:</strong> '+esc(o.notas)+'</div>':'');
+  midisenoRenderEntrega(o);
   _mdMetodo = 'transferencia';
   midisenoSelMetodo('transferencia');
   document.getElementById('md-paso2').scrollIntoView({behavior:'auto',block:'start'});
@@ -1731,10 +1741,79 @@ function midisenoPaso1(){
   document.getElementById('md-orden').focus();
 }
 
+function midisenoRenderEntrega(o){
+  document.getElementById('md-entrega-info').innerHTML =
+    '<div style="font-size:13px;line-height:1.7"><strong>Nombre:</strong> '+esc(o.nombre||'—')+'  |  <strong>WhatsApp:</strong> '+esc(o.contacto||'—')+'</div>'+
+    '<div style="font-size:13px;line-height:1.7"><strong>Direcci\u00f3n:</strong> '+esc(o.direccion||'—')+'  |  <strong>Zona:</strong> '+esc(o.zona||'—')+'</div>'+
+    (o.notas?'<div style="font-size:13px;line-height:1.7;margin-top:4px"><strong>Notas:</strong> '+esc(o.notas)+'</div>':'');
+  document.getElementById('md-entrega-info').style.display='';
+  document.getElementById('md-btn-editar').style.display='';
+  document.getElementById('md-edit-form').style.display='none';
+}
+
+function midisenoEditar(){
+  var o = _midiseno; if(!o) return;
+  document.getElementById('md-edit-nombre').value = o.nombre||'';
+  document.getElementById('md-edit-contacto').value = o.contacto||'';
+  document.getElementById('md-edit-direccion').value = o.direccion||'';
+  document.getElementById('md-edit-zona').value = o.zona||'';
+  document.getElementById('md-edit-notas').value = o.notas||'';
+  document.getElementById('md-entrega-info').style.display='none';
+  document.getElementById('md-btn-editar').style.display='none';
+  document.getElementById('md-edit-form').style.display='block';
+  hideErr('md-edit');
+}
+
+function midisenoCancelarEditar(){
+  document.getElementById('md-edit-form').style.display='none';
+  document.getElementById('md-entrega-info').style.display='';
+  document.getElementById('md-btn-editar').style.display='';
+  hideErr('md-edit');
+}
+
+function midisenoGuardarEditar(){
+  var o = _midiseno; if(!o) return;
+  var payload = {
+    action:'actualizarDatosWeb', token:API_TOKEN, orden:o.orden,
+    nombre: document.getElementById('md-edit-nombre').value.trim(),
+    contacto: document.getElementById('md-edit-contacto').value.trim(),
+    direccion: document.getElementById('md-edit-direccion').value.trim(),
+    zona: document.getElementById('md-edit-zona').value.trim(),
+    notas: document.getElementById('md-edit-notas').value.trim()
+  };
+  if(!payload.nombre || !payload.contacto || !payload.direccion || !payload.zona){
+    showErr('md-edit','Completa los campos obligatorios (nombre, WhatsApp, direcci\u00f3n, zona).');
+    return;
+  }
+  var btn = document.querySelector('#md-edit-form .btn-main');
+  btn.textContent='Guardando\u2026'; btn.disabled=true;
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    btn.textContent='Guardar'; btn.disabled=false;
+    if(res.ok){
+      o.nombre = payload.nombre;
+      o.contacto = payload.contacto;
+      o.direccion = payload.direccion;
+      o.zona = payload.zona;
+      o.notas = payload.notas;
+      midisenoRenderEntrega(o);
+    }else{
+      showErr('md-edit',res.error||'Error al guardar.');
+    }
+  }).catch(function(){
+    btn.textContent='Guardar'; btn.disabled=false;
+    showErr('md-edit','Error de conexi\u00f3n.');
+  });
+}
+
 function midisenoSelMetodo(met){
   _mdMetodo = met;
   document.querySelectorAll('#md-card-pago .mp-opt').forEach(function(el){el.classList.remove('sel');});
   document.querySelectorAll('#md-card-pago .mp-radio').forEach(function(el){el.classList.remove('chk');});
+  document.getElementById('md-transfer-confirm').style.display='none';
+  document.querySelector('#md-card-pago .mp-opts').style.display='';
+  document.getElementById('md-btn-pagar').style.display='';
   if(met==='tarjeta'){
     document.getElementById('md-mp-tarjeta').classList.add('sel');
     document.querySelector('#md-mp-tarjeta .mp-radio').classList.add('chk');

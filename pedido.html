@@ -514,7 +514,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
       <div id="err-midiseno" class="err-box" style="display:none"></div>
       <div id="md-spin" style="display:none;text-align:center;padding:12px"><div class="spinner"></div></div>
-      <button class="btn-main" onclick="midisenoBuscar()">Buscar diseño →</button>
+      <button class="btn-main" onclick="midisenoBuscar()">Continuar</button>
     </div>
     <div class="alert-info" style="margin-top:12px;font-size:12px;line-height:1.6">
       Esta sección está dedicada para realizar el pago de tu diseño a grabar. Si requieres de este servicio contactanos a nuestro número de whatsapp <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a> para darte más información.
@@ -525,32 +525,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
   </div>
   <div id="md-paso2" style="display:none">
     <div class="card">
-      <div class="card-ttl">Detalle del diseño</div>
+      <div class="card-ttl">Detalles de tu pedido</div>
       <div id="md-info"></div>
-    </div>
-    <div class="card" id="md-card-entrega">
-      <div class="card-ttl">Datos de entrega</div>
-      <div id="md-entrega-info"></div>
-      <button class="btn-outline-teal" id="md-btn-editar" onclick="midisenoToggleEditar()" style="margin-top:10px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        <span id="md-btn-editar-text">Editar datos de entrega</span>
-      </button>
-      <div id="md-entrega-edit" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-        <div class="fg"><label>Nombre completo</label><input id="md-f-nom" type="text"></div>
-        <div class="fg"><label>WhatsApp</label><input id="md-f-tel" type="tel"></div>
-        <div class="fg"><label>Dirección</label><input id="md-f-dir" type="text"></div>
-        <div class="fg"><label>Zona de envío</label>
-          <select id="md-f-zona" onchange="document.getElementById('md-otra-zona').style.display=this.value==='otra'?'block':'none'">
-            <option value="">Seleccionar zona…</option>
-            <option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option>
-            <option value="otra">Otra zona…</option>
-          </select>
-        </div>
-        <div class="fg" id="md-otra-zona" style="display:none"><label>Especifica la zona</label><input id="md-f-zonaot" type="text"></div>
-        <div class="fg"><label>Notas adicionales</label><textarea id="md-f-notas"></textarea></div>
-        <button class="btn-main" onclick="midisenoGuardarEntrega()">Guardar cambios</button>
-        <div id="err-md-entrega" class="err-box" style="display:none"></div>
-      </div>
     </div>
     <div class="card" id="md-card-pago">
       <div class="card-ttl">Elige cómo pagar</div>
@@ -602,9 +578,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
       <button class="btn-main" id="md-btn-pagar" onclick="midisenoPagar()" style="margin-top:16px">Continuar</button>
       <div id="err-md-pago" class="err-box" style="display:none"></div>
-    </div>
-    <div style="text-align:center;margin-top:12px">
-      <a href="#" onclick="midisenoPaso1();return false" style="font-size:12px;color:var(--hint);text-decoration:none;display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Buscar otro diseño</a>
     </div>
   </div>
 </div>
@@ -1728,21 +1701,10 @@ function midisenoMostrarPaso2(){
       var col = it.color ? ' · '+it.color : '';
       return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span>'+esc(nom)+esc(col)+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';
     }).join('')+
-    '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;margin-top:4px"><span>Total</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>';
-  document.getElementById('md-entrega-info').innerHTML =
-    '<div style="font-size:13px;line-height:1.7"><strong>Nombre:</strong> '+esc(o.nombre||'—')+'</div>'+
-    '<div style="font-size:13px;line-height:1.7"><strong>WhatsApp:</strong> '+esc(o.contacto||'—')+'</div>'+
-    '<div style="font-size:13px;line-height:1.7"><strong>Dirección:</strong> '+esc(o.direccion||'—')+'</div>'+
-    '<div style="font-size:13px;line-height:1.7"><strong>Zona:</strong> '+esc(o.zona||'—')+'</div>'+
+    '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;margin-top:4px"><span>Total</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>'+
+    '<div style="font-size:13px;line-height:1.7;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><strong>Nombre:</strong> '+esc(o.nombre||'—')+' | <strong>WhatsApp:</strong> '+esc(o.contacto||'—')+'</div>'+
+    '<div style="font-size:13px;line-height:1.7"><strong>Dirección:</strong> '+esc(o.direccion||'—')+' | <strong>Zona:</strong> '+esc(o.zona||'—')+'</div>'+
     (o.notas?'<div style="font-size:13px;line-height:1.7"><strong>Notas:</strong> '+esc(o.notas)+'</div>':'');
-  document.getElementById('md-f-nom').value = o.nombre||'';
-  document.getElementById('md-f-tel').value = o.contacto||'';
-  document.getElementById('md-f-dir').value = o.direccion||'';
-  document.getElementById('md-f-zona').value = o.zona||'';
-  var zonasConocidas = ['Antiguo Cuscatlán','Colonia Escalón','Merliot','Santa Tecla'];
-  document.getElementById('md-otra-zona').style.display = o.zona && zonasConocidas.indexOf(o.zona)<0 ? 'block' : 'none';
-  document.getElementById('md-f-zonaot').value = o.zona && zonasConocidas.indexOf(o.zona)<0 ? o.zona : '';
-  document.getElementById('md-f-notas').value = o.notas||'';
   _mdMetodo = 'transferencia';
   midisenoSelMetodo('transferencia');
   document.getElementById('md-paso2').scrollIntoView({behavior:'auto',block:'start'});
@@ -1754,44 +1716,6 @@ function midisenoPaso1(){
   document.getElementById('md-paso1').style.display = 'block';
   hideErr('midiseno');
   document.getElementById('md-orden').focus();
-}
-
-function midisenoToggleEditar(){
-  var ed = document.getElementById('md-entrega-edit');
-  var bt = document.getElementById('md-btn-editar-text');
-  if(ed.style.display==='none'){ed.style.display='block';bt.textContent='Ocultar editor';}
-  else{ed.style.display='none';bt.textContent='Editar datos de entrega';}
-}
-
-function midisenoGuardarEntrega(){
-  var nom = document.getElementById('md-f-nom').value.trim();
-  var tel = document.getElementById('md-f-tel').value.trim();
-  var dir = document.getElementById('md-f-dir').value.trim();
-  var zonaRaw = document.getElementById('md-f-zona').value;
-  var zona = zonaRaw==='otra'?document.getElementById('md-f-zonaot').value.trim():zonaRaw;
-  var notas = document.getElementById('md-f-notas').value.trim();
-  if(!nom){showErr('md-entrega','El nombre es obligatorio.');return;}
-  if(!dir){showErr('md-entrega','La dirección es obligatoria.');return;}
-  if(!zona){showErr('md-entrega','Seleccioná la zona de envío.');return;}
-  hideErr('md-entrega');
-  var bt = document.getElementById('md-btn-editar-text');
-  bt.textContent = 'Guardando…';
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'actualizarDatosWeb',token:API_TOKEN,orden:_midiseno.orden,nombre:nom,contacto:tel,direccion:dir,zona:zona,notas:notas})
-  }).then(function(r){return r.json();})
-  .then(function(res){
-    if(res.ok){
-      _midiseno.nombre=nom;_midiseno.contacto=tel;_midiseno.direccion=dir;_midiseno.zona=zona;_midiseno.notas=notas;
-      midisenoMostrarPaso2();
-      alert('Datos actualizados correctamente.');
-    }else{
-      bt.textContent='Editar datos de entrega';
-      showErr('md-entrega',res.error||'No se pudieron guardar los cambios.');
-    }
-  }).catch(function(){
-    bt.textContent='Editar datos de entrega';
-    showErr('md-entrega','Error de conexión.');
-  });
 }
 
 function midisenoSelMetodo(met){
@@ -1839,20 +1763,15 @@ function midisenoPagar(){
 
 function midisenoIrAExito(){
   var o = _midiseno;
-  var total = o.total!=null?Number(o.total):0;
   showScreen('s-exito');
   document.querySelector('#s-exito h2').textContent='\u00a1Gracias por tu pago!';
   document.querySelector('#s-exito .success-wrap p').textContent='N\u00famero de orden:';
   document.getElementById('ex-orden').textContent = o.orden;
-  var items = o.items||[];
-  if(!items.length&&o.productos&&o.cantidad) items = [{sku:o.productos[0]||'',cantidad:o.cantidad,precio:o.precio}];
-  document.getElementById('orden-mini').style.display='block';
-  document.getElementById('om-contenido').innerHTML =
-    items.map(function(it){return '<div class="om-fila"><span>'+esc(it.diseno||it.sku||'')+' · '+esc(it.color||'')+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';}).join('')+
-    '<div class="om-fila" style="font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span>Total a pagar</span><span>$'+total.toFixed(2)+'</span></div>';
-  document.getElementById('ex-pago-info').innerHTML =
-    '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d;font-size:14px;text-align:center;line-height:1.6">Gracias por tu pago del numero de orden <strong>'+esc(o.orden)+'</strong>, porque ya fue registrado.</div>';
-  document.getElementById('ex-accion-comprobante').style.display='none';
+  document.getElementById('orden-mini').style.display='none';
+  document.getElementById('ex-pago-info').innerHTML = '';
+  document.getElementById('ex-accion-comprobante').style.display='block';
+  var msg = encodeURIComponent('Hola! Adjunto comprobante de pago de mi dise\u00f1o '+o.orden+'.');
+  document.getElementById('btn-wa-exito').href = 'https://wa.me/'+WA+'?text='+msg;
   document.getElementById('ex-tracking').style.display='none';
   var btnOE=document.querySelector('#s-exito .btn-outline-teal');if(btnOE)btnOE.style.display='none';
   var btnSec=document.querySelector('#s-exito .btn-sec');if(btnSec)btnSec.textContent='Salir';

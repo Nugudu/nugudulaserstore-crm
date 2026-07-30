@@ -1786,7 +1786,7 @@ function midisenoIrAExito(){
     items.map(function(it){
       var nom = it.diseno || it.sku || '';
       var col = it.color ? ' \u00b7 '+it.color : '';
-      return '<div class="om-fila"><span>'+esc(nom)+esc(col)+'</span><span>x'+it.cantidad+' \u2014 $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
+      return '<div class="om-fila"><span>'+esc(nom)+esc(col)+'</span><span>x'+(it.cantidad||1)+' \u2014 $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';
     }).join('')+
     '<div class="om-fila"><span>Total a pagar</span><span>$'+(o.total!=null?Number(o.total):0).toFixed(2)+'</span></div>'+
     '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre||'')+'</span></div>'+

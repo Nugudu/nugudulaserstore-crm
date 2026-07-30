@@ -508,7 +508,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
   <!-- Paso 1: buscar orden -->
   <div id="md-paso1">
     <h2 style="font-size:20px;margin:16px 0 4px;color:var(--navy)">Mi diseño</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Ingresá el número de orden para ver los detalles de tu diseño.</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Ingresá el número de orden para el detalle de tu pedido</p>
     <div class="card">
       <div class="fg">
         <label>Número de orden</label>
@@ -518,8 +518,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="md-spin" style="display:none;text-align:center;padding:12px"><div class="spinner"></div></div>
       <button class="btn-main" onclick="midisenoBuscar()">Buscar diseño →</button>
     </div>
+    <div class="alert-info" style="margin-top:12px;font-size:12px;line-height:1.6">
+      Esta sección está dedicada para realizar el pago de tu diseño a grabar. Si requieres de este servicio contactanos a nuestro número de whatsapp <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a> para darte más información.
+    </div>
     <div style="text-align:center;margin-top:12px">
-      <a href="#" onclick="salir();return false" style="font-size:12px;color:var(--hint);text-decoration:none">← Volver al catálogo</a>
+      <a href="#" onclick="salir();return false" style="font-size:12px;color:var(--hint);text-decoration:none;display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Volver al catálogo</a>
     </div>
   </div>
 
@@ -534,7 +537,10 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="card" id="md-card-entrega">
       <div class="card-ttl">Datos de entrega</div>
       <div id="md-entrega-info"></div>
-      <button class="btn-outline-teal" id="md-btn-editar" onclick="midisenoToggleEditar()" style="margin-top:10px;width:100%">✏️ Editar datos de entrega</button>
+      <button class="btn-outline-teal" id="md-btn-editar" onclick="midisenoToggleEditar()" style="margin-top:10px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span id="md-btn-editar-text">Editar datos de entrega</span>
+      </button>
       <div id="md-entrega-edit" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
         <div class="fg"><label>Nombre completo</label><input id="md-f-nom" type="text"></div>
         <div class="fg"><label>WhatsApp</label><input id="md-f-tel" type="tel"></div>
@@ -580,15 +586,34 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
             <div class="bc-cuenta">3008410011</div>
             <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
           </div>
-          <div class="alert-info">Realiza la transferencia por el monto exacto y luego enviá tu comprobante.</div>
+          <div class="alert-info">Al elegir esta opción debes de ir a tu app de cuenta bancaria de preferencia y realiza la operación. Al tener el comprobante dale continuar para enviarla por whatsapp</div>
         </div>
       </div>
-      <button class="btn-main" id="md-btn-pagar" onclick="midisenoPagar()" style="margin-top:16px">Pagar ahora</button>
+      <!-- Confirmación paso a paso para transferencia -->
+      <div id="md-transfer-confirm" style="display:none">
+        <div class="card" style="margin-top:8px">
+          <div class="card-ttl">Datos para transferencia</div>
+          <div class="bc-card">
+            <div class="bc-banco">Banco Agrícola</div>
+            <div class="bc-tipo">Cuenta de ahorro</div>
+            <div class="bc-cuenta">3008410011</div>
+            <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
+            <div class="bc-monto">Monto: <strong id="md-monto">$0.00</strong></div>
+          </div>
+          <div class="alert-info">Al elegir esta opción debes de ir a tu app de cuenta bancaria de preferencia y realiza la operación. Al tener el comprobante dale continuar para enviarla por whatsapp</div>
+        </div>
+        <a class="btn-wa" id="md-btn-wa" href="#" target="_blank" style="margin-top:8px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.104.546 4.14 1.587 5.939L0 24l6.278-1.547A11.949 11.949 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.811 9.811 0 01-5.002-1.368l-.36-.213-3.725.978.992-3.63-.234-.373A9.775 9.775 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
+          Enviar comprobante por WhatsApp
+        </a>
+        <button class="btn-outline-teal" onclick="midisenoIrAExito()" style="margin-top:10px;width:100%">✓ Ya transferí — Confirmar</button>
+      </div>
+      <button class="btn-main" id="md-btn-pagar" onclick="midisenoPagar()" style="margin-top:16px">Continuar</button>
       <div id="err-md-pago" class="err-box" style="display:none"></div>
     </div>
 
     <div style="text-align:center;margin-top:12px">
-      <a href="#" onclick="midisenoPaso1();return false" style="font-size:12px;color:var(--hint);text-decoration:none">← Buscar otro diseño</a>
+      <a href="#" onclick="midisenoPaso1();return false" style="font-size:12px;color:var(--hint);text-decoration:none;display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Buscar otro diseño</a>
     </div>
   </div>
 </div>
@@ -1742,9 +1767,9 @@ function midisenoPaso1(){
 
 function midisenoToggleEditar(){
   var ed = document.getElementById('md-entrega-edit');
-  var btn = document.getElementById('md-btn-editar');
-  if(ed.style.display==='none'){ed.style.display='block';btn.textContent='✏️ Ocultar editor';}
-  else{ed.style.display='none';btn.textContent='✏️ Editar datos de entrega';}
+  var bt = document.getElementById('md-btn-editar-text');
+  if(ed.style.display==='none'){ed.style.display='block';bt.textContent='Ocultar editor';}
+  else{ed.style.display='none';bt.textContent='Editar datos de entrega';}
 }
 
 function midisenoGuardarEntrega(){
@@ -1758,8 +1783,8 @@ function midisenoGuardarEntrega(){
   if(!dir){showErr('md-entrega','La dirección es obligatoria.');return;}
   if(!zona){showErr('md-entrega','Seleccioná la zona de envío.');return;}
   hideErr('md-entrega');
-  var edBtn = document.getElementById('md-btn-editar');
-  edBtn.textContent = 'Guardando…';
+  var bt = document.getElementById('md-btn-editar-text');
+  bt.textContent = 'Guardando…';
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'actualizarDatosWeb',token:API_TOKEN,orden:_midiseno.orden,nombre:nom,contacto:tel,direccion:dir,zona:zona,notas:notas})
   }).then(function(r){return r.json();})
@@ -1769,11 +1794,11 @@ function midisenoGuardarEntrega(){
       midisenoMostrarPaso2();
       alert('Datos actualizados correctamente.');
     }else{
-      edBtn.textContent='✏️ Editar datos de entrega';
+      bt.textContent='Editar datos de entrega';
       showErr('md-entrega',res.error||'No se pudieron guardar los cambios.');
     }
   }).catch(function(){
-    edBtn.textContent='✏️ Editar datos de entrega';
+    bt.textContent='Editar datos de entrega';
     showErr('md-entrega','Error de conexión.');
   });
 }
@@ -1805,31 +1830,43 @@ function midisenoPagar(){
     }).then(function(r){return r.json();})
     .then(function(wd){
       if(wd.ok&&wd.urlEnlace){window.location.href=wd.urlEnlace;}
-      else{btn.textContent='Pagar ahora';btn.disabled=false;showErr('md-pago','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));}
-    }).catch(function(){btn.textContent='Pagar ahora';btn.disabled=false;showErr('md-pago','Error de conexión con Wompi.');});
+      else{btn.textContent='Continuar';btn.disabled=false;showErr('md-pago','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));}
+    }).catch(function(){btn.textContent='Continuar';btn.disabled=false;showErr('md-pago','Error de conexión con Wompi.');});
   }else{
+    // Mostrar datos bancarios + paso a paso para transferencia
+    document.getElementById('md-monto').textContent = '$'+total.toFixed(2);
     var msg = encodeURIComponent('Hola! Adjunto comprobante de pago de mi diseño '+o.orden+'.');
     var waLink = 'https://wa.me/'+WA+'?text='+msg;
-    showScreen('s-exito');
-    document.getElementById('ex-orden').textContent = o.orden;
-    var items = o.items||[];
-    if(!items.length&&o.productos&&o.cantidad) items = [{sku:o.productos[0]||'',cantidad:o.cantidad,precio:o.precio}];
-    document.getElementById('orden-mini').style.display='block';
-    document.getElementById('om-contenido').innerHTML =
-      items.map(function(it){return '<div class="om-fila"><span>'+esc(it.diseno||it.sku||'')+' · '+esc(it.color||'')+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';}).join('')+
-      '<div class="om-fila" style="font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span>Total a pagar</span><span>$'+total.toFixed(2)+'</span></div>';
-    document.getElementById('ex-pago-info').innerHTML =
-      '<div class="card" style="margin-top:12px"><div class="card-ttl">Datos para transferencia</div>'+
-      '<div class="bc-card"><div class="bc-banco">Banco Agrícola</div><div class="bc-tipo">Cuenta de ahorro</div><div class="bc-cuenta">3008410011</div><div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div></div>'+
-      '<div class="alert-info">Realiza la transferencia por el monto exacto y luego enviá tu comprobante.</div></div>';
-    document.getElementById('ex-accion-comprobante').style.display='block';
-    document.getElementById('btn-wa-exito').href=waLink;
-    document.getElementById('ex-tracking').style.display='none';
-    var btnOE=document.querySelector('#s-exito .btn-outline-teal');if(btnOE)btnOE.style.display='none';
-    var btnSec=document.querySelector('#s-exito .btn-sec');if(btnSec)btnSec.textContent='Salir';
-    window.scrollTo({top:0});
+    document.getElementById('md-btn-wa').href = waLink;
+    document.querySelector('#md-card-pago .mp-opts').style.display='none';
+    document.getElementById('md-bancario-info').style.display='none';
+    document.getElementById('md-btn-pagar').style.display='none';
+    document.getElementById('md-transfer-confirm').style.display='block';
+    document.getElementById('md-transfer-confirm').scrollIntoView({behavior:'auto',block:'start'});
     track('midiseno_pago',{orden:o.orden,metodo:'transferencia'});
   }
+}
+
+function midisenoIrAExito(){
+  var o = _midiseno;
+  var total = o.total!=null?Number(o.total):0;
+  showScreen('s-exito');
+  document.querySelector('#s-exito h2').textContent='\u00a1Gracias por tu pago!';
+  document.querySelector('#s-exito .success-wrap p').textContent='N\u00famero de orden:';
+  document.getElementById('ex-orden').textContent = o.orden;
+  var items = o.items||[];
+  if(!items.length&&o.productos&&o.cantidad) items = [{sku:o.productos[0]||'',cantidad:o.cantidad,precio:o.precio}];
+  document.getElementById('orden-mini').style.display='block';
+  document.getElementById('om-contenido').innerHTML =
+    items.map(function(it){return '<div class="om-fila"><span>'+esc(it.diseno||it.sku||'')+' · '+esc(it.color||'')+'</span><span>x'+(it.cantidad||1)+' — $'+((it.precio||0)*(it.cantidad||1)).toFixed(2)+'</span></div>';}).join('')+
+    '<div class="om-fila" style="font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span>Total a pagar</span><span>$'+total.toFixed(2)+'</span></div>';
+  document.getElementById('ex-pago-info').innerHTML =
+    '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d;font-size:14px;text-align:center;line-height:1.6">Gracias por tu pago del numero de orden <strong>'+esc(o.orden)+'</strong>, porque ya fue registrado.</div>';
+  document.getElementById('ex-accion-comprobante').style.display='none';
+  document.getElementById('ex-tracking').style.display='none';
+  var btnOE=document.querySelector('#s-exito .btn-outline-teal');if(btnOE)btnOE.style.display='none';
+  var btnSec=document.querySelector('#s-exito .btn-sec');if(btnSec)btnSec.textContent='Salir';
+  window.scrollTo({top:0});
 }
 </script>
 <script>

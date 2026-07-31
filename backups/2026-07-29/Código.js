@@ -704,82 +704,119 @@ function escHtml(s) {
 // entrega nada a un servidor que no ejecute JavaScript). LocationIQ es un
 // servicio pensado justamente para uso automatico/programatico como este,
 // con cuenta gratuita (locationiq.com) -- por eso ahora se usa esta.
-// La zona de envio (si viene) se geocodifica primero para obtener su centro,
-// y ese centro se usa como viewbox (SIN bounded=1): prioriza los resultados
-// dentro de la zona pero NO descarta los de afuera. La respuesta ademas
-// devuelve zona_lat/zona_lng/dentro_zona para que el frontend pueda mover
-// el pin a la zona si la direccion cayo lejos de ella.
+// ORDEN (general para TODAS las direcciones): la direccion es el termino de
+// busqueda (lo que se ubica) y la ZONA de envio es la guia que la lleva al
+// punto correcto:
+//   1) Se busca la direccion PEGADA a la zona (query "direccion, zona, El
+//      Salvador") con viewbox bounded=1 alrededor de la zona: el resultado
+//      queda forzosamente dentro del radio (~15 km) de la zona. Asi la zona
+//      lleva cualquier direccion al punto correcto de su area.
+//   2) Si eso no encuentra nada, se busca la direccion sola (segunda chance).
+//      Si cae lejos de la zona, dentro_zona=false y el frontend mueve el pin
+//      a la zona con el aviso de arrastrar al punto exacto.
+//   3) Si tampoco, se devuelve la zona como punto seguro.
+// Todo con countrycodes=sv (El Salvador) en TODAS las consultas, con
+// reintentos ante el rate limit (429) de LocationIQ: el pin nunca sale del
+// pais. La respuesta devuelve zona_lat/zona_lng/dentro_zona para el frontend.
 function geocodificarDireccion(direccion, zona) {
+  var resultado;
   try {
     var dir = String(direccion || '').trim();
-    if (!dir) return { ok: false, error: 'Direccion vacia' };
+    if (!dir) { resultado = { ok: false, error: 'Direccion vacia' }; return guardarDebugGeo(dir, zona, resultado); }
     if (!LOCATIONIQ_KEY || LOCATIONIQ_KEY.indexOf('PEGA_AQUI') === 0) {
-      return { ok: false, error: 'Falta configurar LOCATIONIQ_KEY en Code_1.gs' };
+      resultado = { ok: false, error: 'Falta configurar LOCATIONIQ_KEY en Code_1.gs' };
+      return guardarDebugGeo(dir, zona, resultado);
     }
     var zonaTxt = String(zona || '').trim();
-    // 1) Geocodificar la zona de envio para conocer su centro (si viene)
-    var zonaGeo = null;
-    if (zonaTxt) zonaGeo = geocodificarSimple(zonaTxt);
-    // 2) Armar la busqueda de la direccion, con viewbox alrededor de la zona
-    //    si la tenemos. Sin bounded=1: prioriza la zona pero no excluye.
-    var query = dir + (zonaTxt ? ', ' + zonaTxt : '') + ', El Salvador';
-    var url = 'https://us1.locationiq.com/v1/search?key=' + encodeURIComponent(LOCATIONIQ_KEY) +
-      '&q=' + encodeURIComponent(query) + '&format=json&countrycodes=sv&limit=1';
+    var zonaGeo = zonaTxt ? geocodificarSimple(zonaTxt) : null;
+    var addrGeo = null;
+    var dentro  = false;
     if (zonaGeo) {
-      var d = 0.15; // ~15 km alrededor del centro de la zona
-      url += '&viewbox=' + (zonaGeo.lng - d) + ',' + (zonaGeo.lat - d) + ',' + (zonaGeo.lng + d) + ',' + (zonaGeo.lat + d);
-    }
-    var resp    = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-    var codigo  = resp.getResponseCode();
-    var texto   = resp.getContentText() || '';
-    // Diagnostico guardado en Propiedades del script (no solo en Logger.log)
-    // para poder verlo facil: correr verUltimoDebugGeo() manualmente con el
-    // boton "Ejecutar" y despues abrir "Registro de ejecucion".
-    try {
-      PropertiesService.getScriptProperties().setProperty(
-        'ULTIMO_DEBUG_GEO',
-        new Date().toLocaleString() + ' | dir="' + dir + '" | zona="' + zonaTxt + '" | query="' + query + '" | HTTP ' + codigo + ' | ' + texto.substring(0, 500)
-      );
-    } catch (pe2) {}
-    Logger.log('geocodificarDireccion ["' + dir + '"' + (zonaTxt ? ', zona "' + zonaTxt + '"' : '') + '] -> HTTP ' + codigo + ': ' + texto.substring(0, 400));
-    var data;
-    try { data = JSON.parse(texto); } catch (pe) {
-      return { ok: false, error: 'Respuesta invalida de LocationIQ (HTTP ' + codigo + ')' };
-    }
-    if (Array.isArray(data) && data.length && data[0].lat && data[0].lon) {
-      var res = { ok: true, lat: data[0].lat, lng: data[0].lon };
-      if (zonaGeo) {
-        res.zona_lat = zonaGeo.lat;
-        res.zona_lng = zonaGeo.lng;
-        res.dentro_zona = distanciaKm(parseFloat(data[0].lat), parseFloat(data[0].lon), zonaGeo.lat, zonaGeo.lng) <= 15;
+      // 1) La zona lleva la direccion al punto: direccion + zona con viewbox
+      //    bounded alrededor de la zona (el resultado queda dentro de ella).
+      addrGeo = geoBuscar(dir + ', ' + zonaTxt, zonaGeo, true);
+      if (addrGeo) dentro = true;
+      // 2) Segunda chance: la direccion sola. Si cae lejos de la zona, el
+      //    frontend igual mueve el pin a la zona (dentro_zona=false).
+      if (!addrGeo) {
+        addrGeo = geocodificarSimple(dir);
+        if (addrGeo) dentro = distanciaKm(addrGeo.lat, addrGeo.lng, zonaGeo.lat, zonaGeo.lng) <= 15;
       }
-      return res;
+      if (addrGeo) {
+        var res = { ok: true, lat: String(addrGeo.lat), lng: String(addrGeo.lng),
+                    zona_lat: zonaGeo.lat, zona_lng: zonaGeo.lng, dentro_zona: dentro };
+        return guardarDebugGeo(dir, zonaTxt, res);
+      }
+      // 3) Fallback: la zona como punto seguro.
+      resultado = { ok: false, error: 'No se encontraron coordenadas para la direccion', zona_lat: zonaGeo.lat, zona_lng: zonaGeo.lng };
+      return guardarDebugGeo(dir, zonaTxt, resultado);
     }
-    // 3) La direccion no se encontro pero la zona si: se devuelve la zona
-    //    como fallback para que el frontend mueva el pin ahi.
-    if (zonaGeo) {
-      return { ok: false, error: (data && data.error) ? ('LocationIQ: ' + data.error) : ('No se encontraron coordenadas (HTTP ' + codigo + ')'), zona_lat: zonaGeo.lat, zona_lng: zonaGeo.lng };
+    // Sin zona: se ubica la direccion sola.
+    addrGeo = geocodificarSimple(dir);
+    if (addrGeo) {
+      resultado = { ok: true, lat: String(addrGeo.lat), lng: String(addrGeo.lng) };
+      return guardarDebugGeo(dir, zonaTxt, resultado);
     }
-    if (data && data.error) return { ok: false, error: 'LocationIQ: ' + data.error };
-    return { ok: false, error: 'No se encontraron coordenadas (HTTP ' + codigo + ')' };
-  } catch (e) { return { ok: false, error: e.message }; }
+    resultado = { ok: false, error: 'No se encontraron coordenadas para la direccion' };
+    return guardarDebugGeo(dir, zonaTxt, resultado);
+  } catch (e) {
+    resultado = { ok: false, error: e.message };
+    return guardarDebugGeo(String(direccion || '').trim(), String(zona || '').trim(), resultado);
+  }
 }
 
-// Geocodifica un texto simple (usado para la zona de envio) y devuelve
-// {lat,lng} o null si no se encontro. Se llama desde geocodificarDireccion.
-function geocodificarSimple(texto) {
+// Guarda el ultimo intento de geocodificacion en las Propiedades del script
+// para que verUltimoDebugGeo() / action debugGeo puedan mostrarlo.
+function guardarDebugGeo(dir, zonaTxt, resultado) {
   try {
-    var t = String(texto || '').trim();
-    if (!t) return null;
-    var url = 'https://us1.locationiq.com/v1/search?key=' + encodeURIComponent(LOCATIONIQ_KEY) +
-      '&q=' + encodeURIComponent(t + ', El Salvador') + '&format=json&countrycodes=sv&limit=1';
-    var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-    var data = JSON.parse(resp.getContentText() || '[]');
-    if (Array.isArray(data) && data.length && data[0].lat && data[0].lon) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    }
-  } catch (e) {}
+    PropertiesService.getScriptProperties().setProperty(
+      'ULTIMO_DEBUG_GEO',
+      new Date().toLocaleString() + ' | dir="' + dir + '" | zona="' + zonaTxt + '" | resultado=' + JSON.stringify(resultado)
+    );
+  } catch (pe) {}
+  return resultado;
+}
+
+// Busca en LocationIQ un texto y devuelve {lat,lng} o null. Si zonaGeo viene,
+// agrega viewbox alrededor de la zona; si bounded es true, ademas fuerza el
+// resultado dentro del viewbox (la zona lleva la direccion al punto).
+// Reintenta 2 veces mas cuando LocationIQ contesta 429 (rate limit de la
+// cuenta gratis) o falla, para no degradar a fallback por un error pasajero.
+function geoBuscar(query, zonaGeo, bounded) {
+  if (!query) return null;
+  var d = 0.15; // ~15 km alrededor del centro de la zona
+  // Siempre se agrega ", El Salvador" + countrycodes=sv: sin el sufijo,
+  // LocationIQ a veces contesta 404 y no ubica ni la direccion ni la zona.
+  var url = 'https://us1.locationiq.com/v1/search?key=' + encodeURIComponent(LOCATIONIQ_KEY) +
+    '&q=' + encodeURIComponent(query + ', El Salvador') + '&format=json&countrycodes=sv&limit=1';
+  if (zonaGeo) {
+    url += '&viewbox=' + (zonaGeo.lng - d) + ',' + (zonaGeo.lat - d) + ',' + (zonaGeo.lng + d) + ',' + (zonaGeo.lat + d);
+    if (bounded) url += '&bounded=1';
+  }
+  var intentos = 0;
+  while (intentos < 3) {
+    var resp  = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    var codigo = resp.getResponseCode();
+    var texto  = resp.getContentText() || '';
+    if (codigo === 429) { intentos++; Utilities.sleep(1200); continue; }
+    if (codigo !== 200) { intentos++; Utilities.sleep(1000); continue; }
+    try {
+      var data = JSON.parse(texto);
+      if (Array.isArray(data) && data.length && data[0].lat && data[0].lon) {
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      }
+    } catch (e) { intentos++; Utilities.sleep(1000); continue; }
+    return null; // HTTP 200 pero sin resultados = no se encontro
+  }
   return null;
+}
+
+// Geocodifica un texto simple (zona de envio, direccion sola) y devuelve
+// {lat,lng} o null. geoBuscar agrega ", El Salvador" + countrycodes=sv.
+function geocodificarSimple(texto) {
+  var t = String(texto || '').trim();
+  if (!t) return null;
+  return geoBuscar(t, null, false);
 }
 
 // Distancia en kilometros entre dos coordenadas (formula del haversine).

@@ -718,6 +718,27 @@ function escHtml(s) {
 // Todo con countrycodes=sv (El Salvador) en TODAS las consultas, con
 // reintentos ante el rate limit (429) de LocationIQ: el pin nunca sale del
 // pais. La respuesta devuelve zona_lat/zona_lng/dentro_zona para el frontend.
+// Limpia la direccion quitando ruido que confunde al geocoder (etapa, casa,
+// lote, piso, etc.) pero mantiene lo que importa: urbanizacion, residencial,
+// colonia, avenida, calle, kilometro, barrio.
+function limpiarDireccion(dir) {
+  var t = String(dir || '').trim();
+  if (!t) return t;
+  t = t.replace(/\betapa\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\bcasa\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\blote\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\bpiso\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\blocal\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\bdepartamento\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\bapto\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\bbloque\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\bno\.\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/#\s*[A-Za-z0-9]+\b/g, '');
+  t = t.replace(/\bpoligono\s*[A-Za-z0-9]+\b/gi, '');
+  t = t.replace(/\s{2,}/g, ' ').trim();
+  return t;
+}
+
 function geocodificarDireccion(direccion, zona) {
   var resultado;
   try {
@@ -728,6 +749,7 @@ function geocodificarDireccion(direccion, zona) {
       return guardarDebugGeo(dir, zona, resultado);
     }
     var zonaTxt = String(zona || '').trim();
+    dir = limpiarDireccion(dir);
     var zonaGeo = zonaTxt ? geocodificarSimple(zonaTxt) : null;
     var addrGeo = null;
     var dentro  = false;
@@ -740,7 +762,7 @@ function geocodificarDireccion(direccion, zona) {
       //    frontend igual mueve el pin a la zona (dentro_zona=false).
       if (!addrGeo) {
         addrGeo = geocodificarSimple(dir);
-        if (addrGeo) dentro = distanciaKm(addrGeo.lat, addrGeo.lng, zonaGeo.lat, zonaGeo.lng) <= 15;
+        if (addrGeo) dentro = distanciaKm(addrGeo.lat, addrGeo.lng, zonaGeo.lat, zonaGeo.lng) <= 5;
       }
       if (addrGeo) {
         var res = { ok: true, lat: String(addrGeo.lat), lng: String(addrGeo.lng),
@@ -784,7 +806,7 @@ function guardarDebugGeo(dir, zonaTxt, resultado) {
 // cuenta gratis) o falla, para no degradar a fallback por un error pasajero.
 function geoBuscar(query, zonaGeo, bounded) {
   if (!query) return null;
-  var d = 0.15; // ~15 km alrededor del centro de la zona
+  var d = 0.05; // ~5 km alrededor del centro de la zona
   // Siempre se agrega ", El Salvador" + countrycodes=sv: sin el sufijo,
   // LocationIQ a veces contesta 404 y no ubica ni la direccion ni la zona.
   var url = 'https://us1.locationiq.com/v1/search?key=' + encodeURIComponent(LOCATIONIQ_KEY) +

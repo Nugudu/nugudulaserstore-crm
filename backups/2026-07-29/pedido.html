@@ -357,7 +357,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…" list="md-zonas-sugeridas" oninput="onZonaOtraInput()"><datalist id="md-zonas-sugeridas"><option value="Zaragoza, La Libertad"><option value="San José Villa Nueva, La Libertad"><option value="Lourdes, Libertad Central"><option value="Mejicanos, San Salvador"><option value="Soyapango, San Salvador"><option value="Bernal, San Salvador"><option value="Constitución, San Salvador"><option value="San Marcos, San Salvador"></datalist></div>
         <div class="fg">
           <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">Puedes mover el mapa, hacer zoom y cambiar a vista Satelite tocando el icono dentro del mapa</span></div>
-          <button type="button" id="btn-mi-ubicacion-web" onclick="enviarMiUbicacion()" style="width:100%;margin-top:8px;padding:9px 12px;border:1.5px solid var(--navy);border-radius:var(--rs);background:#fff;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer">📍 Enviar mi ubicación</button>
+          <button type="button" id="btn-mi-ubicacion-web" onclick="enviarMiUbicacion()" style="width:100%;margin-top:8px;padding:9px 12px;border:1.5px solid var(--navy);border-radius:var(--rs);background:#fff;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg> Compartir mi ubicación actual</button>
           <div id="map-aviso" style="display:none;background:#fff8e1;border:1px solid #f0d060;color:#6b5b00;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.4;margin-top:8px"></div>
         </div>
         <!-- Leaflet mapa interactivo -->
@@ -1639,6 +1639,7 @@ function enviarMiUbicacion(){
       var lat=pos.coords.latitude,lng=pos.coords.longitude;
       if(typeof mostrarMapaEnPunto==='function')mostrarMapaEnPunto(lat,lng);
       avisarUbicacionConfirmada();
+      autocompletarDireccionDesdeGps(lat,lng);
     },
     function(){
       mostrarAvisoMapa('No pudimos obtener tu ubicación. Escribí tu dirección y elegí tu zona, o verificá los permisos de ubicación en tu navegador.');
@@ -1649,12 +1650,31 @@ function enviarMiUbicacion(){
 function avisarUbicacionConfirmada(){
   var av=document.getElementById('map-aviso');if(!av)return;
   av.style.display='block';
-  av.innerHTML='<strong>📍 Usamos tu ubicación.</strong> ¿Va aquí tu pedido? Si no, arrastra el pin al punto exacto.';
+  av.innerHTML='<strong>Usamos tu ubicación.</strong> ¿Va aquí tu pedido? Si no, arrastra el pin al punto exacto.';
 }
 function mostrarAvisoMapa(msg){
   var av=document.getElementById('map-aviso');if(!av)return;
   av.style.display='block';
   av.innerHTML=esc(msg);
+}
+// Reverse geocoding (Nominatim, mismo método que index.html): al compartir la
+// ubicación actual, autocompleta el campo de dirección con la dirección legible
+// del punto GPS. No pisa lo que el cliente ya haya escrito.
+function autocompletarDireccionDesdeGps(lat,lng){
+  var campo=document.getElementById('f-dir');if(!campo)return;
+  if((campo.value||'').trim())return;
+  var url='https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&accept-language=es';
+  fetch(url,{headers:{'Accept-Language':'es'}})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data&&data.display_name){
+        var partes=String(data.display_name).split(',').map(function(p){return p.trim();});
+        partes=partes.filter(function(p){return p&&p!=='El Salvador';});
+        var addr=partes.slice(0,3).join(', ');
+        if(addr&&!(campo.value||'').trim())campo.value=addr;
+      }
+    })
+    .catch(function(){});
 }
 
 // ── ELIMINAR DIRECCIONES ANTERIORES (X roja) ──
@@ -1689,7 +1709,7 @@ function renderDirsPrev(selFirst){
       return '<div class="dir-opt'+(i===0&&selFirst?' sel':'')+'" id="dop-'+i+'" onclick="elDir('+i+')">'+
         '<div class="do-dir">'+esc(d.direccion)+'</div>'+
         '<div class="do-zona">'+esc(d.zona)+'</div>'+
-        '<button type="button" class="dir-del" onclick="delDir(event,'+i+')" title="Eliminar esta dirección">✕</button>'+
+        '<button type="button" class="dir-del" onclick="delDir(event,'+i+')" title="Eliminar esta dirección"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>'+
         '</div>';
     }).join('');
     cont.innerHTML=html;

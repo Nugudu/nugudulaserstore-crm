@@ -355,6 +355,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…" list="md-zonas-sugeridas"><datalist id="md-zonas-sugeridas"><option value="Zaragoza, La Libertad"><option value="San José Villa Nueva, La Libertad"><option value="Lourdes, Libertad Central"><option value="Mejicanos, San Salvador"><option value="Soyapango, San Salvador"><option value="Bernal, San Salvador"><option value="Constitución, San Salvador"><option value="San Marcos, San Salvador"></datalist></div>
         <div class="fg">
           <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">Puedes mover el mapa, hacer zoom y cambiar a vista Satelite tocando el icono dentro del mapa</span></div>
+          <div id="map-aviso" style="display:none;background:#fff8e1;border:1px solid #f0d060;color:#6b5b00;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.4;margin-top:8px"></div>
         </div>
         <!-- Leaflet mapa interactivo -->
         <div class="leaflet-map-wrap" id="leaflet-map-wrap" style="display:none">
@@ -1170,6 +1171,7 @@ function showNuevaDir(){
 var _dt=null,_gt=null;
 function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
+  if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
   _dt=setTimeout(fijarDireccion,800);
 }
 // Geocodifica la dirección escrita con LocationIQ (vía Code_1.gs) para
@@ -1183,21 +1185,50 @@ function onDirInp(){
 function fijarDireccion(){
   var v=(document.getElementById('f-dir').value||'').trim();
   if(v.length<5) return;
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:v})})
+  var zSel=document.getElementById('f-zona').value;
+  var zona = zSel==='otra' ? (document.getElementById('f-zonaot').value||'').trim() : zSel;
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:v,zona:zona})})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d&&d.ok&&d.lat&&d.lng){ mostrarMapaEnPunto(d.lat,d.lng); }
-      else{ mostrarBusquedaTexto(v); }
+      if(d&&d.ok&&d.lat&&d.lng){
+        // La dirección se ubicó. Si cae lejos de la zona de envío seleccionada,
+        // el pin se mueve a la zona y se avisa para que la persona lo arrastre
+        // al punto exacto (la zona es la guía principal de ubicación).
+        if(d.dentro_zona===false&&d.zona_lat&&d.zona_lng){
+          mostrarMapaEnPunto(d.zona_lat,d.zona_lng);
+          avisarPinEnZona(v);
+        }else{
+          mostrarMapaEnPunto(d.lat,d.lng);
+        }
+      }else if(d&&d.zona_lat&&d.zona_lng){
+        // La dirección no se ubicó, pero la zona sí: el pin va a la zona.
+        mostrarMapaEnPunto(d.zona_lat,d.zona_lng);
+        avisarPinEnZona(v);
+      }else{
+        mostrarBusquedaTexto(v);
+      }
     }).catch(function(e){
       if(typeof console!=='undefined'&&typeof console.log==='function')console.log('[fijarDireccion] fetch error:',e);
       mostrarBusquedaTexto(v);
     });
+}
+function avisarPinEnZona(dirTexto){
+  var av=document.getElementById('map-aviso');
+  if(!av) return;
+  av.style.display='block';
+  av.innerHTML='<strong>No se encontró la dirección con precisión.</strong> El pin quedó en tu zona de envío ('+
+    esc(dirTexto)+'). Arrastra el pin al punto exacto de entrega en el mapa.';
+}
+function ocultarAvisoPin(){
+  var av=document.getElementById('map-aviso');
+  if(av) av.style.display='none';
 }
 function mostrarBusquedaTexto(v){
   var q=encodeURIComponent(v+', El Salvador');
   document.getElementById('map-fr').src='';
   document.getElementById('map-mini').style.display='block';
   _mapa='https://www.openstreetmap.org/search?query='+q;
+  ocultarAvisoPin();
 }
 // Extrae lat,lng de un link guardado (formato "?q=LAT,LNG"), por si alguna
 // dirección anterior se guardó con coordenadas en vez de texto.

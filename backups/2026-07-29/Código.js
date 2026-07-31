@@ -111,7 +111,7 @@ function doGet(e) {
     // pedido.html sigue sin marcar nada, el problema es que la peticion de
     // pedido.html nunca llega al servidor (no es un problema de LocationIQ
     // ni de permisos del script).
-    if (action === 'testGeo')       return respond(geocodificarDireccion(p.dir || ''));
+    if (action === 'testGeo')       return respond(geocodificarDireccion(p.dir || '', p.zona || ''));
     if (action === 'getConfigOpenWa') return respond(getConfigOpenWa());
     if (action === 'getConfigWompi')  return respond(getConfigWompi());
     if (action === 'enviarComprobante') return respond(enviarComprobante(p));
@@ -133,7 +133,7 @@ function doPost(e) {
     if (action === 'update')          { conLock(function(){ actualizarOrden(payload.id, payload.fields); }); return respond({ ok: true }); }
     if (action === 'registrarBorrado'){ conLock(function(){ registrarBorrado(payload.ts); }); return respond({ ok: true }); }
     if (action === 'resolverLink')    { return respond(resolverLink(payload.url)); }
-    if (action === 'geocodificar')    { return respond(geocodificarDireccion(payload.direccion)); }
+    if (action === 'geocodificar')    { return respond(geocodificarDireccion(payload.direccion, payload.zona)); }
     if (action === 'pedidoWeb')       { return respond(conLock(function(){ return guardarPedidoWeb(payload); })); }
     if (action === 'crearEnlacePago') { return respond(crearEnlacePago(payload)); }
     if (action === 'webhookWompi')    { return respond(webhookWompi(payload)); }
@@ -704,15 +704,31 @@ function escHtml(s) {
 // entrega nada a un servidor que no ejecute JavaScript). LocationIQ es un
 // servicio pensado justamente para uso automatico/programatico como este,
 // con cuenta gratuita (locationiq.com) -- por eso ahora se usa esta.
-function geocodificarDireccion(direccion) {
+// La zona de envio (si viene) se geocodifica primero para obtener su centro,
+// y ese centro se usa como viewbox (SIN bounded=1): prioriza los resultados
+// dentro de la zona pero NO descarta los de afuera. La respuesta ademas
+// devuelve zona_lat/zona_lng/dentro_zona para que el frontend pueda mover
+// el pin a la zona si la direccion cayo lejos de ella.
+function geocodificarDireccion(direccion, zona) {
   try {
     var dir = String(direccion || '').trim();
     if (!dir) return { ok: false, error: 'Direccion vacia' };
     if (!LOCATIONIQ_KEY || LOCATIONIQ_KEY.indexOf('PEGA_AQUI') === 0) {
       return { ok: false, error: 'Falta configurar LOCATIONIQ_KEY en Code_1.gs' };
     }
+    var zonaTxt = String(zona || '').trim();
+    // 1) Geocodificar la zona de envio para conocer su centro (si viene)
+    var zonaGeo = null;
+    if (zonaTxt) zonaGeo = geocodificarSimple(zonaTxt);
+    // 2) Armar la busqueda de la direccion, con viewbox alrededor de la zona
+    //    si la tenemos. Sin bounded=1: prioriza la zona pero no excluye.
+    var query = dir + (zonaTxt ? ', ' + zonaTxt : '') + ', El Salvador';
     var url = 'https://us1.locationiq.com/v1/search?key=' + encodeURIComponent(LOCATIONIQ_KEY) +
-      '&q=' + encodeURIComponent(dir + ', El Salvador') + '&format=json&countrycodes=sv&limit=1';
+      '&q=' + encodeURIComponent(query) + '&format=json&countrycodes=sv&limit=1';
+    if (zonaGeo) {
+      var d = 0.15; // ~15 km alrededor del centro de la zona
+      url += '&viewbox=' + (zonaGeo.lng - d) + ',' + (zonaGeo.lat - d) + ',' + (zonaGeo.lng + d) + ',' + (zonaGeo.lat + d);
+    }
     var resp    = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
     var codigo  = resp.getResponseCode();
     var texto   = resp.getContentText() || '';
@@ -722,20 +738,59 @@ function geocodificarDireccion(direccion) {
     try {
       PropertiesService.getScriptProperties().setProperty(
         'ULTIMO_DEBUG_GEO',
-        new Date().toLocaleString() + ' | dir="' + dir + '" | HTTP ' + codigo + ' | ' + texto.substring(0, 500)
+        new Date().toLocaleString() + ' | dir="' + dir + '" | zona="' + zonaTxt + '" | query="' + query + '" | HTTP ' + codigo + ' | ' + texto.substring(0, 500)
       );
     } catch (pe2) {}
-    Logger.log('geocodificarDireccion ["' + dir + '"] -> HTTP ' + codigo + ': ' + texto.substring(0, 400));
+    Logger.log('geocodificarDireccion ["' + dir + '"' + (zonaTxt ? ', zona "' + zonaTxt + '"' : '') + '] -> HTTP ' + codigo + ': ' + texto.substring(0, 400));
     var data;
     try { data = JSON.parse(texto); } catch (pe) {
       return { ok: false, error: 'Respuesta invalida de LocationIQ (HTTP ' + codigo + ')' };
     }
     if (Array.isArray(data) && data.length && data[0].lat && data[0].lon) {
-      return { ok: true, lat: data[0].lat, lng: data[0].lon };
+      var res = { ok: true, lat: data[0].lat, lng: data[0].lon };
+      if (zonaGeo) {
+        res.zona_lat = zonaGeo.lat;
+        res.zona_lng = zonaGeo.lng;
+        res.dentro_zona = distanciaKm(parseFloat(data[0].lat), parseFloat(data[0].lon), zonaGeo.lat, zonaGeo.lng) <= 15;
+      }
+      return res;
+    }
+    // 3) La direccion no se encontro pero la zona si: se devuelve la zona
+    //    como fallback para que el frontend mueva el pin ahi.
+    if (zonaGeo) {
+      return { ok: false, error: (data && data.error) ? ('LocationIQ: ' + data.error) : ('No se encontraron coordenadas (HTTP ' + codigo + ')'), zona_lat: zonaGeo.lat, zona_lng: zonaGeo.lng };
     }
     if (data && data.error) return { ok: false, error: 'LocationIQ: ' + data.error };
     return { ok: false, error: 'No se encontraron coordenadas (HTTP ' + codigo + ')' };
   } catch (e) { return { ok: false, error: e.message }; }
+}
+
+// Geocodifica un texto simple (usado para la zona de envio) y devuelve
+// {lat,lng} o null si no se encontro. Se llama desde geocodificarDireccion.
+function geocodificarSimple(texto) {
+  try {
+    var t = String(texto || '').trim();
+    if (!t) return null;
+    var url = 'https://us1.locationiq.com/v1/search?key=' + encodeURIComponent(LOCATIONIQ_KEY) +
+      '&q=' + encodeURIComponent(t + ', El Salvador') + '&format=json&countrycodes=sv&limit=1';
+    var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    var data = JSON.parse(resp.getContentText() || '[]');
+    if (Array.isArray(data) && data.length && data[0].lat && data[0].lon) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  } catch (e) {}
+  return null;
+}
+
+// Distancia en kilometros entre dos coordenadas (formula del haversine).
+function distanciaKm(lat1, lng1, lat2, lng2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLng = (lng2 - lng1) * Math.PI / 180;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 // Funcion de diagnostico: correr esto MANUALMENTE con el boton "Ejecutar"

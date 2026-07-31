@@ -1485,9 +1485,14 @@ function onDireccionInput(){
     return;
   }
   _mapTimer = setTimeout(function(){
-    actualizarMapa(texto);
+    // La zona de envío se manda junto con la dirección para apuntar la
+    // geocodificación al área correcta (ej. "Km 20 Carretera al Puerto" +
+    // zona "Zaragoza, La Libertad" → busca en La Libertad).
+    var zSel = document.getElementById('f-zona').value || '';
+    var zona = zSel === '__especial__' ? (document.getElementById('f-zona-especial').value || '').trim() : zSel;
+    actualizarMapa(texto, zona);
     // Si está activa la zona especial, refresca también la sugerencia de lugar.
-    if (document.getElementById('f-zona').value === '__especial__') {
+    if (zSel === '__especial__') {
       sugerirZonaEspecial();
     }
   }, 700); // espera a que termine de escribir
@@ -1506,14 +1511,17 @@ function osmEmbedURL(lat,lng){
 // configurada), cae de vuelta a la busqueda de texto simple que ya
 // funcionaba, para que el mapa nunca se quede vacio. La caja de "pega
 // coordenadas / enlace del mapa" (f-gps) sigue igual, sin tocar.
-function actualizarMapa(direccionTexto){
+// Si la direccion cae lejos de la zona de envio seleccionada (o no se ubico
+// pero la zona si), el mapa se centra en la zona: es la guia principal de
+// ubicacion, y la persona puede ajustar el punto.
+function actualizarMapa(direccionTexto, zona){
   var frame  = document.getElementById('map-frame');
   var abrir  = document.getElementById('map-abrir');
   var wrap   = document.getElementById('map-wrap');
   var status = document.getElementById('map-status');
   if (!frame) return;
-  gasCall({method:'POST', body:{action:'geocodificar', direccion:direccionTexto}}, function(err, res){
-    if (!err && res && res.ok && res.lat && res.lng) {
+  gasCall({method:'POST', body:{action:'geocodificar', direccion:direccionTexto, zona:zona}}, function(err, res){
+    if (!err && res && res.ok && res.lat && res.lng && res.dentro_zona !== false) {
       var q = res.lat + ',' + res.lng;
       frame.src = osmEmbedURL(res.lat, res.lng);
       abrir.href = osmLinkURL(res.lat, res.lng);
@@ -1525,6 +1533,17 @@ function actualizarMapa(direccionTexto){
       if (gpsBoxAuto && !(gpsBoxAuto.value||'').trim()) {
         gpsBoxAuto.value = res.lat + ', ' + res.lng;
         window._mapaLinkGPS = osmLinkURL(res.lat, res.lng);
+      }
+    } else if (!err && res && res.zona_lat && res.zona_lng) {
+      // La direccion cayo lejos de la zona o no se ubico: centrar en la zona.
+      var zq = res.zona_lat + ',' + res.zona_lng;
+      frame.src = osmEmbedURL(res.zona_lat, res.zona_lng);
+      abrir.href = osmLinkURL(res.zona_lat, res.zona_lng);
+      status.innerHTML = _svgPushpin + ' La dirección no se encontró con precisión — el mapa se centró en la zona de envío (' + escHtml(direccionTexto) + ').';
+      var gpsBoxZona = document.getElementById('f-gps');
+      if (gpsBoxZona && !(gpsBoxZona.value||'').trim()) {
+        gpsBoxZona.value = res.zona_lat + ', ' + res.zona_lng;
+        window._mapaLinkGPS = osmLinkURL(res.zona_lat, res.zona_lng);
       }
     } else {
       var query = encodeURIComponent(direccionTexto + ', El Salvador');
@@ -1738,7 +1757,7 @@ function elegirDireccionCliente(i, j){
     document.getElementById('zona-especial-wrap').style.display='block';
     document.getElementById('f-zona-especial').value = d.zona;
   }
-  if (d.direccion) actualizarMapa(d.direccion);
+  if (d.direccion) actualizarMapa(d.direccion, d.zona);
   showToast('Cliente conocido — dirección seleccionada');
 }
 // El cliente quiere recibir en un lugar distinto a los que ya tiene guardados.
@@ -2060,7 +2079,7 @@ function abrirEditarOrden(id){
     // solo texto de direccion, sin que LocationIQ encontrara un resultado
     // exacto en su momento) -- se geocodifica automaticamente al abrir el
     // modal para completar la caja, pero el campo sigue 100% editable.
-    gasCall({method:'POST', body:{action:'geocodificar', direccion:o.direccion}}, function(err,res){
+    gasCall({method:'POST', body:{action:'geocodificar', direccion:o.direccion, zona:o.zona}}, function(err,res){
       if(!err && res && res.ok && res.lat && res.lng && document.getElementById('ed-gps')){
         mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng});
       }

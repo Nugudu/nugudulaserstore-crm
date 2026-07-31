@@ -94,8 +94,10 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--navy)}
 .fg .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .fg textarea{resize:none;height:68px}
-.dir-opt{border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;cursor:pointer;margin-bottom:7px;transition:border .15s;background:#fff}
+.dir-opt{border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;cursor:pointer;margin-bottom:7px;transition:border .15s;background:#fff;position:relative}
 .dir-opt.sel{border-color:var(--navy);background:#f0eefb}
+.dir-del{position:absolute;top:6px;right:6px;width:22px;height:22px;border:none;border-radius:50%;background:#e5484d;color:#fff;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.dir-del:hover{background:#c93a3f}
 .do-dir{font-size:13px;font-weight:600}
 .do-zona{font-size:11px;color:var(--muted);margin-top:2px}
 .btn-ndir{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--rs);color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px}
@@ -1128,19 +1130,18 @@ function goP2(btn){
   var dirsActivo=_dirs.length?_dirs:_dirs_guardados;
   if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';document.getElementById('f-nac').value=cliActivo.fechaNac||'';}
   if(dirsActivo.length>0){
-    var html=dirsActivo.map(function(d,i){return '<div class="dir-opt'+(i===0?' sel':'')+'" id="dop-'+i+'" onclick="elDir('+i+')"><div class="do-dir">'+esc(d.direccion)+'</div><div class="do-zona">'+esc(d.zona)+'</div></div>';}).join('');
-    document.getElementById('dirs-prev').innerHTML=html;
-    document.getElementById('dirs-prev-wrap').style.display='block';
+    renderDirsPrev(true);
     elDir(0);
-    document.getElementById('nueva-dir').style.display='none';
   }else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
   setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'auto'});
 }
 function elDir(i){
-  var dirsActivo2=_dirs.length?_dirs:_dirs_guardados;
+  if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
+  var dirsActivo2=arrFiltrado();
+  if(!dirsActivo2[i]) return;
   _dirSel=dirsActivo2[i];
   document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
-  document.getElementById('dop-'+i).classList.add('sel');
+  var dop=document.getElementById('dop-'+i);if(dop)dop.classList.add('sel');
   if(_dirSel.mapaLink){
     _mapa=_dirSel.mapaLink;
     var coords=extraerLatLngDeLink(_dirSel.mapaLink);
@@ -1152,6 +1153,7 @@ function elDir(i){
   }
 }
 function showNuevaDir(){
+  if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
   _dirSel=null;document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
   document.getElementById('nueva-dir').style.display='block';
   document.getElementById('f-dir').value='';document.getElementById('f-zona').value='';
@@ -1339,6 +1341,14 @@ function confirmarPedido(){
     var dirOk=_dirSel.direccion===dir&&_dirSel.zona===zona;
     if(dirOk) mapa=_dirSel.mapaLink;
   }
+  // Si esta dirección estaba oculta (X roja) y se vuelve a usar en un pedido,
+  // se restaura en "Tus direcciones anteriores".
+  (function(){
+    var c=contactoActual();if(!c)return;
+    var o=dirsOcultas();
+    var k=dirKey({direccion:dir,zona:zona});
+    if(o[c]){var pos=o[c].indexOf(k);if(pos>=0){o[c].splice(pos,1);guardarDirsOcultas(o);}}
+  })();
   var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
   var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
@@ -1507,13 +1517,7 @@ function setPaso(n){
     document.getElementById('f-tel').value=_cli.contacto||'';
     document.getElementById('f-nac').value=_cli.fechaNac||'';
     if(_dirs.length){
-      var dh=_dirs.map(function(d,i){return '<div class="dir-opt'+(i===0?' sel':'')+'" id="dop-'+i+'" onclick="elDir('+i+')"><div class="do-dir">'+esc(d.direccion)+'</div><div class="do-zona">'+esc(d.zona)+'</div></div>';}).join('');
-      document.getElementById('dirs-prev').innerHTML=dh;
-      document.getElementById('dirs-prev-wrap').style.display='block';
-      _dirSel=_dirs[0];
-      document.querySelectorAll('.dir-opt').forEach(function(el){el.classList.remove('sel');});
-      var fd=document.getElementById('dop-0');if(fd)fd.classList.add('sel');
-      document.getElementById('nueva-dir').style.display='none';
+      renderDirsPrev(true);
     }
   }
 }
@@ -1610,6 +1614,96 @@ function obtenerMiUbicacion(){
     function(){showErr('form','No se pudo obtener tu ubicaci\u00f3n. Verifica los permisos en tu navegador.');},
     {enableHighAccuracy:true,timeout:10000}
   );
+}
+// ── UBICACIÓN DEL CLIENTE (botón "Enviar mi ubicación") ──
+// Pide la ubicación real del dispositivo (GPS) y coloca el pin en el punto
+// exacto, con confirmación visual. Si el cliente no autoriza o falla, se
+// mantiene el flujo normal (escribir dirección + elegir zona).
+function enviarMiUbicacion(){
+  if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
+  if(!navigator.geolocation){
+    mostrarAvisoMapa('Tu navegador no soporta geolocalización. Escribí tu dirección y elegí tu zona.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      var lat=pos.coords.latitude,lng=pos.coords.longitude;
+      if(typeof mostrarMapaEnPunto==='function')mostrarMapaEnPunto(lat,lng);
+      avisarUbicacionConfirmada();
+    },
+    function(){
+      mostrarAvisoMapa('No pudimos obtener tu ubicación. Escribí tu dirección y elegí tu zona, o verificá los permisos de ubicación en tu navegador.');
+    },
+    {enableHighAccuracy:true,timeout:12000}
+  );
+}
+function avisarUbicacionConfirmada(){
+  var av=document.getElementById('map-aviso');if(!av)return;
+  av.style.display='block';
+  av.innerHTML='<strong>📍 Usamos tu ubicación.</strong> ¿Va aquí tu pedido? Si no, arrastra el pin al punto exacto.';
+}
+function mostrarAvisoMapa(msg){
+  var av=document.getElementById('map-aviso');if(!av)return;
+  av.style.display='block';
+  av.innerHTML=esc(msg);
+}
+
+// ── ELIMINAR DIRECCIONES ANTERIORES (X roja) ──
+// Las direcciones anteriores salen del historial de pedidos del cliente.
+// La X las oculta y guarda esa preferencia en el navegador (localStorage),
+// así no vuelven a aparecer para ese cliente. Si en el futuro se vuelve a
+// usar esa dirección en un pedido, se restaura sola.
+function dirsActivosArr(){return _dirs.length?_dirs:_dirs_guardados;}
+function dirKey(d){return ((d.direccion||'').trim().toLowerCase()+'|'+(d.zona||'').trim().toLowerCase());}
+function contactoActual(){return String(((_cli||_cli_guardado||{}).contacto||'')).trim();}
+function dirsOcultas(){try{return JSON.parse(localStorage.getItem('nugudu_dirs_ocultas')||'{}')||{};}catch(e){return {};}}
+function guardarDirsOcultas(o){try{localStorage.setItem('nugudu_dirs_ocultas',JSON.stringify(o));}catch(e){}}
+function ocultarDir(d){
+  var c=contactoActual();if(!c)return;
+  var o=dirsOcultas();if(!o[c])o[c]=[];
+  var k=dirKey(d);
+  if(o[c].indexOf(k)<0)o[c].push(k);
+  guardarDirsOcultas(o);
+}
+function dirEstaOculta(d){
+  var c=contactoActual();if(!c)return false;
+  var o=dirsOcultas();return !!(o[c]&&o[c].indexOf(dirKey(d))>=0);
+}
+function arrFiltrado(){return dirsActivosArr().filter(function(d){return !dirEstaOculta(d);});}
+function renderDirsPrev(selFirst){
+  var wrap=document.getElementById('dirs-prev-wrap');
+  var cont=document.getElementById('dirs-prev');
+  if(!wrap||!cont)return;
+  var arr=arrFiltrado();
+  if(arr.length){
+    var html=arr.map(function(d,i){
+      return '<div class="dir-opt'+(i===0&&selFirst?' sel':'')+'" id="dop-'+i+'" onclick="elDir('+i+')">'+
+        '<div class="do-dir">'+esc(d.direccion)+'</div>'+
+        '<div class="do-zona">'+esc(d.zona)+'</div>'+
+        '<button type="button" class="dir-del" onclick="delDir(event,'+i+')" title="Eliminar esta dirección">✕</button>'+
+        '</div>';
+    }).join('');
+    cont.innerHTML=html;
+    wrap.style.display='block';
+    document.getElementById('nueva-dir').style.display='none';
+    if(selFirst){_dirSel=arr[0];var fd=document.getElementById('dop-0');if(fd)fd.classList.add('sel');}
+  }else{
+    cont.innerHTML='';
+    wrap.style.display='none';
+    document.getElementById('nueva-dir').style.display='block';
+  }
+}
+function delDir(ev,i){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  var arr=arrFiltrado();
+  if(!arr[i])return;
+  ocultarDir(arr[i]);
+  var base=dirsActivosArr();
+  for(var j=0;j<base.length;j++){if(base[j]===arr[i]){base.splice(j,1);break;}}
+  _dirSel=null;
+  if(base.length){renderDirsPrev(true);elDir(0);}
+  else{renderDirsPrev(false);}
 }
 // Hooks en el flujo existente — envuelven funciones originales sin alterarlas
 var _goP2Orig=goP2;goP2=function(){_goP2Orig();setTimeout(function(){if(document.getElementById('nueva-dir').style.display!=='none')esperarL();},250);};

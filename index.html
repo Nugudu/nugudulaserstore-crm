@@ -2080,8 +2080,13 @@ function abrirEditarOrden(id){
     // exacto en su momento) -- se geocodifica automaticamente al abrir el
     // modal para completar la caja, pero el campo sigue 100% editable.
     gasCall({method:'POST', body:{action:'geocodificar', direccion:o.direccion, zona:o.zona}}, function(err,res){
-      if(!err && res && res.ok && res.lat && res.lng && document.getElementById('ed-gps')){
-        mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng});
+      if(!err && res && document.getElementById('ed-gps')){
+        // Si la direccion cayo lejos de la zona o no se ubico pero la zona si,
+        // se centra en la zona (misma logica que en Nueva Venta).
+        var coordsEdit = null;
+        if(res.ok && res.lat && res.lng && res.dentro_zona !== false) coordsEdit = {lat:res.lat, lng:res.lng};
+        else if(res.zona_lat && res.zona_lng) coordsEdit = {lat:res.zona_lat, lng:res.zona_lng};
+        if(coordsEdit) mostrarCoordsMapaEdit(coordsEdit);
       }
     });
   }

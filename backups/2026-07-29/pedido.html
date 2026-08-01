@@ -690,15 +690,15 @@ function volverDesdeForm(){
 // ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
 window.addEventListener('DOMContentLoaded',function(){
   _cat=fallback(); _catCargado=true;
+  renderCat();
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok&&d.productos&&d.productos.length) _cat=d.productos;
+      if(d.ok&&d.productos&&d.productos.length){_cat=d.productos;renderCat();}
     }).catch(function(){});
   if(window._wompiReturn) return;
   if(!restaurarSesion()){
     showScreen('s-catalogo');
-    renderCat();
   }
 });
 
@@ -885,10 +885,13 @@ function renderCat(){
     });
     html+='</div>';
   });
-  document.getElementById('cat-wrap').innerHTML=html;
+  _catHTML=html;
   var ci=document.getElementById('cat-inicio-wrap');
-  if(ci)ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');
+  if(ci&&ci.offsetParent!==null){ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');}
+  var cw=document.getElementById('cat-wrap');
+  if(cw&&cw.offsetParent!==null){cw.innerHTML=html;}
 }
+var _catHTML='';
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
 // Construye la lista de archivos a probar, en orden de prioridad:
 // 1) la foto EXACTA del SKU/color (ej. RSV-IKA-GR.png) — la foto real del
@@ -1088,6 +1091,7 @@ function continuarCatalogo(btn){
   if(_cli_guardado&&!_cli){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];setContacto(_cli.contacto||'');}
   if(_cli){
     guardarSesion('s-form',2);
+    renderCat();
     showScreen('s-form');setPaso(2);
   }else{
     showScreen('s-phone');

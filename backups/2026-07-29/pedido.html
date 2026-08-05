@@ -1636,7 +1636,18 @@ function enviarMiUbicacion(){
     mostrarAvisoMapa('Tu navegador no soporta geolocalización. Escribí tu dirección y elegí tu zona.');
     return;
   }
+  if(esNavegadorIntegrado()){
+    mostrarAvisoMapa('Este navegador integrado (WhatsApp, Facebook, Instagram...) no permite compartir la ubicación. Tocá los 3 puntos (⋯) y elegí "Abrir en Safari" o "Abrir en Chrome", o escribí tu dirección y elegí tu zona.');
+  }
   pedirUbicacion(true);
+}
+// Detecta navegadores integrados (WhatsApp, Facebook, Instagram, TikTok, etc.):
+// aunque el permiso esté activado, bloquean la geolocalización del dispositivo.
+function esNavegadorIntegrado(){
+  var ua=(navigator.userAgent||'');
+  if(/FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line|TikTok|Messenger|MicroMessenger/i.test(ua))return true;
+  if(/iPhone|iPad|iPod/i.test(ua)&&window.webkit&&window.webkit.messageHandlers&&Object.keys(window.webkit.messageHandlers).length>0)return true;
+  return false;
 }
 // Pide la ubicación con reintento automático: si falla con alta precisión
 // (GPS fino), reintenta con menor precisión y más tiempo — en interiores o

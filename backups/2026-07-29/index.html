@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nugudú Láser Store — CRM</title>
+<title>Nugudú Store — CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -25,7 +25,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--navy);display:flex;flex-direction:column;z-index:200;overflow-y:auto}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:#160340;display:flex;flex-direction:column;z-index:200;overflow-y:auto}
 .sb-logo{padding:1rem 1.1rem .85rem;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
 .sb-icon{width:34px;height:34px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--navy)}
 .sb-name{font-size:14px;font-weight:700;color:#fff}.sb-sub{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.9px}
@@ -188,7 +188,7 @@ tbody tr:last-child td{border-bottom:none}
   <div style="max-width:420px;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;box-shadow:var(--sh)">
     <div style="text-align:center;margin-bottom:1.5rem">
       <div class="sb-icon" style="width:48px;height:48px;font-size:18px;margin:0 auto .75rem;display:flex;align-items:center;justify-content:center;background:var(--navy);color:#fff;border-radius:12px;font-weight:700">NG</div>
-      <h2 style="font-size:19px">Nugudú Láser Store</h2>
+      <h2 style="font-size:19px">Nugudú Store</h2>
       <p style="font-size:13px;color:var(--muted);margin-top:2px">Elige tu rol para continuar</p>
     </div>
 
@@ -213,7 +213,7 @@ tbody tr:last-child td{border-bottom:none}
 
 <div id="app-shell" style="display:none">
 <nav class="sidebar">
-  <div class="sb-logo"><div class="sb-icon">NG</div><div><div class="sb-name">Nugudú</div><div class="sb-sub">Láser Store · CRM</div></div></div>
+  <div class="sb-logo"><div class="sb-icon">NG</div><div><div class="sb-name">Nugudú</div><div class="sb-sub">Store · CRM</div></div></div>
   <div class="sb-sec">Registro</div>
   <div class="nav active" onclick="go('overview')" id="nav-overview"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
   <div class="nav" onclick="go('nueva')" id="nav-nueva"><i class="fa-solid fa-circle-plus"></i> Nueva Venta <span class="nbadge nb-do">DO</span></div>
@@ -247,7 +247,7 @@ tbody tr:last-child td{border-bottom:none}
       <span style="font-size:10px;color:rgba(255,255,255,.4)" id="gate-usuario-actual"></span>
       <span style="font-size:10px;color:rgba(255,255,255,.5);cursor:pointer;text-decoration:underline" onclick="cerrarSesionGate()">Cambiar usuario</span>
     </div>
-    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:4px">v10.1 · Nugudú Láser Store</div>
+    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:4px">v10.1 · Nugudú Store</div>
   </div>
 </nav>
 
@@ -2189,7 +2189,7 @@ function buscarTrack(){
 // Construye el mensaje de WhatsApp/copiar según el estado.
 // Si el estado es "En empaque" (índice 2), incluye la fecha de entrega estimada.
 function construirMensajeWA(o, est){
-  var base = 'Hola '+o.nombre+', tu pedido '+o.orden+' de Nugudú Láser Store está en: '+ESTADOS[est]+'.';
+  var base = 'Hola '+o.nombre+', tu pedido '+o.orden+' de Nugudú Store está en: '+ESTADOS[est]+'.';
   if (est === 2 && o.fechaEntrega) {
     base += ' Fecha estimada de entrega: '+formatoFechaCorta(o.fechaEntrega)+'.';
   }
@@ -2402,7 +2402,7 @@ function imprimirListaDia(){
     '.foot{margin-top:16px;font-size:11px;color:#9b96b0;text-align:center}' +
     '@media print{body{padding:0}}' +
     '</style></head><body>' +
-    '<div class="brand">Nugudú Láser Store</div>' +
+    '<div class="brand">Nugudú Store</div>' +
     '<div class="ttl">Lista de entregas del día</div>' +
     '<div class="sub">' + hoy + '</div>' +
     '<table><thead><tr><th></th><th>#</th><th>N° Orden</th><th>Cliente</th><th>Dirección / Zona</th><th>Contacto</th></tr></thead><tbody>' + filas + '</tbody></table>' +
@@ -2496,7 +2496,7 @@ function abrirVentanaFicha(o, mapLink){
     '.fecha{display:inline-block;margin-top:10px;font-size:13px;background:#e8f5ee;color:#2e7d52;padding:4px 10px;border-radius:20px;font-weight:600}' +
     '@media print{body{padding:0}}' +
     '</style></head><body>' +
-    '<div class="brand">Nugudú Láser Store</div>' +
+    '<div class="brand">Nugudú Store</div>' +
     '<div class="orden-box"><div class="lbl">N° de orden</div><div class="num">' + esc(o.orden) + '</div></div>' +
     '<div class="nombre">' + esc(o.nombre) + '</div>' +
     '<div class="fila"><b>Dirección:</b><span>' + esc(o.direccion || '') + '</span></div>' +
@@ -2600,7 +2600,7 @@ function exportarClientesPDF(){
   var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   var W=297,gm=13;
   doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Láser Store — Ranking de clientes',gm,9.5);
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Store — Ranking de clientes',gm,9.5);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
   var totalComp = clientes.reduce(function(s,c){return s+c.totalComprado;},0);
   doc.setTextColor(50);doc.setFontSize(9);doc.text('Clientes: '+clientes.length+'   Total comprado: $'+totalComp.toFixed(2),gm,22);
@@ -2745,12 +2745,12 @@ function abrirInv(id){
   var fe=new Date().toLocaleDateString('es-SV',{year:'numeric',month:'long',day:'numeric'});
   var ciTag = o.consumoInterno ? '<span style="display:inline-block;font-size:11px;font-weight:700;background:rgba(255,255,255,.15);color:#fff;padding:3px 10px;border-radius:11px;margin-left:10px;vertical-align:middle">' + _svgGift + ' PATROCINIO / CONSUMO INTERNO</span>' : '';
   var totalLineLabel = o.consumoInterno ? 'TOTAL (sin costo — patrocinio)' : 'TOTAL';
-  document.getElementById('inv-prev-content').innerHTML='<div class="inv-hdr"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem"><div><div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Nugudú'+ciTag+'</div><div style="font-size:11px;opacity:.5;letter-spacing:.8px;margin-top:1px">LÁSER STORE</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:700;letter-spacing:1px;color:var(--gold)">'+invNum+'</div><div style="font-size:10px;opacity:.5;margin-top:3px;letter-spacing:.5px">REGISTRO DE VENTA</div></div></div><div style="display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap"><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Fecha</div><div style="font-size:13px">'+fe+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Orden</div><div style="font-size:13px;font-family:\'DM Mono\',monospace">'+esc(o.orden)+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Pago</div><div style="font-size:13px">'+(o.consumoInterno?'Sin costo':esc(o.pago||'Transferencia'))+'</div></div></div></div><div class="inv-body"><div class="inv-parties"><div><div class="inv-pt">Emitido por</div><div class="inv-pv"><strong>Nugudú Láser Store</strong><br>El Salvador<br>Vendedor: '+esc(o.vendedor)+'</div></div><div><div class="inv-pt">Registrado a</div><div class="inv-pv"><strong>'+esc(o.nombre)+'</strong><br>'+esc(o.contacto)+'<br>'+esc(o.direccion||'')+'</div></div><div><div class="inv-pt">Envío</div><div class="inv-pv"><strong>'+esc(o.zona)+'</strong><br>'+(o.notas?esc(o.notas):'Sin notas')+'</div></div></div><table class="inv-tbl"><thead><tr><th>SKU(s)</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">P.Unit</th><th style="text-align:right">Total</th></tr></thead><tbody><tr><td style="font-family:\'DM Mono\',monospace;font-size:12px">'+(o.productos||[]).join(', ')+'</td><td>Producto(s) Nugudú Láser Store</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:700">$'+total+'</td></tr></tbody></table><div class="inv-totals"><div class="itr"><span class="l">Subtotal</span><span class="v">$'+total+'</span></div><div class="itr"><span class="l">Envío</span><span class="v" style="color:var(--green)">Incluido</span></div><div class="itr grand"><span class="l">'+totalLineLabel+'</span><span class="v" style="'+(o.consumoInterno?'color:#6d28d9':'')+'">$'+total+'</span></div></div><div class="inv-fnote">'+(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso ' + _svgGift:'¡Gracias por tu compra en Nugudú Láser Store! ' + _svgHeart)+'</div></div>';
+  document.getElementById('inv-prev-content').innerHTML='<div class="inv-hdr"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem"><div><div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Nugudú'+ciTag+'</div><div style="font-size:11px;opacity:.5;letter-spacing:.8px;margin-top:1px">STORE</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:700;letter-spacing:1px;color:var(--gold)">'+invNum+'</div><div style="font-size:10px;opacity:.5;margin-top:3px;letter-spacing:.5px">REGISTRO DE VENTA</div></div></div><div style="display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap"><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Fecha</div><div style="font-size:13px">'+fe+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Orden</div><div style="font-size:13px;font-family:\'DM Mono\',monospace">'+esc(o.orden)+'</div></div><div><div style="font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Pago</div><div style="font-size:13px">'+(o.consumoInterno?'Sin costo':esc(o.pago||'Transferencia'))+'</div></div></div></div><div class="inv-body"><div class="inv-parties"><div><div class="inv-pt">Emitido por</div><div class="inv-pv"><strong>Nugudú Store</strong><br>El Salvador<br>Vendedor: '+esc(o.vendedor)+'</div></div><div><div class="inv-pt">Registrado a</div><div class="inv-pv"><strong>'+esc(o.nombre)+'</strong><br>'+esc(o.contacto)+'<br>'+esc(o.direccion||'')+'</div></div><div><div class="inv-pt">Envío</div><div class="inv-pv"><strong>'+esc(o.zona)+'</strong><br>'+(o.notas?esc(o.notas):'Sin notas')+'</div></div></div><table class="inv-tbl"><thead><tr><th>SKU(s)</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:right">P.Unit</th><th style="text-align:right">Total</th></tr></thead><tbody><tr><td style="font-family:\'DM Mono\',monospace;font-size:12px">'+(o.productos||[]).join(', ')+'</td><td>Producto(s) Nugudú Store</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:700">$'+total+'</td></tr></tbody></table><div class="inv-totals"><div class="itr"><span class="l">Subtotal</span><span class="v">$'+total+'</span></div><div class="itr"><span class="l">Envío</span><span class="v" style="color:var(--green)">Incluido</span></div><div class="itr grand"><span class="l">'+totalLineLabel+'</span><span class="v" style="'+(o.consumoInterno?'color:#6d28d9':'')+'">$'+total+'</span></div></div><div class="inv-fnote">'+(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso ' + _svgGift:'¡Gracias por tu compra en Nugudú Store! ' + _svgHeart)+'</div></div>';
   var waNum=o.contacto.replace(/\D/g,'');
   var waMsg = o.consumoInterno
     ? encodeURIComponent('Hola '+o.nombre+', registro de patrocinio/consumo interno de Nugudú:\nRegistro '+invNum+' | Orden: '+o.orden+'\nSKU: '+(o.productos||[]).join(', ')+' x '+(o.cantidad||1)+'\nValor patrocinado: $'+total+' (sin costo)\nZona: '+o.zona+'\nGracias.')
     : encodeURIComponent('Hola '+o.nombre+', tu registro de venta de Nugudú:\nRegistro '+invNum+' | Orden: '+o.orden+'\nSKU: '+(o.productos||[]).join(', ')+' x '+(o.cantidad||1)+'\nPrecio unitario: $'+(o.precio||0).toFixed(2)+' | TOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+' | Zona: '+o.zona+'\nGracias por tu compra.');
-  var eSubj=encodeURIComponent((o.consumoInterno?'Registro de patrocinio ':'Registro de venta ')+invNum+' — Nugudú Láser Store');
+  var eSubj=encodeURIComponent((o.consumoInterno?'Registro de patrocinio ':'Registro de venta ')+invNum+' — Nugudú Store');
   var eBody = o.consumoInterno
     ? encodeURIComponent('Hola '+o.nombre+',\n\nRegistro: '+invNum+'\nOrden: '+o.orden+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+'\nValor patrocinado: $'+total+' (sin costo)\nZona: '+o.zona+'\n\nGracias.')
     : encodeURIComponent('Hola '+o.nombre+',\n\nRegistro: '+invNum+'\nOrden: '+o.orden+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+'\nPrecio unit.: $'+(o.precio||0).toFixed(2)+'\nTOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+'\nZona: '+o.zona+'\n\nGracias por tu compra.');
@@ -2796,7 +2796,7 @@ function generarPdfRegistroVenta(o, fotoUrl, natW, natH){
   doc.setFillColor(45,36,96);doc.rect(0,0,W,46,'F');
   doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(255);doc.text('Nugudú',gm,19);
   if (o.consumoInterno) { doc.setFontSize(9);doc.setTextColor(245,166,35);doc.text('PATROCINIO / CONSUMO INTERNO',gm+38,19); }
-  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,175,210);doc.text('LÁSER STORE',gm,25);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,175,210);doc.text('STORE',gm,25);
   doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(245,166,35);doc.text(invNum,W-gm,19,{align:'right'});
   doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,175,210);doc.text('REGISTRO DE VENTA',W-gm,25,{align:'right'});
   doc.setFontSize(8);doc.text('Fecha: '+fe,gm,36);doc.text('Orden: '+o.orden,gm+65,36);doc.text('Pago: '+(o.consumoInterno?'Sin costo':(o.pago||'Transferencia')),gm+130,36);
@@ -2818,7 +2818,7 @@ function generarPdfRegistroVenta(o, fotoUrl, natW, natH){
   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(107,101,133);
   doc.text('EMITIDO POR',gm+3,y);doc.text('REGISTRADO A',W/2+2,y);doc.text('ENVÍO',W*0.72+2,y);
   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(24,21,46);
-  doc.text('Nugudú Láser Store',gm+3,y+7);doc.text('El Salvador',gm+3,y+13);doc.text('Vendedor: '+o.vendedor,gm+3,y+19);
+  doc.text('Nugudú Store',gm+3,y+7);doc.text('El Salvador',gm+3,y+13);doc.text('Vendedor: '+o.vendedor,gm+3,y+19);
   doc.text(o.nombre,W/2+2,y+7);doc.text(o.contacto.slice(0,22),W/2+2,y+13);doc.text((o.direccion||'').slice(0,22),W/2+2,y+19);
   doc.text(o.zona,W*0.72+2,y+7);doc.text((o.notas||'Sin notas').slice(0,20),W*0.72+2,y+13);
   y+=38;doc.setFillColor(45,36,96);doc.rect(gm,y,W-gm*2,7,'F');
@@ -2826,7 +2826,7 @@ function generarPdfRegistroVenta(o, fotoUrl, natW, natH){
   doc.text('SKU(s)',gm+2,y+5);doc.text('Descripción',gm+38,y+5);doc.text('Cant.',gm+102,y+5);doc.text('P.Unit',gm+118,y+5);doc.text('Total',W-gm-2,y+5,{align:'right'});
   y+=7;doc.setFillColor(248,248,252);doc.rect(gm,y,W-gm*2,9,'F');
   doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(24,21,46);
-  doc.text(((o.productos||[]).join(',')|| '-').slice(0,22),gm+2,y+6);doc.text('Producto(s) Nugudú Láser Store',gm+38,y+6);
+  doc.text(((o.productos||[]).join(',')|| '-').slice(0,22),gm+2,y+6);doc.text('Producto(s) Nugudú Store',gm+38,y+6);
   doc.text(String(o.cantidad||1),gm+104,y+6);doc.text('$'+(o.precio||0).toFixed(2),gm+118,y+6);
   doc.setFont('helvetica','bold');doc.text('$'+total.toFixed(2),W-gm-2,y+6,{align:'right'});
   y+=16;doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(107,101,133);
@@ -2838,13 +2838,13 @@ function generarPdfRegistroVenta(o, fotoUrl, natW, natH){
   else { doc.setTextColor(45,36,96); doc.text('TOTAL:',W-gm-42,y,{align:'right'}); }
   doc.text('$'+total.toFixed(2),W-gm,y,{align:'right'});y+=14;
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(160,155,186);
-  doc.text(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso':'Gracias por tu compra en Nugudú Láser Store',W/2,y,{align:'center'});
+  doc.text(o.consumoInterno?'Pedido de patrocinio / consumo interno — no representa un ingreso':'Gracias por tu compra en Nugudú Store',W/2,y,{align:'center'});
   doc.save('registro_venta_'+invNum+'.pdf');
 }
 function cpInv(id){
   var o=getOrd().filter(function(x){return x.id===id;})[0]; if(!o)return;
   var total=((o.precio||0)*(o.cantidad||1)).toFixed(2), invNum='RV-'+String(o.id).slice(-6);
-  var txt='REGISTRO DE VENTA — NUGUDÚ LÁSER STORE\nN° '+invNum+' | Orden: '+o.orden+'\nFecha: '+new Date().toLocaleDateString('es-SV')+'\nCliente: '+o.nombre+' | '+o.contacto+'\nDirección: '+(o.direccion||'')+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+' | P.Unit: $'+(o.precio||0).toFixed(2)+'\nTOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+' · Zona: '+o.zona+'\n¡Gracias por tu compra! \u2665';
+  var txt='REGISTRO DE VENTA — NUGUDÚ STORE\nN° '+invNum+' | Orden: '+o.orden+'\nFecha: '+new Date().toLocaleDateString('es-SV')+'\nCliente: '+o.nombre+' | '+o.contacto+'\nDirección: '+(o.direccion||'')+'\nSKU(s): '+(o.productos||[]).join(', ')+'\nCantidad: '+(o.cantidad||1)+' | P.Unit: $'+(o.precio||0).toFixed(2)+'\nTOTAL: $'+total+'\nPago: '+(o.pago||'Transferencia')+' · Zona: '+o.zona+'\n¡Gracias por tu compra! \u2665';
   navigator.clipboard.writeText(txt).then(function(){alert('Copiado \u2713');}).catch(function(){alert(txt);});
 }
 
@@ -2877,7 +2877,7 @@ function generarPdfReporte(o, data, fotos){
   var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   var W=297,gm=13;
   doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Láser Store — Reporte CRM',gm,9.5);
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Store — Reporte CRM',gm,9.5);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
   var ent=o.filter(function(x){return parseInt(x.estado)===4;}).length;
   var rev=o.reduce(function(s,x){return s+(x.precio||0)*(x.cantidad||1);},0);
@@ -2994,7 +2994,7 @@ function generarPdfReporteSku(data, sku, foto){
   var jP=window.jspdf; var doc=new jP.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   var W=297,gm=13;
   doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
-  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Láser Store — Reporte por SKU',gm,9.5);
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Store — Reporte por SKU',gm,9.5);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
   var rev=data.reduce(function(s,x){return s+(x.precio||0)*(x.cantidad||1);},0);
   doc.setTextColor(50);doc.setFontSize(9);doc.text('SKU: '+sku+'   Órdenes: '+data.length+'   Ingresos: $'+rev.toFixed(2),gm,22);

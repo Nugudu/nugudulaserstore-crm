@@ -658,7 +658,7 @@ function notificarPedidoNuevo(orden) {
     var total     = orden.total != null ? orden.total : (orden.precio || 0) * (orden.cantidad || 1);
     var asunto = 'Nuevo pedido - ' + orden.orden;
     var cuerpo =
-      'Ha llegado un nuevo pedido a Nugudu Laser Store.\n\n' +
+      'Ha llegado un nuevo pedido a Nugudu Store.\n\n' +
       'Orden: '      + orden.orden + '\n' +
       'Cliente: '    + (orden.nombre   || '-') + '\n' +
       'Contacto: '   + (orden.contacto || '-') + '\n' +
@@ -672,7 +672,7 @@ function notificarPedidoNuevo(orden) {
       '\nRevisa el CRM para mas detalles.';
     var cuerpoHtml =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.6;max-width:480px">' +
-      '<p>Ha llegado un nuevo pedido a <b>Nugudu Laser Store</b>.</p>' +
+      '<p>Ha llegado un nuevo pedido a <b>Nugudu Store</b>.</p>' +
       '<p>' +
         '<b>Orden:</b> ' + escHtml(orden.orden) + '<br>' +
         '<b>Cliente:</b> ' + escHtml(orden.nombre || '-') + '<br>' +

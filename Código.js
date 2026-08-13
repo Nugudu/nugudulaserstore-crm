@@ -64,6 +64,11 @@ function doGet(e) {
     var p = (e && e.parameter) || {};
     if (p.token !== API_TOKEN) return respond({ ok: false, error: 'No autorizado' });
     var action = p.action || 'read';
+    // "Ping" de calentamiento: pedido.html lo llama en background para que la
+    // instancia de Apps Script no se enfrie y la busqueda de telefono/orden
+    // (o el boton Continuar de Mi Diseno) responda instantaneo, sin el
+    // arranque en frio de 2-3 segundos.
+    if (action === 'ping')         return respond({ ok: true });
     if (action === 'read')          return respond(leerOrdenes());
     if (action === 'sync')          return respond(conLock(sincronizar));
     if (action === 'catalogo')      return respond(leerCatalogo());

@@ -72,6 +72,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12)}
 .p-precio{font-size:15px;font-weight:700;color:var(--navy)}
 .p-stock{font-size:10px;margin-top:2px}
+.p-share{position:absolute;right:8px;bottom:9px;width:22px;height:22px;color:var(--hint);background:#fff;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:3;transition:color .15s,border-color .15s}
+.p-share:hover{color:var(--navy);border-color:var(--navy)}
+#rn-aviso{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1f1a3d;color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:30px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:9999;display:none;max-width:84vw;text-align:center}
 .sok{color:var(--green)}.slow{color:var(--amber)}.sno{color:var(--coral)}
 .pcheck{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(45,36,96,.35)}
 .prod-card.sel .pcheck{display:flex}
@@ -706,8 +709,60 @@ function warmGAS(){
 window.addEventListener('focusin',function(){warmGAS();});
 setInterval(function(){if(!document.hidden)warmGAS();},60000);
 
+// ── COMPARTIR PRODUCTO: icono limpio por tarjeta → enlace directo ?p=SKU ──
+var _svgShare='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
+function compartirProducto(sku){
+  var v=_cat.find(function(p){return p.sku===sku;});
+  var nom=v?v.nombre:sku;
+  var txt=esc(nom)+' de Nugudú Store';
+  var url=window.location.href.split('?')[0]+'?p='+encodeURIComponent(sku);
+  if(navigator.share){
+    navigator.share({title:nom,text:txt,url:url}).catch(function(e){
+      if(e&&e.name==='AbortError')return;
+      copiarEnlace(url);
+      mostrarAvisoLink('Enlace copiado ✓');
+    });
+  }else{
+    copiarEnlace(url);
+    mostrarAvisoLink('Enlace copiado ✓');
+  }
+}
+function copiarEnlace(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).catch(function(){legacyCopy(t);});
+  }else{legacyCopy(t);}
+}
+function legacyCopy(t){
+  var ta=document.createElement('textarea');
+  ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  document.body.removeChild(ta);
+}
+function mostrarAvisoLink(msg){
+  var av=document.getElementById('rn-aviso');
+  if(!av){av=document.createElement('div');av.id='rn-aviso';document.body.appendChild(av);}
+  av.textContent=msg;av.style.display='block';
+  clearTimeout(av._tm);av._tm=setTimeout(function(){av.style.display='none';},2000);
+}
+// Enlace directo: si la URL trae ?p=SKU, abre ESO producto (foto + color) al
+// llegar, sin buscar en el catalogo. Se queda pendiente hasta que haya datos.
+var _pendienteSku='';
+function abrirSkuPendiente(){
+  if(!_pendienteSku) return;
+  var v=_cat.find(function(p){return p.sku===_pendienteSku;});
+  if(!v) return;
+  _pendienteSku='';
+  showScreen('s-catalogo');
+  renderCat();
+  elDisInicio(encodeId(v.nombre));
+  elColInicio(v.sku);
+}
+
 // ── INIT: caché local al instante + GAS refresca en background (sin bloqueo) ──
 window.addEventListener('DOMContentLoaded',function(){
+  var q=window.location.search.match(/[?&]p=([^&]+)/);
+  if(q) _pendienteSku=decodeURIComponent(q[1]);
   var cache=cargarCatalogoCache();
   _cat=(cache&&cache.length)?cache:fallback(); _catCargado=true;
   var firmaInicial=firmaCatalogo(_cat);
@@ -719,12 +774,14 @@ window.addEventListener('DOMContentLoaded',function(){
         guardarCatalogoCache(d.productos);
         renderCat();
       }
+      abrirSkuPendiente();
     }).catch(function(){});
   if(window._wompiReturn) return;
   if(!restaurarSesion()){
     showScreen('s-catalogo');
     renderCat();
   }
+  abrirSkuPendiente();
 });
 
 function fallback(){
@@ -905,6 +962,7 @@ function renderCat(){
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
       html+='<div class="p-dots">'+dots+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
+      html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
       if(agot)html+='<div class="p-stock sno">✗ Agotado</div>';
       html+='</div>';
     });

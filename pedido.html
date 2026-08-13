@@ -642,7 +642,7 @@ function flushEvents(){
 window.addEventListener('beforeunload',function(){if(_eventQueue.length)flushEvents();});
 
 var SESSION_KEY='ngd_pedido_v1';
-// Catálogo siempre fresco de Sheets — sin caché local
+// Catálogo: caché local (instantáneo en visitas repetidas) + siempre refrescado de Sheets en background
 
 // ── SESIÓN: persiste entre refrescos, se borra solo al presionar Salir ──
 function guardarSesion(s,paso){
@@ -687,13 +687,25 @@ function volverDesdeForm(){
   if(_cli){guardarSesion('s-cliente');mostrarPantallaCliente(_cli);}else{salir();}
 }
 
-// ── INIT: catálogo siempre fresco de GAS, fallback instantáneo mientras carga ──
+// ── CACHÉ DEL CATÁLOGO: instantáneo en visitas repetidas, siempre fresco ──
+var CACHE_KEY='ngd_cat_v1';
+function cargarCatalogoCache(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'null');}catch(e){return null;}}
+function guardarCatalogoCache(c){try{localStorage.setItem(CACHE_KEY,JSON.stringify(c));}catch(e){}}
+function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock;}return s;}
+
+// ── INIT: caché local al instante + GAS refresca en background (sin bloqueo) ──
 window.addEventListener('DOMContentLoaded',function(){
-  _cat=fallback(); _catCargado=true;
+  var cache=cargarCatalogoCache();
+  _cat=(cache&&cache.length)?cache:fallback(); _catCargado=true;
+  var firmaInicial=firmaCatalogo(_cat);
   fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok&&d.productos&&d.productos.length) _cat=d.productos;
+      if(d.ok&&d.productos&&d.productos.length&&firmaCatalogo(d.productos)!==firmaInicial){
+        _cat=d.productos;
+        guardarCatalogoCache(d.productos);
+        renderCat();
+      }
     }).catch(function(){});
   if(window._wompiReturn) return;
   if(!restaurarSesion()){
@@ -876,7 +888,7 @@ function renderCat(){
       var candAttr=JSON.stringify(candidatos).replace(/'/g,'&#39;');
       html+='<div class="prod-card'+(agot?' agotado':'')+'" id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
       html+='<div class="pcheck">✓</div>';
-      html+='<img class="p-foto" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
+      html+='<img class="p-foto" loading="lazy" decoding="async" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
       html+='<div class="p-dots">'+dots+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
@@ -894,11 +906,11 @@ function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
 // 1) la foto EXACTA del SKU/color (ej. RSV-IKA-GR.png) — la foto real del
 //    producto terminado (gorra + parche), la mas fiel a lo que se va a llevar.
 // 2) si esa no existe, el dibujo generico del diseno (ej. ikal.png) como respaldo.
-// .png va primero porque son los archivos que ya subiste.
+// .jpg va primero (versiones livianas), .png como respaldo, .webp por si agregas.
 function candidatosFoto(sku,nombreDiseno){
   var codigoSku=(sku||'').split('-')[1]||'';
   var slugDiseno=DISENO_SLUG[codigoSku]||(nombreDiseno||'').toLowerCase().replace(/[^a-z0-9]/g,'');
-  var exts=['png','jpg','webp'],out=[];
+  var exts=['jpg','png','webp'],out=[];
   exts.forEach(function(e){ if(sku) out.push(sku+'.'+e); });
   exts.forEach(function(e){ if(slugDiseno) out.push(slugDiseno+'.'+e); });
   return out;

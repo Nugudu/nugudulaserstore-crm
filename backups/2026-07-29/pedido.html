@@ -693,6 +693,19 @@ function cargarCatalogoCache(){try{return JSON.parse(localStorage.getItem(CACHE_
 function guardarCatalogoCache(c){try{localStorage.setItem(CACHE_KEY,JSON.stringify(c));}catch(e){}}
 function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock;}return s;}
 
+// ── WARM-UP DE GAS: evita el arranque en frio (2-3s) en busquedas pedido/Mi
+// Diseno. Un ping barato mantiene la instancia caliente mientras la pagina
+// esta abierta. No toca ninguna logica existente; solo despierta el script.
+var _ultimaWarm=0;
+function warmGAS(){
+  var t=Date.now();
+  if(t-_ultimaWarm<20000) return;
+  _ultimaWarm=t;
+  fetch(GAS+'?action=ping&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
+}
+window.addEventListener('focusin',function(){warmGAS();});
+setInterval(function(){if(!document.hidden)warmGAS();},60000);
+
 // ── INIT: caché local al instante + GAS refresca en background (sin bloqueo) ──
 window.addEventListener('DOMContentLoaded',function(){
   var cache=cargarCatalogoCache();

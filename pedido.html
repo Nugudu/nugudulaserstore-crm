@@ -39,6 +39,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .nac-btn{display:inline-block;font-size:11px;font-weight:600;color:var(--teal);cursor:pointer;margin-left:6px;transition:color .15s}.nac-btn:hover{color:#158a7d}
 .step-line{height:2px;flex:1;background:var(--border);margin-bottom:14px;transition:background .2s}
 .step-line.done{background:var(--teal)}
+.step.clickable{cursor:pointer}
+.step.clickable .step-d:hover{transform:scale(1.08);border-color:var(--navy)}
+.step.clickable .step-l{color:var(--muted)}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
 .card-ttl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
 .phone-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:30px 20px;text-align:center;box-shadow:0 1px 5px rgba(45,36,96,.06)}
@@ -229,6 +232,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <span style="font-size:12px;color:var(--hint);margin:0 4px">|</span>
       <a href="#" onclick="mostrarMiDiseno();return false" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:1px">Mi diseño →</a>
     </div>
+    <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
+      Contacta con nuestro equipo al: <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a>
+    </div>
   </div>
 </div>
 
@@ -292,11 +298,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <div class="screen" id="s-form">
   <div style="display:flex;justify-content:space-between;padding:6px 0 2px"><button onclick="volverDesdeForm()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">← Volver</button><button onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
   <div class="steps" id="steps">
-    <div class="step"><div class="step-d act" id="sd1">1</div><div class="step-l act" id="sl1">Producto</div></div>
+    <div class="step" id="step1" onclick="irAPaso(1)"><div class="step-d act" id="sd1">1</div><div class="step-l act" id="sl1">Producto</div></div>
     <div class="step-line" id="sl-1"></div>
-    <div class="step"><div class="step-d" id="sd2">2</div><div class="step-l" id="sl2">Mis datos</div></div>
+    <div class="step" id="step2" onclick="irAPaso(2)"><div class="step-d" id="sd2">2</div><div class="step-l" id="sl2">Mis datos</div></div>
     <div class="step-line" id="sl-2"></div>
-    <div class="step"><div class="step-d" id="sd3">3</div><div class="step-l" id="sl3">Pago</div></div>
+    <div class="step" id="step3" onclick="irAPaso(3)"><div class="step-d" id="sd3">3</div><div class="step-l" id="sl3">Pago</div></div>
     <div class="step-line" id="sl-3"></div>
     <div class="step" id="step4-wrap"><div class="step-d" id="sd4">4</div><div class="step-l" id="sl4">Transferencia</div></div>
     <div class="step-line" id="sl-4"></div>
@@ -1656,6 +1662,8 @@ function nuevoP(){
 
 // ── NAVEGACIÓN ──
 function setPaso(n){
+  if(typeof _pasoMax==='undefined')_pasoMax=1;
+  if(n>_pasoMax)_pasoMax=n;
   var maxPaso=_metodoPago==='tarjeta'?4:5;
   [1,2,3,4,5].forEach(function(i){
     var d=document.getElementById('sd'+i);if(!d)return;
@@ -1668,6 +1676,11 @@ function setPaso(n){
       var ln=document.getElementById('sl-'+i);
       if(ln){if(i<n)ln.classList.add('done');else ln.classList.remove('done');}
     }
+  });
+  // Pasos 1-3 navegables: retroceder siempre, avanzar solo a pasos ya visitados.
+  [1,2,3].forEach(function(i){
+    var s=document.getElementById('step'+i);if(!s)return;
+    s.classList.toggle('clickable',i<=_pasoMax);
   });
   document.getElementById('p1').style.display=n===1?'block':'none';
   document.getElementById('p2').style.display=n===2?'block':'none';
@@ -1683,6 +1696,21 @@ function setPaso(n){
   }
 }
 function goP1(){setPaso(1);window.scrollTo({top:0,behavior:'auto'});}
+// Navegación tocando los círculos de paso (1, 2, 3): retroceder siempre;
+// avanzar solo hasta el paso más alto ya visitado (_pasoMax), para que nadie
+// salte al pago sin haber llenado datos.
+function getPasoActual(){
+  for(var i=1;i<=5;i++){var el=document.getElementById('p'+i);if(el&&el.style.display==='block')return i;}
+  return 1;
+}
+function irAPaso(n){
+  var actual=getPasoActual();
+  if(n===actual||n<1||n>3)return;
+  if(n>_pasoMax)return;
+  if(n===1){goP1();return;}
+  if(n===2){if(actual>2){editarDatosPaso2();}else{goP2();}return;}
+  goP3();
+}
 function showScreen(id){
   ['s-catalogo','s-phone','s-cliente','s-form','s-exito','s-midiseno'].forEach(function(sid){
     var el=document.getElementById(sid);if(el)el.style.display='none';

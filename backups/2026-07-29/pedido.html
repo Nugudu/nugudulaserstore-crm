@@ -105,6 +105,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .do-zona{font-size:11px;color:var(--muted);margin-top:2px}
 .btn-ndir{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--rs);color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px}
 .map-mini{margin-top:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);display:none!important}/* oculto a pedido de Nuria hasta nuevo aviso -- !important para que ningun JS lo pueda mostrar mientras tanto, sin tocar esa logica */
+#leaflet-map-wrap{display:none!important}/* idem: el mapa interactivo no aparece ante el cliente (friccion); reversible quitando esta linea */
+#map-aviso{display:none!important}/* aviso del mapa: sin mapa visible no aplica */
 .map-mini iframe{display:block;width:100%;height:200px;border:0}
 .map-mini .hint-mapa{display:block;font-size:11px;color:var(--hint);padding:6px 8px;background:var(--bg)}
 .res-fila{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)}

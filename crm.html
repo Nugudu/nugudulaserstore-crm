@@ -1660,6 +1660,14 @@ function linkMapaDesdeDireccion(direccionTexto, zona){
   var query = encodeURIComponent(direccionTexto + (zona ? ', ' + zona : '') + ', El Salvador');
   return 'https://www.openstreetmap.org/search?query=' + query;
 }
+// Link de TEXTO para el QR de la ficha de entrega (solo lo escanea el repartidor):
+// abre Google Maps con la direccion escrita por el cliente. Sin coordenadas ni
+// geocoding — el texto viaja dentro del enlace y Google Maps lo ubica al escanear.
+function linkMapaTextoQR(direccionTexto, zona){
+  if (!direccionTexto) return '';
+  var query = encodeURIComponent(direccionTexto + (zona ? ', ' + zona : '') + ', El Salvador');
+  return 'https://www.google.com/maps/search/?api=1&query=' + query;
+}
 
 // CLIENTES RECURRENTES — el dashboard ya es una base de datos de órdenes;
 // aprovechamos ese historial para reconocer clientes sin necesitar una
@@ -2421,7 +2429,7 @@ function imprimirFichaQR(id){
   var actual = (o.direccion||'').trim().toLowerCase();
   var alternas = dirs.filter(function(d){ return (d.direccion||'').trim().toLowerCase() !== actual; });
   if (alternas.length === 0) {
-    abrirVentanaFicha(o, o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona));
+    abrirVentanaFicha(o, linkMapaTextoQR(o.direccion, o.zona) || o.mapaLink);
     return;
   }
   mostrarModalDireccion(o, dirs);
@@ -2429,7 +2437,7 @@ function imprimirFichaQR(id){
 
 function mostrarModalDireccion(o, dirs){
   var overlay = document.getElementById('modal-direccion-overlay');
-  var opciones = [{ direccion:o.direccion, zona:o.zona, mapaLink:o.mapaLink || linkMapaDesdeDireccion(o.direccion,o.zona), esActual:true }]
+  var opciones = [{ direccion:o.direccion, zona:o.zona, mapaLink:linkMapaTextoQR(o.direccion,o.zona) || o.mapaLink, esActual:true }]
     .concat(dirs.filter(function(d){ return (d.direccion||'').trim().toLowerCase() !== (o.direccion||'').trim().toLowerCase(); }));
   var html = '<div style="background:#fff;border-radius:var(--r);max-width:420px;width:90%;padding:1.4rem;box-shadow:0 12px 40px rgba(0,0,0,.25)">' +
     '<h3 style="font-size:16px;margin-bottom:4px">¿Qué dirección usar para el QR?</h3>' +
@@ -2467,7 +2475,7 @@ function confirmarDireccionImpresion(id){
   var idx = sel ? parseInt(sel.value) : 0;
   var elegida = window._modalOpciones[idx];
   cerrarModalDireccion();
-  abrirVentanaFicha(o, elegida.mapaLink || linkMapaDesdeDireccion(elegida.direccion, elegida.zona));
+  abrirVentanaFicha(o, linkMapaTextoQR(elegida.direccion, elegida.zona) || elegida.mapaLink);
 }
 
 function abrirVentanaFicha(o, mapLink){

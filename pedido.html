@@ -353,6 +353,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
             <input id="f-dir" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDirInp()" style="flex:1">
             <button type="button" onclick="fijarDireccion()" style="padding:0 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap;display:none" title="Fijar ubicacion">Fijar</button>
           </div>
+          <span class="hint" style="margin-top:4px">O escribe la dirección a la que deseas enviar la orden.</span>
         </div>
         <div class="fg">
           <label>Zona de envío *</label>
@@ -429,7 +430,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     </div>
 
     <button class="btn-main" id="btn-conf" onclick="confirmarPedido()">Continuar →</button>
-    <button class="btn-sec" onclick="goP2()">← Editar mis datos</button>
+    <button class="btn-sec" onclick="editarDatosPaso2()">← Editar mis datos</button>
   </div>
 
   <!-- P4: Datos bancarios (solo para transferencia) -->
@@ -1251,6 +1252,17 @@ function goP2(btn){
   }else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
   setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'auto'});
 }
+// "← Editar mis datos" (paso 3): vuelve al paso 2 sin exigir carrito lleno.
+// goP2() valida el carrito y se quedaba mudo si el cliente volvía tras un
+// refresco en el paso 3 (donde el carrito ya no está en memoria).
+function editarDatosPaso2(){
+  hideErr('form');
+  var cliActivo=_cli||_cli_guardado;
+  var dirsActivo=_dirs.length?_dirs:_dirs_guardados;
+  if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';document.getElementById('f-nac').value=cliActivo.fechaNac||'';}
+  if(dirsActivo.length>0){renderDirsPrev(true);elDir(0);}else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
+  setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'auto'});
+}
 function elDir(i){
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
   var dirsActivo2=arrFiltrado();
@@ -1737,6 +1749,7 @@ function obtenerMiUbicacion(){
 // mantiene el flujo normal (escribir dirección + elegir zona).
 function enviarMiUbicacion(){
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
+  if(_ubicando)return;
   if(!navigator.geolocation){
     mostrarAvisoMapa('Tu navegador no soporta geolocalización. Escribí tu dirección y elegí tu zona.');
     return;
@@ -1754,36 +1767,66 @@ function esNavegadorIntegrado(){
   if(/iPhone|iPad|iPod/i.test(ua)&&window.webkit&&window.webkit.messageHandlers&&Object.keys(window.webkit.messageHandlers).length>0)return true;
   return false;
 }
-// Pide la ubicación con reintento automático: si falla con alta precisión
-// (GPS fino), reintenta con menor precisión y más tiempo — en interiores o
-// con señal débil algunos equipos solo responden al segundo intento. Si el
-// error es de PERMISOS (código 1) no reintenta, porque no ayudaría.
+// Estado visual del botón "Compartir mi ubicación actual": al primer toque
+// muestra "Buscando tu ubicación…" con spinner para que se note que reaccionó,
+// y se restaura al terminar (éxito o error). Evita toques dobles.
+var _ubicando=false;
+function setBtnUbicacionEstado(activo){
+  var btn=document.getElementById('btn-mi-ubicacion-web');
+  if(!btn)return;
+  if(activo){
+    if(!btn.getAttribute('data-html'))btn.setAttribute('data-html',btn.innerHTML);
+    btn.disabled=true;
+    btn.style.opacity=.75;
+    btn.style.cursor='default';
+    btn.innerHTML='<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></span> Buscando tu ubicación…';
+  }else{
+    btn.disabled=false;
+    btn.style.opacity='';
+    btn.style.cursor='';
+    if(btn.getAttribute('data-html'))btn.innerHTML=btn.getAttribute('data-html');
+  }
+}
+// Pide la ubicación con respuesta al PRIMER toque: intenta con alta precisión
+// (GPS fino) y, si falla sin ser por permisos, reintenta al instante con menor
+// precisión y una caché reciente (máx. 30s) — en interiores o con señal débil
+// algunos equipos solo responden al segundo intento. Siempre devuelve el botón
+// a su estado normal. Si el error es de PERMISOS (código 1) no reintenta.
 function pedirUbicacion(altaPrecision){
-  navigator.geolocation.getCurrentPosition(
-    function(pos){
-      var lat=pos.coords.latitude,lng=pos.coords.longitude;
-      if(typeof mostrarMapaEnPunto==='function')mostrarMapaEnPunto(lat,lng);
-      avisarUbicacionConfirmada();
-      autocompletarDireccionDesdeGps(lat,lng);
-    },
-    function(err){
-      var codigo = err && typeof err.code==='number' ? err.code : 0;
-      if(altaPrecision && codigo !== 1){
-        setTimeout(function(){pedirUbicacion(false);},300);
-        return;
-      }
-      var msg;
-      if(codigo===1 || codigo===0){
-        msg='No se pudo acceder a tu ubicación por permisos. Activá la ubicación en los ajustes del navegador (Ubicación: permitir) y probá de nuevo, o escribí tu dirección y elegí tu zona.';
-      }else if(codigo===2){
-        msg='Tu dispositivo no pudo obtener la señal GPS. Activá la ubicación/GPS del dispositivo, salí a un lugar abierto y probá de nuevo, o escribí tu dirección y elegí tu zona.';
-      }else{
-        msg='Tardó demasiado en obtener tu ubicación. Verificá que el GPS esté activo y probá de nuevo, o escribí tu dirección y elegí tu zona.';
-      }
-      mostrarAvisoMapa(msg);
-    },
-    {enableHighAccuracy:altaPrecision,timeout:altaPrecision?10000:15000,maximumAge:0}
-  );
+  if(_ubicando)return;
+  _ubicando=true;
+  setBtnUbicacionEstado(true);
+  (function intento(usarAlta){
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        _ubicando=false;
+        setBtnUbicacionEstado(false);
+        var lat=pos.coords.latitude,lng=pos.coords.longitude;
+        if(typeof mostrarMapaEnPunto==='function')mostrarMapaEnPunto(lat,lng);
+        avisarUbicacionConfirmada();
+        autocompletarDireccionDesdeGps(lat,lng);
+      },
+      function(err){
+        var codigo = err && typeof err.code==='number' ? err.code : 0;
+        if(usarAlta && codigo !== 1){
+          setTimeout(function(){intento(false);},250);
+          return;
+        }
+        _ubicando=false;
+        setBtnUbicacionEstado(false);
+        var msg;
+        if(codigo===1 || codigo===0){
+          msg='No se pudo acceder a tu ubicación por permisos. Activá la ubicación en los ajustes del navegador (Ubicación: permitir) y probá de nuevo, o escribí tu dirección y elegí tu zona.';
+        }else if(codigo===2){
+          msg='Tu dispositivo no pudo obtener la señal GPS. Activá la ubicación/GPS del dispositivo, salí a un lugar abierto y probá de nuevo, o escribí tu dirección y elegí tu zona.';
+        }else{
+          msg='Tardó demasiado en obtener tu ubicación. Verificá que el GPS esté activo y probá de nuevo, o escribí tu dirección y elegí tu zona.';
+        }
+        mostrarAvisoMapa(msg);
+      },
+      {enableHighAccuracy:usarAlta,timeout:usarAlta?7000:7000,maximumAge:usarAlta?10000:30000}
+    );
+  })(altaPrecision);
 }
 function avisarUbicacionConfirmada(){
   var av=document.getElementById('map-aviso');if(!av)return;
@@ -1802,17 +1845,23 @@ function autocompletarDireccionDesdeGps(lat,lng){
   var campo=document.getElementById('f-dir');if(!campo)return;
   if((campo.value||'').trim())return;
   var url='https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&accept-language=es';
-  fetch(url,{headers:{'Accept-Language':'es'}})
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(data&&data.display_name){
-        var partes=String(data.display_name).split(',').map(function(p){return p.trim();});
-        partes=partes.filter(function(p){return p&&p!=='El Salvador';});
-        var addr=partes.slice(0,3).join(', ');
-        if(addr&&!(campo.value||'').trim())campo.value=addr;
-      }
-    })
-    .catch(function(){});
+  var intentos=0;
+  function pedir(){
+    fetch(url,{headers:{'Accept-Language':'es'}})
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(data&&data.display_name){
+          var partes=String(data.display_name).split(',').map(function(p){return p.trim();});
+          partes=partes.filter(function(p){return p&&p!=='El Salvador';});
+          var addr=partes.slice(0,3).join(', ');
+          if(addr&&!(campo.value||'').trim())campo.value=addr;
+        }else if(intentos<1){
+          intentos++;setTimeout(pedir,900);
+        }
+      })
+      .catch(function(){if(intentos<1){intentos++;setTimeout(pedir,900);}});
+  }
+  pedir();
 }
 
 // ── ELIMINAR DIRECCIONES ANTERIORES (X roja) ──

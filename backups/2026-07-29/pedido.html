@@ -42,9 +42,20 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .step.clickable{cursor:pointer}
 .step.clickable .step-d:hover{transform:scale(1.08);border-color:var(--navy)}
 .step.clickable .step-l{color:var(--muted)}
-.filtros-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:14px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
-.fil-buscar{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:#fff;margin-bottom:10px;box-sizing:border-box}
+.filtros-bar{position:relative}
+.filtros-toolbar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:14px}
+.fil-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s;position:relative}
+.fil-icon:hover{border-color:var(--navy);color:var(--navy)}
+.fil-icon.open{color:var(--navy);border-color:var(--navy)}
+.fil-icon.act{color:#fff;background:var(--navy);border-color:var(--navy)}
+.fil-badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;border-radius:9px;background:var(--teal);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box}
+.filtros-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:14px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
+.fil-search-row{display:flex;gap:8px;margin-bottom:10px}
+.fil-search-row .fil-buscar{flex:1;margin-bottom:0}
+.fil-buscar{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:#fff;box-sizing:border-box}
 .fil-buscar:focus{outline:none;border-color:var(--navy)}
+.fil-limpiar{flex:0 0 auto;height:38px;padding:0 12px;border-radius:var(--rs);border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;display:none;align-items:center;transition:all .15s}
+.fil-limpiar:hover{border-color:var(--navy);color:var(--navy)}
 .fil-grupo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
 .fil-grupo:last-of-type{margin-bottom:0}
 .fil-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-right:4px}
@@ -1027,32 +1038,89 @@ function renderCat(){
 // "Todas", y las listas se encadenan (al elegir coleccion, las categorias y
 // tecnicas se reducen a las que existen dentro de esa coleccion). Filtrar
 // muestra/oculta tarjetas (CSS) — sin re-renderizar, sin parpadeo.
+var _svgLupa='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+var _svgEmbudo='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>';
 function barraFiltrosCat(){
   return '<div class="filtros-bar">'+
-    '<input type="search" class="fil-buscar" placeholder="Buscar producto, colección, categoría o técnica…" autocomplete="off">'+
-    '<div class="fil-grupo" data-grupo="col"></div>'+
-    '<div class="fil-grupo" data-grupo="cat"></div>'+
-    '<div class="fil-grupo" data-grupo="tec"></div>'+
-    '<div class="fil-msg">No hay productos en esta colección o con estos filtros.</div>'+
+    '<div class="filtros-toolbar">'+
+      '<button type="button" class="fil-icon fil-btn-buscar" title="Buscar" aria-label="Buscar">'+_svgLupa+'</button>'+
+      '<button type="button" class="fil-icon fil-btn-filtros" title="Filtrar por colección, categoría o técnica" aria-label="Filtrar">'+_svgEmbudo+'<span class="fil-badge">0</span></button>'+
+    '</div>'+
+    '<div class="filtros-panel">'+
+      '<div class="fil-search-row">'+
+        '<input type="search" class="fil-buscar" placeholder="Buscar producto, colección, categoría o técnica…" autocomplete="off">'+
+        '<button type="button" class="fil-limpiar">Limpiar</button>'+
+      '</div>'+
+      '<div class="fil-grupo" data-grupo="col"></div>'+
+      '<div class="fil-grupo" data-grupo="cat"></div>'+
+      '<div class="fil-grupo" data-grupo="tec"></div>'+
+      '<div class="fil-msg">No hay productos en esta colección o con estos filtros.</div>'+
+    '</div>'+
     '</div>';
 }
 function activarFiltrosCat(cont){
   if(!cont)return;
   var bar=cont.querySelector('.filtros-bar');if(!bar)return;
-  var estado={col:'',cat:'',tec:''};
-  bar.addEventListener('click',function(ev){
-    var ch=ev.target&&ev.target.closest?ev.target.closest('.fil-chip'):null;
-    if(!ch||!bar.contains(ch))return;
-    estado[ch.getAttribute('data-fil')]=ch.getAttribute('data-val')||'';
-    recomputarChips(bar,estado);
+  var panel=bar.querySelector('.filtros-panel');
+  var btnF=bar.querySelector('.fil-btn-filtros');
+  var btnB=bar.querySelector('.fil-btn-buscar');
+  var estado={col:'',cat:'',tec:'',q:''};
+  function sincronizarIcons(){
+    var activos=contarFiltrosActivos(estado);
+    var abierto=panel&&panel.style.display==='block';
+    if(btnF)btnF.classList.toggle('open',abierto);
+    if(btnF)btnF.classList.toggle('act',!abierto&&activos>0);
+    if(btnB)btnB.classList.toggle('open',abierto);
+    var badge=bar.querySelector('.fil-badge');
+    if(badge){badge.textContent=activos;badge.style.display=activos>0?'flex':'none';}
+    var lim=bar.querySelector('.fil-limpiar');
+    if(lim)lim.style.display=activos>0?'inline-flex':'none';
+  }
+  function abrirPanel(focusBuscar){
+    if(panel)panel.style.display='block';
+    if(focusBuscar){
+      var inp=bar.querySelector('.fil-buscar');
+      if(inp)inp.focus();
+    }
+    sincronizarIcons();
+  }
+  function cerrarPanel(){
+    if(panel)panel.style.display='none';
+    sincronizarIcons();
+  }
+  function aplicar(){
+    estado.q=bar.querySelector('.fil-buscar').value||'';
     aplicarFiltros(bar,cont,estado);
+    sincronizarIcons();
+  }
+  if(btnF)btnF.addEventListener('click',function(){
+    if(panel&&panel.style.display==='block')cerrarPanel();else abrirPanel(false);
+  });
+  if(btnB)btnB.addEventListener('click',function(){
+    if(panel&&panel.style.display!=='block'){abrirPanel(true);}else{var inp=bar.querySelector('.fil-buscar');if(inp)inp.focus();}
+  });
+  bar.addEventListener('click',function(ev){
+    var el=ev.target&&ev.target.closest?ev.target.closest('.fil-chip,.fil-limpiar'):null;
+    if(!el||!bar.contains(el))return;
+    if(el.classList.contains('fil-chip')){
+      estado[el.getAttribute('data-fil')]=el.getAttribute('data-val')||'';
+      recomputarChips(bar,estado);
+      aplicar();
+      return;
+    }
+    estado.col='';estado.cat='';estado.tec='';estado.q='';
+    var inp=bar.querySelector('.fil-buscar');if(inp)inp.value='';
+    recomputarChips(bar,estado);
+    aplicar();
   });
   var inp=bar.querySelector('.fil-buscar');
   var t=null;
-  if(inp)inp.addEventListener('input',function(){clearTimeout(t);t=setTimeout(function(){aplicarFiltros(bar,cont,estado);},200);});
+  if(inp)inp.addEventListener('input',function(){clearTimeout(t);t=setTimeout(aplicar,200);});
   recomputarChips(bar,estado);
   aplicarFiltros(bar,cont,estado);
+  sincronizarIcons();
 }
+function contarFiltrosActivos(estado){return (estado.col?1:0)+(estado.cat?1:0)+(estado.tec?1:0)+((estado.q||'').trim()?1:0);}
 function recomputarChips(bar,estado){
   function base(excluir){
     return _cat.filter(function(p){

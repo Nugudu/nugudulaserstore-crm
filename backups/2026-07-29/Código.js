@@ -344,7 +344,7 @@ function leerCatalogo() {
     if (!sheet) return { ok: false, error: 'Hoja Catalogo no encontrada' };
     var data = sheet.getDataRange().getValues();
     if (data.length < 2) return { ok: true, productos: [] };
-    var headers = data[0].map(function(h) { return String(h).toUpperCase().trim().replace(/\s+/g,'_'); });
+    var headers = data[0].map(function(h) { return String(h).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,'_'); });
     var productos = [];
     for (var r = 1; r < data.length; r++) {
       var row = data[r];

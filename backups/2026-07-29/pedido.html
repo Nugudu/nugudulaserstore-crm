@@ -1080,7 +1080,7 @@ function recomputarChips(bar,estado){
   grupo('tec','tecnica','tec','Técnica');
 }
 function aplicarFiltros(bar,cont,estado){
-  var q=(bar.querySelector('.fil-buscar').value||'').toLowerCase().trim();
+  var q=normTxt(bar.querySelector('.fil-buscar').value).trim();
   var vis=0;
   cont.querySelectorAll('.prod-card').forEach(function(c){
     var ok=true;
@@ -1088,7 +1088,7 @@ function aplicarFiltros(bar,cont,estado){
     if(ok&&estado.cat&&c.getAttribute('data-cat')!==estado.cat)ok=false;
     if(ok&&estado.tec&&c.getAttribute('data-tec')!==estado.tec)ok=false;
     if(ok&&q){
-      var hay=(c.getAttribute('data-nom')||'')+' '+(c.getAttribute('data-col')||'')+' '+(c.getAttribute('data-cat')||'')+' '+(c.getAttribute('data-tec')||'');
+      var hay=normTxt(c.getAttribute('data-nom'))+' '+normTxt(c.getAttribute('data-col'))+' '+normTxt(c.getAttribute('data-cat'))+' '+normTxt(c.getAttribute('data-tec'));
       if(hay.indexOf(q)<0)ok=false;
     }
     c.style.display=ok?'':'none';
@@ -1102,6 +1102,7 @@ function aplicarFiltros(bar,cont,estado){
   var msg=bar.querySelector('.fil-msg');
   if(msg)msg.style.display=vis===0?'block':'none';
 }
+function normTxt(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function gridCat(){
   var cols={};
   _cat.forEach(function(p){if(!cols[p.coleccion])cols[p.coleccion]=[];cols[p.coleccion].push(p);});

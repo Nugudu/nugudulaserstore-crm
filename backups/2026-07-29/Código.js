@@ -361,7 +361,10 @@ function leerCatalogo() {
         color:     String(obj['COLOR']     || '').trim(),
         hex:       String(obj['HEX']       || '#333333').trim(),
         precio:    parseFloat(obj['PRECIO'])  || 0,
-        stock:     parseInt(obj['STOCK'])     || 0
+        stock:     parseInt(obj['STOCK'])     || 0,
+        categoria: String(obj['CATEGORIA'] || '').trim(),
+        tecnica:   String(obj['TECNICA']   || '').trim(),
+        disponibilidad: String(obj['DISPONIBILIDAD'] || '').trim()
       });
     }
     return { ok: true, productos: productos };

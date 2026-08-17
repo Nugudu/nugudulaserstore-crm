@@ -42,6 +42,16 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .step.clickable{cursor:pointer}
 .step.clickable .step-d:hover{transform:scale(1.08);border-color:var(--navy)}
 .step.clickable .step-l{color:var(--muted)}
+.filtros-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:14px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
+.fil-buscar{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:'DM Sans',sans-serif;background:#fff;margin-bottom:10px;box-sizing:border-box}
+.fil-buscar:focus{outline:none;border-color:var(--navy)}
+.fil-grupo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
+.fil-grupo:last-of-type{margin-bottom:0}
+.fil-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-right:4px}
+.fil-chip{border:1.5px solid var(--border);background:#fff;color:var(--navy);font-size:12px;font-weight:600;border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s}
+.fil-chip:hover{border-color:var(--navy)}
+.fil-chip.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.fil-msg{display:none;text-align:center;padding:16px;color:var(--muted);font-size:13px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
 .card-ttl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
 .phone-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:30px 20px;text-align:center;box-shadow:0 1px 5px rgba(45,36,96,.06)}
@@ -703,7 +713,7 @@ function volverDesdeForm(){
 var CACHE_KEY='ngd_cat_v1';
 function cargarCatalogoCache(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'null');}catch(e){return null;}}
 function guardarCatalogoCache(c){try{localStorage.setItem(CACHE_KEY,JSON.stringify(c));}catch(e){}}
-function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock;}return s;}
+function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock+':'+(c[i].categoria||'')+':'+(c[i].tecnica||'')+':'+(c[i].coleccion||'')+':'+(c[i].disponibilidad||'');}return s;}
 
 // ── WARM-UP DE GAS: evita el arranque en frio (2-3s) en busquedas pedido/Mi
 // Diseno. Un ping barato mantiene la instancia caliente mientras la pagina
@@ -1003,12 +1013,103 @@ function iniciar(){
 var DISENO_SLUG={'KA':'kaan','MU':'muuk','IKA':'ikal','SA':'saan','KI':'kin','OX':'oxan'};
 // ── CATÁLOGO ──
 function renderCat(){
+  var html=barraFiltrosCat()+gridCat();
+  document.getElementById('cat-wrap').innerHTML=html;
+  var ci=document.getElementById('cat-inicio-wrap');
+  if(ci)ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');
+  var conts=[document.getElementById('cat-wrap'),document.getElementById('cat-inicio-wrap')];
+  conts.forEach(function(cont){if(cont)activarFiltrosCat(cont);});
+}
+// ── FILTROS + BUSCADOR (Fase 2) ──
+// Todo corre en memoria sobre _cat (cero llamadas a GAS al filtrar). Las
+// opciones salen SIEMPRE de los datos: si agregas una coleccion/categoria/
+// tecnica nueva en la hoja, aparece sola. Cada dimension tiene su opcion
+// "Todas", y las listas se encadenan (al elegir coleccion, las categorias y
+// tecnicas se reducen a las que existen dentro de esa coleccion). Filtrar
+// muestra/oculta tarjetas (CSS) — sin re-renderizar, sin parpadeo.
+function barraFiltrosCat(){
+  return '<div class="filtros-bar">'+
+    '<input type="search" class="fil-buscar" placeholder="Buscar producto, colección, categoría o técnica…" autocomplete="off">'+
+    '<div class="fil-grupo" data-grupo="col"></div>'+
+    '<div class="fil-grupo" data-grupo="cat"></div>'+
+    '<div class="fil-grupo" data-grupo="tec"></div>'+
+    '<div class="fil-msg">No hay productos en esta colección o con estos filtros.</div>'+
+    '</div>';
+}
+function activarFiltrosCat(cont){
+  if(!cont)return;
+  var bar=cont.querySelector('.filtros-bar');if(!bar)return;
+  var estado={col:'',cat:'',tec:''};
+  bar.addEventListener('click',function(ev){
+    var ch=ev.target&&ev.target.closest?ev.target.closest('.fil-chip'):null;
+    if(!ch||!bar.contains(ch))return;
+    estado[ch.getAttribute('data-fil')]=ch.getAttribute('data-val')||'';
+    recomputarChips(bar,estado);
+    aplicarFiltros(bar,cont,estado);
+  });
+  var inp=bar.querySelector('.fil-buscar');
+  var t=null;
+  if(inp)inp.addEventListener('input',function(){clearTimeout(t);t=setTimeout(function(){aplicarFiltros(bar,cont,estado);},200);});
+  recomputarChips(bar,estado);
+  aplicarFiltros(bar,cont,estado);
+}
+function recomputarChips(bar,estado){
+  function base(excluir){
+    return _cat.filter(function(p){
+      if(excluir!=='col'&&estado.col&&String(p.coleccion||'').toLowerCase()!==estado.col)return false;
+      if(excluir!=='cat'&&estado.cat&&String(p.categoria||'').toLowerCase()!==estado.cat)return false;
+      if(excluir!=='tec'&&estado.tec&&String(p.tecnica||'').toLowerCase()!==estado.tec)return false;
+      return true;
+    });
+  }
+  function grupo(excluir,prop,id,label){
+    var data=base(excluir),v={};
+    data.forEach(function(p){var x=String(p[prop]||'').trim();if(x)v[x]=true;});
+    var vals=Object.keys(v).sort();
+    var h='<span class="fil-lbl">'+label+'</span>';
+    h+='<button type="button" class="fil-chip'+(estado[id]===''?' sel':'')+'" data-fil="'+id+'" data-val="">Todas</button>';
+    vals.forEach(function(val){
+      var k=val.toLowerCase();
+      h+='<button type="button" class="fil-chip'+(estado[id]===k?' sel':'')+'" data-fil="'+id+'" data-val="'+esc(k)+'">'+esc(val)+'</button>';
+    });
+    var w=bar.querySelector('[data-grupo="'+id+'"]');
+    if(w)w.innerHTML=h;
+  }
+  grupo('col','coleccion','col','Colección');
+  grupo('cat','categoria','cat','Categoría');
+  grupo('tec','tecnica','tec','Técnica');
+}
+function aplicarFiltros(bar,cont,estado){
+  var q=(bar.querySelector('.fil-buscar').value||'').toLowerCase().trim();
+  var vis=0;
+  cont.querySelectorAll('.prod-card').forEach(function(c){
+    var ok=true;
+    if(ok&&estado.col&&c.getAttribute('data-col')!==estado.col)ok=false;
+    if(ok&&estado.cat&&c.getAttribute('data-cat')!==estado.cat)ok=false;
+    if(ok&&estado.tec&&c.getAttribute('data-tec')!==estado.tec)ok=false;
+    if(ok&&q){
+      var hay=(c.getAttribute('data-nom')||'')+' '+(c.getAttribute('data-col')||'')+' '+(c.getAttribute('data-cat')||'')+' '+(c.getAttribute('data-tec')||'');
+      if(hay.indexOf(q)<0)ok=false;
+    }
+    c.style.display=ok?'':'none';
+    if(ok)vis++;
+  });
+  cont.querySelectorAll('.col-sec').forEach(function(sec){
+    var n=0;
+    sec.querySelectorAll('.prod-card').forEach(function(c){if(c.style.display!=='none')n++;});
+    sec.style.display=n>0?'':'none';
+  });
+  var msg=bar.querySelector('.fil-msg');
+  if(msg)msg.style.display=vis===0?'block':'none';
+}
+function gridCat(){
   var cols={};
   _cat.forEach(function(p){if(!cols[p.coleccion])cols[p.coleccion]=[];cols[p.coleccion].push(p);});
   var html='';
   Object.keys(cols).forEach(function(col){
     var prods=cols[col],dis={};
     prods.forEach(function(p){if(!dis[p.nombre])dis[p.nombre]=[];dis[p.nombre].push(p);});
+    html+='<div class="col-sec">';
     html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div>';
     html+='<div style="font-size:11px;color:var(--hint);margin:0 0 14px;letter-spacing:.3px">la diferencia se lleva</div>';
     html+='<div class="prod-grid">';
@@ -1018,7 +1119,8 @@ function renderCat(){
       var dots=vs.map(function(v){return '<div class="cdot" style="background:'+v.hex+'" title="'+v.color+'"></div>';}).join('');
       var candidatos=candidatosFoto(vs[0].sku,nom);
       var candAttr=JSON.stringify(candidatos).replace(/'/g,'&#39;');
-      html+='<div class="prod-card'+(agot?' agotado':'')+'" id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
+      var attrs=' data-col="'+esc((vs[0].coleccion||'').toLowerCase())+'" data-cat="'+esc((vs[0].categoria||'').toLowerCase())+'" data-tec="'+esc((vs[0].tecnica||'').toLowerCase())+'" data-nom="'+esc(nom.toLowerCase())+'"';
+      html+='<div class="prod-card'+(agot?' agotado':'')+'"'+attrs+' id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
       html+='<div class="pcheck">✓</div>';
       html+='<img class="p-foto" loading="lazy" decoding="async" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
@@ -1028,11 +1130,9 @@ function renderCat(){
       if(agot)html+='<div class="p-stock sno">✗ Agotado</div>';
       html+='</div>';
     });
-    html+='</div>';
+    html+='</div></div>';
   });
-  document.getElementById('cat-wrap').innerHTML=html;
-  var ci=document.getElementById('cat-inicio-wrap');
-  if(ci)ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');
+  return html;
 }
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
 // Construye la lista de archivos a probar, en orden de prioridad:

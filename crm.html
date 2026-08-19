@@ -1523,17 +1523,19 @@ function solCard(s, pendiente){
   var fecha = (s.fecha || '').slice(0, 10);
   var prods = (s.productos || []).join(', ') || '–';
   var waNum = String(s.contacto || '').replace(/\D/g, '');
-  var waLink = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + (s.nombre || '') + ', confirmamos tu pago de la solicitud ' + s.ref + '. Tu número de orden es ' + (s.orden || '') + '. ¡Gracias!') : '#';
+  var waLinkPend = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + (s.nombre || '') + ', te contactamos de Nugudú Store sobre tu solicitud ' + s.ref + ' (pago por verificar).') : '#';
+  var waLinkConf = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + (s.nombre || '') + ', confirmamos tu pago de la solicitud ' + s.ref + '. Tu número de orden es ' + (s.orden || '') + '. ¡Gracias!') : '#';
   var accion;
   if (pendiente) {
     accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">' +
       '<button class="btn btn-green btn-sm" onclick="confirmarSolicitud(\'' + s.ref + '\')"><i class="fa-solid fa-circle-check"></i> Confirmar pago</button>' +
       '<button class="btn btn-outline btn-sm" onclick="descartarSolicitud(\'' + s.ref + '\')"><i class="fa-solid fa-xmark"></i> Descartar</button>' +
+      '<a class="btn btn-wa btn-sm" href="' + waLinkPend + '" target="_blank"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>' +
     '</div>';
   } else if (s.estadoSolicitud === 'confirmada') {
     accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">' +
       '<span class="bdg-pago verde">' + _svgCheck + ' Confirmada → ' + escHtml(s.orden || '') + '</span>' +
-      '<a class="btn btn-wa btn-sm" href="' + waLink + '" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp</a>' +
+      '<a class="btn btn-wa btn-sm" href="' + waLinkConf + '" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp</a>' +
     '</div>';
   } else {
     accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem"><span class="bdg-pago rojo">Descartada</span></div>';
@@ -2579,6 +2581,29 @@ function confirmarDireccionImpresion(id){
 function abrirVentanaFicha(o, mapLink){
   var qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(mapLink);
   var fechaTxt = o.fechaEntrega ? formatoFechaCorta(o.fechaEntrega) : '';
+  // SKU + foto legible de cada producto (como en Órdenes) integrados a la
+  // ficha de entrega. Se usa la URL absoluta para que la imagen cargue en la
+  // ventana nueva y un fallback de extensión (png→jpg→webp y slug de diseño)
+  // igual al de las órdenes. No modifica el QR ni el resto de la ficha.
+  var origin = (location.origin && location.origin !== 'null') ? location.origin : '';
+  var fichaBase = origin ? origin + '/' : '';
+  var prodsHtml = '';
+  var vistos = {};
+  (o.productos || []).forEach(function(sku){
+    if (vistos[sku]) return; vistos[sku] = true;
+    var parts = sku.split('-');
+    var sufijo = parts[parts.length - 1];
+    var color = COLOR_MAP[sufijo];
+    var cands = [];
+    ['png','jpg','webp'].forEach(function(e){ cands.push(fichaBase + 'imagenes/' + sku + '.' + e); });
+    var slugDiseno = parts.length > 1 ? DISENO_SLUG[parts[1]] : null;
+    if (slugDiseno) ['png','jpg','webp'].forEach(function(e){ cands.push(fichaBase + 'imagenes/' + slugDiseno + '.' + e); });
+    prodsHtml +=
+      '<div class="prod">' +
+        '<img src="' + cands[0] + '" data-candidatos="' + JSON.stringify(cands).replace(/'/g, '&#39;') + '" data-idx="0" onerror="fb(this)" alt="">' +
+        '<div><div class="sku">' + esc(sku) + '</div>' + (color ? '<div class="col">' + esc(color.nombre) + '</div>' : '') + '</div>' +
+      '</div>';
+  });
 
   var win = window.open('', '_blank', 'width=480,height=720');
   if (!win) { alert('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes para este sitio.'); return; }
@@ -2595,6 +2620,12 @@ function abrirVentanaFicha(o, mapLink){
     '.nombre{font-size:20px;font-weight:700;margin-bottom:10px}' +
     '.fila{display:flex;gap:8px;font-size:14px;margin-bottom:6px;align-items:flex-start}' +
     '.fila b{min-width:78px;flex-shrink:0}' +
+    '.prods{margin-top:14px;border-top:1px solid #e8e5f0;padding-top:12px;margin-bottom:14px}' +
+    '.prods-lbl{font-size:11px;font-weight:700;letter-spacing:.6px;color:#6b6585;text-transform:uppercase;margin-bottom:8px}' +
+    '.prod{display:flex;align-items:center;gap:12px;margin-bottom:10px}' +
+    '.prod img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #ddd6f0}' +
+    '.prod .sku{font-family:monospace;font-size:16px;font-weight:700;color:#2D2460}' +
+    '.prod .col{font-size:12px;color:#6b6585;margin-top:2px}' +
     '.qrbox{display:flex;flex-direction:column;align-items:center;margin:20px 0;padding:16px;border:1px dashed #b0abc8;border-radius:10px}' +
     '.qrbox img{width:220px;height:220px}' +
     '.qrbox span{font-size:12px;color:#6b6585;margin-top:8px;text-align:center}' +
@@ -2609,9 +2640,13 @@ function abrirVentanaFicha(o, mapLink){
     '<div class="fila"><b>Zona:</b><span>' + esc(o.zona || '') + '</span></div>' +
     '<div class="fila"><b>Contacto:</b><span>' + esc(o.contacto || '') + '</span></div>' +
     (fechaTxt ? '<div class="fecha">Entrega estimada: ' + fechaTxt + '</div>' : '') +
+    (prodsHtml ? '<div class="prods"><div class="prods-lbl">Producto(s)</div>' + prodsHtml + '</div>' : '') +
     (o.notas ? '<div class="notas"><b>Notas:</b> ' + esc(o.notas) + '</div>' : '') +
     '<div class="qrbox"><img src="' + qrSrc + '" alt="QR de ubicación"><span>Escanea con la cámara del celular<br>para abrir la ruta en Google Maps</span></div>' +
-    '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>' +
+    '<script>' +
+    'function fb(im){var c=null;try{c=JSON.parse(im.getAttribute("data-candidatos"));}catch(e){}if(!c)return;var i=parseInt(im.getAttribute("data-idx")||"0",10)+1;if(i<c.length){im.setAttribute("data-idx",i);im.src=c[i];}else{im.style.display="none";}}' +
+    'window.onload=function(){setTimeout(function(){window.print();},300);};' +
+    '<\/script>' +
     '</body></html>'
   );
   win.document.close();

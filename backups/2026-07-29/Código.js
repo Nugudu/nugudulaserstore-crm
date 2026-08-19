@@ -699,8 +699,39 @@ function guardarSolicitudWeb(payload) {
     };
     solicitudes.unshift(solicitud);
     guardarSolicitudes(solicitudes);
+    // Correo al llegar la solicitud (paso 3 del flujo web: pantalla de exito
+    // "Solicitud registrada — pago pendiente de verificación"). Va en su
+    // propio try/catch: si falla, nunca bloquea el registro de la solicitud.
+    notificarSolicitudNueva(solicitud);
     return { ok: true, ref: ref, solicitud: ref };
   } catch(err) { return { ok: false, error: err.message }; }
+}
+
+// Envia un correo a NOTIFY_EMAIL cuando se registra una solicitud de
+// transferencia (ref SOL-...). Es distinto de notificarPedidoNuevo porque
+// aqui todavia no existe una ORD-: la encargada va a CRM > Pagos pendientes
+// a verificar el pago y confirmar (ahi si se genera la orden).
+function notificarSolicitudNueva(sol) {
+  try {
+    var productos = (sol.productos || []).join(', ');
+    var total     = sol.total != null ? sol.total : 0;
+    var asunto = 'Nueva solicitud de pago - ' + sol.ref;
+    var cuerpo =
+      'Se registro una solicitud de transferencia en Nugudu Store (pago pendiente de verificar).\n\n' +
+      'Referencia: ' + sol.ref + '\n' +
+      'Cliente: '    + (sol.nombre    || '-') + '\n' +
+      'Contacto: '   + (sol.contacto  || '-') + '\n' +
+      'Direccion: '  + (sol.direccion || '-') + '\n' +
+      'Zona: '       + (sol.zona      || '-') + '\n' +
+      'Producto(s): '+ (productos     || '-') + '\n' +
+      'Cantidad: '   + (sol.cantidad  || 1) + '\n' +
+      'Total: $'     + Number(total).toFixed(2) + '\n' +
+      (sol.notas ? ('Notas: ' + sol.notas + '\n') : '') +
+      '\nVe a CRM > Pagos pendientes para confirmar o descartar la solicitud.';
+    MailApp.sendEmail(NOTIFY_EMAIL, asunto, cuerpo);
+  } catch (err) {
+    Logger.log('notificarSolicitudNueva: ' + err.message);
+  }
 }
 
 // Convierte una solicitud aprobada en una ORDEN real con pago confirmado.

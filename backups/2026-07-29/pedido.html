@@ -162,6 +162,10 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .bc-titular{font-size:13px;color:var(--text);font-weight:600}
 .bc-monto{font-size:15px;color:var(--navy);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 .alert-info{background:#eef2ff;border:1px solid #c7d2fe;border-radius:var(--rs);padding:12px;font-size:13px;color:#312e81;line-height:1.6;margin-bottom:12px}
+/* Aviso ámbar de transferencia: el pedido no se confirma al momento */
+.aviso-transferencia{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--rs);padding:12px;font-size:13px;color:#78350f;line-height:1.6;margin-bottom:12px}
+.aviso-transferencia strong{color:#78350f}
+.bc-tag365{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px}
 .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .btn-main:disabled{opacity:.5;cursor:not-allowed}
@@ -446,13 +450,14 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <!-- Datos bancarios (se muestra al seleccionar Transferencia) -->
     <div id="bancario-info" style="display:none">
       <div class="card">
-        <div class="card-ttl">Datos para transferencia</div>
+        <div class="bc-tag365"><img src="imagenes/banco-agricola.png" alt="Banco Agrícola" style="height:26px;width:auto">Transferencia 365</div>
         <div class="bc-card">
           <div class="bc-banco">Banco Agrícola</div>
           <div class="bc-tipo">Cuenta de ahorro</div>
           <div class="bc-cuenta">3008410011</div>
           <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
         </div>
+        <div class="aviso-transferencia"><strong>⚠️ IMPORTANTE — Tu pedido no se confirma al momento:</strong> registramos tu solicitud y, al verificar tu pago en el banco, generamos tu número de orden. Por favor realiza la transferencia a nombre del titular de la cuenta.</div>
         <div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante.</div>
       </div>
     </div>
@@ -612,13 +617,14 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
       <div id="md-bancario-info" style="display:none">
         <div class="card" style="margin-top:8px">
-          <div class="card-ttl">Datos para transferencia</div>
+          <div class="bc-tag365"><img src="imagenes/banco-agricola.png" alt="Banco Agrícola" style="height:26px;width:auto">Transferencia 365</div>
           <div class="bc-card">
             <div class="bc-banco">Banco Agrícola</div>
             <div class="bc-tipo">Cuenta de ahorro</div>
             <div class="bc-cuenta">3008410011</div>
             <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
           </div>
+          <div class="aviso-transferencia"><strong>⚠️ IMPORTANTE — Tu pedido no se confirma al momento:</strong> registramos tu solicitud y, al verificar tu pago en el banco, generamos tu número de orden. Por favor realiza la transferencia a nombre del titular de la cuenta.</div>
           <div class="alert-info">Al elegir esta opción debes de ir a tu app de cuenta bancaria de preferencia y realiza la operación. Al tener el comprobante dale continuar para enviarla por whatsapp</div>
         </div>
       </div>
@@ -681,13 +687,16 @@ var SESSION_KEY='ngd_pedido_v1';
 // ── SESIÓN: persiste entre refrescos, se borra solo al presionar Salir ──
 function guardarSesion(s,paso){
   // Guarda también el paso actual del formulario (1, 2 o 3)
-  try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({screen:s,paso:paso||0,cli:_cli,dirs:_dirs,ultimaOrden:_ultimaOrden}));}catch(e){}
+  try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({screen:s,paso:paso||0,cli:_cli,dirs:_dirs,ultimaOrden:_ultimaOrden,carrito:_carrito}));}catch(e){}
 }
 function limpiarSesion(){try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}}
 function restaurarSesion(){
   try{
     var r=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
     if(!r) return false;
+    // El carrito se persiste también por si el cliente salió a la app del
+    // banco y volvió: al restaurar, _carrito sigue intacto para confirmar.
+    if(r.carrito&&r.carrito.length)_carrito=r.carrito;
     if(r.screen==='s-cliente'&&r.cli){
       _cli=r.cli;_dirs=r.dirs||[];
       setContacto(_cli.contacto||'');
@@ -1684,7 +1693,7 @@ function confirmarPedido(){
   var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
 
   var payload={
-    action:'pedidoWeb',token:API_TOKEN,nombre:nom,contacto:tel,
+    action:_metodoPago==='tarjeta'?'pedidoWeb':'solicitudWeb',token:API_TOKEN,nombre:nom,contacto:tel,
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
     vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac,
     recargoEnvio:recargo
@@ -1699,8 +1708,9 @@ function confirmarPedido(){
         return;
       }
       _ultimaOrden={
-        orden:d.orden,nombre:nom,tel:tel,email:email,
-        items:_carrito.slice(),total:total,metodoPago:_metodoPago
+        orden:_metodoPago==='tarjeta'?d.orden:(d.ref||''),nombre:nom,tel:tel,email:email,
+        items:_carrito.slice(),total:total,metodoPago:_metodoPago,
+        _esSolicitud:_metodoPago==='transferencia'
       };
       if(_cli&&nac)_cli.fechaNac=nac;
       if(ov)ov.style.display='none';
@@ -1753,6 +1763,11 @@ function notificarAdmin(orden){
 
 function mostrarExito(){
   var o=_ultimaOrden;
+  var esSol=!!o._esSolicitud;
+  var h2=document.querySelector('#s-exito h2');
+  var pEx=document.querySelector('#s-exito .success-wrap p');
+  if(h2)h2.textContent=esSol?'¡Solicitud registrada!':'¡Pedido registrado!';
+  if(pEx)pEx.textContent=esSol?'Tu referencia es:':'Tu número de orden es:';
   document.getElementById('ex-orden').textContent=o.orden;
   document.getElementById('om-contenido').innerHTML=
     o.items.map(function(it){
@@ -1766,16 +1781,21 @@ function mostrarExito(){
   if(o.metodoPago==='tarjeta'){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago procesado con exito. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
     document.getElementById('ex-accion-comprobante').style.display='none';
+  }else if(esSol){
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fffbeb;border-color:#fde68a;color:#78350f">Solicitud registrada — pago pendiente de verificación. Recibirás tu número de orden cuando verifiquemos tu pago.<br><span style="font-size:12px">¿Dudas? <a href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola! Tengo una consulta sobre mi solicitud '+o.orden+'.')+'" target="_blank" style="color:#78350f;text-decoration:underline">Contáctanos directamente</a></span></div>';
+    document.getElementById('ex-accion-comprobante').style.display='block';
+    var msg=encodeURIComponent('Hola! Adjunto comprobante de pago de mi solicitud '+o.orden+'.');
+    document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+msg;
   }else{
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pedido registrado. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
     document.getElementById('ex-accion-comprobante').style.display='block';
     var msg=encodeURIComponent('Hola! Adjunto comprobante de pago de mi pedido '+o.orden+'.');
     document.getElementById('btn-wa-exito').href='https://wa.me/'+WA+'?text='+msg;
   }
-  document.getElementById('ex-tracking').style.display='block';
+  document.getElementById('ex-tracking').style.display=esSol?'none':'block';
   guardarSesion('s-exito',0);
   showScreen('s-exito');window.scrollTo({top:0,behavior:'auto'});
-  if(o.orden&&!o._notificado){o._notificado=true;notificarAdmin(o.orden);}
+  if(o.orden&&!o._esSolicitud&&!o._notificado){o._notificado=true;notificarAdmin(o.orden);}
   if(o.orden) setContacto(o.contacto||'');
   track('purchase',{orden:o.orden,total:o.total,items:(o.items||[]).length});
 }
@@ -2423,7 +2443,7 @@ function midisenoIrAExito(){
   var items = o.items || [];
   if(!items.length && o.productos && o.cantidad) items = [{sku:o.productos[0]||'', cantidad:o.cantidad, precio:o.precio}];
   showScreen('s-exito');
-  document.querySelector('#s-exito h2').textContent='\u00a1Gracias por tu pago!';
+  document.querySelector('#s-exito h2').textContent='\u00a1Solicitud registrada!';
   document.querySelector('#s-exito .success-wrap p').textContent='N\u00famero de orden:';
   document.getElementById('ex-orden').textContent = o.orden;
   document.getElementById('om-contenido').innerHTML =
@@ -2436,7 +2456,7 @@ function midisenoIrAExito(){
     '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre||'')+'</span></div>'+
     '<div class="om-fila"><span>M\u00e9todo</span><span>Transferencia bancaria</span></div>';
   document.getElementById('orden-mini').style.display='block';
-  document.getElementById('ex-pago-info').innerHTML = '';
+  document.getElementById('ex-pago-info').innerHTML = '<div class="snote" style="background:#fffbeb;border-color:#fde68a;color:#78350f">Solicitud registrada \u2014 pago pendiente de verificaci\u00f3n. Recibir\u00e1s tu n\u00famero de orden cuando verifiquemos tu pago.<br><span style="font-size:12px">\u00bfDudas? <a href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola! Tengo una consulta sobre mi solicitud '+o.orden+'.')+'" target="_blank" style="color:#78350f;text-decoration:underline">Cont\u00e1ctanos directamente</a></span></div>';
   document.getElementById('ex-accion-comprobante').style.display='block';
   var msg = encodeURIComponent('Hola! Adjunto comprobante de pago de mi dise\u00f1o '+o.orden+'.');
   document.getElementById('btn-wa-exito').href = 'https://wa.me/'+WA+'?text='+msg;

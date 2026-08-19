@@ -10,6 +10,7 @@ var HOJA_DATOS       = 'datos';
 var HOJA_BORRADOS    = 'borrados_ts';
 var HOJA_CATALOGO    = 'Catalogo';
 var HOJA_EVENTOS     = 'eventos_usuario';
+var HOJA_SOLICITUDES = 'solicitudes';
 var NOTIFY_EMAIL     = 'nugudulasersv@gmail.com';
 // Token compartido: index.html y pedido.html deben mandarlo en cada llamada.
 // Cierra el acceso publico anonimo al endpoint (antes cualquiera con la URL
@@ -123,6 +124,9 @@ function doGet(e) {
     if (action === 'validarHashWompi')   return respond(validarHashWompi(p));
     if (action === 'verificarTransaccion') return respond(verificarTransaccionWompi(p.idTransaccion || ''));
     if (action === 'leerEventos') return respond(leerEventos(p));
+    // Solicitudes de transferencia: el CRM las lee para la seccion
+    // "Pagos pendientes" (ref SOL-..., ver guardarSolicitudWeb).
+    if (action === 'solicitudes') return respond(leerSolicitudes());
     return respond({ error: 'Accion desconocida: ' + action });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -151,6 +155,9 @@ function doPost(e) {
     if (action === 'guardarFechaNac') return respond(guardarFechaNac(payload));
     if (action === 'buscarOrdenWeb')  return respond(buscarOrdenWeb(payload));
     if (action === 'actualizarDatosWeb'){ conLock(function(){ actualizarDatosWeb(payload); }); return respond({ ok: true }); }
+    if (action === 'solicitudWeb')      { return respond(conLock(function(){ return guardarSolicitudWeb(payload); })); }
+    if (action === 'confirmarSolicitud'){ return respond(conLock(function(){ return confirmarSolicitudWeb(payload); })); }
+    if (action === 'descartarSolicitud'){ return respond(conLock(function(){ return descartarSolicitudWeb(payload); })); }
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -580,6 +587,217 @@ function guardarPedidoWeb(payload) {
     notificarPedidoNuevo(nuevaOrden);
     return { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10) };
   } catch(err) { return { ok: false, error: err.message }; }
+}
+
+// ── SOLICITUDES DE TRANSFERENCIA (pago pendiente de verificación) ──
+// Flujo nuevo: el cliente elige transferencia, se registra una SOLICITUD
+// (ref SOL-…) SIN crear orden ni descontar stock (antes se creaba la ORD-…
+// al instante = "orden fantasma"). La encargada la ve en el CRM ("Pagos
+// pendientes"), verifica el pago y al confirmar SÍ se crea la ORD-… real
+// (con pagoConfirmado) y se descuenta stock. La hoja 'solicitudes' guarda
+// una solicitud por fila en JSON (columna A), igual que la hoja 'datos'.
+function getHojaSolicitudes() {
+  var ss    = abrirSS(SHEET_ORDENES);
+  var sheet = ss.getSheetByName(HOJA_SOLICITUDES);
+  if (!sheet) { sheet = ss.insertSheet(HOJA_SOLICITUDES); sheet.getRange('A1').setValue('[]'); }
+  return sheet;
+}
+
+function leerSolicitudes() {
+  var sheet   = getHojaSolicitudes();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 1) return [];
+  var values  = sheet.getRange(1, 1, lastRow, 1).getValues();
+  var lista   = [];
+  for (var i = 0; i < values.length; i++) {
+    var raw = values[i][0];
+    if (!raw) continue;
+    try {
+      var s = JSON.parse(raw);
+      if (s && typeof s === 'object' && !Array.isArray(s)) lista.push(s);
+    } catch(e) { /* fila invalida - se ignora, no rompe el resto */ }
+  }
+  return lista;
+}
+
+function guardarSolicitudes(lista) {
+  var sheet = getHojaSolicitudes();
+  sheet.clearContents();
+  if (!lista || !lista.length) return;
+  var filas = lista.map(function(s) { return [JSON.stringify(s)]; });
+  sheet.getRange(1, 1, filas.length, 1).setValues(filas);
+}
+
+// Registra una solicitud de transferencia desde pedido.html. Valida los
+// SKUs contra el catalogo (mismo criterio que guardarPedidoWeb), pero NO
+// crea orden, NO descuenta stock y NO genera numero ORD-. El cliente recibe
+// la ref SOL-... como confirmacion de que su solicitud quedo registrada.
+function guardarSolicitudWeb(payload) {
+  try {
+    var catalogo = leerCatalogo();
+    if (!catalogo.ok) return { ok: false, error: 'No se pudo validar el catalogo, intenta de nuevo.' };
+
+    var itemsSolicitados = Array.isArray(payload.items) && payload.items.length
+      ? payload.items
+      : (payload.sku ? [{ sku: payload.sku, cantidad: payload.cantidad }] : []);
+    if (!itemsSolicitados.length) return { ok: false, error: 'La solicitud no tiene ningun producto.' };
+
+    var itemsValidados = [];
+    for (var i = 0; i < itemsSolicitados.length; i++) {
+      var skuSolicitado = String(itemsSolicitados[i].sku || '').trim().toUpperCase();
+      var producto = null;
+      for (var j = 0; j < catalogo.productos.length; j++) {
+        if (String(catalogo.productos[j].sku).trim().toUpperCase() === skuSolicitado) { producto = catalogo.productos[j]; break; }
+      }
+      if (!producto) return { ok: false, error: 'Producto no disponible: ' + skuSolicitado };
+      var cant = parseInt(itemsSolicitados[i].cantidad) || 1;
+      if (cant < 1) cant = 1;
+      itemsValidados.push({ sku: producto.sku, precio: producto.precio, cantidad: cant });
+    }
+
+    var productosArr = [];
+    var cantidadTotal = 0;
+    var totalSolicitud = 0;
+    itemsValidados.forEach(function(it) {
+      for (var k = 0; k < it.cantidad; k++) productosArr.push(it.sku);
+      cantidadTotal += it.cantidad;
+      totalSolicitud += it.precio * it.cantidad;
+    });
+    var recargoEnvio = parseFloat(payload.recargoEnvio) || 0;
+    totalSolicitud += recargoEnvio;
+
+    var solicitudes = leerSolicitudes();
+    var d   = new Date();
+    var id  = d.getTime();
+    var ref = 'SOL-' + String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(id).slice(-4);
+    var fecha = d.toISOString();
+
+    var solicitud = {
+      id: id, ref: ref,
+      nombre:        String(payload.nombre    || '').trim(),
+      contacto:      String(payload.contacto  || '').trim(),
+      direccion:     String(payload.direccion || '').trim(),
+      zona:          String(payload.zona      || 'Canal Digital').trim(),
+      recargoEnvio:  recargoEnvio,
+      vendedor:      (function(){
+        var vRef = String(payload.vendedorRef || '').trim().toUpperCase();
+        return CODIGOS_VENDEDORAS_WEB.indexOf(vRef) >= 0 ? vRef : 'WEB';
+      })(),
+      cantidad:      cantidadTotal,
+      total:         totalSolicitud,
+      productos:     productosArr,
+      items:         itemsValidados,
+      canal:         'Canal Digital',
+      notas:         String(payload.notas || '').trim(),
+      fecha:         fecha,
+      mapaLink:      String(payload.mapaLink || ''),
+      email:         String(payload.email || '').trim(),
+      fechaNac:      String(payload.fechaNac || '').trim(),
+      metodoPago:    'transferencia',
+      estadoSolicitud: 'pendiente',
+      creadoDesde:   'pedidoWeb'
+    };
+    solicitudes.unshift(solicitud);
+    guardarSolicitudes(solicitudes);
+    return { ok: true, ref: ref, solicitud: ref };
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+// Convierte una solicitud aprobada en una ORDEN real con pago confirmado.
+// Re-verifica el stock AL MOMENTO de confirmar (pudo cambiar entre que el
+// cliente pidio y que la encargada confirmo). Crea la orden con la misma
+// estructura que guardarPedidoWeb, descuenta stock, notifica y liga la
+// solicitud a la orden.
+function confirmarSolicitudWeb(payload) {
+  var ref = String(payload.ref || '').trim().toUpperCase();
+  if (!ref) throw new Error('Falta la referencia de la solicitud.');
+  var solicitudes = leerSolicitudes();
+  var sol = null, idx = -1;
+  for (var i = 0; i < solicitudes.length; i++) {
+    if (String(solicitudes[i].ref).trim().toUpperCase() === ref) { sol = solicitudes[i]; idx = i; break; }
+  }
+  if (!sol) throw new Error('Solicitud no encontrada: ' + ref);
+  if (sol.estadoSolicitud !== 'pendiente') throw new Error('La solicitud ya fue ' + sol.estadoSolicitud + '.');
+
+  var catalogo = leerCatalogo();
+  if (!catalogo.ok) throw new Error('No se pudo validar el catalogo, intenta de nuevo.');
+  var sinStock = [];
+  (sol.items || []).forEach(function(it) {
+    var producto = null;
+    for (var j = 0; j < catalogo.productos.length; j++) {
+      if (String(catalogo.productos[j].sku).trim().toUpperCase() === String(it.sku).toUpperCase()) { producto = catalogo.productos[j]; break; }
+    }
+    if (!producto) sinStock.push(it.sku);
+    else if ((producto.stock || 0) < it.cantidad) sinStock.push(it.sku + ' (stock: ' + producto.stock + ')');
+  });
+  if (sinStock.length) throw new Error('Stock insuficiente para: ' + sinStock.join(', '));
+
+  var ordenes = leerOrdenes();
+  var d   = new Date();
+  var id  = d.getTime();
+  var orden = 'ORD-' + String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(id).slice(-4);
+  var fecha = d.toISOString();
+  var fe = new Date(d), dias = 0;
+  while (dias < 3) { fe.setDate(fe.getDate() + 1); if (fe.getDay() !== 0) dias++; }
+  var total   = sol.total || 0;
+  var recargo = sol.recargoEnvio || 0;
+  var cantidadTotal = sol.cantidad || 0;
+  var precioPromedio = cantidadTotal > 0 ? (total - recargo) / cantidadTotal : 0;
+  var nuevaOrden = {
+    id: id, orden: orden,
+    nombre:        sol.nombre,
+    contacto:      sol.contacto,
+    direccion:     sol.direccion,
+    zona:          sol.zona,
+    recargoEnvio:  recargo,
+    vendedor:      sol.vendedor || 'WEB',
+    precio:        precioPromedio,
+    cantidad:      cantidadTotal,
+    total:         total,
+    canal:         'Canal Digital',
+    pago:          'Transferencia',
+    productos:     sol.productos || [],
+    estado:        '0',
+    notas:         sol.notas || '',
+    fecha:         fecha,
+    fechaEntrega:  fe.toISOString().slice(0, 10),
+    mapaLink:      sol.mapaLink || '',
+    email:         sol.email || '',
+    fechaNac:      sol.fechaNac || '',
+    metodoPago:    'transferencia',
+    pagoConfirmado: true,
+    pendientePago:  false,
+    pagoFecha:      fecha,
+    consumoInterno: false,
+    historial: [{ estado: '0', fecha: fecha, fuente: 'Canal Digital Web · pago verificado' }]
+  };
+  ordenes.unshift(nuevaOrden);
+  guardarOrdenes(ordenes);
+  (sol.items || []).forEach(function(it){ descontarStock(it.sku, it.cantidad); });
+  notificarPedidoNuevo(nuevaOrden);
+
+  solicitudes[idx].estadoSolicitud = 'confirmada';
+  solicitudes[idx].orden = orden;
+  solicitudes[idx].confirmadaEn = fecha;
+  guardarSolicitudes(solicitudes);
+  return { ok: true, orden: orden };
+}
+
+function descartarSolicitudWeb(payload) {
+  var ref = String(payload.ref || '').trim().toUpperCase();
+  if (!ref) throw new Error('Falta la referencia de la solicitud.');
+  var solicitudes = leerSolicitudes();
+  for (var i = 0; i < solicitudes.length; i++) {
+    if (String(solicitudes[i].ref).trim().toUpperCase() === ref) {
+      if (solicitudes[i].estadoSolicitud === 'pendiente') {
+        solicitudes[i].estadoSolicitud = 'descartada';
+        solicitudes[i].descartadaEn = new Date().toISOString();
+        guardarSolicitudes(solicitudes);
+      }
+      return { ok: true };
+    }
+  }
+  throw new Error('Solicitud no encontrada: ' + ref);
 }
 
 // Busca una orden por su numero ORD-XXXXX y devuelve el objeto completo.

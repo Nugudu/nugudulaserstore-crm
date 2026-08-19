@@ -218,6 +218,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav active" onclick="go('overview')" id="nav-overview"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
   <div class="nav" onclick="go('nueva')" id="nav-nueva"><i class="fa-solid fa-circle-plus"></i> Nueva Venta <span class="nbadge nb-do">DO</span></div>
   <div class="nav" onclick="go('ordenes');limpiarBadgeOrdenes()" id="nav-ordenes"><i class="fa-solid fa-list-check"></i> Órdenes<span class="nb-new" id="badge-nuevas" style="display:none">0</span></div>
+  <div class="nav" onclick="go('pagos');cargarSolicitudes()" id="nav-pagos"><i class="fa-solid fa-hand-holding-dollar"></i> Pagos pendientes<span class="nb-new" id="badge-solicitudes" style="display:none">0</span></div>
   <div class="nav" onclick="go('tracking')" id="nav-tracking"><i class="fa-solid fa-truck-fast"></i> Tracking <span class="nbadge nb-care">CARE</span></div>
   <div class="nav" onclick="go('repartidor')" id="nav-repartidor"><i class="fa-solid fa-motorcycle"></i> Repartidor <span class="nbadge nb-rep">ENTREGA</span></div>
   <div class="sb-sec">Formularios</div>
@@ -389,6 +390,15 @@ tbody tr:last-child td{border-bottom:none}
         <button class="btn btn-outline btn-sm" onclick="resetOrd()"><i class="fa-solid fa-rotate-left"></i></button>
       </div>
       <div class="card"><div class="tw" id="tbl-ordenes"><div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin órdenes aún.</p></div></div></div>
+    </div>
+
+    <!-- PAGOS PENDIENTES (solicitudes de transferencia) -->
+    <div id="panel-pagos" class="panel">
+      <div class="ph-row">
+        <div><h2>Pagos pendientes</h2><p>Solicitudes de transferencia registradas en la web — verifica el pago y confirma para generar la orden real.</p></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="cargarSolicitudes()"><i class="fa-solid fa-rotate"></i> Refrescar</button></div>
+      </div>
+      <div id="sol-list"><div class="card"><div class="empty"><i class="fa-regular fa-hourglass-half"></i><p>Cargando solicitudes…</p></div></div></div>
     </div>
 
     <!-- TRACKING -->
@@ -859,6 +869,7 @@ var PANELS  = {
   overview:     ['Dashboard','DO · CARE · tiempo real'],
   nueva:        ['Nueva Venta · DO','Registro de conversión'],
   ordenes:      ['Órdenes','Base de datos completa'],
+  pagos:        ['Pagos pendientes','Solicitudes de transferencia por verificar'],
   tracking:     ['Tracking · CARE','Actualiza y notifica el estado de pedidos'],
   repartidor:   ['Repartidor','Entregas del día'],
   fvendedor:    ['Formulario Vendedores','Comparte con tu equipo de ventas'],
@@ -1055,6 +1066,8 @@ window.addEventListener('DOMContentLoaded', function(){
   // Start sync: immediate + every 30s
   syncFromGAS(true);
   setInterval(function(){ syncFromGAS(true); }, 30000);
+  // Badge de "Pagos pendientes" (solicitudes de transferencia) al cargar.
+  cargarSolicitudes();
   restaurarSesionGate();
 });
 
@@ -1074,6 +1087,7 @@ function go(name){
   }
   if(name==='overview')  { updateOverview(); setTimeout(renderOvCharts,80); }
   if(name==='ordenes')   { renderOrdenes(); }
+  if(name==='pagos')     { cargarSolicitudes(); }
   if(name==='analytics') { renderAnalytics(); }
   if(name==='inventario'){ renderInventario(); }
   if(name==='clientes'){ renderClientes(); }
@@ -1471,6 +1485,90 @@ function enviarDatosBancarios(id){
       updateGASField(id, {datosBancariosEnviados:true});
     }
   }
+}
+
+// ── PAGOS PENDIENTES (solicitudes de transferencia) ──
+// Las solicitudes (ref SOL-…) llegan de pedido.html cuando el cliente elige
+// transferencia: NO crean orden al instante. Aquí se verifica el pago y se
+// confirma (se crea la ORD-… real con pagoConfirmado) o se descarta.
+var _solicitudes = [];
+function cargarSolicitudes(){
+  gasCall({method:'GET', params:'action=solicitudes'}, function(err, res){
+    if (err || !res || !Array.isArray(res)) { renderSolicitudes([]); return; }
+    _solicitudes = res;
+    renderSolicitudes(res);
+  });
+}
+function renderSolicitudes(lista){
+  var el = document.getElementById('sol-list');
+  if (!el) return;
+  var pendientes = lista.filter(function(s){ return s.estadoSolicitud==='pendiente'; });
+  var resto      = lista.filter(function(s){ return s.estadoSolicitud!=='pendiente'; });
+  var badge = document.getElementById('badge-solicitudes');
+  if (badge) {
+    if (pendientes.length > 0) { badge.style.display='inline-block'; badge.textContent = pendientes.length; }
+    else badge.style.display = 'none';
+  }
+  if (!lista.length) {
+    el.innerHTML = '<div class="card"><div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin solicitudes aún.</p></div></div>';
+    return;
+  }
+  var html = '';
+  pendientes.forEach(function(s){ html += solCard(s, true); });
+  resto.forEach(function(s){ html += solCard(s, false); });
+  el.innerHTML = html || '<div class="card"><div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin solicitudes.</p></div></div>';
+}
+function solCard(s, pendiente){
+  var total = Number(s.total || 0);
+  var fecha = (s.fecha || '').slice(0, 10);
+  var prods = (s.productos || []).join(', ') || '–';
+  var waNum = String(s.contacto || '').replace(/\D/g, '');
+  var waLink = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + (s.nombre || '') + ', confirmamos tu pago de la solicitud ' + s.ref + '. Tu número de orden es ' + (s.orden || '') + '. ¡Gracias!') : '#';
+  var accion;
+  if (pendiente) {
+    accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">' +
+      '<button class="btn btn-green btn-sm" onclick="confirmarSolicitud(\'' + s.ref + '\')"><i class="fa-solid fa-circle-check"></i> Confirmar pago</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="descartarSolicitud(\'' + s.ref + '\')"><i class="fa-solid fa-xmark"></i> Descartar</button>' +
+    '</div>';
+  } else if (s.estadoSolicitud === 'confirmada') {
+    accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">' +
+      '<span class="bdg-pago verde">' + _svgCheck + ' Confirmada → ' + escHtml(s.orden || '') + '</span>' +
+      '<a class="btn btn-wa btn-sm" href="' + waLink + '" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp</a>' +
+    '</div>';
+  } else {
+    accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem"><span class="bdg-pago rojo">Descartada</span></div>';
+  }
+  return '<div class="card" style="margin-bottom:10px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">' +
+      '<div>' +
+        '<div style="font-family:\'DM Mono\',monospace;font-size:13px">' + escHtml(s.ref) + '</div>' +
+        '<div style="font-weight:600;font-size:15px;margin-top:2px">' + escHtml(s.nombre || '') + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-brands fa-whatsapp" style="color:#25D366;margin-right:4px"></i>' + escHtml(s.contacto || '') + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>' + escHtml(s.direccion || '') + ' · ' + escHtml(s.zona || '') + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + fecha + ' · ' + escHtml(prods) + '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:20px;font-weight:700;color:var(--green)">$' + total.toFixed(2) + '</div>' +
+        '<span class="bdg-pago ' + (pendiente ? 'ambar' : '') + '">' + _svgClock + ' ' + (pendiente ? 'Pago por verificar' : (s.estadoSolicitud === 'confirmada' ? 'Confirmada' : 'Descartada')) + '</span>' +
+      '</div>' +
+    '</div>' + accion + '</div>';
+}
+function confirmarSolicitud(ref){
+  if (!confirm('¿Confirmar el pago de la solicitud ' + ref + '?\n\nSe generará la orden real (ORD-…), se descontará stock y se notificará al cliente.')) return;
+  gasCall({method:'POST', body:{action:'confirmarSolicitud', ref:ref}}, function(err, res){
+    if (err || !res || !res.ok) { showToast('Error: ' + ((res && res.error) || (err && err.message) || 'Intenta de nuevo')); return; }
+    showToast('Solicitud confirmada · Orden ' + res.orden);
+    cargarSolicitudes();
+    setTimeout(function(){ syncFromGAS(true); }, 400);
+  });
+}
+function descartarSolicitud(ref){
+  if (!confirm('¿Descartar la solicitud ' + ref + '? Se elimina sin crear orden.')) return;
+  gasCall({method:'POST', body:{action:'descartarSolicitud', ref:ref}}, function(err, res){
+    if (err || !res || !res.ok) { showToast('Error: ' + ((res && res.error) || (err && err.message) || 'Intenta de nuevo')); return; }
+    showToast('Solicitud descartada');
+    cargarSolicitudes();
+  });
 }
 
 // MAPA — se integra automáticamente al escribir la dirección.

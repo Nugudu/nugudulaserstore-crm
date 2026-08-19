@@ -1691,6 +1691,9 @@ function confirmarPedido(){
   btn.textContent=_metodoPago==='tarjeta'?'Redirigiendo a Wompi…':'Procesando…';
   btn.disabled=true;
   var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='flex';
+  // Texto del overlay según método: transferencia registra una SOLICITUD,
+  // tarjeta confirma la orden antes de redirigir a Wompi.
+  if(ov){var ovP=ov.querySelector('p');if(ovP)ovP.textContent=_metodoPago==='tarjeta'?'Confirmando tu pedido…':'Registrando tu solicitud…';}
 
   var payload={
     action:_metodoPago==='tarjeta'?'pedidoWeb':'solicitudWeb',token:API_TOKEN,nombre:nom,contacto:tel,

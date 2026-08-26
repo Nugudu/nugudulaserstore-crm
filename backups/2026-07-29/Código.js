@@ -584,7 +584,12 @@ function guardarPedidoWeb(payload) {
     ordenes.unshift(nuevaOrden);
     guardarOrdenes(ordenes);
     itemsValidados.forEach(function(it){ descontarStock(it.sku, it.cantidad); });
-    notificarPedidoNuevo(nuevaOrden);
+    // Para TARJETA se salta el correo "Nuevo pedido": el pago se confirma en
+    // segundos via webhook Wompi, que ya manda el correo "Pago confirmado".
+    // Asi el boton no espera el envio de correo (MailApp ~1-4s) y va mas
+    // rapido a Wompi. Transferencia (solicitud) sigue avisando con
+    // notificarSolicitudNueva.
+    if (payload.metodoPago !== 'tarjeta') notificarPedidoNuevo(nuevaOrden);
     return { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10) };
   } catch(err) { return { ok: false, error: err.message }; }
 }
@@ -1399,7 +1404,7 @@ function notificarPagoConfirmado(payload) {
       if (ordenes[i].orden === ordenId) { orden = ordenes[i]; break; }
     }
     if (!orden) return { ok: false, error: 'Orden no encontrada: ' + ordenId };
-    var asunto = '💳 Pago confirmado - ' + orden.orden;
+    var asunto = 'Pago confirmado - ' + orden.orden;
     var cuerpo =
       'Pago confirmado para el pedido ' + orden.orden + '\n\n' +
       'Cliente: ' + (orden.nombre   || '-') + '\n' +

@@ -507,7 +507,23 @@ function guardarPedidoWeb(payload) {
     // para su pareja y otro para un hijo en un solo pedido). Si llega el
     // formato viejo de un solo producto (payload.sku suelto), se trata
     // igual como un pedido de un solo item -- no rompe nada existente.
-    var catalogo = leerCatalogo();
+    // Cache de catálogo en ScriptProperties (TTL 5 min) para no leer
+    // Sheets en cada llamada.
+    var catalogo = null;
+    var _now = Date.now();
+    var _cacheStr = PropertiesService.getScriptProperties().getProperty('CATALOGO_CACHE');
+    if (_cacheStr) {
+      try {
+        var _cached = JSON.parse(_cacheStr);
+        if (_cached.ts && (_now - _cached.ts < 300000)) catalogo = _cached.data;
+      } catch(e) { catalogo = null; }
+    }
+    if (!catalogo) {
+      catalogo = leerCatalogo();
+      if (catalogo.ok) {
+        PropertiesService.getScriptProperties().setProperty('CATALOGO_CACHE', JSON.stringify({ts: _now, data: catalogo}));
+      }
+    }
     if (!catalogo.ok) return { ok: false, error: 'No se pudo validar el catalogo, intenta de nuevo.' };
 
     var itemsSolicitados = Array.isArray(payload.items) && payload.items.length
@@ -590,7 +606,48 @@ function guardarPedidoWeb(payload) {
     // rapido a Wompi. Transferencia (solicitud) sigue avisando con
     // notificarSolicitudNueva.
     if (payload.metodoPago !== 'tarjeta') notificarPedidoNuevo(nuevaOrden);
-    return { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10) };
+    // Para TARJETA: crear enlace Wompi EN LA MISMA LLAMADA para que el
+    // frontend redirija directo sin 2da llamada (ahorra ~2.5s).
+    var _result = { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10) };
+    if (payload.metodoPago === 'tarjeta') {
+      try {
+        var _token = wompiAutenticar();
+        if (_token) {
+          var _body = {
+            amount_in_cents: Math.round(totalPedido * 100),
+            currency: 'USD',
+            payment_method: { type: 'PSE' },
+            reference: orden,
+            customer_data: {
+              email: payload.email || payload.correo || '',
+              phone_number: payload.contacto || payload.telefono || '',
+              full_name: payload.nombre || ''
+            },
+            billing_data: {
+              address: {
+                address_line_1: payload.direccion || '',
+                address_line_2: payload.colonia || '',
+                city: payload.zona || '',
+                country: 'SV'
+              }
+            },
+            redirect_url: 'https://www.nugudustore.com/'
+          };
+          var _res = UrlFetchApp.fetch('https://api.wompi.sv/v1/checkout/sessions', {
+            method: 'post',
+            contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + _token },
+            muteHttpExceptions: true,
+            payload: JSON.stringify(_body)
+          });
+          var _data = JSON.parse(_res.getContentText());
+          if (_data && _data.data && _data.data.payment_method && _data.data.payment_method.redirect_url) {
+            _result.urlEnlace = _data.data.payment_method.redirect_url;
+          }
+        }
+      } catch(e) { /* fallback: frontend llamará crearEnlacePago */ }
+    }
+    return _result;
   } catch(err) { return { ok: false, error: err.message }; }
 }
 

@@ -747,6 +747,7 @@ function warmGAS(){
   fetch(GAS+'?action=ping&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
 }
 window.addEventListener('focusin',function(){warmGAS();});
+warmGAS();
 setInterval(function(){if(!document.hidden)warmGAS();},60000);
 
 // ── COMPARTIR PRODUCTO: icono limpio por tarjeta → enlace directo ?p=SKU ──
@@ -1719,6 +1720,11 @@ function confirmarPedido(){
       if(ov)ov.style.display='none';
 
       if(_metodoPago==='tarjeta'){
+        // Si el backend ya devolvió el enlace Wompi (merged call), redirigir directo
+        if(d.urlEnlace){
+          window.location.href=d.urlEnlace;
+          return;
+        }
         btn.textContent='Redirigiendo a Wompi…';
         fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
           body:JSON.stringify({

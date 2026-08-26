@@ -774,7 +774,7 @@ function notificarSolicitudNueva(sol) {
   try {
     var productos = (sol.productos || []).join(', ');
     var total     = sol.total != null ? sol.total : 0;
-    var asunto = 'Nueva solicitud de pago - ' + sol.ref;
+    var asunto = 'Nueva solicitud para verificación de pago (transferencia) - ' + sol.ref;
     var cuerpo =
       'Se registro una solicitud de transferencia en Nugudu Store (pago pendiente de verificar).\n\n' +
       'Referencia: ' + sol.ref + '\n' +

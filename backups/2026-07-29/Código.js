@@ -346,11 +346,20 @@ function registrarBorrado(ts) {
 
 function leerCatalogo() {
   try {
+    // Cache en ScriptProperties (TTL 5 min) para no leer Sheets cada vez.
+    var _now = Date.now();
+    var _cs = PropertiesService.getScriptProperties().getProperty('CATALOGO_CACHE');
+    if (_cs) {
+      try {
+        var _c = JSON.parse(_cs);
+        if (_c.ts && (_now - _c.ts < 300000)) return _c.data;
+      } catch(e) {}
+    }
     var ss    = abrirSS(SHEET_CATALOGO);
     var sheet = ss.getSheetByName(HOJA_CATALOGO);
     if (!sheet) return { ok: false, error: 'Hoja Catalogo no encontrada' };
     var data = sheet.getDataRange().getValues();
-    if (data.length < 2) return { ok: true, productos: [] };
+    if (data.length < 2) { var _r = { ok: true, productos: [] }; PropertiesService.getScriptProperties().setProperty('CATALOGO_CACHE', JSON.stringify({ts: _now, data: _r})); return _r; }
     var headers = data[0].map(function(h) { return String(h).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,'_'); });
     var productos = [];
     for (var r = 1; r < data.length; r++) {
@@ -374,7 +383,9 @@ function leerCatalogo() {
         disponibilidad: String(obj['DISPONIBILIDAD'] || '').trim()
       });
     }
-    return { ok: true, productos: productos };
+    var _result = { ok: true, productos: productos };
+    PropertiesService.getScriptProperties().setProperty('CATALOGO_CACHE', JSON.stringify({ts: _now, data: _result}));
+    return _result;
   } catch(err) {
     return { ok: false, error: err.message };
   }
@@ -417,6 +428,8 @@ function descontarStock(sku, cantidad) {
       var actual = parseInt(data[r][colStock]) || 0;
       var nuevo  = Math.max(0, actual - (parseInt(cantidad) || 1));
       sheet.getRange(r + 1, colStock + 1).setValue(nuevo);
+      // Invalidar cache del catálogo para que la próxima llamada lea stock actualizado
+      try { PropertiesService.getScriptProperties().deleteProperty('CATALOGO_CACHE'); } catch(e) {}
       return;
     }
   } catch(err) { Logger.log('descontarStock: ' + err.message); }
@@ -507,23 +520,7 @@ function guardarPedidoWeb(payload) {
     // para su pareja y otro para un hijo en un solo pedido). Si llega el
     // formato viejo de un solo producto (payload.sku suelto), se trata
     // igual como un pedido de un solo item -- no rompe nada existente.
-    // Cache de catálogo en ScriptProperties (TTL 5 min) para no leer
-    // Sheets en cada llamada.
-    var catalogo = null;
-    var _now = Date.now();
-    var _cacheStr = PropertiesService.getScriptProperties().getProperty('CATALOGO_CACHE');
-    if (_cacheStr) {
-      try {
-        var _cached = JSON.parse(_cacheStr);
-        if (_cached.ts && (_now - _cached.ts < 300000)) catalogo = _cached.data;
-      } catch(e) { catalogo = null; }
-    }
-    if (!catalogo) {
-      catalogo = leerCatalogo();
-      if (catalogo.ok) {
-        PropertiesService.getScriptProperties().setProperty('CATALOGO_CACHE', JSON.stringify({ts: _now, data: catalogo}));
-      }
-    }
+    var catalogo = leerCatalogo();
     if (!catalogo.ok) return { ok: false, error: 'No se pudo validar el catalogo, intenta de nuevo.' };
 
     var itemsSolicitados = Array.isArray(payload.items) && payload.items.length

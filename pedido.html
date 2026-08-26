@@ -796,6 +796,8 @@ function warmGAS(){
   if(t-_ultimaWarm<20000) return;
   _ultimaWarm=t;
   fetch(GAS+'?action=ping&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
+  // Pre-calentar token Wompi (~1-2s si venció) para que no frene al confirmar
+  fetch(GAS+'?action=warmWompi&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
 }
 window.addEventListener('focusin',function(){warmGAS();});
 warmGAS();

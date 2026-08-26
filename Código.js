@@ -70,6 +70,7 @@ function doGet(e) {
     // (o el boton Continuar de Mi Diseno) responda instantaneo, sin el
     // arranque en frio de 2-3 segundos.
     if (action === 'ping')         return respond({ ok: true });
+    if (action === 'warmWompi')    { try { wompiAutenticar(); } catch(e) {} return respond({ ok: true }); }
     if (action === 'read')          return respond(leerOrdenes());
     if (action === 'sync')          return respond(conLock(sincronizar));
     if (action === 'catalogo')      return respond(leerCatalogo());
@@ -557,7 +558,6 @@ function guardarPedidoWeb(payload) {
     totalPedido += recargoEnvio;
     var precioPromedio = cantidadTotal > 0 ? (totalPedido - recargoEnvio) / cantidadTotal : 0;
 
-    var ordenes = leerOrdenes();
     var d   = new Date();
     var id  = d.getTime();
     var orden = 'ORD-' + String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(id).slice(-4);
@@ -594,8 +594,12 @@ function guardarPedidoWeb(payload) {
       consumoInterno: false,
       historial: [{ estado: '0', fecha: fecha, fuente: 'Canal Digital Web' }]
     };
-    ordenes.unshift(nuevaOrden);
-    guardarOrdenes(ordenes);
+    // Append directo a la hoja (lee+reescribe). Para pedidos nuevos solo
+    // necesitamos agregar una fila, NO leer todo el Sheet y reescribirlo
+    // (leerOrdenes+guardarOrdenes ~2s).  CRM sigue usando
+    // leerOrdenes/guardarOrdenes para lecturas/actualizaciones completas.
+    var _hoja = getHojaDatos();
+    _hoja.appendRow([JSON.stringify(nuevaOrden)]);
     itemsValidados.forEach(function(it){ descontarStock(it.sku, it.cantidad); });
     // Para TARJETA se salta el correo "Nuevo pedido": el pago se confirma en
     // segundos via webhook Wompi, que ya manda el correo "Pago confirmado".
@@ -642,7 +646,7 @@ function guardarPedidoWeb(payload) {
             _result.urlEnlace = _data.data.payment_method.redirect_url;
           }
         }
-      } catch(e) { /* fallback: frontend llamará crearEnlacePago */ }
+      } catch(e) { Logger.log('guardarPedidoWeb Wompi link error: ' + e.message); /* fallback: frontend llamará crearEnlacePago */ }
     }
     return _result;
   } catch(err) { return { ok: false, error: err.message }; }
@@ -725,7 +729,6 @@ function guardarSolicitudWeb(payload) {
     var recargoEnvio = parseFloat(payload.recargoEnvio) || 0;
     totalSolicitud += recargoEnvio;
 
-    var solicitudes = leerSolicitudes();
     var d   = new Date();
     var id  = d.getTime();
     var ref = 'SOL-' + String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(id).slice(-4);
@@ -756,8 +759,9 @@ function guardarSolicitudWeb(payload) {
       estadoSolicitud: 'pendiente',
       creadoDesde:   'pedidoWeb'
     };
-    solicitudes.unshift(solicitud);
-    guardarSolicitudes(solicitudes);
+    // Append directo a la hoja (misma optimización que guardarPedidoWeb).
+    var _hojaS = getHojaSolicitudes();
+    _hojaS.appendRow([JSON.stringify(solicitud)]);
     // Correo al llegar la solicitud (paso 3 del flujo web: pantalla de exito
     // "Solicitud registrada — pago pendiente de verificación"). Va en su
     // propio try/catch: si falla, nunca bloquea el registro de la solicitud.

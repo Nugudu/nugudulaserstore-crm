@@ -2571,9 +2571,8 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
   <div class="user-modal" onclick="event.stopPropagation()">
     <button class="user-modal-close" onclick="cerrarUserModal()">✕</button>
     <h3>Consultar mi pedido</h3>
-    <p>Ingresá tu número de teléfono o número de orden para ver el estado de tus pedidos.</p>
-    <input class="user-modal-input" id="user-modal-tel" type="tel" placeholder="Teléfono: Ej. 7262 6332" maxlength="12">
-    <input class="user-modal-input" id="user-modal-orden" type="text" placeholder="o N° de orden: Ej. ORD-260819-9728" maxlength="20" style="margin-bottom:14px">
+    <p>Ingresá tu teléfono o número de orden para ver el estado de tus pedidos.</p>
+    <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono o N° de orden (Ej. 7262 6332 o ORD-26819-9728)" maxlength="30">
     <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()">Buscar</button>
     <div id="user-modal-result"></div>
   </div>
@@ -2630,27 +2629,30 @@ function actualizarBadgeCarrito(){
 /* ── Modal consultar mi pedido ── */
 var _ESTADOS_LABEL=['Pendiente','En proceso','En camino','Entregado'];
 function abrirUserModal(){
-  document.getElementById('user-modal-tel').value='';
-  document.getElementById('user-modal-orden').value='';
+  document.getElementById('user-modal-q').value='';
   document.getElementById('user-modal-result').innerHTML='';
   document.getElementById('user-modal-overlay').classList.add('open');
-  setTimeout(function(){document.getElementById('user-modal-tel').focus();},100);
+  setTimeout(function(){document.getElementById('user-modal-q').focus();},100);
 }
 function cerrarUserModal(e){
   if(e&&e.target&&e.target!==document.getElementById('user-modal-overlay'))return;
   document.getElementById('user-modal-overlay').classList.remove('open');
 }
 function buscarMiPedido(){
-  var tel=document.getElementById('user-modal-tel').value.replace(/\D/g,'');
-  var orden=document.getElementById('user-modal-orden').value.trim().toUpperCase();
+  var raw=document.getElementById('user-modal-q').value.trim();
   var res=document.getElementById('user-modal-result');
   var btn=document.getElementById('user-modal-btn');
-  if(!tel&&!orden){res.innerHTML='<div class="user-modal-no">Ingresá un teléfono o número de orden.</div>';return;}
+  if(!raw){res.innerHTML='<div class="user-modal-no">Ingresá un teléfono o número de orden.</div>';return;}
+  // Auto-detectar: si contiene "ORD-" o solo dígitos con guiones/letras → orden; si son mostly dígitos → teléfono
+  var isOrden=/^(ORD-|SOL-)/i.test(raw)||/^[A-Z]{2,}-/i.test(raw);
+  var tel=isOrden?'':raw.replace(/\D/g,'');
+  var orden=isOrden?raw.toUpperCase():'';
+  // Si parece teléfono pero tiene pocos dígnos y no empieza con ORD, tratar como orden
+  if(!isOrden && tel.length>0 && tel.length<4 && !/^7\d{3}$/.test(tel)){orden=raw.toUpperCase();tel='';}
   btn.textContent='Buscando…';btn.disabled=true;res.innerHTML='';
   var url=GAS+'?action=buscarCliente&token='+encodeURIComponent(API_TOKEN);
   if(orden)url+='&orden='+encodeURIComponent(orden);
   else url+='&tel='+encodeURIComponent(tel);
-  setTimeout(function(){
   fetch(url).then(function(r){return r.json();}).then(function(d){
     btn.textContent='Buscar';btn.disabled=false;
     if(!d.ok||!d.encontrado){res.innerHTML='<div class="user-modal-no">No se encontraron pedidos para ese dato.</div>';return;}
@@ -2669,10 +2671,8 @@ function buscarMiPedido(){
     btn.textContent='Buscar';btn.disabled=false;
     res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';
   });
-  },800);
 }
-document.getElementById('user-modal-tel').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
-document.getElementById('user-modal-orden').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
+document.getElementById('user-modal-q').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
 </script>
 </body>
 </html>

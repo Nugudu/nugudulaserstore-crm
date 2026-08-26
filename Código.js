@@ -171,6 +171,15 @@ function doPost(e) {
 // celda y corromper todo el historial de golpe. Con una fila por pedido, ese
 // limite deja de aplicar sin importar cuantos pedidos se acumulen.
 function leerOrdenes() {
+  // Cache 30s en ScriptProperties para que buscarCliente sea rapido (~1s
+  // en vez de ~10s). El cache se invalida al escribir (guardarOrdenes) para
+  // que la CRM siempre vea datos frescos en actualizaciones.
+  var props = PropertiesService.getScriptProperties();
+  var cached = props.getProperty('ORDENES_CACHE');
+  var cacheExp = parseInt(props.getProperty('ORDENES_CACHE_EXP') || '0');
+  if (cached && Date.now() < cacheExp) {
+    try { return JSON.parse(cached); } catch(e) {}
+  }
   var sheet   = getHojaDatos();
   var lastRow = sheet.getLastRow();
   if (lastRow < 1) return [];
@@ -184,6 +193,11 @@ function leerOrdenes() {
       if (o && typeof o === 'object' && !Array.isArray(o)) ordenes.push(o);
     } catch(e) { /* fila invalida - se ignora, no rompe el resto */ }
   }
+  // Guardar cache
+  try {
+    props.setProperty('ORDENES_CACHE', JSON.stringify(ordenes));
+    props.setProperty('ORDENES_CACHE_EXP', String(Date.now() + 30000));
+  } catch(e) {}
   return ordenes;
 }
 
@@ -193,6 +207,12 @@ function guardarOrdenes(data) {
   if (!data || !data.length) return;
   var filas = data.map(function(o) { return [JSON.stringify(o)]; });
   sheet.getRange(1, 1, filas.length, 1).setValues(filas);
+  // Invalidar cache de leerOrdenes para que la proxima lectura sea fresca
+  try {
+    var props = PropertiesService.getScriptProperties();
+    props.deleteProperty('ORDENES_CACHE');
+    props.deleteProperty('ORDENES_CACHE_EXP');
+  } catch(e) {}
 }
 
 // Migracion de una sola vez: convierte el formato viejo (un JSON gigante en
@@ -689,6 +709,12 @@ function guardarSolicitudes(lista) {
   if (!lista || !lista.length) return;
   var filas = lista.map(function(s) { return [JSON.stringify(s)]; });
   sheet.getRange(1, 1, filas.length, 1).setValues(filas);
+  // Invalidar cache de leerOrdenes por si se confirmó una solicitud (= nueva ORD-)
+  try {
+    var props = PropertiesService.getScriptProperties();
+    props.deleteProperty('ORDENES_CACHE');
+    props.deleteProperty('ORDENES_CACHE_EXP');
+  } catch(e) {}
 }
 
 // Registra una solicitud de transferencia desde pedido.html. Valida los

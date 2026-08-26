@@ -220,12 +220,62 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 #btn-mi-ubicacion{transition:transform .12s ease,opacity .15s}
 #btn-mi-ubicacion:active{transform:scale(.97)}
 #btn-mi-ubicacion:hover{opacity:.9}
+/* ── Iconos header (carrito + usuario) ── */
+.hdr-icons{display:flex;align-items:center;gap:14px;margin-left:auto}
+.hdr-icon{position:relative;background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center}
+.hdr-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hdr-badge{position:absolute;top:-4px;right:-6px;background:var(--coral);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1}
+/* ── Drawer carrito ── */
+.cart-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;opacity:0;transition:opacity .25s}
+.cart-drawer-overlay.open{display:block;opacity:1}
+.cart-drawer{position:fixed;top:0;right:0;width:320px;max-width:85vw;height:100%;background:#fff;z-index:201;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.15)}
+.cart-drawer.open{transform:translateX(0)}
+.cart-drawer-hdr{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--border)}
+.cart-drawer-hdr h3{margin:0;font-size:15px;font-weight:700;color:var(--navy)}
+.cart-drawer-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:4px 8px;line-height:1}
+.cart-drawer-items{flex:1;overflow-y:auto;padding:12px 16px}
+.cart-drawer-empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+.cart-drawer-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.cart-drawer-item-info{flex:1}
+.cart-drawer-item-name{font-weight:600;color:var(--navy)}
+.cart-drawer-item-meta{color:var(--muted);font-size:12px;margin-top:2px}
+.cart-drawer-item-price{font-weight:600;color:var(--navy);white-space:nowrap;margin-left:8px}
+.cart-drawer-item-remove{background:none;border:none;color:var(--coral);font-size:16px;cursor:pointer;padding:2px 6px;margin-left:4px}
+.cart-drawer-footer{border-top:1px solid var(--border);padding:14px 16px}
+.cart-drawer-total{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.cart-drawer-btn{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+.cart-drawer-btn:disabled{opacity:.5;cursor:default}
+/* ── Modal consultar mi pedido ── */
+.user-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .25s}
+.user-modal-overlay.open{display:flex;opacity:1}
+.user-modal{background:#fff;border-radius:14px;width:340px;max-width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.2);padding:24px 20px}
+.user-modal h3{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--navy)}
+.user-modal p{margin:0 0 16px;font-size:12px;color:var(--muted)}
+.user-modal-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:12px}
+.user-modal-input:focus{outline:none;border-color:var(--navy)}
+.user-modal-btn{width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer}
+.user-modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:0;margin-top:-2px}
+.user-modal-ordenes{margin-top:14px}
+.user-modal-orden{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px;font-size:13px}
+.user-modal-orden-num{font-weight:700;color:var(--navy);font-size:14px}
+.user-modal-orden-estado{font-size:11px;font-weight:600;margin-top:4px}
+.user-modal-orden-fecha{font-size:11px;color:var(--muted);margin-top:2px}
+.user-modal-no{color:var(--muted);font-size:13px;text-align:center;padding:16px 0}
 </style>
 </head>
 <body>
 <div class="hdr">
   <div class="hdr-logo"><img src="data:image/png;base64,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" alt="Nugudú"></div>
   <div><h1>Nugudú Store</h1><p>Gorras con parche de cuero grabado a láser</p></div>
+  <div class="hdr-icons">
+    <button class="hdr-icon" onclick="abrirUserModal()" title="Consultar mi pedido">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+    <button class="hdr-icon" onclick="abrirCartDrawer()" title="Mi carrito">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="hdr-badge" id="hdr-cart-badge" style="display:none">0</span>
+    </button>
+  </div>
 </div>
 
 <!-- CATALOGO INICIAL — pantalla #1 -->
@@ -697,6 +747,7 @@ function restaurarSesion(){
     // El carrito se persiste también por si el cliente salió a la app del
     // banco y volvió: al restaurar, _carrito sigue intacto para confirmar.
     if(r.carrito&&r.carrito.length)_carrito=r.carrito;
+    actualizarBadgeCarrito();
     if(r.screen==='s-cliente'&&r.cli){
       _cli=r.cli;_dirs=r.dirs||[];
       setContacto(_cli.contacto||'');
@@ -723,7 +774,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){_yaSoyClienteMode=false;limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];setContacto('');hideErr('phone');hideErr('form');var ccBtn=document.querySelector('#s-catalogo .btn-main');if(ccBtn)ccBtn.disabled=false;if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();guardarSesion('s-catalogo');if(window.location.search.includes('idTransaccion')){try{window.history.replaceState({},'',window.location.pathname);}catch(e){}}showScreen('s-catalogo');}
+function salir(){_yaSoyClienteMode=false;limpiarSesion();_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];setContacto('');hideErr('phone');hideErr('form');var ccBtn=document.querySelector('#s-catalogo .btn-main');if(ccBtn)ccBtn.disabled=false;if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();actualizarBadgeCarrito();guardarSesion('s-catalogo');if(window.location.search.includes('idTransaccion')){try{window.history.replaceState({},'',window.location.pathname);}catch(e){}}showScreen('s-catalogo');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -1018,7 +1069,7 @@ function formatFecha(iso){
   return dias[d.getDay()]+' '+p[2]+'/'+p[1];
 }
 
-function iniciarNuevoPedido(){_cli_guardado=_cli;_dirs_guardados=_dirs;_carrito=[];if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();showScreen('s-catalogo');}
+function iniciarNuevoPedido(){_cli_guardado=_cli;_dirs_guardados=_dirs;_carrito=[];if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();actualizarBadgeCarrito();showScreen('s-catalogo');}
 var _cli_guardado=null,_dirs_guardados=[];
 function iniciar(){
   if(_cli_guardado){_cli=_cli_guardado;_dirs=_dirs_guardados;_cli_guardado=null;_dirs_guardados=[];}
@@ -1309,7 +1360,7 @@ function totalCarrito(){
 }
 function renderCarrito(){
   var wrap=document.getElementById('carrito-wrap');
-  if(_carrito.length===0){wrap.style.display='none';return;}
+  if(_carrito.length===0){wrap.style.display='none';actualizarBadgeCarrito();return;}
   wrap.style.display='block';
   document.getElementById('carrito-items').innerHTML=_carrito.map(function(it,i){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
@@ -1318,6 +1369,7 @@ function renderCarrito(){
     '</div>';
   }).join('');
   document.getElementById('carrito-total').textContent='$'+totalCarrito().toFixed(2);
+  actualizarBadgeCarrito();
 }
 function chgQty(d){
   var mx=_color?Math.min(_color.stock||10,10):10;
@@ -2477,6 +2529,122 @@ function midisenoIrAExito(){
 </script>
 <script>
 if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)el.style.display='none';}
+</script>
+
+<!-- ── Drawer carrito (header) ── -->
+<div class="cart-drawer-overlay" id="cart-drawer-overlay" onclick="cerrarCartDrawer()"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-drawer-hdr">
+    <h3>Mi carrito</h3>
+    <button class="cart-drawer-close" onclick="cerrarCartDrawer()">✕</button>
+  </div>
+  <div class="cart-drawer-items" id="cart-drawer-items">
+    <div class="cart-drawer-empty">Tu carrito está vacío</div>
+  </div>
+  <div class="cart-drawer-footer" id="cart-drawer-footer" style="display:none">
+    <div class="cart-drawer-total"><span>Total</span><span id="cart-drawer-total">$0.00</span></div>
+    <button class="cart-drawer-btn" id="cart-drawer-btn" onclick="cerrarCartDrawer();continuarCatalogo(document.getElementById('cart-drawer-btn'))">Continuar pedido →</button>
+  </div>
+</div>
+
+<!-- ── Modal consultar mi pedido (header) ── -->
+<div class="user-modal-overlay" id="user-modal-overlay" onclick="cerrarUserModal(event)">
+  <div class="user-modal" onclick="event.stopPropagation()">
+    <button class="user-modal-close" onclick="cerrarUserModal()">✕</button>
+    <h3>Consultar mi pedido</h3>
+    <p>Ingresá tu número de teléfono para ver el estado de tus pedidos.</p>
+    <input class="user-modal-input" id="user-modal-tel" type="tel" placeholder="Ej: 7262 6332" maxlength="12">
+    <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()">Buscar</button>
+    <div id="user-modal-result"></div>
+  </div>
+</div>
+
+<script>
+/* ── Drawer carrito ── */
+function abrirCartDrawer(){
+  renderCartDrawer();
+  document.getElementById('cart-drawer-overlay').classList.add('open');
+  document.getElementById('cart-drawer').classList.add('open');
+}
+function cerrarCartDrawer(){
+  document.getElementById('cart-drawer-overlay').classList.remove('open');
+  document.getElementById('cart-drawer').classList.remove('open');
+}
+function renderCartDrawer(){
+  var items=document.getElementById('cart-drawer-items');
+  var footer=document.getElementById('cart-drawer-footer');
+  if(!_carrito||_carrito.length===0){
+    items.innerHTML='<div class="cart-drawer-empty">Tu carrito está vacío</div>';
+    footer.style.display='none';
+    return;
+  }
+  items.innerHTML=_carrito.map(function(it,i){
+    var nom=it.diseno||it.nombre||it.sku||'Producto';
+    var col=it.color||'';
+    return '<div class="cart-drawer-item">'+
+      '<div class="cart-drawer-item-info">'+
+        '<div class="cart-drawer-item-name">'+esc(nom)+'</div>'+
+        '<div class="cart-drawer-item-meta">'+esc(col)+' · x'+it.cantidad+'</div>'+
+      '</div>'+
+      '<div class="cart-drawer-item-price">$'+(it.precio*it.cantidad).toFixed(2)+'</div>'+
+      '<button class="cart-drawer-item-remove" onclick="drawerQuitar('+i+')" title="Quitar">✕</button>'+
+    '</div>';
+  }).join('');
+  document.getElementById('cart-drawer-total').textContent='$'+totalCarrito().toFixed(2);
+  footer.style.display='block';
+  actualizarBadgeCarrito();
+}
+function drawerQuitar(i){
+  if(typeof quitarDelCarrito==='function'){quitarDelCarrito(i);}
+  else{_carrito.splice(i,1);}
+  renderCartDrawer();
+}
+function actualizarBadgeCarrito(){
+  var b=document.getElementById('hdr-cart-badge');
+  if(!b)return;
+  var n=_carrito?_carrito.length:0;
+  b.textContent=n;
+  b.style.display=n>0?'flex':'none';
+}
+
+/* ── Modal consultar mi pedido ── */
+var _ESTADOS_LABEL=['Pendiente','En proceso','En camino','Entregado'];
+function abrirUserModal(){
+  document.getElementById('user-modal-tel').value='';
+  document.getElementById('user-modal-result').innerHTML='';
+  document.getElementById('user-modal-overlay').classList.add('open');
+  setTimeout(function(){document.getElementById('user-modal-tel').focus();},100);
+}
+function cerrarUserModal(e){
+  if(e&&e.target&&e.target!==document.getElementById('user-modal-overlay'))return;
+  document.getElementById('user-modal-overlay').classList.remove('open');
+}
+function buscarMiPedido(){
+  var tel=document.getElementById('user-modal-tel').value.replace(/\D/g,'');
+  var res=document.getElementById('user-modal-result');
+  var btn=document.getElementById('user-modal-btn');
+  if(tel.length<4){res.innerHTML='<div class="user-modal-no">Ingresá al menos 4 dígitos.</div>';return;}
+  btn.textContent='Buscando…';btn.disabled=true;
+  fetch(GAS+'?action=buscarCliente&tel='+encodeURIComponent(tel)+'&token='+encodeURIComponent(API_TOKEN)).then(function(r){return r.json();}).then(function(d){
+    btn.textContent='Buscar';btn.disabled=false;
+    if(!d.ok||!d.encontrado){res.innerHTML='<div class="user-modal-no">No se encontraron pedidos para ese número.</div>';return;}
+    var html='';
+    (d.ordenesRecientes||[]).forEach(function(o){
+      var est=parseInt(o.estado)||0;
+      var color=est===0?'#f59e0b':est===1?'#3b82f6':est===2?'#8b5cf6':'#10b981';
+      html+='<div class="user-modal-orden">'+
+        '<div class="user-modal-orden-num">'+esc(o.orden)+'</div>'+
+        '<div class="user-modal-orden-estado" style="color:'+color+'">'+(_ESTADOS_LABEL[est]||'Pendiente')+'</div>'+
+        '<div class="user-modal-orden-fecha">'+esc(o.fecha||'')+' · $'+(Number(o.precio||0)*Number(o.cantidad||1)).toFixed(2)+'</div>'+
+      '</div>';
+    });
+    res.innerHTML='<div class="user-modal-ordenes">'+html+'</div>';
+  }).catch(function(){
+    btn.textContent='Buscar';btn.disabled=false;
+    res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';
+  });
+}
+document.getElementById('user-modal-tel').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
 </script>
 </body>
 </html>

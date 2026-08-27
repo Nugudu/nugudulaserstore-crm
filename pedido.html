@@ -2810,10 +2810,10 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
   var STORAGE_KEY='ob_tour_done';
   var currentStep=0;
   var steps=[
-    {ico:'🛍️',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:'#cat-inicio-wrap',pos:'center'},
-    {ico:'🛒',title:'Agregá al carrito',desc:'Elegí color y cantidad, luego presioná "Agregar al carrito". Podés sumar varios productos.',target:'.res-total',pos:'top'},
-    {ico:'✅',title:'Finalizá tu compra',desc:'Cuando tengas todo, presioná "Continuar" para completar tus datos y elegir el pago.',target:'.btn-main',pos:'top'},
-    {ico:'📱',title:'Consultá tu pedido',desc:'Siempre podés volver y usar "Consultar mi pedido" con tu código personal.',target:'a[href*="irAConsultar"]',pos:'top'}
+    {ico:'<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:'#cat-inicio-wrap',pos:'center'},
+    {ico:'<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Agregá al carrito',desc:'Elegí color y cantidad, luego presioná "Agregar al carrito". Podés sumar varios productos.',target:'.btn-main',pos:'top'},
+    {ico:'<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Finalizá tu compra',desc:'Presioná "Continuar" para completar tus datos y elegir el pago.',target:'.btn-main',pos:'top'},
+    {ico:'<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>',title:'Consultá tu pedido',desc:'Siempre podés volver y usar "Consultar mi pedido" con tu código personal.',target:'a[href*="irAConsultar"]',pos:'top'}
   ];
   var overlay=document.getElementById('ob-overlay');
   var spotlight=document.getElementById('ob-spotlight');
@@ -2858,35 +2858,49 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     var step=steps[currentStep];
     var el=document.querySelector(step.target);
     if(!el){spotlight.style.display='none';return;}
-    var r=el.getBoundingClientRect();
-    var pad=16;
-    spotlight.style.display='block';
-    spotlight.style.left=(r.left-pad)+'px';
-    spotlight.style.top=(r.top-pad)+'px';
-    spotlight.style.width=(r.width+pad*2)+'px';
-    spotlight.style.height=(r.height+pad*2)+'px';
-    // Position card
-    var cardW=Math.min(320,window.innerWidth-40);
-    var cardH=card.offsetHeight||200;
-    card.style.width=cardW+'px';
-    var cx=(window.innerWidth-cardW)/2;
-    var cy;
-    if(step.pos==='top'){cy=r.top-pad-cardH-12;if(cy<16)cy=r.bottom+pad+12;}
-    else{cy=(window.innerHeight-cardH)/2;}
-    if(cy<16)cy=16;
-    if(cy+cardH>window.innerHeight-16)cy=window.innerHeight-cardH-16;
-    card.style.left=cx+'px';
-    card.style.top=cy+'px';
+    // Scroll element into view first
+    el.scrollIntoView({behavior:'auto',block:'center'});
+    // Wait for scroll to settle, then position
+    setTimeout(function(){
+      var r=el.getBoundingClientRect();
+      var pad=16;
+      // Check if element is visible in viewport
+      if(r.top<0||r.bottom>window.innerHeight||r.width===0){
+        spotlight.style.display='none';
+      }else{
+        spotlight.style.display='block';
+        spotlight.style.left=(r.left-pad)+'px';
+        spotlight.style.top=(r.top-pad)+'px';
+        spotlight.style.width=(r.width+pad*2)+'px';
+        spotlight.style.height=(r.height+pad*2)+'px';
+      }
+      // Position card
+      var cardW=Math.min(320,window.innerWidth-40);
+      var cardH=card.offsetHeight||200;
+      card.style.width=cardW+'px';
+      var cx=(window.innerWidth-cardW)/2;
+      var cy;
+      if(step.pos==='top'){
+        cy=r.top-pad-cardH-12;
+        if(cy<16)cy=r.bottom+pad+12;
+      }else{
+        cy=(window.innerHeight-cardH)/2;
+      }
+      if(cy<16)cy=16;
+      if(cy+cardH>window.innerHeight-16)cy=window.innerHeight-cardH-16;
+      card.style.left=cx+'px';
+      card.style.top=cy+'px';
+    },100);
   }
   function showStep(){
     var s=steps[currentStep];
-    icoEl.textContent=s.ico;
+    icoEl.innerHTML=s.ico;
     titleEl.textContent=s.title;
     descEl.textContent=s.desc;
     renderIndicators();
     renderButtons();
     overlay.classList.add('active');
-    setTimeout(positionSpotlight,50);
+    positionSpotlight();
   }
   function closeTour(){
     overlay.classList.remove('active');

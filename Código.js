@@ -162,6 +162,7 @@ function doPost(e) {
     if (action === 'descartarSolicitud'){ return respond(conLock(function(){ return descartarSolicitudWeb(payload); })); }
     if (action === 'obtenerCodigoCliente') return respond(obtenerCodigoParaCRM(payload));
     if (action === 'regenerarCodigoCliente') return respond(regenerarCodigoCliente(payload));
+    if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(p.tel || payload.tel, p.codigo || payload.codigo));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });

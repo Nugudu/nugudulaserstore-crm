@@ -263,6 +263,26 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .user-modal-orden-estado{font-size:11px;font-weight:600;margin-top:4px}
 .user-modal-orden-fecha{font-size:11px;color:var(--muted);margin-top:2px}
 .user-modal-no{color:var(--muted);font-size:13px;text-align:center;padding:16px 0}
+/* ── Onboarding Tour ── */
+.ob-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center}
+.ob-overlay.active{display:flex}
+.ob-bg{position:absolute;inset:0;background:rgba(45,36,96,.55);transition:opacity .3s}
+.ob-spotlight{position:absolute;border-radius:16px;box-shadow:0 0 0 4000px rgba(45,36,96,.55);transition:all .4s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:1}
+.ob-card{position:relative;z-index:2;background:#fff;border-radius:16px;padding:28px 24px 20px;max-width:320px;width:90vw;box-shadow:0 8px 32px rgba(45,36,96,.18);text-align:center;animation:obFadeIn .35s ease}
+@keyframes obFadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.ob-ico{font-size:36px;margin-bottom:8px}
+.ob-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.ob-desc{font-size:14px;color:#555;line-height:1.5;margin-bottom:18px}
+.ob-ind{display:flex;justify-content:center;gap:8px;margin-bottom:18px}
+.ob-dot{width:10px;height:10px;border-radius:50%;background:#e0ddf0;transition:all .3s}
+.ob-dot.act{background:var(--navy);width:24px;border-radius:5px}
+.ob-btns{display:flex;gap:10px;justify-content:center}
+.ob-btn-skip{padding:10px 18px;border:1.5px solid #c8c5d6;background:#fff;color:#666;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.ob-btn-skip:hover{border-color:#2D2460;color:#2D2460}
+.ob-btn-next{padding:10px 22px;border:none;background:var(--navy);color:#fff;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.ob-btn-next:hover{opacity:.9}
+.ob-btn-done{padding:10px 22px;border:none;background:var(--teal);color:#fff;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.ob-btn-done:hover{opacity:.9}
 </style>
 </head>
 <body>
@@ -2622,6 +2642,19 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <div class="cart-drawer-total"><span>Total</span><span id="cart-drawer-total">$0.00</span></div>
     <button class="cart-drawer-btn" id="cart-drawer-btn" onclick="cerrarCartDrawer();continuarCatalogo(document.getElementById('cart-drawer-btn'))">Continuar pedido →</button>
   </div>
+ </div>
+
+<!-- ── Onboarding Tour ── -->
+<div class="ob-overlay" id="ob-overlay">
+  <div class="ob-bg"></div>
+  <div class="ob-spotlight" id="ob-spotlight"></div>
+  <div class="ob-card" id="ob-card">
+    <div class="ob-ico" id="ob-ico"></div>
+    <div class="ob-title" id="ob-title"></div>
+    <div class="ob-desc" id="ob-desc"></div>
+    <div class="ob-ind" id="ob-ind"></div>
+    <div class="ob-btns" id="ob-btns"></div>
+  </div>
 </div>
 
 <!-- ── Modal consultar mi pedido (header) ── -->
@@ -2769,6 +2802,102 @@ function renderResultados(d,res){
 }
 document.getElementById('user-modal-q').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
 document.getElementById('user-modal-cod').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
+/* ── Onboarding Tour ── */
+(function(){
+  var STORAGE_KEY='ob_tour_done';
+  var currentStep=0;
+  var steps=[
+    {ico:'🛍️',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:'#cat-inicio-wrap',pos:'center'},
+    {ico:'🛒',title:'Agregá al carrito',desc:'Elegí color y cantidad, luego presioná "Agregar al carrito". Podés sumar varios productos.',target:'.res-total',pos:'top'},
+    {ico:'✅',title:'Finalizá tu compra',desc:'Cuando tengas todo, presioná "Continuar" para completar tus datos y elegir el pago.',target:'.btn-main',pos:'top'},
+    {ico:'📱',title:'Consultá tu pedido',desc:'Siempre podés volver y usar "Consultar mi pedido" con tu código personal.',target:'a[href*="irAConsultar"]',pos:'top'}
+  ];
+  var overlay=document.getElementById('ob-overlay');
+  var spotlight=document.getElementById('ob-spotlight');
+  var card=document.getElementById('ob-card');
+  var icoEl=document.getElementById('ob-ico');
+  var titleEl=document.getElementById('ob-title');
+  var descEl=document.getElementById('ob-desc');
+  var indEl=document.getElementById('ob-ind');
+  var btnsEl=document.getElementById('ob-btns');
+  function hasDone(){try{return localStorage.getItem(STORAGE_KEY)==='1';}catch(e){return false;}}
+  function markDone(){try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
+  function renderIndicators(){
+    indEl.innerHTML='';
+    for(var i=0;i<steps.length;i++){
+      var d=document.createElement('div');
+      d.className='ob-dot'+(i===currentStep?' act':'');
+      indEl.appendChild(d);
+    }
+  }
+  function renderButtons(){
+    btnsEl.innerHTML='';
+    var skip=document.createElement('button');
+    skip.className='ob-btn-skip';
+    skip.textContent=currentStep===steps.length-1?'Cerrar':'Omitir';
+    skip.onclick=function(){closeTour();};
+    btnsEl.appendChild(skip);
+    var next=document.createElement('button');
+    if(currentStep===steps.length-1){
+      next.className='ob-btn-done';
+      next.textContent='¡Entendido!';
+    }else{
+      next.className='ob-btn-next';
+      next.textContent='Siguiente →';
+    }
+    next.onclick=function(){
+      if(currentStep<steps.length-1){currentStep++;showStep();}
+      else closeTour();
+    };
+    btnsEl.appendChild(next);
+  }
+  function positionSpotlight(){
+    var step=steps[currentStep];
+    var el=document.querySelector(step.target);
+    if(!el){spotlight.style.display='none';return;}
+    var r=el.getBoundingClientRect();
+    var pad=16;
+    spotlight.style.display='block';
+    spotlight.style.left=(r.left-pad)+'px';
+    spotlight.style.top=(r.top-pad)+'px';
+    spotlight.style.width=(r.width+pad*2)+'px';
+    spotlight.style.height=(r.height+pad*2)+'px';
+    // Position card
+    var cardW=Math.min(320,window.innerWidth-40);
+    var cardH=card.offsetHeight||200;
+    card.style.width=cardW+'px';
+    var cx=(window.innerWidth-cardW)/2;
+    var cy;
+    if(step.pos==='top'){cy=r.top-pad-cardH-12;if(cy<16)cy=r.bottom+pad+12;}
+    else{cy=(window.innerHeight-cardH)/2;}
+    if(cy<16)cy=16;
+    if(cy+cardH>window.innerHeight-16)cy=window.innerHeight-cardH-16;
+    card.style.left=cx+'px';
+    card.style.top=cy+'px';
+  }
+  function showStep(){
+    var s=steps[currentStep];
+    icoEl.textContent=s.ico;
+    titleEl.textContent=s.title;
+    descEl.textContent=s.desc;
+    renderIndicators();
+    renderButtons();
+    overlay.classList.add('active');
+    setTimeout(positionSpotlight,50);
+  }
+  function closeTour(){
+    overlay.classList.remove('active');
+    markDone();
+  }
+  window.obStartTour=function(){
+    if(hasDone())return;
+    currentStep=0;
+    showStep();
+  };
+  window.addEventListener('resize',function(){if(overlay.classList.contains('active'))positionSpotlight();});
+  // Auto-start after short delay if not done
+  setTimeout(function(){window.obStartTour();},1200);
+})();
 </script>
 </body>
 </html>

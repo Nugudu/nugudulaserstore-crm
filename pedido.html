@@ -45,29 +45,29 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .filtros-bar{position:relative}
 .filtros-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .fil-buscar-wrap{position:relative;flex:1;min-width:0}
-.fil-buscar{width:100%;padding:12px 40px 12px 14px;border:2px solid #2D2460;border-radius:var(--rs);font-size:15px;font-family:'DM Sans',sans-serif;background:#fff;box-sizing:border-box;color:#222}
+.fil-buscar{width:100%;padding:12px 40px 12px 14px;border:1.5px solid #c8c5d6;border-radius:var(--rs);font-size:15px;font-family:'DM Sans',sans-serif;background:#fff;box-sizing:border-box;color:#222;box-shadow:0 1px 4px rgba(45,36,96,.08)}
 .fil-buscar::placeholder{color:#888}
-.fil-buscar:focus{outline:none;border-color:#2D2460;box-shadow:0 0 0 3px rgba(45,36,96,.15)}
+.fil-buscar:focus{outline:none;border-color:#2D2460;box-shadow:0 2px 8px rgba(45,36,96,.12)}
 .fil-lupa-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#2D2460;display:flex;pointer-events:none}
-.fil-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;border:2px solid #2D2460;background:#fff;color:#2D2460;cursor:pointer;transition:all .15s;position:relative;flex:0 0 auto}
-.fil-icon:hover{background:#2D2460;color:#fff}
+.fil-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;border:1.5px solid #c8c5d6;background:#fff;color:#2D2460;cursor:pointer;transition:all .15s;position:relative;flex:0 0 auto;box-shadow:0 1px 4px rgba(45,36,96,.08)}
+.fil-icon:hover{border-color:#2D2460;box-shadow:0 2px 8px rgba(45,36,96,.15)}
 .fil-icon.open{color:#fff;background:#2D2460;border-color:#2D2460}
 .fil-icon.act{color:#fff;background:var(--navy);border-color:var(--navy)}
 .fil-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--teal);color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;box-sizing:border-box}
-.filtros-panel{display:none;background:var(--surface);border:2px solid #2D2460;border-radius:var(--rs);padding:14px;margin-bottom:14px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
+.filtros-panel{display:none;background:#fff;border:1px solid #e8e5f0;border-radius:var(--rs);padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(45,36,96,.06)}
 .fil-limpiar-row{display:flex;justify-content:flex-end;margin-bottom:10px}
-.fil-limpiar{height:34px;padding:0 14px;border-radius:var(--rs);border:2px solid #2D2460;background:#fff;color:#2D2460;font-size:13px;font-weight:700;cursor:pointer;display:none;align-items:center;transition:all .15s}
-.fil-limpiar:hover{background:#2D2460;color:#fff}
+.fil-limpiar{height:34px;padding:0 14px;border-radius:var(--rs);border:1px solid #c8c5d6;background:#fff;color:#2D2460;font-size:13px;font-weight:600;cursor:pointer;display:none;align-items:center;transition:all .15s}
+.fil-limpiar:hover{border-color:#2D2460;color:#2D2460}
 .fil-grupo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
 .fil-grupo:last-of-type{margin-bottom:0}
-.fil-lbl{font-size:13px;font-weight:700;color:#2D2460;text-transform:uppercase;letter-spacing:.5px;margin-right:4px}
-.fil-chip{border:2px solid #2D2460;background:#fff;color:#2D2460;font-size:13px;font-weight:700;border-radius:20px;padding:6px 14px;cursor:pointer;transition:all .15s}
-.fil-chip:hover{background:#2D2460;color:#fff}
+.fil-lbl{font-size:12px;font-weight:700;color:#2D2460;letter-spacing:.3px;margin-right:4px}
+.fil-chip{border:1.5px solid #c8c5d6;background:#f8f6ff;color:#2D2460;font-size:13px;font-weight:600;border-radius:20px;padding:6px 14px;cursor:pointer;transition:all .15s}
+.fil-chip:hover{border-color:#2D2460;background:#ede9fb}
 .fil-chip.sel{background:var(--navy);border-color:var(--navy);color:#fff}
-.fil-msg{display:none;text-align:center;padding:16px;color:#555;font-size:14px;font-weight:600}
-.card{background:var(--surface);border:1.5px solid #2D2460;border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 5px rgba(45,36,96,.06)}
-.card-ttl{font-size:12px;font-weight:700;color:#2D2460;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
-.phone-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:30px 20px;text-align:center;box-shadow:0 1px 5px rgba(45,36,96,.06)}
+.fil-msg{display:none;text-align:center;padding:16px;color:#666;font-size:14px}
+.card{background:#fff;border:1px solid #e8e5f0;border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(45,36,96,.05)}
+.card-ttl{font-size:12px;font-weight:700;color:#2D2460;letter-spacing:.3px;margin-bottom:12px}
+.phone-card{background:#fff;border:1px solid #e8e5f0;border-radius:var(--r);padding:30px 20px;text-align:center;box-shadow:0 2px 12px rgba(45,36,96,.06)}
 .phone-icon{font-size:46px;margin-bottom:8px}
 .phone-brand{font-size:22px;font-weight:800;color:var(--navy);line-height:1.25;margin-bottom:2px;letter-spacing:-.2px}
 .phone-welcome{font-size:16px;font-weight:600;color:var(--teal);margin-bottom:10px;line-height:1.3}
@@ -170,7 +170,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .btn-main:disabled{opacity:.5;cursor:not-allowed}
-.btn-sec{width:100%;padding:14px;background:transparent;color:#2D2460;border:2px solid #2D2460;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;margin-top:10px}
+.btn-sec{width:100%;padding:14px;background:transparent;color:#2D2460;border:1.5px solid #c8c5d6;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;transition:all .15s}
+.btn-sec:hover{border-color:#2D2460}
 .btn-wa{width:100%;padding:15px;background:#25D366;color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;text-decoration:none}
 .btn-outline-teal{width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--teal);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px}
 .err-box{background:#fcebeb;color:#a32d2d;border:1px solid #f7c1c1;border-radius:var(--rs);padding:11px 13px;font-size:13px;margin-bottom:12px;display:none}
@@ -179,7 +180,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .cli-ico{font-size:36px;margin-bottom:6px}
 .cli-greeting h2{font-size:18px;font-weight:700;color:var(--navy)}
 .cli-greeting p{font-size:13px;color:var(--muted);margin-top:3px}
-.orden-track{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(45,36,96,.06)}
+.orden-track{background:#fff;border:1px solid #e8e5f0;border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(45,36,96,.05)}
 .ot-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .ot-num{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--navy)}
 .ot-fecha{font-size:11px;color:var(--hint)}
@@ -328,8 +329,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div id="err-phone" class="err-box" style="display:none"></div>
         <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
         <div style="display:flex;justify-content:space-between;margin-top:10px">
-          <a href="#" onclick="cancelarConsulta();return false" style="font-size:16px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;border-radius:8px;background:#f0eef9">← Volver</a>
-          <a href="#" onclick="_yaSoyClienteMode=true;irAConsultar();return false" style="font-size:16px;color:var(--navy);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;border-radius:8px;background:#e8f5e9">Ya soy cliente →</a>
+          <a href="#" onclick="cancelarConsulta();return false" style="font-size:16px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:8px;background:#f4f2fb;transition:all .15s" onmouseover="this.style.background='#ede9fb'" onmouseout="this.style.background='#f4f2fb'">← Volver</a>
+          <a href="#" onclick="_yaSoyClienteMode=true;irAConsultar();return false" style="font-size:16px;color:var(--navy);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:8px;background:#e8f5e9;transition:all .15s" onmouseover="this.style.background='#dcedc8'" onmouseout="this.style.background='#e8f5e9'">Ya soy cliente →</a>
         </div>
         <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
       </div>
@@ -351,7 +352,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <button onclick="buscarTel(this)" style="width:100%;box-sizing:border-box;padding:17px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:18px;font-weight:700;cursor:pointer">Buscar</button>
         <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
-        <button style="background:none;border:2px solid #2D2460;color:#2D2460;font-size:15px;font-weight:700;cursor:pointer;margin-top:12px;width:100%;padding:12px;border-radius:8px" onclick="cancelarConsulta()">← Volver</button>
+        <button style="background:none;border:1.5px solid #c8c5d6;color:#2D2460;font-size:15px;font-weight:700;cursor:pointer;margin-top:12px;width:100%;padding:12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#2D2460'" onmouseout="this.style.borderColor='#c8c5d6'" onclick="cancelarConsulta()">← Volver</button>
       </div>
     </div>
   </div>
@@ -359,7 +360,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- PANTALLA CLIENTE — tracking de pedidos y opciones -->
 <div class="screen" id="s-cliente">
-  <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
+  <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
   <div class="cli-greeting">
     <div class="cli-ico" style="display:none"></div>
     <h2 id="cli-nombre-ttl">¡Hola!</h2>
@@ -380,7 +381,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- PASOS -->
 <div class="screen" id="s-form">
-  <div style="display:flex;justify-content:space-between;padding:6px 0 2px"><button onclick="volverDesdeForm()" style="background:none;border:2px solid #2D2460;color:#2D2460;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">← Volver</button><button onclick="salir()" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
+  <div style="display:flex;justify-content:space-between;padding:6px 0 2px"><button onclick="volverDesdeForm()" style="background:none;border:1.5px solid #c8c5d6;color:#2D2460;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#2D2460'" onmouseout="this.style.borderColor='#c8c5d6'">← Volver</button><button onclick="salir()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
   <div class="steps" id="steps">
     <div class="step" id="step1" onclick="irAPaso(1)"><div class="step-d act" id="sd1">1</div><div class="step-l act" id="sl1">Producto</div></div>
     <div class="step-line" id="sl-1"></div>
@@ -570,7 +571,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
-    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salir()" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
+    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salir()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
     <div class="ico" style="display:none"></div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
@@ -609,7 +610,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- MI DISEÑO — buscar por número de orden y ver detalle -->
 <div class="screen" id="s-midiseno" style="display:none">
-  <div style="text-align:right;padding:6px 0 0"><button onclick="salir();return false" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
+  <div style="text-align:right;padding:6px 0 0"><button onclick="salir();return false" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
 
   <!-- Paso 1: buscar orden -->
   <div id="md-paso1">
@@ -628,7 +629,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       Ya tienes listo tu dise&ntilde;o? Convierte tu dise&ntilde;o formato SVG en un grabado a l&aacute;ser para tu gorra Nugud&uacute;. Si tu archivo ya est&aacute; en formato SVG revisaremos que sea apto para producci&oacute;n. Si a&uacute;n no esta en ese formato, podemos ayudarte con la conversi&oacute;n para el proceso de grabado a l&aacute;ser. Este servicio esta dirigido para archivos finales listos para producci&oacute;n, por lo que no incluye modificaciones cont&aacute;ctanos por whatsapp <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a> y con gusto te brindamos m&aacute;s informaci&oacute;n.
     </div>
     <div style="text-align:center;margin-top:12px">
-      <a href="#" onclick="salir();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;border-radius:8px;background:#f0eef9">← Volver al catálogo</a>
+      <a href="#" onclick="salir();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:8px;background:#f4f2fb;transition:all .15s" onmouseover="this.style.background='#ede9fb'" onmouseout="this.style.background='#f4f2fb'">← Volver al catálogo</a>
     </div>
   </div>
 

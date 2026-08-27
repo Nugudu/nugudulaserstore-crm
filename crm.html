@@ -579,6 +579,7 @@ tbody tr:last-child td{border-bottom:none}
         <button class="btn btn-outline btn-sm sel" id="cdp-tab-360" onclick="cdpTab('360')" style="border-color:var(--navy);background:var(--navy);color:#fff">Customer 360</button>
         <button class="btn btn-outline btn-sm" id="cdp-tab-funnel" onclick="cdpTab('funnel')">Embudo de conversión</button>
         <button class="btn btn-outline btn-sm" id="cdp-tab-segmentos" onclick="cdpTab('segmentos')">Segmentos</button>
+        <button class="btn btn-outline btn-sm" id="cdp-tab-visitantes" onclick="cdpTab('visitantes')"><i class="fa-solid fa-eye"></i> Visitantes</button>
         <button class="btn btn-outline btn-sm" onclick="cargarCDP()" style="margin-left:auto"><i class="fa-solid fa-rotate"></i> Actualizar</button>
       </div>
 
@@ -623,6 +624,37 @@ tbody tr:last-child td{border-bottom:none}
           <button class="btn btn-outline btn-sm" onclick="exportarSegmentosCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button>
         </div>
         <div class="g3" id="cdp-segmentos-grid"></div>
+      </div>
+
+      <!-- Visitantes -->
+      <div id="cdp-visitantes" style="display:none">
+        <div class="ph-row">
+          <div><h2>Visitantes en tiempo real</h2><p>Comportamiento de usuarios anónimos y identificados</p></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="hoy" onclick="cdpVisitantesFiltro('hoy')" style="border-color:var(--navy);background:var(--navy);color:#fff">Hoy</button>
+          <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="semana" onclick="cdpVisitantesFiltro('semana')">Esta semana</button>
+          <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="mes" onclick="cdpVisitantesFiltro('mes')">Este mes</button>
+          <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="cdp-v-actualizar">Auto-refresh: 30s</span>
+        </div>
+        <div class="g4" id="cdp-v-stats" style="margin-bottom:1.2rem"></div>
+        <div class="card">
+          <div class="card-ttl"><i class="fa-solid fa-users" style="color:var(--navy)"></i> <span id="cdp-v-title">Visitantes de hoy</span></div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="border-bottom:2px solid var(--border);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+              <th style="text-align:left;padding:8px 6px">Estado</th>
+              <th style="text-align:left;padding:8px 6px">Ciudad</th>
+              <th style="text-align:left;padding:8px 6px">Última página</th>
+              <th style="text-align:left;padding:8px 6px">Producto visto</th>
+              <th style="text-align:center;padding:8px 6px">Dispositivo</th>
+              <th style="text-align:center;padding:8px 6px">Fuente</th>
+              <th style="text-align:center;padding:8px 6px">Eventos</th>
+              <th style="text-align:right;padding:8px 6px">Hace</th>
+            </tr></thead>
+            <tbody id="cdp-v-body"></tbody>
+          </table></div>
+          <div id="cdp-v-empty" style="display:none;padding:40px;text-align:center;color:var(--muted)"><i class="fa-solid fa-eye-slash" style="font-size:32px;margin-bottom:12px;display:block;opacity:.3"></i><p>No hay visitantes en este período.</p></div>
+        </div>
       </div>
     </div>
 
@@ -3170,6 +3202,8 @@ function generarPdfReporteSku(data, sku, foto){
 var _cdpEventos = [];
 
 var _cdpTabActual = '360';
+var _cdpVisitantesPeriodo = 'hoy';
+var _cdpVisitantesTimer = null;
 
 function cargarCDP(){
   fetch(GAS+'?action=leerEventos&limite=10000&token='+encodeURIComponent(API_TOKEN))
@@ -3183,8 +3217,8 @@ function cargarCDP(){
 
 function cdpTab(tab){
   _cdpTabActual = tab;
-  var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos' };
-  ['360','funnel','segmentos'].forEach(function(t){
+  var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos', 'visitantes':'cdp-visitantes' };
+  ['360','funnel','segmentos','visitantes'].forEach(function(t){
     var el = document.getElementById(secciones[t]); if(el) el.style.display = t === tab ? 'block' : 'none';
     var btn = document.getElementById('cdp-tab-'+t);
     if(btn){
@@ -3194,6 +3228,72 @@ function cdpTab(tab){
   });
   if(tab === 'funnel') cdpRenderFunnel();
   if(tab === 'segmentos') cdpRenderSegmentos();
+  if(tab === 'visitantes') cdpCargarVisitantes();
+}
+
+function cdpVisitantesFiltro(periodo){
+  _cdpVisitantesPeriodo = periodo;
+  document.querySelectorAll('.cdp-v.filt').forEach(function(b){
+    if(b.dataset.periodo===periodo){b.style.borderColor='var(--navy)';b.style.background='var(--navy)';b.style.color='#fff';}
+    else{b.style.borderColor='';b.style.background='';b.style.color='';}
+  });
+  var titulos={hoy:'Visitantes de hoy',semana:'Visitantes de esta semana',mes:'Visitantes de este mes'};
+  document.getElementById('cdp-v-title').textContent=titulos[periodo]||'Visitantes';
+  cdpCargarVisitantes();
+}
+
+function cdpCargarVisitantes(){
+  fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&token='+encodeURIComponent(API_TOKEN))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{});
+      else cdpRenderVisitantes([],{});
+    }).catch(function(){cdpRenderVisitantes([],{});});
+}
+
+function cdpRenderVisitantes(visitantes,stats){
+  // Stats
+  var statsHtml='';
+  var statItems=[
+    {label:'Activos ahora',value:stats.activos||0,icon:'fa-solid fa-circle',color:'#22c55e'},
+    {label:'Hoy',value:stats.hoy||0,icon:'fa-solid fa-calendar-day',color:'var(--navy)'},
+    {label:'Esta semana',value:stats.semana||0,icon:'fa-solid fa-calendar-week',color:'var(--gold)'},
+    {label:'Este mes',value:stats.mes||0,icon:'fa-solid fa-calendar',color:'var(--accent)'}
+  ];
+  statItems.forEach(function(s){
+    statsHtml+='<div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:'+s.color+'">'+s.value+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px"><i class="'+s.icon+'" style="margin-right:4px"></i>'+s.label+'</div></div>';
+  });
+  document.getElementById('cdp-v-stats').innerHTML=statsHtml;
+  
+  // Tabla
+  var body=document.getElementById('cdp-v-body');
+  var empty=document.getElementById('cdp-v-empty');
+  if(!visitantes.length){body.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  
+  var paginas={s_catalogo:'Catálogo',s_cliente:'Datos',s_envio:'Envío',s_pago:'Pago',s_exito:'¡Listo!',s_consulta:'Consulta',s_midsenio:'Mi diseño'};
+  var html='';
+  visitantes.forEach(function(v){
+    var status=v.isActive?'<span style="display:inline-flex;align-items:center;gap:5px;color:#22c55e;font-weight:600"><i class="fa-solid fa-circle" style="font-size:8px"></i>En línea</span>':'<span style="display:inline-flex;align-items:center;gap:5px;color:var(--muted)"><i class="fa-solid fa-circle" style="font-size:8px;opacity:.3"></i>'+v.minutesAgo+' min</span>';
+    var city=v.city||'—';
+    var page=paginas[v.lastPage]||v.lastPage||'—';
+    var collection=v.collection||'—';
+    var device=v.device==='Móvil'?'<i class="fa-solid fa-mobile-screen" style="color:var(--navy)"></i> Móvil':'<i class="fa-solid fa-desktop" style="color:var(--muted)"></i> Escritorio';
+    var source=v.source||'Directo';
+    if(source.match(/^N\d+$/))source='<span style="background:var(--navy);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600">'+source+'</span>';
+    else if(source==='WEB')source='<span style="background:var(--gold);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600">WEB</span>';
+    html+='<tr style="border-bottom:1px solid var(--border)">';
+    html+='<td style="padding:8px 6px">'+status+'</td>';
+    html+='<td style="padding:8px 6px">'+city+'</td>';
+    html+='<td style="padding:8px 6px">'+page+'</td>';
+    html+='<td style="padding:8px 6px">'+collection+'</td>';
+    html+='<td style="padding:8px 6px;text-align:center">'+device+'</td>';
+    html+='<td style="padding:8px 6px;text-align:center">'+source+'</td>';
+    html+='<td style="padding:8px 6px;text-align:center;font-weight:600">'+v.events+'</td>';
+    html+='<td style="padding:8px 6px;text-align:right;color:var(--muted);font-size:12px">'+v.minutesAgo+' min</td>';
+    html+='</tr>';
+  });
+  body.innerHTML=html;
 }
 
 // ── Customer 360 ──

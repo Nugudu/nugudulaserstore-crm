@@ -154,6 +154,7 @@ function doPost(e) {
     if (action === 'validarHashWompi') return respond(validarHashWompi(payload.params || payload));
     if (action === 'notificarPagoConfirmado') return respond(notificarPagoConfirmado(payload));
     if (action === 'trackEvent')  return respond(guardarEventos(payload));
+    if (action === 'leerVisitantes') return respond(leerVisitantes(payload));
     if (action === 'guardarFechaNac') return respond(guardarFechaNac(payload));
     if (action === 'buscarOrdenWeb')  return respond(buscarOrdenWeb(payload));
     if (action === 'actualizarDatosWeb'){ conLock(function(){ actualizarDatosWeb(payload); }); return respond({ ok: true }); }
@@ -1842,6 +1843,138 @@ function leerEventos(p) {
       eventos.push(ev);
     }
     return { ok: true, eventos: eventos };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CDP — LEER VISITANTES (agrupados por session_id)
+// ══════════════════════════════════════════════════════════════════
+function leerVisitantes(p) {
+  try {
+    var sheet = getHojaEventos();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 } };
+    var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+    
+    var periodo = p.periodo || 'hoy';
+    var ahora = new Date();
+    var filtroDesde = null;
+    if (periodo === 'hoy') {
+      filtroDesde = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    } else if (periodo === 'semana') {
+      filtroDesde = new Date(ahora);
+      filtroDesde.setDate(filtroDesde.getDate() - 7);
+    } else if (periodo === 'mes') {
+      filtroDesde = new Date(ahora);
+      filtroDesde.setMonth(filtroDesde.getMonth() - 1);
+    }
+    
+    var sesiones = {};
+    var todosSinFiltro = {};
+    
+    for (var i = 0; i < datos.length; i++) {
+      var row = datos[i];
+      var ts = String(row[0] || '');
+      var sessionId = String(row[1] || '');
+      var contacto = String(row[2] || '');
+      var evento = String(row[3] || '');
+      var dataRaw = row[4] || '{}';
+      var urlRef = String(row[5] || '');
+      
+      if (!sessionId) continue;
+      
+      var dataObj = {};
+      try { dataObj = JSON.parse(dataRaw); } catch(e) { dataObj = {}; }
+      
+      var tsDate = null;
+      try { tsDate = new Date(ts); } catch(e) {}
+      
+      // Acumular para stats sin filtro
+      if (!todosSinFiltro[sessionId]) {
+        todosSinFiltro[sessionId] = { session: sessionId, lastSeen: ts, events: 0 };
+      }
+      todosSinFiltro[sessionId].events++;
+      if (ts > todosSinFiltro[sessionId].lastSeen) todosSinFiltro[sessionId].lastSeen = ts;
+      
+      // Aplicar filtro de período
+      if (filtroDesde && tsDate && tsDate < filtroDesde) continue;
+      
+      if (!sesiones[sessionId]) {
+        sesiones[sessionId] = {
+          session: sessionId,
+          contacto: contacto,
+          city: '',
+          lastPage: '',
+          collection: '',
+          device: '',
+          source: urlRef || 'Directo',
+          lastSeen: ts,
+          firstSeen: ts,
+          events: 0,
+          hasPurchase: false,
+          hasCart: false
+        };
+      }
+      
+      var s = sesiones[sessionId];
+      s.events++;
+      if (ts > s.lastSeen) s.lastSeen = ts;
+      if (ts < s.firstSeen) s.firstSeen = ts;
+      if (contacto && !s.contacto) s.contacto = contacto;
+      if (dataObj.city && !s.city) s.city = dataObj.city;
+      if (dataObj.device && !s.device) s.device = dataObj.device;
+      if (dataObj.source && s.source === 'Directo') s.source = dataObj.source;
+      if (dataObj.screen) s.lastPage = dataObj.screen;
+      if (dataObj.nombre) s.collection = dataObj.nombre;
+      if (evento === 'purchase') s.hasPurchase = true;
+      if (evento === 'add_to_cart') s.hasCart = true;
+    }
+    
+    // Calcular isActive (últimos 10 min)
+    var diezMin = 10 * 60 * 1000;
+    var ahoraMs = ahora.getTime();
+    var visitantes = [];
+    var activos = 0;
+    
+    Object.keys(sesiones).forEach(function(k) {
+      var s = sesiones[k];
+      var lastMs = new Date(s.lastSeen).getTime();
+      s.isActive = (ahoraMs - lastMs) < diezMin;
+      if (s.isActive) activos++;
+      s.minutesAgo = Math.round((ahoraMs - lastMs) / 60000);
+      visitantes.push(s);
+    });
+    
+    // Ordenar por último visto (más reciente primero)
+    visitantes.sort(function(a, b) { return b.lastSeen > a.lastSeen ? 1 : -1; });
+    
+    // Stats: contar sesiones únicas sin filtro de período
+    var totalHoy = 0, totalSemana = 0, totalMes = 0;
+    var hoyInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).getTime();
+    var semanaInicio = new Date(ahora);
+    semanaInicio.setDate(semanaInicio.getDate() - 7);
+    var mesInicio = new Date(ahora);
+    mesInicio.setMonth(mesInicio.getMonth() - 1);
+    
+    Object.keys(todosSinFiltro).forEach(function(k) {
+      var ls = new Date(todosSinFiltro[k].lastSeen).getTime();
+      if (ls >= hoyInicio) totalHoy++;
+      if (ls >= semanaInicio.getTime()) totalSemana++;
+      if (ls >= mesInicio.getTime()) totalMes++;
+    });
+    
+    return {
+      ok: true,
+      visitantes: visitantes,
+      stats: {
+        activos: activos,
+        hoy: totalHoy,
+        semana: totalSemana,
+        mes: totalMes
+      }
+    };
   } catch (err) {
     return { ok: false, error: err.message };
   }

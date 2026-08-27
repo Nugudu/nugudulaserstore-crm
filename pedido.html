@@ -2811,8 +2811,8 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
   var currentStep=0;
   var steps=[
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:null},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Elegí tu producto',desc:'Tocá en cualquier gorra. Aparecerá un ✓ y verás los colores disponibles.',target:'.prod-card'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>',title:'Elegí el color',desc:'Elegí entre Negro o Grisis tocando el círculo de color que prefieras.',target:'.p-dots'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Elegí tu producto',desc:'Tocá "Siguiente" para ver cómo se selecciona una gorra.',target:'.prod-card',action:'selectFirstProduct'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>',title:'Elegí el color',desc:'Así se ven los colores al seleccionar una gorra. Tocá Negro o Grisis para elegir.',target:'#ci-color-sel.show'},
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Continuá con tu pedido',desc:'Cuando tengas todo, presioná "Continuar" para completar tus datos y elegir el pago.',target:'.btn-main'},
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'Consultá tu pedido',desc:'Usá "Consultar mi pedido" con tu código personal para ver el estado de tu orden.',target:'button[title="Consultar mi pedido"]'}
   ];
@@ -2852,6 +2852,11 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     next.className='ob-btn-next';
     next.textContent=currentStep===steps.length-1?'¡Entendido!':'Siguiente →';
     next.onclick=function(){
+      var step=steps[currentStep];
+      if(step.action==='selectFirstProduct'){
+        var firstProd=document.querySelector('.prod-card:not(.agotado)');
+        if(firstProd){firstProd.click();}
+      }
       if(currentStep<steps.length-1){currentStep++;showStep();}
       else closeTour();
     };

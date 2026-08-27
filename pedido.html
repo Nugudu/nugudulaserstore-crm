@@ -335,13 +335,20 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="phone-consulta" style="display:none">
         <div style="margin-bottom:20px">
           <div style="font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px">Consultar o realizar un nuevo pedido</div>
-          <p style="font-size:13px;color:var(--muted)">Ingresa tu WhatsApp o numero de orden</p>
+          <p style="font-size:13px;color:var(--muted)">Ingresa tu WhatsApp y código, o número de orden</p>
         </div>
         <div id="err-consulta" class="err-box" style="display:none"></div>
         <div class="phone-row">
-          <input id="p-tel" type="text" placeholder="WhatsApp o numero de orden (ORD-...)" onkeydown="if(event.key==='Enter')buscarTel()">
-          <button onclick="buscarTel(this)">Buscar</button>
+          <input id="p-tel" type="text" placeholder="WhatsApp (Ej. 7262 6332)" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
         </div>
+        <div class="phone-row" style="margin-top:8px">
+          <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:8px">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
+        <div style="text-align:center;margin-bottom:8px">
+          <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:12px;color:var(--navy);text-decoration:underline">¿Olvidaste tu código?</a>
+        </div>
+        <button onclick="buscarTel(this)">Buscar</button>
         <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
         <button style="background:none;border:none;color:var(--hint);font-size:12px;cursor:pointer;margin-top:10px;width:100%;padding:8px" onclick="cancelarConsulta()">← Volver</button>
       </div>
@@ -573,6 +580,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div class="om-ttl">Detalle de tu pedido</div>
       <div id="om-contenido"></div>
     </div>
+
+    <!-- Código personal del cliente (solo primer pedido) -->
+    <div id="ex-codigo-cliente" style="display:none"></div>
 
     <!-- Información de pago (cambia según método) -->
     <div id="ex-pago-info"></div>
@@ -932,6 +942,7 @@ function buscarTel(btn){
   setBtnBuscarEstado(btn,true);
   var desdeYaCliente=_yaSoyClienteMode===true;
   var val=(document.getElementById('p-tel').value||'').trim();
+  var cod=(document.getElementById('p-cod')?document.getElementById('p-cod').value:'').trim();
   var consMode=document.getElementById('phone-consulta').style.display==='block';
   var errId=consMode?'consulta':'phone';
   if(!val){showErr(errId,'Ingresa tu numero de WhatsApp o tu numero de orden.');setBtnBuscarEstado(btn,false);return;}
@@ -941,9 +952,47 @@ function buscarTel(btn){
   var mostrarTracking=consMode&&!desdeYaCliente;
   if(mostrarTracking)mostrarTrackingCargando();
   var esOrden=/^ORD-/i.test(val);
-  var param=esOrden?'&orden='+encodeURIComponent(val.toUpperCase()):'&tel='+encodeURIComponent(val);
-  fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN))
-    .then(function(r){return r.json();})
+  // Si busca por orden → GET normal (sin código)
+  if(esOrden){
+    var param='&orden='+encodeURIComponent(val.toUpperCase());
+    fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN))
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(spin)spin.style.display='none';
+        if(d.ok&&d.encontrado){
+          _cli=d;_dirs=d.direcciones||[];
+          setContacto(d.contacto||'');
+          if(desdeYaCliente){
+            _yaSoyClienteMode=false;
+            setBtnBuscarEstado(btn,false);
+            if(_carrito.length>0){guardarSesion('s-form',2);showScreen('s-form');setPaso(2);}
+            else{iniciar();}
+          }else{mostrarPantallaCliente(d);}
+        }else{
+          setBtnBuscarEstado(btn,false);
+          if(mostrarTracking){irAConsultar();}
+          showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
+        }
+      }).catch(function(){
+        _yaSoyClienteMode=false;
+        if(spin)spin.style.display='none';
+        setBtnBuscarEstado(btn,false);
+        if(mostrarTracking){irAConsultar();showErr(errId,'Hubo un error de conexión. Intentá de nuevo.');}
+        else{nuevoCli();}
+      });
+    return;
+  }
+  // Si busca por teléfono → necesita código de 4 dígitos
+  if(!cod || cod.length!==4 || !/^\d{4}$/.test(cod)){
+    if(spin)spin.style.display='none';
+    setBtnBuscarEstado(btn,false);
+    showErr(errId,'Para buscar por teléfono necesitás tu código personal de 4 dígitos.');
+    return;
+  }
+  // POST con teléfono + código
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:val,codigo:cod})
+  }).then(function(r){return r.json();})
     .then(function(d){
       if(spin)spin.style.display='none';
       if(d.ok&&d.encontrado){
@@ -952,19 +1001,14 @@ function buscarTel(btn){
         if(desdeYaCliente){
           _yaSoyClienteMode=false;
           setBtnBuscarEstado(btn,false);
-          if(_carrito.length>0){
-            guardarSesion('s-form',2);
-            showScreen('s-form');setPaso(2);
-          }else{
-            iniciar();
-          }
-        }else{
-          mostrarPantallaCliente(d);
-        }
+          if(_carrito.length>0){guardarSesion('s-form',2);showScreen('s-form');setPaso(2);}
+          else{iniciar();}
+        }else{mostrarPantallaCliente(d);}
       }else{
         setBtnBuscarEstado(btn,false);
+        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No encontramos ese numero. Continua como cliente nuevo.';
         if(mostrarTracking){irAConsultar();}
-        showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
+        showErr(errId,msg);
       }
     }).catch(function(){
       _yaSoyClienteMode=false;
@@ -1785,7 +1829,8 @@ function confirmarPedido(){
       _ultimaOrden={
         orden:_metodoPago==='tarjeta'?d.orden:(d.ref||''),nombre:nom,tel:tel,email:email,
         items:_carrito.slice(),total:total,metodoPago:_metodoPago,
-        _esSolicitud:_metodoPago==='transferencia'
+        _esSolicitud:_metodoPago==='transferencia',
+        codigo_cliente:d.codigo_cliente||''
       };
       if(_cli&&nac)_cli.fechaNac=nac;
       if(ov)ov.style.display='none';
@@ -1857,6 +1902,17 @@ function mostrarExito(){
     '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
     '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':'Transferencia bancaria')+'</span></div>';
   document.getElementById('orden-mini').style.display='block';
+
+  // Mostrar código personal solo si es pedido nuevo (no solicitud) y tiene código
+  var _codeEl=document.getElementById('ex-codigo-cliente');
+  if(_codeEl){
+    if(!esSol && o.codigo_cliente){
+      _codeEl.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">⭐ Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(o.codigo_cliente)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
+      _codeEl.style.display='block';
+    }else{
+      _codeEl.style.display='none';
+    }
+  }
 
   if(o.metodoPago==='tarjeta'){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago procesado con exito. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
@@ -2571,9 +2627,14 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
   <div class="user-modal" onclick="event.stopPropagation()">
     <button class="user-modal-close" onclick="cerrarUserModal()">✕</button>
     <h3>Consultar mi pedido</h3>
-    <p>Ingresá tu teléfono o número de orden para ver el estado de tus pedidos.</p>
-    <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono o N° de orden (Ej. 7262 6332 o ORD-26819-9728)" maxlength="30">
+    <p>Ingresá tu teléfono y código personal, o tu número de orden.</p>
+    <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono (Ej. 7262 6332)" maxlength="30">
+    <input class="user-modal-input" id="user-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
+    <div style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:12px">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
     <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()">Buscar</button>
+    <div style="margin-top:12px;text-align:center">
+      <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:12px;color:var(--navy);text-decoration:underline">¿Olvidaste tu código?</a>
+    </div>
     <div id="user-modal-result"></div>
   </div>
 </div>
@@ -2630,6 +2691,7 @@ function actualizarBadgeCarrito(){
 var _ESTADOS_LABEL=['Pendiente','En proceso','En camino','Entregado'];
 function abrirUserModal(){
   document.getElementById('user-modal-q').value='';
+  document.getElementById('user-modal-cod').value='';
   document.getElementById('user-modal-result').innerHTML='';
   document.getElementById('user-modal-overlay').classList.add('open');
   setTimeout(function(){document.getElementById('user-modal-q').focus();},100);
@@ -2638,8 +2700,13 @@ function cerrarUserModal(e){
   if(e&&e.target&&e.target!==document.getElementById('user-modal-overlay'))return;
   document.getElementById('user-modal-overlay').classList.remove('open');
 }
+function abrirWhatsAppOlvidoCodigo(){
+  var msg='Hola! Olvidé mi código personal de Nugudú Store. Mi teléfono es: ';
+  window.open('https://wa.me/50376837604?text='+encodeURIComponent(msg),'_blank');
+}
 function buscarMiPedido(){
   var raw=document.getElementById('user-modal-q').value.trim();
+  var cod=document.getElementById('user-modal-cod').value.trim();
   var res=document.getElementById('user-modal-result');
   var btn=document.getElementById('user-modal-btn');
   if(!raw){res.innerHTML='<div class="user-modal-no">Ingresá un teléfono o número de orden.</div>';return;}
@@ -2649,30 +2716,57 @@ function buscarMiPedido(){
   var orden=isOrden?raw.toUpperCase():'';
   // Si parece teléfono pero tiene pocos dígnos y no empieza con ORD, tratar como orden
   if(!isOrden && tel.length>0 && tel.length<4 && !/^7\d{3}$/.test(tel)){orden=raw.toUpperCase();tel='';}
+  // Si busca por teléfono, necesita código de 4 dígitos
+  if(tel && !orden){
+    if(!cod || cod.length!==4 || !/^\d{4}$/.test(cod)){
+      res.innerHTML='<div class="user-modal-no">Para buscar por teléfono necesitás tu código personal de 4 dígitos.</div>';
+      return;
+    }
+  }
   btn.textContent='Buscando…';btn.disabled=true;res.innerHTML='';
-  var url=GAS+'?action=buscarCliente&token='+encodeURIComponent(API_TOKEN);
-  if(orden)url+='&orden='+encodeURIComponent(orden);
-  else url+='&tel='+encodeURIComponent(tel);
-  fetch(url).then(function(r){return r.json();}).then(function(d){
-    btn.textContent='Buscar';btn.disabled=false;
-    if(!d.ok||!d.encontrado){res.innerHTML='<div class="user-modal-no">No se encontraron pedidos para ese dato.</div>';return;}
-    var html='';
-    (d.ordenesRecientes||[]).forEach(function(o){
-      var est=parseInt(o.estado)||0;
-      var color=est===0?'#f59e0b':est===1?'#3b82f6':est===2?'#8b5cf6':'#10b981';
-      html+='<div class="user-modal-orden">'+
-        '<div class="user-modal-orden-num">'+esc(o.orden)+'</div>'+
-        '<div class="user-modal-orden-estado" style="color:'+color+'">'+(_ESTADOS_LABEL[est]||'Pendiente')+'</div>'+
-        '<div class="user-modal-orden-fecha">'+esc(o.fecha||'')+' · $'+(Number(o.precio||0)*Number(o.cantidad||1)).toFixed(2)+'</div>'+
-      '</div>';
+  // Si busca por orden → GET normal (sin código). Si busca por teléfono → POST con código.
+  if(orden){
+    var url=GAS+'?action=buscarCliente&token='+encodeURIComponent(API_TOKEN)+'&orden='+encodeURIComponent(orden);
+    fetch(url).then(function(r){return r.json();}).then(function(d){
+      btn.textContent='Buscar';btn.disabled=false;
+      if(!d.ok||!d.encontrado){res.innerHTML='<div class="user-modal-no">No se encontraron pedidos para ese dato.</div>';return;}
+      renderResultados(d,res);
+    }).catch(function(){
+      btn.textContent='Buscar';btn.disabled=false;
+      res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';
     });
-    res.innerHTML='<div class="user-modal-ordenes">'+html+'</div>';
-  }).catch(function(){
-    btn.textContent='Buscar';btn.disabled=false;
-    res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';
+  }else{
+    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:tel,codigo:cod})
+    }).then(function(r){return r.json();}).then(function(d){
+      btn.textContent='Buscar';btn.disabled=false;
+      if(!d.ok||!d.encontrado){
+        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No se encontraron pedidos para ese teléfono.';
+        res.innerHTML='<div class="user-modal-no">'+msg+'</div>';
+        return;
+      }
+      renderResultados(d,res);
+    }).catch(function(){
+      btn.textContent='Buscar';btn.disabled=false;
+      res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';
+    });
+  }
+}
+function renderResultados(d,res){
+  var html='';
+  (d.ordenesRecientes||[]).forEach(function(o){
+    var est=parseInt(o.estado)||0;
+    var color=est===0?'#f59e0b':est===1?'#3b82f6':est===2?'#8b5cf6':'#10b981';
+    html+='<div class="user-modal-orden">'+
+      '<div class="user-modal-orden-num">'+esc(o.orden)+'</div>'+
+      '<div class="user-modal-orden-estado" style="color:'+color+'">'+(_ESTADOS_LABEL[est]||'Pendiente')+'</div>'+
+      '<div class="user-modal-orden-fecha">'+esc(o.fecha||'')+' · $'+(Number(o.precio||0)*Number(o.cantidad||1)).toFixed(2)+'</div>'+
+    '</div>';
   });
+  res.innerHTML='<div class="user-modal-ordenes">'+html+'</div>';
 }
 document.getElementById('user-modal-q').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
+document.getElementById('user-modal-cod').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
 </script>
 </body>
 </html>

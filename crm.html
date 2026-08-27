@@ -3222,20 +3222,23 @@ function cdpRender360(clientes){
     c.eventos.sort(function(a,b){ return a.ts < b.ts ? 1 : -1; });
     var compras = c.eventos.filter(function(e){ return e.evento === 'purchase'; });
     var visitas = c.eventos.filter(function(e){ return e.evento === 'page_view' && e.data && e.data.screen === 's-catalogo'; });
-    // Buscar fechaNac en órdenes
+    // Buscar fechaNac y código_personal en órdenes
     var fechaNac = '';
+    var codigoCliente = '';
     var telNorm = tel.replace(/\D/g,'');
     for(var oi=0;oi<_ordenes.length;oi++){
       var oContacto = String(_ordenes[oi].contacto||'').replace(/\D/g,'');
       var oNombre = (_ordenes[oi].nombre||'').toLowerCase();
       if((telNorm && oContacto.indexOf(telNorm)>=0) || (c.nombre && oNombre.indexOf(c.nombre.toLowerCase())>=0)){
-        if(_ordenes[oi].fechaNac){ fechaNac = _ordenes[oi].fechaNac; break; }
+        if(_ordenes[oi].fechaNac && !fechaNac) fechaNac = _ordenes[oi].fechaNac;
+        if(_ordenes[oi].codigo_cliente && !codigoCliente) codigoCliente = _ordenes[oi].codigo_cliente;
       }
     }
     html += '<div class="card" style="margin-bottom:1rem">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
     html += '<div><strong style="font-size:15px">' + escHtml(c.nombre || tel) + '</strong><br><span style="font-size:12px;color:var(--muted)">' + escHtml(c.contacto) + '</span>';
     if(fechaNac) html += '<br><span style="font-size:11px;color:var(--amber)">' + _svgCake + ' ' + escHtml(fechaNac) + '</span>';
+    if(codigoCliente) html += '<br><span style="font-size:11px;color:var(--navy);font-weight:600">Código: ' + escHtml(codigoCliente) + '</span>';
     html += '</div>';
     html += '<div style="text-align:right;font-size:11px;color:var(--muted)">' + visitas.length + ' visitas · ' + compras.length + ' compras</div>';
     html += '</div>';

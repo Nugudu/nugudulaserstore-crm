@@ -75,6 +75,7 @@ function doGet(e) {
     if (action === 'sync')          return respond(conLock(sincronizar));
     if (action === 'catalogo')      return respond(leerCatalogo());
     if (action === 'buscarCliente') return respond(buscarClienteGAS(p.tel, p.orden));
+    if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(p.tel, p.codigo));
     // Boton del correo de notificacion (ver notificarPedidoNuevo): marca la
     // orden como "datos bancarios enviados" -- para que el tracking en
     // index.html lo sepa sin importar el dispositivo -- y redirige derecho a
@@ -159,6 +160,8 @@ function doPost(e) {
     if (action === 'solicitudWeb')      { return respond(conLock(function(){ return guardarSolicitudWeb(payload); })); }
     if (action === 'confirmarSolicitud'){ return respond(conLock(function(){ return confirmarSolicitudWeb(payload); })); }
     if (action === 'descartarSolicitud'){ return respond(conLock(function(){ return descartarSolicitudWeb(payload); })); }
+    if (action === 'obtenerCodigoCliente') return respond(obtenerCodigoParaCRM(payload));
+    if (action === 'regenerarCodigoCliente') return respond(regenerarCodigoCliente(payload));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -510,7 +513,94 @@ function buscarClienteGAS(tel, orden) {
   } catch(err) { return { ok: false, error: err.message }; }
 }
 
-function guardarFechaNac(payload){
+// ── CÓDIGO PERSONAL DE CLIENTE (4 dígitos) ──
+// Almacena en PropertiesService con clave "CLI_<tel>". Se genera una sola
+// vez por cliente (primer pedido) y se asocia al teléfono. El cliente lo
+// necesita para consultar sus pedidos desde pedido.html.
+function _telKey(tel) {
+  return 'CLI_' + String(tel).replace(/\D/g, '');
+}
+
+function generarCodigoCliente(tel) {
+  var telNorm = String(tel).replace(/\D/g, '');
+  if (!telNorm || telNorm.length < 4) return null;
+  var props = PropertiesService.getScriptProperties();
+  var key = _telKey(telNorm);
+  var existente = props.getProperty(key);
+  if (existente) return existente; // ya tiene código, no generar otro
+  // Generar código de 4 dígitos (1000-9999)
+  var codigo = String(Math.floor(1000 + Math.random() * 9000));
+  props.setProperty(key, codigo);
+  return codigo;
+}
+
+function obtenerCodigoCliente(tel) {
+  var telNorm = String(tel).replace(/\D/g, '');
+  if (!telNorm) return null;
+  return PropertiesService.getScriptProperties().getProperty(_telKey(telNorm)) || null;
+}
+
+// Valida código. Retorna true/false.
+function validarCodigoCliente(tel, codigo) {
+  var telNorm = String(tel).replace(/\D/g, '');
+  var cod = String(codigo || '').trim();
+  if (!telNorm || !cod || cod.length !== 4) return false;
+  var guardado = PropertiesService.getScriptProperties().getProperty(_telKey(telNorm));
+  return guardado === cod;
+}
+
+// Acción desde pedido.html: validar código + retornar historial
+function buscarClienteSeguro(tel, codigo) {
+  if (!validarCodigoCliente(tel, codigo)) {
+    return { ok: true, encontrado: false, error: 'codigo_incorrecto' };
+  }
+  return buscarClienteGAS(tel);
+}
+
+// Acción desde CRM: obtener código de un cliente por teléfono
+function obtenerCodigoParaCRM(payload) {
+  try {
+    var tel = String(payload.tel || '').replace(/\D/g, '');
+    if (!tel || tel.length < 4) return { ok: false, error: 'Teléfono inválido' };
+    var codigo = obtenerCodigoCliente(tel);
+    return { ok: true, codigo: codigo || null, telefono: tel };
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+// Regenerar código de un cliente (desde CRM, para soporte)
+function regenerarCodigoCliente(payload) {
+  try {
+    var tel = String(payload.tel || '').replace(/\D/g, '');
+    if (!tel || tel.length < 4) return { ok: false, error: 'Teléfono inválido' };
+    var props = PropertiesService.getScriptProperties();
+    var key = _telKey(tel);
+    var codigo = String(Math.floor(1000 + Math.random() * 9000));
+    props.setProperty(key, codigo);
+    return { ok: true, codigo: codigo, telefono: tel };
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+// Migración: genera códigos para todos los clientes existentes que no tengan uno.
+// Ejecutar UNA VEZ desde el editor de Apps Script.
+function migrarCodigosExistentes() {
+  var props = PropertiesService.getScriptProperties();
+  var ordenes = leerOrdenes();
+  var telefonosVistos = {};
+  var migrados = 0;
+  for (var i = 0; i < ordenes.length; i++) {
+    var tel = String(ordenes[i].contacto || '').replace(/\D/g, '');
+    if (!tel || tel.length < 4 || telefonosVistos[tel]) continue;
+    telefonosVistos[tel] = true;
+    var key = _telKey(tel);
+    if (!props.getProperty(key)) {
+      var codigo = String(Math.floor(1000 + Math.random() * 9000));
+      props.setProperty(key, codigo);
+      migrados++;
+    }
+  }
+  Logger.log('Migración completa: ' + migrados + ' códigos generados. Total teléfonos únicos: ' + Object.keys(telefonosVistos).length);
+  return { ok: true, migrados: migrados, total: Object.keys(telefonosVistos).length };
+}
   try {
     var contacto = String(payload.contacto || '').trim().replace(/\D/g, '');
     var fechaNac = String(payload.fechaNac || '').trim();
@@ -584,6 +674,9 @@ function guardarPedidoWeb(payload) {
     var fecha = d.toISOString();
     var fe = new Date(d), dias = 0;
     while (dias < 3) { fe.setDate(fe.getDate() + 1); if (fe.getDay() !== 0) dias++; }
+    // Generar código personal de 4 dígitos para el cliente (si es nuevo, crea uno;
+    // si ya existe, conserva el actual). Se guarda en PropertiesService y en la orden.
+    var _codigoCliente = generarCodigoCliente(payload.contacto);
     var nuevaOrden = {
       id: id, orden: orden,
       nombre:        String(payload.nombre    || '').trim(),
@@ -612,6 +705,7 @@ function guardarPedidoWeb(payload) {
       pendientePago: true,
       pendienteDesde: fecha,
       consumoInterno: false,
+      codigo_cliente: _codigoCliente || '',
       historial: [{ estado: '0', fecha: fecha, fuente: 'Canal Digital Web' }]
     };
     // Append directo a la hoja (lee+reescribe). Para pedidos nuevos solo
@@ -629,7 +723,7 @@ function guardarPedidoWeb(payload) {
     if (payload.metodoPago !== 'tarjeta') notificarPedidoNuevo(nuevaOrden);
     // Para TARJETA: crear enlace Wompi EN LA MISMA LLAMADA para que el
     // frontend redirija directo sin 2da llamada (ahorra ~2.5s).
-    var _result = { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10) };
+    var _result = { ok: true, orden: orden, fechaEntrega: fe.toISOString().slice(0, 10), codigo_cliente: _codigoCliente || '' };
     if (payload.metodoPago === 'tarjeta') {
       try {
         var _token = wompiAutenticar();
@@ -863,6 +957,8 @@ function confirmarSolicitudWeb(payload) {
   var recargo = sol.recargoEnvio || 0;
   var cantidadTotal = sol.cantidad || 0;
   var precioPromedio = cantidadTotal > 0 ? (total - recargo) / cantidadTotal : 0;
+  // Generar/obtener código personal del cliente para esta orden
+  var _codigoCliente = generarCodigoCliente(sol.contacto);
   var nuevaOrden = {
     id: id, orden: orden,
     nombre:        sol.nombre,
@@ -889,6 +985,7 @@ function confirmarSolicitudWeb(payload) {
     pendientePago:  false,
     pagoFecha:      fecha,
     consumoInterno: false,
+    codigo_cliente: _codigoCliente || '',
     historial: [{ estado: '0', fecha: fecha, fuente: 'Canal Digital Web · pago verificado' }]
   };
   ordenes.unshift(nuevaOrden);

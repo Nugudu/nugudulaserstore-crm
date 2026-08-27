@@ -169,7 +169,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .btn-main:disabled{opacity:.5;cursor:not-allowed}
-.btn-sec{width:100%;padding:12px;background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;cursor:pointer;margin-top:8px}
+.btn-sec{width:100%;padding:14px;background:transparent;color:#2D2460;border:2px solid #2D2460;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;margin-top:10px}
 .btn-wa{width:100%;padding:15px;background:#25D366;color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;text-decoration:none}
 .btn-outline-teal{width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--teal);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px}
 .err-box{background:#fcebeb;color:#a32d2d;border:1px solid #f7c1c1;border-radius:var(--rs);padding:11px 13px;font-size:13px;margin-bottom:12px;display:none}
@@ -253,7 +253,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .user-modal p{margin:0 0 16px;font-size:12px;color:var(--muted)}
 .user-modal-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:12px}
 .user-modal-input:focus{outline:none;border-color:var(--navy)}
-.user-modal-btn{width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer}
+.user-modal-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:16px;font-weight:700;cursor:pointer}
 .user-modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:0;margin-top:-2px}
 .user-modal-ordenes{margin-top:14px}
 .user-modal-orden{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px;font-size:13px}
@@ -304,9 +304,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     </div>
     <button class="btn-main" onclick="continuarCatalogo(this)">Continuar →</button>
     <div style="text-align:center;margin-top:10px">
-      <a href="#" onclick="irAConsultar();return false" style="font-size:12px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px">Consultar mi pedido</a>
-      <span style="font-size:12px;color:var(--hint);margin:0 4px">|</span>
-      <a href="#" onclick="mostrarMiDiseno();return false" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:1px">Mi diseño →</a>
+      <a href="#" onclick="irAConsultar();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;border-bottom:2px solid #2D2460;padding-bottom:2px">Consultar mi pedido</a>
+      <span style="font-size:15px;color:#2D2460;margin:0 6px">|</span>
+      <a href="#" onclick="mostrarMiDiseno();return false" style="font-size:15px;color:var(--navy);text-decoration:none;font-weight:700;border-bottom:2px solid var(--navy);padding-bottom:2px">Mi diseño →</a>
     </div>
     <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
       Contacta con nuestro equipo al: <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a>
@@ -327,8 +327,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div id="err-phone" class="err-box" style="display:none"></div>
         <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
         <div style="display:flex;justify-content:space-between;margin-top:10px">
-          <a href="#" onclick="cancelarConsulta();return false" style="font-size:12px;color:var(--muted);text-decoration:none">← Volver</a>
-          <a href="#" onclick="_yaSoyClienteMode=true;irAConsultar();return false" style="font-size:12px;color:var(--navy);text-decoration:none;font-weight:600">Ya soy cliente →</a>
+          <a href="#" onclick="cancelarConsulta();return false" style="font-size:16px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;border-radius:8px;background:#f0eef9">← Volver</a>
+          <a href="#" onclick="_yaSoyClienteMode=true;irAConsultar();return false" style="font-size:16px;color:var(--navy);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;border-radius:8px;background:#e8f5e9">Ya soy cliente →</a>
         </div>
         <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
       </div>
@@ -344,13 +344,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="phone-row" style="margin-top:8px">
           <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:8px">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
+        <div style="font-size:13px;color:#555;margin:8px 0">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
         <div style="text-align:center;margin-bottom:8px">
-          <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:12px;color:var(--navy);text-decoration:underline">¿Olvidaste tu código?</a>
+          <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
         </div>
-        <button onclick="buscarTel(this)">Buscar</button>
+        <button onclick="buscarTel(this)" style="width:100%;box-sizing:border-box;padding:17px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:18px;font-weight:700;cursor:pointer">Buscar</button>
         <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
-        <button style="background:none;border:none;color:var(--hint);font-size:12px;cursor:pointer;margin-top:10px;width:100%;padding:8px" onclick="cancelarConsulta()">← Volver</button>
+        <button style="background:none;border:2px solid #2D2460;color:#2D2460;font-size:15px;font-weight:700;cursor:pointer;margin-top:12px;width:100%;padding:12px;border-radius:8px" onclick="cancelarConsulta()">← Volver</button>
       </div>
     </div>
   </div>
@@ -358,7 +358,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- PANTALLA CLIENTE — tracking de pedidos y opciones -->
 <div class="screen" id="s-cliente">
-  <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
+  <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
   <div class="cli-greeting">
     <div class="cli-ico" style="display:none"></div>
     <h2 id="cli-nombre-ttl">¡Hola!</h2>
@@ -379,7 +379,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- PASOS -->
 <div class="screen" id="s-form">
-  <div style="display:flex;justify-content:space-between;padding:6px 0 2px"><button onclick="volverDesdeForm()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">← Volver</button><button onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
+  <div style="display:flex;justify-content:space-between;padding:6px 0 2px"><button onclick="volverDesdeForm()" style="background:none;border:2px solid #2D2460;color:#2D2460;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">← Volver</button><button onclick="salir()" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
   <div class="steps" id="steps">
     <div class="step" id="step1" onclick="irAPaso(1)"><div class="step-d act" id="sd1">1</div><div class="step-l act" id="sl1">Producto</div></div>
     <div class="step-line" id="sl-1"></div>
@@ -569,7 +569,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
-    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salir()" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
+    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salir()" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
     <div class="ico" style="display:none"></div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
@@ -608,7 +608,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- MI DISEÑO — buscar por número de orden y ver detalle -->
 <div class="screen" id="s-midiseno" style="display:none">
-  <div style="text-align:right;padding:6px 0 0"><button onclick="salir();return false" style="background:none;border:none;color:#9b96b0;font-size:12px;cursor:pointer;padding:4px 2px">Salir ×</button></div>
+  <div style="text-align:right;padding:6px 0 0"><button onclick="salir();return false" style="background:none;border:2px solid #cc3333;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px">Salir ×</button></div>
 
   <!-- Paso 1: buscar orden -->
   <div id="md-paso1">
@@ -627,7 +627,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       Ya tienes listo tu dise&ntilde;o? Convierte tu dise&ntilde;o formato SVG en un grabado a l&aacute;ser para tu gorra Nugud&uacute;. Si tu archivo ya est&aacute; en formato SVG revisaremos que sea apto para producci&oacute;n. Si a&uacute;n no esta en ese formato, podemos ayudarte con la conversi&oacute;n para el proceso de grabado a l&aacute;ser. Este servicio esta dirigido para archivos finales listos para producci&oacute;n, por lo que no incluye modificaciones cont&aacute;ctanos por whatsapp <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a> y con gusto te brindamos m&aacute;s informaci&oacute;n.
     </div>
     <div style="text-align:center;margin-top:12px">
-      <a href="#" onclick="salir();return false" style="font-size:12px;color:var(--hint);text-decoration:none;display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Volver al catálogo</a>
+      <a href="#" onclick="salir();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;border-radius:8px;background:#f0eef9">← Volver al catálogo</a>
     </div>
   </div>
 
@@ -2630,10 +2630,10 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <p>Ingresá tu teléfono y código personal, o tu número de orden.</p>
     <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono (Ej. 7262 6332)" maxlength="30">
     <input class="user-modal-input" id="user-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
-    <div style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:12px">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
-    <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()">Buscar</button>
+    <div style="font-size:13px;color:#555;margin-top:-8px;margin-bottom:12px">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
+    <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:16px;font-weight:700;cursor:pointer">Buscar</button>
     <div style="margin-top:12px;text-align:center">
-      <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:12px;color:var(--navy);text-decoration:underline">¿Olvidaste tu código?</a>
+      <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
     </div>
     <div id="user-modal-result"></div>
   </div>

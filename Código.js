@@ -601,6 +601,8 @@ function migrarCodigosExistentes() {
   Logger.log('Migración completa: ' + migrados + ' códigos generados. Total teléfonos únicos: ' + Object.keys(telefonosVistos).length);
   return { ok: true, migrados: migrados, total: Object.keys(telefonosVistos).length };
 }
+
+function guardarFechaNac(payload){
   try {
     var contacto = String(payload.contacto || '').trim().replace(/\D/g, '');
     var fechaNac = String(payload.fechaNac || '').trim();

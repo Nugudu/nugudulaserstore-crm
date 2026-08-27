@@ -162,6 +162,7 @@ function doPost(e) {
     if (action === 'descartarSolicitud'){ return respond(conLock(function(){ return descartarSolicitudWeb(payload); })); }
     if (action === 'obtenerCodigoCliente') return respond(obtenerCodigoParaCRM(payload));
     if (action === 'regenerarCodigoCliente') return respond(regenerarCodigoCliente(payload));
+    if (action === 'obtenerCodigosLote') return respond(obtenerCodigosLote(payload));
     if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(p.tel || payload.tel, p.codigo || payload.codigo));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
@@ -578,6 +579,24 @@ function regenerarCodigoCliente(payload) {
     var codigo = String(Math.floor(1000 + Math.random() * 9000));
     props.setProperty(key, codigo);
     return { ok: true, codigo: codigo, telefono: tel };
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+// Obtener códigos de varios clientes en lote (para CRM Customer 360)
+// Recibe un array de teléfonos y retorna {tel: codigo, ...}
+function obtenerCodigosLote(payload) {
+  try {
+    var tels = payload.tels || [];
+    var props = PropertiesService.getScriptProperties();
+    var resultado = {};
+    for (var i = 0; i < tels.length; i++) {
+      var tel = String(tels[i]).replace(/\D/g, '');
+      if (tel && tel.length >= 4) {
+        var cod = props.getProperty(_telKey(tel));
+        if (cod) resultado[tel] = cod;
+      }
+    }
+    return { ok: true, codigos: resultado };
   } catch(err) { return { ok: false, error: err.message }; }
 }
 

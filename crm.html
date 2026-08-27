@@ -3212,7 +3212,19 @@ function cdpBuscar(){
   });
   var lista = Object.keys(clientes);
   if(!lista.length){ document.getElementById('cdp-timeline').innerHTML = '<div class="empty"><i class="fa-solid fa-user-xmark"></i><p>No se encontraron clientes con ese criterio.</p></div>'; return; }
-  cdpRender360(clientes);
+  // Traer códigos personales desde PropertiesService (una sola llamada)
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'obtenerCodigosLote',token:API_TOKEN,tels:lista})
+  }).then(function(r){return r.json();}).then(function(d){
+    var codigos=(d&&d.ok)?(d.codigos||{}) : {};
+    // Inyectar código en cada cliente
+    lista.forEach(function(tel){
+      if(codigos[tel]) clientes[tel].codigo_cliente = codigos[tel];
+    });
+    cdpRender360(clientes);
+  }).catch(function(){
+    cdpRender360(clientes);
+  });
 }
 
 function cdpRender360(clientes){
@@ -3222,16 +3234,16 @@ function cdpRender360(clientes){
     c.eventos.sort(function(a,b){ return a.ts < b.ts ? 1 : -1; });
     var compras = c.eventos.filter(function(e){ return e.evento === 'purchase'; });
     var visitas = c.eventos.filter(function(e){ return e.evento === 'page_view' && e.data && e.data.screen === 's-catalogo'; });
-    // Buscar fechaNac y código_personal en órdenes
+    // Buscar fechaNac en órdenes
     var fechaNac = '';
-    var codigoCliente = '';
+    var codigoCliente = c.codigo_cliente || '';
     var telNorm = tel.replace(/\D/g,'');
     for(var oi=0;oi<_ordenes.length;oi++){
       var oContacto = String(_ordenes[oi].contacto||'').replace(/\D/g,'');
       var oNombre = (_ordenes[oi].nombre||'').toLowerCase();
       if((telNorm && oContacto.indexOf(telNorm)>=0) || (c.nombre && oNombre.indexOf(c.nombre.toLowerCase())>=0)){
         if(_ordenes[oi].fechaNac && !fechaNac) fechaNac = _ordenes[oi].fechaNac;
-        if(_ordenes[oi].codigo_cliente && !codigoCliente) codigoCliente = _ordenes[oi].codigo_cliente;
+        if(!codigoCliente && _ordenes[oi].codigo_cliente) codigoCliente = _ordenes[oi].codigo_cliente;
       }
     }
     html += '<div class="card" style="margin-bottom:1rem">';

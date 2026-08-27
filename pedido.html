@@ -2864,30 +2864,19 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
       return;
     }
     var el=document.querySelector(step.target);
-    if(!el){
+    if(!el||el.offsetWidth===0||el.offsetHeight===0){
       spotlight.style.display='none';
       return;
     }
-    // Check if element is actually visible
-    var style=window.getComputedStyle(el);
-    if(style.display==='none'||style.visibility==='hidden'||el.offsetWidth===0){
-      spotlight.style.display='none';
-      return;
-    }
-    // Scroll element into view
     el.scrollIntoView({behavior:'auto',block:'center'});
     setTimeout(function(){
       var r=el.getBoundingClientRect();
       var pad=16;
-      if(r.width===0||r.height===0||r.top<0||r.bottom>window.innerHeight){
-        spotlight.style.display='none';
-      }else{
-        spotlight.style.display='block';
-        spotlight.style.left=(r.left-pad)+'px';
-        spotlight.style.top=(r.top-pad)+'px';
-        spotlight.style.width=(r.width+pad*2)+'px';
-        spotlight.style.height=(r.height+pad*2)+'px';
-      }
+      spotlight.style.display='block';
+      spotlight.style.left=(r.left-pad)+'px';
+      spotlight.style.top=(r.top-pad)+'px';
+      spotlight.style.width=(r.width+pad*2)+'px';
+      spotlight.style.height=(r.height+pad*2)+'px';
     },150);
   }
   function showStep(){

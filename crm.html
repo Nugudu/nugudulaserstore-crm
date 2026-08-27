@@ -638,6 +638,38 @@ tbody tr:last-child td{border-bottom:none}
           <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="cdp-v-actualizar">Auto-refresh: 30s</span>
         </div>
         <div class="g4" id="cdp-v-stats" style="margin-bottom:1.2rem"></div>
+        
+        <!-- Analytics Row 1: Embudo + Rebote/Duración -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+          <div class="card">
+            <div class="card-ttl"><i class="fa-solid fa-filter" style="color:var(--navy)"></i> Embudo de conversión</div>
+            <div id="cdp-v-embudo" style="padding:10px 0"></div>
+          </div>
+          <div class="card">
+            <div class="card-ttl"><i class="fa-solid fa-chart-simple" style="color:var(--gold)"></i> Métricas de comportamiento</div>
+            <div id="cdp-v-metricas" style="padding:10px 0"></div>
+          </div>
+        </div>
+        
+        <!-- Analytics Row 2: Fuentes + Horas pico -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+          <div class="card">
+            <div class="card-ttl"><i class="fa-solid fa-share-nodes" style="color:var(--accent)"></i> Fuentes de tráfico</div>
+            <div id="cdp-v-fuentes" style="padding:10px 0"></div>
+          </div>
+          <div class="card">
+            <div class="card-ttl"><i class="fa-solid fa-clock" style="color:#22c55e"></i> Horas pico</div>
+            <div id="cdp-v-horas" style="padding:10px 0"></div>
+          </div>
+        </div>
+        
+        <!-- Analytics Row 3: Páginas más vistas -->
+        <div class="card" style="margin-bottom:1.2rem">
+          <div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Páginas más vistas</div>
+          <div id="cdp-v-paginas" style="padding:10px 0"></div>
+        </div>
+        
+        <!-- Tabla de visitantes -->
         <div class="card">
           <div class="card-ttl"><i class="fa-solid fa-users" style="color:var(--navy)"></i> <span id="cdp-v-title">Visitantes de hoy</span></div>
           <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -3246,12 +3278,12 @@ function cdpCargarVisitantes(){
   fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{});
-      else cdpRenderVisitantes([],{});
-    }).catch(function(){cdpRenderVisitantes([],{});});
+      if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
+      else cdpRenderVisitantes([],{},{});
+    }).catch(function(){cdpRenderVisitantes([],{},{});});
 }
 
-function cdpRenderVisitantes(visitantes,stats){
+function cdpRenderVisitantes(visitantes,stats,analytics){
   // Stats
   var statsHtml='';
   var statItems=[
@@ -3265,7 +3297,95 @@ function cdpRenderVisitantes(visitantes,stats){
   });
   document.getElementById('cdp-v-stats').innerHTML=statsHtml;
   
-  // Tabla
+  // Embudo de conversión
+  var embudo=analytics.embudo||{};
+  var embudoSteps=[
+    {key:'page_view',label:'Visitas',color:'var(--navy)'},
+    {key:'product_click',label:'Producto visto',color:'#6366f1'},
+    {key:'color_select',label:'Color elegido',color:'#8b5cf6'},
+    {key:'add_to_cart',label:'Agregó al carrito',color:'var(--gold)'},
+    {key:'checkout_start',label:'Inició pago',color:'#f97316'},
+    {key:'purchase',label:'Compró',color:'#22c55e'}
+  ];
+  var maxEmbudo=embudo.page_view||1;
+  var embudoHtml='';
+  embudoSteps.forEach(function(step,i){
+    var val=embudo[step.key]||0;
+    var pct=maxEmbudo>0?Math.round((val/maxEmbudo)*100):0;
+    var width=Math.max(pct,2);
+    embudoHtml+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
+    embudoHtml+='<div style="width:100px;font-size:12px;color:var(--muted);text-align:right">'+step.label+'</div>';
+    embudoHtml+='<div style="flex:1;background:var(--border);border-radius:4px;height:20px;overflow:hidden">';
+    embudoHtml+='<div style="width:'+width+'%;background:'+step.color+';height:100%;border-radius:4px;transition:width .3s"></div>';
+    embudoHtml+='</div>';
+    embudoHtml+='<div style="width:50px;font-size:12px;font-weight:600">'+val+'</div>';
+    embudoHtml+='<div style="width:40px;font-size:11px;color:var(--muted)">'+pct+'%</div>';
+    embudoHtml+='</div>';
+  });
+  document.getElementById('cdp-v-embudo').innerHTML=embudoHtml||'<div style="color:var(--muted);text-align:center;padding:20px">Sin datos</div>';
+  
+  // Métricas de comportamiento
+  var metricasHtml='';
+  metricasHtml+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:10px 0">';
+  metricasHtml+='<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--navy)">'+(analytics.rebote||0)+'%</div><div style="font-size:11px;color:var(--muted)">Tasa de rebote</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Visitantes que solo vieron 1 página</div></div>';
+  metricasHtml+='<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--gold)">'+(analytics.duracionProm||0)+' min</div><div style="font-size:11px;color:var(--muted)">Duración promedio</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Tiempo promedio por sesión</div></div>';
+  metricasHtml+='</div>';
+  document.getElementById('cdp-v-metricas').innerHTML=metricasHtml;
+  
+  // Fuentes de tráfico (barras horizontales)
+  var fuentes=analytics.fuentes||[];
+  var fuentesHtml='';
+  var maxFuente=fuentes.length?fuentes[0].count:1;
+  var colores=['var(--navy)','#6366f1','var(--gold)','#22c55e','#f97316','#ec4899','#8b5cf6'];
+  fuentes.forEach(function(f,i){
+    var pct=maxFuente>0?Math.round((f.count/maxFuente)*100):0;
+    var color=colores[i%colores.length];
+    fuentesHtml+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
+    fuentesHtml+='<div style="width:60px;font-size:12px;font-weight:600">'+f.name+'</div>';
+    fuentesHtml+='<div style="flex:1;background:var(--border);border-radius:4px;height:18px;overflow:hidden">';
+    fuentesHtml+='<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px"></div>';
+    fuentesHtml+='</div>';
+    fuentesHtml+='<div style="width:40px;font-size:12px;font-weight:600">'+f.count+'</div>';
+    fuentesHtml+='</div>';
+  });
+  document.getElementById('cdp-v-fuentes').innerHTML=fuentesHtml||'<div style="color:var(--muted);text-align:center;padding:20px">Sin datos</div>';
+  
+  // Horas pico (barras verticales)
+  var horas=analytics.horas||[];
+  var horasHtml='<div style="display:flex;align-items:flex-end;gap:2px;height:80px;padding:0 4px">';
+  var maxHora=1;
+  horas.forEach(function(h){if(h.count>maxHora)maxHora=h.count;});
+  horas.forEach(function(h){
+    var pct=maxHora>0?Math.round((h.count/maxHora)*100):0;
+    var color=h.count>=maxHora*.7?'var(--navy)':h.count>=maxHora*.4?'#6366f1':'var(--border)';
+    horasHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center">';
+    horasHtml+='<div style="width:100%;background:'+color+';height:'+Math.max(pct,2)+'px;border-radius:2px 2px 0 0;min-height:2px"></div>';
+    horasHtml+='<div style="font-size:8px;color:var(--muted);margin-top:2px">'+h.hour+'</div>';
+    horasHtml+='</div>';
+  });
+  horasHtml+='</div>';
+  horasHtml+='<div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px">Hora del día (0-23)</div>';
+  document.getElementById('cdp-v-horas').innerHTML=horasHtml;
+  
+  // Páginas más vistas (barras horizontales)
+  var paginas=analytics.paginas||[];
+  var paginasHtml='';
+  var maxPag=paginas.length?paginas[0].count:1;
+  var pagColores=['var(--navy)','#6366f1','var(--gold)','#22c55e','#f97316','#ec4899'];
+  paginas.forEach(function(pg,i){
+    var pct=maxPag>0?Math.round((pg.count/maxPag)*100):0;
+    var color=pagColores[i%pagColores.length];
+    paginasHtml+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
+    paginasHtml+='<div style="width:80px;font-size:12px;font-weight:600">'+pg.name+'</div>';
+    paginasHtml+='<div style="flex:1;background:var(--border);border-radius:4px;height:18px;overflow:hidden">';
+    paginasHtml+='<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px"></div>';
+    paginasHtml+='</div>';
+    paginasHtml+='<div style="width:40px;font-size:12px;font-weight:600">'+pg.count+'</div>';
+    paginasHtml+='</div>';
+  });
+  document.getElementById('cdp-v-paginas').innerHTML=paginasHtml||'<div style="color:var(--muted);text-align:center;padding:20px">Sin datos</div>';
+  
+  // Tabla de visitantes
   var body=document.getElementById('cdp-v-body');
   var empty=document.getElementById('cdp-v-empty');
   if(!visitantes.length){body.innerHTML='';empty.style.display='block';return;}

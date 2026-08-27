@@ -1855,7 +1855,7 @@ function leerVisitantes(p) {
   try {
     var sheet = getHojaEventos();
     var lastRow = sheet.getLastRow();
-    if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 } };
+    if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
     var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
     
     var periodo = p.periodo || 'hoy';
@@ -1873,6 +1873,13 @@ function leerVisitantes(p) {
     
     var sesiones = {};
     var todosSinFiltro = {};
+    var fuentesConteo = {};
+    var horasConteo = {};
+    var paginasConteo = {};
+    var embudo = { page_view: 0, product_click: 0, color_select: 0, add_to_cart: 0, checkout_start: 0, purchase: 0 };
+    var totalSesiones = 0;
+    var sesionesRebote = 0;
+    var duraciones = [];
     
     for (var i = 0; i < datos.length; i++) {
       var row = datos[i];
@@ -1893,10 +1900,26 @@ function leerVisitantes(p) {
       
       // Acumular para stats sin filtro
       if (!todosSinFiltro[sessionId]) {
-        todosSinFiltro[sessionId] = { session: sessionId, lastSeen: ts, events: 0 };
+        todosSinFiltro[sessionId] = { session: sessionId, lastSeen: ts, events: 0, firstSeen: ts };
       }
       todosSinFiltro[sessionId].events++;
       if (ts > todosSinFiltro[sessionId].lastSeen) todosSinFiltro[sessionId].lastSeen = ts;
+      if (ts < todosSinFiltro[sessionId].firstSeen) todosSinFiltro[sessionId].firstSeen = ts;
+      
+      // Analytics: fuentes, horas, páginas (sin filtro de período)
+      var source = dataObj.source || urlRef || 'Directo';
+      fuentesConteo[source] = (fuentesConteo[source] || 0) + 1;
+      
+      if (tsDate) {
+        var hora = tsDate.getHours();
+        horasConteo[hora] = (horasConteo[hora] || 0) + 1;
+      }
+      
+      var page = dataObj.screen || '';
+      if (page) paginasConteo[page] = (paginasConteo[page] || 0) + 1;
+      
+      // Embudo
+      if (embudo.hasOwnProperty(evento)) embudo[evento]++;
       
       // Aplicar filtro de período
       if (filtroDesde && tsDate && tsDate < filtroDesde) continue;
@@ -1931,6 +1954,44 @@ function leerVisitantes(p) {
       if (evento === 'purchase') s.hasPurchase = true;
       if (evento === 'add_to_cart') s.hasCart = true;
     }
+    
+    // Calcular rebote y duración
+    Object.keys(todosSinFiltro).forEach(function(k) {
+      var sesion = todosSinFiltro[k];
+      totalSesiones++;
+      if (sesion.events <= 1) sesionesRebote++;
+      var inicio = new Date(sesion.firstSeen).getTime();
+      var fin = new Date(sesion.lastSeen).getTime();
+      if (fin > inicio) duraciones.push(fin - inicio);
+    });
+    
+    var bounceRate = totalSesiones > 0 ? Math.round((sesionesRebote / totalSesiones) * 100) : 0;
+    var duracionProm = 0;
+    if (duraciones.length) {
+      var sumaDuraciones = duraciones.reduce(function(a, b) { return a + b; }, 0);
+      duracionProm = Math.round((sumaDuraciones / duraciones.length) / 60000); // minutos
+    }
+    
+    // Convertir fuentes a array ordenado
+    var fuentesArr = [];
+    Object.keys(fuentesConteo).forEach(function(k) {
+      fuentesArr.push({ name: k, count: fuentesConteo[k] });
+    });
+    fuentesArr.sort(function(a, b) { return b.count - a.count; });
+    
+    // Convertir horas a array (0-23)
+    var horasArr = [];
+    for (var h = 0; h < 24; h++) {
+      horasArr.push({ hour: h, count: horasConteo[h] || 0 });
+    }
+    
+    // Convertir páginas a array ordenado
+    var paginasArr = [];
+    var paginasNombres = { s_catalogo: 'Catálogo', s_cliente: 'Datos', s_envio: 'Envío', s_pago: 'Pago', s_exito: '¡Listo!', s_consulta: 'Consulta', s_midsenio: 'Mi diseño' };
+    Object.keys(paginasConteo).forEach(function(k) {
+      paginasArr.push({ name: paginasNombres[k] || k, count: paginasConteo[k] });
+    });
+    paginasArr.sort(function(a, b) { return b.count - a.count; });
     
     // Calcular isActive (últimos 10 min)
     var diezMin = 10 * 60 * 1000;
@@ -1973,6 +2034,14 @@ function leerVisitantes(p) {
         hoy: totalHoy,
         semana: totalSemana,
         mes: totalMes
+      },
+      analytics: {
+        fuentes: fuentesArr,
+        horas: horasArr,
+        paginas: paginasArr,
+        embudo: embudo,
+        rebote: bounceRate,
+        duracionProm: duracionProm
       }
     };
   } catch (err) {

@@ -264,10 +264,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .user-modal-orden-fecha{font-size:11px;color:var(--muted);margin-top:2px}
 .user-modal-no{color:var(--muted);font-size:13px;text-align:center;padding:16px 0}
 /* ── Onboarding Tour ── */
-.ob-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;background:rgba(45,36,96,.5);backdrop-filter:blur(2px);animation:obFadeIn .3s ease}
+.ob-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;animation:obFadeIn .3s ease}
 .ob-overlay.active{display:flex}
 @keyframes obFadeIn{from{opacity:0}to{opacity:1}}
-.ob-card{background:#fff;border-radius:18px;padding:32px 28px 24px;width:320px;max-width:90vw;box-shadow:0 12px 40px rgba(45,36,96,.2);text-align:center}
+.ob-bg{position:absolute;inset:0;background:rgba(45,36,96,.5);transition:opacity .3s}
+.ob-spotlight{position:absolute;border-radius:14px;box-shadow:0 0 0 4000px rgba(45,36,96,.5);transition:all .4s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:1}
+.ob-card{position:relative;z-index:2;background:#fff;border-radius:18px;padding:32px 28px 24px;width:320px;max-width:90vw;box-shadow:0 12px 40px rgba(45,36,96,.2);text-align:center}
 .ob-ico{margin-bottom:10px}
 .ob-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px}
 .ob-desc{font-size:14px;color:#555;line-height:1.55;margin-bottom:20px}
@@ -277,6 +279,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ob-btns{display:flex;gap:10px;justify-content:center}
 .ob-btn-skip{padding:11px 18px;border:1.5px solid #c8c5d6;background:#fff;color:#666;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
 .ob-btn-skip:hover{border-color:#2D2460;color:#2D2460}
+.ob-btn-back{padding:11px 16px;border:1.5px solid #c8c5d6;background:#fff;color:#2D2460;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.ob-btn-back:hover{border-color:#2D2460}
 .ob-btn-next{padding:11px 24px;border:none;background:var(--navy);color:#fff;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;flex:1}
 .ob-btn-next:hover{opacity:.9}
 </style>
@@ -2645,6 +2649,8 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
 
 <!-- ── Onboarding Tour ── -->
 <div class="ob-overlay" id="ob-overlay">
+  <div class="ob-bg"></div>
+  <div class="ob-spotlight" id="ob-spotlight"></div>
   <div class="ob-card" id="ob-card">
     <div class="ob-ico" id="ob-ico"></div>
     <div class="ob-title" id="ob-title"></div>
@@ -2804,12 +2810,14 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
   var STORAGE_KEY='ob_tour_done';
   var currentStep=0;
   var steps=[
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Agregá al carrito',desc:'Elegí color y cantidad, luego presioná "Agregar al carrito". Podés sumar varios productos.'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Finalizá tu compra',desc:'Presioná "Continuar" para completar tus datos y elegir el pago.'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>',title:'Consultá tu pedido',desc:'Siempre podés volver y usar "Consultar mi pedido" con tu código personal.'}
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:null},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Elegí color y cantidad',desc:'Seleccioná el color que te guste y la cantidad de gorras que necesitás.',target:'.color-sel'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Agregá al carrito',desc:'Presioná "Agregar al carrito" para sumar tu producto. Podés agregar varios.',target:'.ci-carrito-wrap'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Finalizá tu compra',desc:'Cuando tengas todo, presioná "Continuar" para completar tus datos y elegir el pago.',target:'.btn-main'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>',title:'Consultá tu pedido',desc:'Siempre podés volver al sitio y usar "Consultar mi pedido" con tu código personal.',target:null}
   ];
   var overlay=document.getElementById('ob-overlay');
+  var spotlight=document.getElementById('ob-spotlight');
   var icoEl=document.getElementById('ob-ico');
   var titleEl=document.getElementById('ob-title');
   var descEl=document.getElementById('ob-desc');
@@ -2827,11 +2835,19 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
   }
   function renderButtons(){
     btnsEl.innerHTML='';
-    var skip=document.createElement('button');
-    skip.className='ob-btn-skip';
-    skip.textContent='Omitir';
-    skip.onclick=function(){closeTour();};
-    btnsEl.appendChild(skip);
+    if(currentStep>0){
+      var back=document.createElement('button');
+      back.className='ob-btn-back';
+      back.textContent='← Atrás';
+      back.onclick=function(){currentStep--;showStep();};
+      btnsEl.appendChild(back);
+    }else{
+      var skip=document.createElement('button');
+      skip.className='ob-btn-skip';
+      skip.textContent='Omitir';
+      skip.onclick=function(){closeTour();};
+      btnsEl.appendChild(skip);
+    }
     var next=document.createElement('button');
     next.className='ob-btn-next';
     next.textContent=currentStep===steps.length-1?'¡Entendido!':'Siguiente →';
@@ -2841,6 +2857,33 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     };
     btnsEl.appendChild(next);
   }
+  function positionSpotlight(){
+    var step=steps[currentStep];
+    if(!step.target){
+      spotlight.style.display='none';
+      return;
+    }
+    var el=document.querySelector(step.target);
+    if(!el){
+      spotlight.style.display='none';
+      return;
+    }
+    // Scroll element into view
+    el.scrollIntoView({behavior:'auto',block:'center'});
+    setTimeout(function(){
+      var r=el.getBoundingClientRect();
+      var pad=16;
+      if(r.width===0||r.height===0){
+        spotlight.style.display='none';
+      }else{
+        spotlight.style.display='block';
+        spotlight.style.left=(r.left-pad)+'px';
+        spotlight.style.top=(r.top-pad)+'px';
+        spotlight.style.width=(r.width+pad*2)+'px';
+        spotlight.style.height=(r.height+pad*2)+'px';
+      }
+    },150);
+  }
   function showStep(){
     var s=steps[currentStep];
     icoEl.innerHTML=s.ico;
@@ -2849,9 +2892,11 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     renderIndicators();
     renderButtons();
     overlay.classList.add('active');
+    positionSpotlight();
   }
   function closeTour(){
     overlay.classList.remove('active');
+    spotlight.style.display='none';
     markDone();
   }
   window.obStartTour=function(){

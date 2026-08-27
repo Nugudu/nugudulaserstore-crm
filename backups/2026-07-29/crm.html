@@ -859,6 +859,7 @@ var NAV_POR_ROL = {
 };
 var GATE_SESSION_KEY = 'ngd_gate_sesion';
 var REP_SESSION_KEY = 'ngd_rep_sesion';
+var CRM_PAGE_KEY = 'ngd_crm_page';
 function concederAcceso(rol, nombre){
   document.getElementById('access-gate').style.display = 'none';
   document.getElementById('app-shell').style.display = 'block';
@@ -881,10 +882,20 @@ function concederAcceso(rol, nombre){
   // de cerrar el navegador sí vuelve a pedir el código, como se definió.
   try { sessionStorage.setItem(GATE_SESSION_KEY, JSON.stringify({rol:rol, nombre:nombre})); } catch(e){}
 
-  // Lleva directo a la única pestaña relevante para roles restringidos.
-  if (rol === 'vendedora') go('nueva');
-  if (rol === 'produccion') go('ordenes');
-  if (rol === 'repartidor') go('repartidor');
+  // Restaura la última página visitada o va al default del rol
+  var savedPage = null;
+  try { savedPage = localStorage.getItem(CRM_PAGE_KEY); } catch(e){}
+  if (savedPage && document.getElementById('panel-'+savedPage)) {
+    go(savedPage);
+  } else if (rol === 'vendedora') {
+    go('nueva');
+  } else if (rol === 'produccion') {
+    go('ordenes');
+  } else if (rol === 'repartidor') {
+    go('repartidor');
+  } else {
+    go('overview');
+  }
 }
 function cerrarSesionGate(){
   document.getElementById('app-shell').style.display = 'none';
@@ -894,6 +905,7 @@ function cerrarSesionGate(){
   document.querySelectorAll('.sidebar .nav, .sidebar .sb-sec').forEach(function(el){ el.style.display = ''; });
   document.querySelector('.sb-pdf').style.display = '';
   try { sessionStorage.removeItem(GATE_SESSION_KEY); } catch(e){}
+  try { localStorage.removeItem(CRM_PAGE_KEY); } catch(e){}
 }
 // Al cargar la página, si ya hay una sesión activa en esta pestaña, entra directo
 // sin volver a pedir el código — pero si se abre en una pestaña/ventana nueva,
@@ -1149,6 +1161,8 @@ function go(name){
     document.getElementById('tb-title').textContent = PANELS[name][0];
     document.getElementById('tb-sub').textContent   = PANELS[name][1];
   }
+  // Guardar página actual en localStorage
+  try { localStorage.setItem(CRM_PAGE_KEY, name); } catch(e){}
   if(name==='overview')  { updateOverview(); setTimeout(renderOvCharts,80); }
   if(name==='ordenes')   { renderOrdenes(); }
   if(name==='pagos')     { cargarSolicitudes(); }

@@ -292,24 +292,17 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .user-modal-orden-fecha{font-size:11px;color:var(--muted);margin-top:2px}
 .user-modal-no{color:var(--muted);font-size:13px;text-align:center;padding:16px 0}
 /* ── Onboarding Tour ── */
-.ob-overlay{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;animation:obFadeIn .3s ease}
+.ob-overlay{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(45,36,96,.5);animation:obFadeIn .3s ease}
 .ob-overlay.active{display:flex}
 @keyframes obFadeIn{from{opacity:0}to{opacity:1}}
-.ob-bg{position:absolute;inset:0;background:rgba(45,36,96,.5);transition:opacity .3s}
-.ob-spotlight{position:absolute;border-radius:14px;box-shadow:0 0 0 4000px rgba(45,36,96,.5);transition:all .4s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:1}
-.ob-card{position:relative;z-index:2;background:#fff;border-radius:14px;padding:14px 18px 12px;width:auto;min-width:260px;max-width:90vw;box-shadow:0 8px 30px rgba(45,36,96,.25);text-align:left;display:flex;align-items:center;gap:12px}
-.ob-ico{margin-bottom:0;flex-shrink:0}
-.ob-ico svg{width:28px;height:28px}
-.ob-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:0;flex:1}
-.ob-desc{display:none}
-.ob-ind{display:none}
-.ob-btns{display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
-.ob-btn-skip{padding:7px 12px;border:1.5px solid #c8c5d6;background:#fff;color:#666;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-.ob-btn-skip:hover{border-color:#2D2460;color:#2D2460}
-.ob-btn-back{padding:7px 10px;border:1.5px solid #c8c5d6;background:#fff;color:#2D2460;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
-.ob-btn-back:hover{border-color:#2D2460}
-.ob-btn-next{padding:7px 14px;border:none;background:var(--navy);color:#fff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
-.ob-btn-next:hover{opacity:.9}
+.ob-card{background:#fff;border-radius:16px;padding:24px 20px;width:auto;min-width:280px;max-width:90vw;box-shadow:0 8px 30px rgba(45,36,96,.25);text-align:center}
+.ob-ico{margin-bottom:12px}
+.ob-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.ob-desc{font-size:13px;color:var(--muted);margin-bottom:16px}
+.ob-steps{display:flex;flex-direction:column;gap:10px;text-align:left}
+.ob-step{display:flex;align-items:center;gap:10px}
+.ob-step-num{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ob-step-txt{font-size:14px;font-weight:500;color:var(--text)}
 </style>
 </head>
 <body>
@@ -2802,14 +2795,19 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
 
 <!-- ── Onboarding Tour ── -->
 <div class="ob-overlay" id="ob-overlay">
-  <div class="ob-bg"></div>
-  <div class="ob-spotlight" id="ob-spotlight"></div>
   <div class="ob-card" id="ob-card">
-    <div class="ob-ico" id="ob-ico"></div>
-    <div class="ob-title" id="ob-title"></div>
-    <div class="ob-desc" id="ob-desc"></div>
-    <div class="ob-ind" id="ob-ind"></div>
-    <div class="ob-btns" id="ob-btns"></div>
+    <div class="ob-ico">
+      <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+    </div>
+    <div class="ob-title">¡Bienvenido a Nugudú Store!</div>
+    <div class="ob-desc">Así funciona en 5 simples pasos:</div>
+    <div class="ob-steps">
+      <div class="ob-step"><span class="ob-step-num">1</span><span class="ob-step-txt">Explorá el catálogo</span></div>
+      <div class="ob-step"><span class="ob-step-num">2</span><span class="ob-step-txt">Elegí tu producto y color</span></div>
+      <div class="ob-step"><span class="ob-step-num">3</span><span class="ob-step-txt">Agregá al carrito</span></div>
+      <div class="ob-step"><span class="ob-step-num">4</span><span class="ob-step-txt">Completá tus datos</span></div>
+      <div class="ob-step"><span class="ob-step-num">5</span><span class="ob-step-txt">Elegí el pago</span></div>
+    </div>
   </div>
 </div>
 
@@ -2961,122 +2959,16 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
 /* ── Onboarding Tour ── */
 (function(){
   var STORAGE_KEY='ob_tour_done';
-  var currentStep=0;
-  var steps=[
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:null},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Elegí tu producto',desc:'Tocá "Siguiente" para ver cómo se selecciona una gorra.',target:'.prod-card',action:'selectFirstProduct'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>',title:'Elegí el color',desc:'Elegí tu color favorito. Tocá uno de los colores disponibles.',target:'#ci-color-sel.show',action:'selectFirstColor'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Agregá al carrito',desc:'Elegí color y cantidad, tocá "Agregar al carrito" para guardarlo.',target:'.pm-btn'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'Consultá tu pedido',desc:'Usá "Consultar mi pedido" con tu código personal para ver el estado de tu orden.',target:'button[title="Consultar mi pedido"]'}
-  ];
   var overlay=document.getElementById('ob-overlay');
-  var spotlight=document.getElementById('ob-spotlight');
-  var icoEl=document.getElementById('ob-ico');
-  var titleEl=document.getElementById('ob-title');
-  var descEl=document.getElementById('ob-desc');
-  var indEl=document.getElementById('ob-ind');
-  var btnsEl=document.getElementById('ob-btns');
   function hasDone(){try{return localStorage.getItem(STORAGE_KEY)==='1';}catch(e){return false;}}
   function markDone(){try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
-  function renderIndicators(){
-    indEl.innerHTML='';
-    for(var i=0;i<steps.length;i++){
-      var d=document.createElement('div');
-      d.className='ob-dot'+(i===currentStep?' act':'');
-      indEl.appendChild(d);
-    }
-  }
-  function renderButtons(){
-    btnsEl.innerHTML='';
-    if(currentStep>0){
-      var back=document.createElement('button');
-      back.className='ob-btn-back';
-      back.textContent='← Atrás';
-      back.onclick=function(){currentStep--;showStep();};
-      btnsEl.appendChild(back);
-    }else{
-      var skip=document.createElement('button');
-      skip.className='ob-btn-skip';
-      skip.textContent='Omitir';
-      skip.onclick=function(){closeTour();};
-      btnsEl.appendChild(skip);
-    }
-    var next=document.createElement('button');
-    next.className='ob-btn-next';
-    next.textContent=currentStep===steps.length-1?'¡Entendido!':'Siguiente →';
-    next.onclick=function(){
-      var step=steps[currentStep];
-      if(step.action==='selectFirstProduct'){
-        var firstProd=document.querySelector('.prod-card:not(.agotado)');
-        if(firstProd){firstProd.click();}
-      }
-      if(step.action==='selectFirstColor'){
-        var firstColor=document.querySelector('.pm-copt:not(.agotado)');
-        if(firstColor){firstColor.click();}
-      }
-      if(currentStep<steps.length-1){currentStep++;showStep();}
-      else closeTour();
-    };
-    btnsEl.appendChild(next);
-  }
-  function positionSpotlight(){
-    var step=steps[currentStep];
-    if(!step.target){
-      spotlight.style.display='none';
-      return;
-    }
-    var el=document.querySelector(step.target);
-    if(!el||el.offsetWidth===0||el.offsetHeight===0){
-      spotlight.style.display='none';
-      return;
-    }
-    el.scrollIntoView({behavior:'auto',block:'center'});
-    setTimeout(function(){
-      var r=el.getBoundingClientRect();
-      var pad=16;
-      spotlight.style.display='block';
-      spotlight.style.left=(r.left-pad)+'px';
-      spotlight.style.top=(r.top-pad)+'px';
-      spotlight.style.width=(r.width+pad*2)+'px';
-      spotlight.style.height=(r.height+pad*2)+'px';
-    },150);
-  }
-  function showStep(){
-    var s=steps[currentStep];
-    icoEl.innerHTML=s.ico;
-    titleEl.textContent=s.title;
-    descEl.textContent=s.desc;
-    renderIndicators();
-    renderButtons();
-    overlay.classList.add('active');
-    // Ajustar posición de la card según el paso
-    var card=document.getElementById('ob-card');
-    card.style.marginTop='';
-    card.style.marginBottom='';
-    if(currentStep===1) card.style.marginTop='118px'; // Paso2: bajar 1cm mas
-    if(currentStep===2) card.style.marginBottom='271px'; // Paso3: subir 1.5cm mas
-    positionSpotlight();
-  }
-  function closeTour(){
+  window.closeTour=function(){
     overlay.classList.remove('active');
-    spotlight.style.display='none';
     markDone();
-    // Cerrar modal del producto si está abierto
-    closePm();
-    // Resetear selección de producto
-    document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
-    var ciColor=document.getElementById('ci-color-sel');
-    if(ciColor)ciColor.classList.remove('show');
-    var colorSel=document.getElementById('color-sel');
-    if(colorSel)colorSel.classList.remove('show');
-    // Resetear al catálogo después del tour
-    showScreen('s-catalogo');
-  }
-  window.obStartTour=function(){
-    currentStep=0;
-    showStep();
   };
-  // Auto-start if not done
+  window.obStartTour=function(){
+    overlay.classList.add('active');
+  };
   setTimeout(function(){if(!hasDone())window.obStartTour();},1200);
 })();
 </script>

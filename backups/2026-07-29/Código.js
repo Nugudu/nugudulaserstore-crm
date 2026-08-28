@@ -126,6 +126,7 @@ function doGet(e) {
     if (action === 'validarHashWompi')   return respond(validarHashWompi(p));
     if (action === 'verificarTransaccion') return respond(verificarTransaccionWompi(p.idTransaccion || ''));
     if (action === 'leerEventos') return respond(leerEventos(p));
+    if (action === 'leerVisitantes') return respond(leerVisitantes(p));
     // Solicitudes de transferencia: el CRM las lee para la seccion
     // "Pagos pendientes" (ref SOL-..., ver guardarSolicitudWeb).
     if (action === 'solicitudes') return respond(leerSolicitudes());

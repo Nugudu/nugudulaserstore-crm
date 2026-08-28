@@ -126,6 +126,7 @@ function doGet(e) {
     if (action === 'validarHashWompi')   return respond(validarHashWompi(p));
     if (action === 'verificarTransaccion') return respond(verificarTransaccionWompi(p.idTransaccion || ''));
     if (action === 'leerEventos') return respond(leerEventos(p));
+    if (action === 'leerVisitantes') return respond(leerVisitantes(p));
     // Solicitudes de transferencia: el CRM las lee para la seccion
     // "Pagos pendientes" (ref SOL-..., ver guardarSolicitudWeb).
     if (action === 'solicitudes') return respond(leerSolicitudes());
@@ -154,6 +155,7 @@ function doPost(e) {
     if (action === 'validarHashWompi') return respond(validarHashWompi(payload.params || payload));
     if (action === 'notificarPagoConfirmado') return respond(notificarPagoConfirmado(payload));
     if (action === 'trackEvent')  return respond(guardarEventos(payload));
+    if (action === 'leerVisitantes') return respond(leerVisitantes(payload));
     if (action === 'guardarFechaNac') return respond(guardarFechaNac(payload));
     if (action === 'buscarOrdenWeb')  return respond(buscarOrdenWeb(payload));
     if (action === 'actualizarDatosWeb'){ conLock(function(){ actualizarDatosWeb(payload); }); return respond({ ok: true }); }
@@ -1842,6 +1844,207 @@ function leerEventos(p) {
       eventos.push(ev);
     }
     return { ok: true, eventos: eventos };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CDP — LEER VISITANTES (agrupados por session_id)
+// ══════════════════════════════════════════════════════════════════
+function leerVisitantes(p) {
+  try {
+    var sheet = getHojaEventos();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
+    var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+    
+    var periodo = p.periodo || 'hoy';
+    var ahora = new Date();
+    var filtroDesde = null;
+    if (periodo === 'hoy') {
+      filtroDesde = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    } else if (periodo === 'semana') {
+      filtroDesde = new Date(ahora);
+      filtroDesde.setDate(filtroDesde.getDate() - 7);
+    } else if (periodo === 'mes') {
+      filtroDesde = new Date(ahora);
+      filtroDesde.setMonth(filtroDesde.getMonth() - 1);
+    }
+    
+    var sesiones = {};
+    var todosSinFiltro = {};
+    var fuentesConteo = {};
+    var horasConteo = {};
+    var paginasConteo = {};
+    var embudo = { page_view: 0, product_click: 0, color_select: 0, add_to_cart: 0, checkout_start: 0, purchase: 0 };
+    var totalSesiones = 0;
+    var sesionesRebote = 0;
+    var duraciones = [];
+    
+    for (var i = 0; i < datos.length; i++) {
+      var row = datos[i];
+      var ts = String(row[0] || '');
+      var sessionId = String(row[1] || '');
+      var contacto = String(row[2] || '');
+      var evento = String(row[3] || '');
+      var dataRaw = row[4] || '{}';
+      var urlRef = String(row[5] || '');
+      
+      if (!sessionId) continue;
+      
+      var dataObj = {};
+      try { dataObj = JSON.parse(dataRaw); } catch(e) { dataObj = {}; }
+      
+      var tsDate = null;
+      try { tsDate = new Date(ts); } catch(e) {}
+      
+      // Acumular para stats sin filtro
+      if (!todosSinFiltro[sessionId]) {
+        todosSinFiltro[sessionId] = { session: sessionId, lastSeen: ts, events: 0, firstSeen: ts };
+      }
+      todosSinFiltro[sessionId].events++;
+      if (ts > todosSinFiltro[sessionId].lastSeen) todosSinFiltro[sessionId].lastSeen = ts;
+      if (ts < todosSinFiltro[sessionId].firstSeen) todosSinFiltro[sessionId].firstSeen = ts;
+      
+      // Analytics: fuentes, horas, páginas (sin filtro de período)
+      var source = dataObj.source || urlRef || 'Directo';
+      fuentesConteo[source] = (fuentesConteo[source] || 0) + 1;
+      
+      if (tsDate) {
+        var hora = tsDate.getHours();
+        horasConteo[hora] = (horasConteo[hora] || 0) + 1;
+      }
+      
+      var page = dataObj.screen || '';
+      if (page) paginasConteo[page] = (paginasConteo[page] || 0) + 1;
+      
+      // Embudo
+      if (embudo.hasOwnProperty(evento)) embudo[evento]++;
+      
+      // Aplicar filtro de período
+      if (filtroDesde && tsDate && tsDate < filtroDesde) continue;
+      
+      if (!sesiones[sessionId]) {
+        sesiones[sessionId] = {
+          session: sessionId,
+          contacto: contacto,
+          city: '',
+          lastPage: '',
+          collection: '',
+          device: '',
+          source: urlRef || 'Directo',
+          lastSeen: ts,
+          firstSeen: ts,
+          events: 0,
+          hasPurchase: false,
+          hasCart: false
+        };
+      }
+      
+      var s = sesiones[sessionId];
+      s.events++;
+      if (ts > s.lastSeen) s.lastSeen = ts;
+      if (ts < s.firstSeen) s.firstSeen = ts;
+      if (contacto && !s.contacto) s.contacto = contacto;
+      if (dataObj.city && !s.city) s.city = dataObj.city;
+      if (dataObj.device && !s.device) s.device = dataObj.device;
+      if (dataObj.source && s.source === 'Directo') s.source = dataObj.source;
+      if (dataObj.screen) s.lastPage = dataObj.screen;
+      if (dataObj.nombre) s.collection = dataObj.nombre;
+      if (evento === 'purchase') s.hasPurchase = true;
+      if (evento === 'add_to_cart') s.hasCart = true;
+    }
+    
+    // Calcular rebote y duración
+    Object.keys(todosSinFiltro).forEach(function(k) {
+      var sesion = todosSinFiltro[k];
+      totalSesiones++;
+      if (sesion.events <= 1) sesionesRebote++;
+      var inicio = new Date(sesion.firstSeen).getTime();
+      var fin = new Date(sesion.lastSeen).getTime();
+      if (fin > inicio) duraciones.push(fin - inicio);
+    });
+    
+    var bounceRate = totalSesiones > 0 ? Math.round((sesionesRebote / totalSesiones) * 100) : 0;
+    var duracionProm = 0;
+    if (duraciones.length) {
+      var sumaDuraciones = duraciones.reduce(function(a, b) { return a + b; }, 0);
+      duracionProm = Math.round((sumaDuraciones / duraciones.length) / 60000); // minutos
+    }
+    
+    // Convertir fuentes a array ordenado
+    var fuentesArr = [];
+    Object.keys(fuentesConteo).forEach(function(k) {
+      fuentesArr.push({ name: k, count: fuentesConteo[k] });
+    });
+    fuentesArr.sort(function(a, b) { return b.count - a.count; });
+    
+    // Convertir horas a array (0-23)
+    var horasArr = [];
+    for (var h = 0; h < 24; h++) {
+      horasArr.push({ hour: h, count: horasConteo[h] || 0 });
+    }
+    
+    // Convertir páginas a array ordenado
+    var paginasArr = [];
+    var paginasNombres = { s_catalogo: 'Catálogo', s_cliente: 'Datos', s_envio: 'Envío', s_pago: 'Pago', s_exito: '¡Listo!', s_consulta: 'Consulta', s_midsenio: 'Mi diseño' };
+    Object.keys(paginasConteo).forEach(function(k) {
+      paginasArr.push({ name: paginasNombres[k] || k, count: paginasConteo[k] });
+    });
+    paginasArr.sort(function(a, b) { return b.count - a.count; });
+    
+    // Calcular isActive (últimos 10 min)
+    var diezMin = 10 * 60 * 1000;
+    var ahoraMs = ahora.getTime();
+    var visitantes = [];
+    var activos = 0;
+    
+    Object.keys(sesiones).forEach(function(k) {
+      var s = sesiones[k];
+      var lastMs = new Date(s.lastSeen).getTime();
+      s.isActive = (ahoraMs - lastMs) < diezMin;
+      if (s.isActive) activos++;
+      s.minutesAgo = Math.round((ahoraMs - lastMs) / 60000);
+      visitantes.push(s);
+    });
+    
+    // Ordenar por último visto (más reciente primero)
+    visitantes.sort(function(a, b) { return b.lastSeen > a.lastSeen ? 1 : -1; });
+    
+    // Stats: contar sesiones únicas sin filtro de período
+    var totalHoy = 0, totalSemana = 0, totalMes = 0;
+    var hoyInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).getTime();
+    var semanaInicio = new Date(ahora);
+    semanaInicio.setDate(semanaInicio.getDate() - 7);
+    var mesInicio = new Date(ahora);
+    mesInicio.setMonth(mesInicio.getMonth() - 1);
+    
+    Object.keys(todosSinFiltro).forEach(function(k) {
+      var ls = new Date(todosSinFiltro[k].lastSeen).getTime();
+      if (ls >= hoyInicio) totalHoy++;
+      if (ls >= semanaInicio.getTime()) totalSemana++;
+      if (ls >= mesInicio.getTime()) totalMes++;
+    });
+    
+    return {
+      ok: true,
+      visitantes: visitantes,
+      stats: {
+        activos: activos,
+        hoy: totalHoy,
+        semana: totalSemana,
+        mes: totalMes
+      },
+      analytics: {
+        fuentes: fuentesArr,
+        horas: horasArr,
+        paginas: paginasArr,
+        embudo: embudo,
+        rebote: bounceRate,
+        duracionProm: duracionProm
+      }
+    };
   } catch (err) {
     return { ok: false, error: err.message };
   }

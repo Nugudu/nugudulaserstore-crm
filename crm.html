@@ -576,10 +576,10 @@ tbody tr:last-child td{border-bottom:none}
     <!-- CDP — CUSTOMER DATA PLATFORM -->
     <div id="panel-cdp" class="panel">
       <div style="display:flex;gap:8px;margin-bottom:1.1rem;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm sel" id="cdp-tab-360" onclick="cdpTab('360')" style="border-color:var(--navy);background:var(--navy);color:#fff">Customer 360</button>
-        <button class="btn btn-outline btn-sm" id="cdp-tab-funnel" onclick="cdpTab('funnel')">Embudo de conversión</button>
+        <button class="btn btn-outline btn-sm sel" id="cdp-tab-visitantes" onclick="cdpTab('visitantes')" style="border-color:var(--navy);background:var(--navy);color:#fff"><i class="fa-solid fa-eye"></i> Visitantes</button>
+        <button class="btn btn-outline btn-sm" id="cdp-tab-funnel" onclick="cdpTab('funnel')">Embudo de ventas</button>
+        <button class="btn btn-outline btn-sm" id="cdp-tab-360" onclick="cdpTab('360')">Customer 360</button>
         <button class="btn btn-outline btn-sm" id="cdp-tab-segmentos" onclick="cdpTab('segmentos')">Segmentos</button>
-        <button class="btn btn-outline btn-sm" id="cdp-tab-visitantes" onclick="cdpTab('visitantes')"><i class="fa-solid fa-eye"></i> Visitantes</button>
         <button class="btn btn-outline btn-sm" onclick="cargarCDP()" style="margin-left:auto"><i class="fa-solid fa-rotate"></i> Actualizar</button>
       </div>
 
@@ -635,7 +635,7 @@ tbody tr:last-child td{border-bottom:none}
           <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="hoy" onclick="cdpVisitantesFiltro('hoy')" style="border-color:var(--navy);background:var(--navy);color:#fff">Hoy</button>
           <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="semana" onclick="cdpVisitantesFiltro('semana')">Esta semana</button>
           <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="mes" onclick="cdpVisitantesFiltro('mes')">Este mes</button>
-          <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="cdp-v-actualizar">Auto-refresh: 30s</span>
+          <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="cdp-v-actualizar">Auto-refresh: 5s</span>
         </div>
         <div class="g4" id="cdp-v-stats" style="margin-bottom:1.2rem"></div>
         
@@ -3247,7 +3247,7 @@ function generarPdfReporteSku(data, sku, foto){
 // ══════════════════════════════════════════════════════════════════
 var _cdpEventos = [];
 
-var _cdpTabActual = '360';
+var _cdpTabActual = 'visitantes';
 var _cdpVisitantesPeriodo = 'hoy';
 var _cdpVisitantesTimer = null;
 
@@ -3263,6 +3263,8 @@ function cargarCDP(){
 
 function cdpTab(tab){
   _cdpTabActual = tab;
+  // Limpiar timer de visitantes si existe
+  if(_cdpVisitantesTimer){clearInterval(_cdpVisitantesTimer);_cdpVisitantesTimer=null;}
   var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos', 'visitantes':'cdp-visitantes' };
   ['360','funnel','segmentos','visitantes'].forEach(function(t){
     var el = document.getElementById(secciones[t]); if(el) el.style.display = t === tab ? 'block' : 'none';
@@ -3274,7 +3276,11 @@ function cdpTab(tab){
   });
   if(tab === 'funnel') cdpRenderFunnel();
   if(tab === 'segmentos') cdpRenderSegmentos();
-  if(tab === 'visitantes') cdpCargarVisitantes();
+  if(tab === 'visitantes'){
+    cdpCargarVisitantes();
+    // Auto-refresh cada5 segundos
+    _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes();},5000);
+  }
 }
 
 function cdpVisitantesFiltro(periodo){

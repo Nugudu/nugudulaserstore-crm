@@ -758,7 +758,7 @@ function track(evento,data){
       source:_refV||'Directo'
     };
     try{
-      fetch('http://ip-api.com/json/?fields=city,country').then(function(r){return r.json();}).then(function(d){_visitorData.city=d.city||'';}).catch(function(){});
+      fetch('https://ip-api.com/json/?fields=city,country').then(function(r){return r.json();}).then(function(d){if(d&&d.city)_visitorData.city=d.city;}).catch(function(){});
     }catch(e){}
   }
   data=data||{};

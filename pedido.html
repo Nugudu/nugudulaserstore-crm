@@ -131,6 +131,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .pm-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:'DM Sans',sans-serif}
 .pm-btn:hover{opacity:.9}
 .pm-btn:disabled{opacity:.4;cursor:not-allowed}
+.pm-btn-outline{width:100%;padding:12px;background:transparent;color:var(--navy);border:2px solid var(--navy);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;margin-top:8px}
+.pm-btn-outline:hover{background:var(--bg)}
+.pm-btn-outline:disabled{opacity:.4;cursor:not-allowed}
 .pm-hint{font-size:11px;color:var(--hint);text-align:center;margin-top:8px}
 .color-sel{background:#f4f3fa;border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .color-sel.show{display:block}
@@ -383,6 +386,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <div class="pm-qty-total">Total: <strong id="pm-qty-t">$0.00</strong></div>
         </div>
         <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Agregar</button>
+        <button class="pm-btn-outline" id="pm-btn-another" onclick="pmAgregarOtro()">+ Agregar otro producto</button>
         <div class="pm-hint">Selecciona un color para continuar</div>
       </div>
     </div>
@@ -1561,6 +1565,7 @@ function elDisInicio(nomEnc){
     document.getElementById('pm-qty-n').textContent='1';
     document.getElementById('pm-qty-t').textContent='$'+vs[0].precio.toFixed(2);
     document.getElementById('pm-btn-continue').disabled=true;
+    var btnAnother=document.getElementById('pm-btn-another');if(btnAnother)btnAnother.disabled=true;
     document.querySelector('.pm-hint').textContent='Selecciona un color para continuar';
     document.querySelector('.pm-hint').style.color='var(--hint)';
     openPm();
@@ -1577,6 +1582,7 @@ function pmSelColor(sku){
   var qn=document.getElementById('pm-qty-n');if(qn)qn.textContent='1';
   var qt=document.getElementById('pm-qty-t');if(qt)qt.textContent='$'+v.precio.toFixed(2);
   var btn=document.getElementById('pm-btn-continue');if(btn)btn.disabled=false;
+  var btnAnother=document.getElementById('pm-btn-another');if(btnAnother)btnAnother.disabled=false;
   document.querySelector('.pm-hint').textContent=v.color+' · $'+v.precio.toFixed(2);
   document.querySelector('.pm-hint').style.color='var(--navy)';
   track('color_select',{sku:sku,color:v.color});
@@ -1588,6 +1594,14 @@ function pmChgQty(d){
   document.getElementById('pm-qty-t').textContent='$'+(_pmColor?(_pmColor.precio*_pmQty).toFixed(2):'0.00');
 }
 function pmContinuar(){
+  if(!_pmColor)return;
+  _color=_pmColor;_qty=_pmQty;_diseno=_pmNombre;
+  agregarSeleccionAlCarrito();
+  renderCarrito();
+  track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty});
+  closePm();
+}
+function pmAgregarOtro(){
   if(!_pmColor)return;
   _color=_pmColor;_qty=_pmQty;_diseno=_pmNombre;
   agregarSeleccionAlCarrito();

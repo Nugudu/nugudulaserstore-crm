@@ -2075,7 +2075,20 @@ function showScreen(id){
     document.getElementById('phone-consulta').style.display='none';
   }
   track('page_view',{screen:id});
+  // Guardar en historial del navegador para botón atrás del dispositivo
+  if(!_isNavigatingBack){
+    try{history.pushState({screen:id},'',window.location.pathname);}catch(e){}
+  }
 }
+// Manejar botón atrás del dispositivo
+var _isNavigatingBack=false;
+window.addEventListener('popstate',function(e){
+  if(e.state && e.state.screen){
+    _isNavigatingBack=true;
+    showScreen(e.state.screen);
+    _isNavigatingBack=false;
+  }
+});
 function showErr(c,m){var el=document.getElementById('err-'+c);el.textContent=m;el.style.display='block';el.scrollIntoView({behavior:'auto',block:'nearest'});}
 function hideErr(c){document.getElementById('err-'+c).style.display='none';}
 // ── LEAFLET MAPA INTERACTIVO ──

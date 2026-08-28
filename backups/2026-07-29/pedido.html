@@ -131,9 +131,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .pm-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:'DM Sans',sans-serif}
 .pm-btn:hover{opacity:.9}
 .pm-btn:disabled{opacity:.4;cursor:not-allowed}
-.pm-btn-outline{width:100%;padding:12px;background:transparent;color:var(--navy);border:2px solid var(--navy);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;margin-top:8px}
-.pm-btn-outline:hover{background:var(--bg)}
-.pm-btn-outline:disabled{opacity:.4;cursor:not-allowed}
 .pm-hint{font-size:11px;color:var(--hint);text-align:center;margin-top:8px}
 .color-sel{background:#f4f3fa;border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .color-sel.show{display:block}
@@ -357,7 +354,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="ci-carrito-items"></div>
       <div class="res-total"><span>Total</span><span id="ci-carrito-total">$0.00</span></div>
     </div>
-    <button class="btn-main" id="ci-btn-continuar" onclick="continuarCatalogo(this)">Continuar →</button>
+    <button class="btn-main" id="ci-btn-continuar" onclick="continuarCatalogo(this)" style="display:none">Continuar →</button>
     <div style="text-align:center;margin-top:10px">
       <a href="#" onclick="irAConsultar();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.background='#f4f2fb'" onmouseout="this.style.background='transparent'">Consultar mi pedido</a>
       <span style="font-size:15px;color:#2D2460;margin:0 6px">|</span>
@@ -385,8 +382,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <button class="pm-qty-btn" onclick="pmChgQty(1)">+</button>
           <div class="pm-qty-total">Total: <strong id="pm-qty-t">$0.00</strong></div>
         </div>
-        <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Agregar</button>
-        <button class="pm-btn-outline" id="pm-btn-another" onclick="pmAgregarOtro()">+ Agregar otro producto</button>
+        <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Agregar al carrito</button>
         <div class="pm-hint">Selecciona un color para continuar</div>
       </div>
     </div>
@@ -1565,7 +1561,6 @@ function elDisInicio(nomEnc){
     document.getElementById('pm-qty-n').textContent='1';
     document.getElementById('pm-qty-t').textContent='$'+vs[0].precio.toFixed(2);
     document.getElementById('pm-btn-continue').disabled=true;
-    var btnAnother=document.getElementById('pm-btn-another');if(btnAnother)btnAnother.disabled=true;
     document.querySelector('.pm-hint').textContent='Selecciona un color para continuar';
     document.querySelector('.pm-hint').style.color='var(--hint)';
     openPm();
@@ -1582,7 +1577,6 @@ function pmSelColor(sku){
   var qn=document.getElementById('pm-qty-n');if(qn)qn.textContent='1';
   var qt=document.getElementById('pm-qty-t');if(qt)qt.textContent='$'+v.precio.toFixed(2);
   var btn=document.getElementById('pm-btn-continue');if(btn)btn.disabled=false;
-  var btnAnother=document.getElementById('pm-btn-another');if(btnAnother)btnAnother.disabled=false;
   document.querySelector('.pm-hint').textContent=v.color+' · $'+v.precio.toFixed(2);
   document.querySelector('.pm-hint').style.color='var(--navy)';
   track('color_select',{sku:sku,color:v.color});
@@ -1601,20 +1595,10 @@ function pmContinuar(){
   track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty});
   closePm();
 }
-function pmAgregarOtro(){
-  if(!_pmColor)return;
-  _color=_pmColor;_qty=_pmQty;_diseno=_pmNombre;
-  agregarSeleccionAlCarrito();
-  renderCarrito();
-  track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty});
-  closePm();
-}
 function openPm(){
   var ov=document.getElementById('pm-overlay');
   ov.style.display='flex';
   document.body.style.overflow='hidden';
-  var btn=document.getElementById('ci-btn-continuar');
-  if(btn)btn.style.display='none';
   requestAnimationFrame(function(){ov.classList.add('open');});
   var sheet=ov.querySelector('.pm-sheet');
   var startY=0;
@@ -1629,8 +1613,6 @@ function closePm(){
   var ov=document.getElementById('pm-overlay');
   ov.classList.remove('open');
   document.body.style.overflow='';
-  var btn=document.getElementById('ci-btn-continuar');
-  if(btn)btn.style.display='';
   setTimeout(function(){ov.style.display='none';},300);
 }
 function elColInicio(sku){
@@ -2984,7 +2966,7 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:null},
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Elegí tu producto',desc:'Tocá "Siguiente" para ver cómo se selecciona una gorra.',target:'.prod-card',action:'selectFirstProduct'},
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>',title:'Elegí el color',desc:'Elegí tu color favorito. Tocá uno de los colores disponibles.',target:'#ci-color-sel.show',action:'selectFirstColor'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Continuá con tu pedido',desc:'Presioná "Continuar" para agregar al carrito y completar tu pedido.',target:'.btn-main'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Agregá al carrito',desc:'Elegí color y cantidad, tocá "Agregar al carrito" para guardarlo.',target:'.pm-btn'},
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'Consultá tu pedido',desc:'Usá "Consultar mi pedido" con tu código personal para ver el estado de tu orden.',target:'button[title="Consultar mi pedido"]'}
   ];
   var overlay=document.getElementById('ob-overlay');

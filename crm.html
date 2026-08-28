@@ -485,7 +485,7 @@ tbody tr:last-child td{border-bottom:none}
     <div id="panel-clientes" class="panel">
       <div class="ph-row">
         <div><h2>Clientes</h2><p>Ranking por compras reales — calculado desde el historial de órdenes</p></div>
-        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportarClientesCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button><button class="btn btn-outline btn-sm" onclick="exportarClientesPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-outline btn-sm" onclick="renderClientes()"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportarClientesCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button><button class="btn btn-outline btn-sm" onclick="exportarClientesPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-outline btn-sm" onclick="syncYRender('clientes',this)"><i class="fa-solid fa-rotate"></i> Actualizar</button></div>
       </div>
       <div class="g3">
         <div class="mc"><div class="ml">Clientes distintos</div><div class="mv" id="cli-total" style="color:var(--navy)">0</div></div>
@@ -503,7 +503,7 @@ tbody tr:last-child td{border-bottom:none}
     <div id="panel-inventario" class="panel">
       <div class="ph-row">
         <div><h2>Inventario</h2><p>Unidades vendidas por SKU · calculado desde las órdenes registradas</p></div>
-        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-outline btn-sm" onclick="renderInventario()"><i class="fa-solid fa-rotate"></i> Actualizar</button><button class="btn btn-outline btn-sm" onclick="confirmarLimpiarDatos()" style="color:#a32d2d;border-color:#f7c1c1"><i class="fa-solid fa-trash-can"></i> Limpiar datos</button><button class="btn btn-primary btn-sm" onclick="irANuevoProducto()"><i class="fa-solid fa-plus"></i> Nuevo producto</button></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button><button class="btn btn-outline btn-sm" onclick="syncYRender('inventario',this)"><i class="fa-solid fa-rotate"></i> Actualizar</button><button class="btn btn-outline btn-sm" onclick="confirmarLimpiarDatos()" style="color:#a32d2d;border-color:#f7c1c1"><i class="fa-solid fa-trash-can"></i> Limpiar datos</button><button class="btn btn-primary btn-sm" onclick="irANuevoProducto()"><i class="fa-solid fa-plus"></i> Nuevo producto</button></div>
       </div>
       <div class="g3">
         <div class="mc"><div class="ml">SKUs distintos</div><div class="mv" id="inv-skus" style="color:var(--navy)">0</div></div>
@@ -581,7 +581,7 @@ tbody tr:last-child td{border-bottom:none}
         <button class="btn btn-outline btn-sm" id="cdp-tab-funnel" onclick="cdpTab('funnel')">Embudo de ventas</button>
         <button class="btn btn-outline btn-sm" id="cdp-tab-360" onclick="cdpTab('360')">Customer 360</button>
         <button class="btn btn-outline btn-sm" id="cdp-tab-segmentos" onclick="cdpTab('segmentos')">Segmentos</button>
-        <button class="btn btn-outline btn-sm" onclick="cargarCDP()" style="margin-left:auto"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+        <button class="btn btn-outline btn-sm" onclick="syncYRender('cdp',this)" style="margin-left:auto"><i class="fa-solid fa-rotate"></i> Actualizar</button>
       </div>
 
       <!-- Customer 360 -->
@@ -3251,6 +3251,23 @@ var _cdpEventos = [];
 var _cdpTabActual = 'visitantes';
 var _cdpVisitantesPeriodo = 'hoy';
 var _cdpVisitantesTimer = null;
+
+function syncYRender(panel, btn){
+  if(btn){
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando…';
+    btn.disabled = true;
+  }
+  syncFromGAS(true);
+  var check = setInterval(function(){
+    if(btn) btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Actualizar';
+    if(btn) btn.disabled = false;
+    clearInterval(check);
+    if(panel==='clientes') renderClientes();
+    else if(panel==='inventario') renderInventario();
+    else if(panel==='cdp') cargarCDP();
+  }, 1500);
+}
 
 function cargarCDP(){
   // Si estamos en visitantes, refrescar visitantes directamente

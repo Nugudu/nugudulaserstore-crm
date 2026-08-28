@@ -2919,6 +2919,12 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     renderIndicators();
     renderButtons();
     overlay.classList.add('active');
+    // Ajustar posición de la card según el paso
+    var card=document.getElementById('ob-card');
+    card.style.marginTop='';
+    card.style.marginBottom='';
+    if(currentStep===1) card.style.marginTop='80px'; // Paso2: bajar
+    if(currentStep===2) card.style.marginBottom='100px'; // Paso3: subir
     positionSpotlight();
   }
   function closeTour(){

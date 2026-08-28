@@ -354,7 +354,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div id="ci-carrito-items"></div>
       <div class="res-total"><span>Total</span><span id="ci-carrito-total">$0.00</span></div>
     </div>
-    <button class="btn-main" onclick="continuarCatalogo(this)">Continuar →</button>
+    <button class="btn-main" id="ci-btn-continuar" onclick="continuarCatalogo(this)">Continuar →</button>
     <div style="text-align:center;margin-top:10px">
       <a href="#" onclick="irAConsultar();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.background='#f4f2fb'" onmouseout="this.style.background='transparent'">Consultar mi pedido</a>
       <span style="font-size:15px;color:#2D2460;margin:0 6px">|</span>
@@ -382,7 +382,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <button class="pm-qty-btn" onclick="pmChgQty(1)">+</button>
           <div class="pm-qty-total">Total: <strong id="pm-qty-t">$0.00</strong></div>
         </div>
-        <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Continuar →</button>
+        <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Agregar</button>
         <div class="pm-hint">Selecciona un color para continuar</div>
       </div>
     </div>
@@ -1599,6 +1599,8 @@ function openPm(){
   var ov=document.getElementById('pm-overlay');
   ov.style.display='flex';
   document.body.style.overflow='hidden';
+  var btn=document.getElementById('ci-btn-continuar');
+  if(btn)btn.style.display='none';
   requestAnimationFrame(function(){ov.classList.add('open');});
   var sheet=ov.querySelector('.pm-sheet');
   var startY=0;
@@ -1613,6 +1615,8 @@ function closePm(){
   var ov=document.getElementById('pm-overlay');
   ov.classList.remove('open');
   document.body.style.overflow='';
+  var btn=document.getElementById('ci-btn-continuar');
+  if(btn)btn.style.display='';
   setTimeout(function(){ov.style.display='none';},300);
 }
 function elColInicio(sku){

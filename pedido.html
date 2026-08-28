@@ -104,6 +104,34 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .sok{color:var(--green)}.slow{color:var(--amber)}.sno{color:var(--coral)}
 .pcheck{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(45,36,96,.35)}
 .prod-card.sel .pcheck{display:flex}
+/* ── PRODUCT MODAL / BOTTOM-SHEET ── */
+.pm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:none;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .25s}
+.pm-overlay.open{display:flex;opacity:1}
+.pm-sheet{background:#fff;width:100%;max-width:480px;max-height:88vh;border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);box-shadow:0 -4px 24px rgba(0,0,0,.15)}
+.pm-overlay.open .pm-sheet{transform:translateY(0)}
+.pm-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 6px;flex-shrink:0}
+.pm-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);z-index:2;transition:background .15s}
+.pm-close:hover{background:var(--border)}
+.pm-body{padding:0 16px 20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;position:relative}
+.pm-foto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border)}
+.pm-nombre{font-size:18px;font-weight:700;margin-bottom:4px}
+.pm-precio{font-size:20px;font-weight:800;color:var(--navy);margin-bottom:12px}
+.pm-section{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.pm-colors{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.pm-copt{display:flex;align-items:center;gap:7px;padding:8px 14px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
+.pm-copt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+.pm-copt.agotado{opacity:.4;pointer-events:none}
+.pm-cswatch{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
+.pm-qty{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.pm-qty-btn{width:40px;height:40px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:22px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.pm-qty-btn:hover{background:var(--bg)}
+.pm-qty-num{font-size:24px;font-weight:700;min-width:40px;text-align:center}
+.pm-qty-total{margin-left:auto;font-size:14px;color:var(--muted)}
+.pm-qty-total strong{color:var(--navy);font-size:18px}
+.pm-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:'DM Sans',sans-serif}
+.pm-btn:hover{opacity:.9}
+.pm-btn:disabled{opacity:.4;cursor:not-allowed}
+.pm-hint{font-size:11px;color:var(--hint);text-align:center;margin-top:8px}
 .color-sel{background:#f4f3fa;border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .color-sel.show{display:block}
 .cs-ttl{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px}
@@ -264,7 +292,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .user-modal-orden-fecha{font-size:11px;color:var(--muted);margin-top:2px}
 .user-modal-no{color:var(--muted);font-size:13px;text-align:center;padding:16px 0}
 /* ── Onboarding Tour ── */
-.ob-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;animation:obFadeIn .3s ease}
+.ob-overlay{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;animation:obFadeIn .3s ease}
 .ob-overlay.active{display:flex}
 @keyframes obFadeIn{from{opacity:0}to{opacity:1}}
 .ob-bg{position:absolute;inset:0;background:rgba(45,36,96,.5);transition:opacity .3s}
@@ -334,6 +362,29 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     </div>
     <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
       Contacta con nuestro equipo al: <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a>
+    </div>
+  </div>
+  <!-- PRODUCT DETAIL MODAL -->
+  <div class="pm-overlay" id="pm-overlay" onclick="if(event.target===this)closePm()">
+    <div class="pm-sheet">
+      <div class="pm-handle"></div>
+      <button class="pm-close" onclick="closePm()">✕</button>
+      <div class="pm-body">
+        <img class="pm-foto" id="pm-foto" alt="">
+        <div class="pm-nombre" id="pm-nombre"></div>
+        <div class="pm-precio" id="pm-precio"></div>
+        <div class="pm-section">Color</div>
+        <div class="pm-colors" id="pm-colors"></div>
+        <div class="pm-section">Cantidad</div>
+        <div class="pm-qty">
+          <button class="pm-qty-btn" onclick="pmChgQty(-1)">−</button>
+          <div class="pm-qty-num" id="pm-qty-n">1</div>
+          <button class="pm-qty-btn" onclick="pmChgQty(1)">+</button>
+          <div class="pm-qty-total">Total: <strong id="pm-qty-t">$0.00</strong></div>
+        </div>
+        <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Continuar →</button>
+        <div class="pm-hint">Selecciona un color para continuar</div>
+      </div>
     </div>
   </div>
 </div>
@@ -919,7 +970,7 @@ function abrirSkuPendiente(){
   showScreen('s-catalogo');
   renderCat();
   elDisInicio(encodeId(v.nombre));
-  elColInicio(v.sku);
+  setTimeout(function(){pmSelColor(v.sku);},400);
 }
 
 // ── INIT: caché local al instante + GAS refresca en background (sin bloqueo) ──
@@ -1466,28 +1517,103 @@ function chgQty(d){
 }
 
 // ── CATALOGO INICIAL (pantalla #1) ──
+var _pmNombre=null,_pmColor=null,_pmQty=1,_pmSku=null;
+function _tourActivo(){
+  var ov=document.getElementById('ob-overlay');
+  return ov&&ov.classList.contains('active');
+}
 function elDisInicio(nomEnc){
   var nombre=_cat.find(function(p){return encodeId(p.nombre)===nomEnc;});
   if(!nombre)return;
   nombre=nombre.nombre;
   document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
   var el=document.getElementById('pc-'+encodeId(nombre)); if(el)el.classList.add('sel');
-  _diseno=nombre;_color=null;
+  _diseno=nombre;_pmNombre=nombre;_pmColor=null;_pmQty=1;
   var vs=_cat.filter(function(p){return p.nombre===nombre;});
-  document.getElementById('ci-cs-nom').textContent=nombre;
-  var opts=vs.map(function(v){
-    var agot=v.stock<=0;
-    var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Ultimas '+v.stock:'';
-    return '<div class="copt'+(agot?' agotado':'')+'" id="ci-co-'+v.sku+'" '+(agot?'style="opacity:.4;pointer-events:none"':'')+' onclick="elColInicio(\''+v.sku+'\')">'+
-      '<div class="cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
-    '</div>';
-  }).join('');
-  document.getElementById('ci-color-opts').innerHTML=opts;
-  actualizarFotoPreviewInicio(vs[0].sku,nombre);
-  document.getElementById('ci-color-sel').classList.add('show');
-  document.getElementById('ci-qty-card').style.display='none';
-  document.getElementById('ci-color-sel').scrollIntoView({behavior:'auto',block:'nearest'});
+  if(_tourActivo()){
+    document.getElementById('ci-cs-nom').textContent=nombre;
+    var opts=vs.map(function(v){
+      var agot=v.stock<=0;
+      var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Ultimas '+v.stock:'';
+      return '<div class="copt'+(agot?' agotado':'')+'" id="ci-co-'+v.sku+'" '+(agot?'style="opacity:.4;pointer-events:none"':'')+' onclick="elColInicio(\''+v.sku+'\')">'+
+        '<div class="cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
+      '</div>';
+    }).join('');
+    document.getElementById('ci-color-opts').innerHTML=opts;
+    actualizarFotoPreviewInicio(vs[0].sku,nombre);
+    document.getElementById('ci-color-sel').classList.add('show');
+    document.getElementById('ci-qty-card').style.display='none';
+    document.getElementById('ci-color-sel').scrollIntoView({behavior:'auto',block:'nearest'});
+  }else{
+    document.getElementById('pm-nombre').textContent=nombre;
+    document.getElementById('pm-precio').textContent='$'+vs[0].precio.toFixed(2);
+    var opts=vs.map(function(v){
+      var agot=v.stock<=0;
+      var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Últimas '+v.stock:'';
+      return '<div class="pm-copt'+(agot?' agotado':'')+'" id="pm-co-'+v.sku+'" onclick="pmSelColor(\''+v.sku+'\')">'+
+        '<div class="pm-cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
+      '</div>';
+    }).join('');
+    document.getElementById('pm-colors').innerHTML=opts;
+    var candidatos=candidatosFoto(vs[0].sku,nombre);
+    document.getElementById('pm-foto').src='imagenes/'+candidatos[0];
+    document.getElementById('pm-foto').onerror=function(){imgFallback(this);};
+    document.getElementById('pm-qty-n').textContent='1';
+    document.getElementById('pm-qty-t').textContent='$'+vs[0].precio.toFixed(2);
+    document.getElementById('pm-btn-continue').disabled=true;
+    document.querySelector('.pm-hint').textContent='Selecciona un color para continuar';
+    document.querySelector('.pm-hint').style.color='var(--hint)';
+    openPm();
+  }
   track('product_click',{nombre:nombre});
+}
+function pmSelColor(sku){
+  var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
+  _pmColor=v;_pmQty=1;_pmSku=sku;
+  document.querySelectorAll('.pm-copt').forEach(function(c){c.classList.remove('sel');});
+  var el=document.getElementById('pm-co-'+sku);if(el)el.classList.add('sel');
+  var candidatos=candidatosFoto(sku,_pmNombre);
+  var foto=document.getElementById('pm-foto');if(foto){foto.src='imagenes/'+candidatos[0];}
+  var qn=document.getElementById('pm-qty-n');if(qn)qn.textContent='1';
+  var qt=document.getElementById('pm-qty-t');if(qt)qt.textContent='$'+v.precio.toFixed(2);
+  var btn=document.getElementById('pm-btn-continue');if(btn)btn.disabled=false;
+  document.querySelector('.pm-hint').textContent=v.color+' · $'+v.precio.toFixed(2);
+  document.querySelector('.pm-hint').style.color='var(--navy)';
+  track('color_select',{sku:sku,color:v.color});
+}
+function pmChgQty(d){
+  var mx=_pmColor?Math.min(_pmColor.stock||10,10):10;
+  _pmQty=Math.max(1,Math.min(mx,_pmQty+d));
+  document.getElementById('pm-qty-n').textContent=_pmQty;
+  document.getElementById('pm-qty-t').textContent='$'+(_pmColor?(_pmColor.precio*_pmQty).toFixed(2):'0.00');
+}
+function pmContinuar(){
+  if(!_pmColor)return;
+  _color=_pmColor;_qty=_pmQty;_diseno=_pmNombre;
+  agregarSeleccionAlCarrito();
+  renderCarrito();
+  track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty});
+  closePm();
+}
+function openPm(){
+  var ov=document.getElementById('pm-overlay');
+  ov.style.display='flex';
+  document.body.style.overflow='hidden';
+  requestAnimationFrame(function(){ov.classList.add('open');});
+  var sheet=ov.querySelector('.pm-sheet');
+  var startY=0;
+  sheet.ontouchstart=function(e){startY=e.touches[0].clientY;};
+  sheet.ontouchmove=function(e){
+    var dy=e.touches[0].clientY-startY;
+    if(dy>80)closePm();
+  };
+  sheet.ontouchend=function(){sheet.ontouchmove=null;};
+}
+function closePm(){
+  var ov=document.getElementById('pm-overlay');
+  ov.classList.remove('open');
+  document.body.style.overflow='';
+  setTimeout(function(){ov.style.display='none';},300);
 }
 function elColInicio(sku){
   var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
@@ -2839,8 +2965,8 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
   var steps=[
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>',title:'Explorá el catálogo',desc:'Deslizá para ver todos nuestros productos. Cada gorra tiene su estilo único.',target:null},
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',title:'Elegí tu producto',desc:'Tocá "Siguiente" para ver cómo se selecciona una gorra.',target:'.prod-card',action:'selectFirstProduct'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>',title:'Elegí el color',desc:'Así se ven los colores al seleccionar una gorra. Tocá Negro o Grisis para elegir.',target:'#ci-color-sel.show'},
-    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Continuá con tu pedido',desc:'Cuando tengas todo, presioná "Continuar" para completar tus datos y elegir el pago.',target:'.btn-main'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="19" r="2.5"/><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>',title:'Elegí el color',desc:'Elegí tu color favorito. Tocá uno de los colores disponibles.',target:'#ci-color-sel.show',action:'selectFirstColor'},
+    {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',title:'Continuá con tu pedido',desc:'Presioná "Continuar" para agregar al carrito y completar tu pedido.',target:'.btn-main'},
     {ico:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',title:'Consultá tu pedido',desc:'Usá "Consultar mi pedido" con tu código personal para ver el estado de tu orden.',target:'button[title="Consultar mi pedido"]'}
   ];
   var overlay=document.getElementById('ob-overlay');
@@ -2883,6 +3009,10 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
       if(step.action==='selectFirstProduct'){
         var firstProd=document.querySelector('.prod-card:not(.agotado)');
         if(firstProd){firstProd.click();}
+      }
+      if(step.action==='selectFirstColor'){
+        var firstColor=document.querySelector('.pm-copt:not(.agotado)');
+        if(firstColor){firstColor.click();}
       }
       if(currentStep<steps.length-1){currentStep++;showStep();}
       else closeTour();
@@ -2931,6 +3061,8 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     overlay.classList.remove('active');
     spotlight.style.display='none';
     markDone();
+    // Cerrar modal del producto si está abierto
+    closePm();
     // Resetear selección de producto
     document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
     var ciColor=document.getElementById('ci-color-sel');

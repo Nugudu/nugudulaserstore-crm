@@ -584,7 +584,7 @@ tbody tr:last-child td{border-bottom:none}
       </div>
 
       <!-- Customer 360 -->
-      <div id="cdp-360">
+      <div id="cdp-360" style="display:none">
         <div class="ph-row" style="margin-bottom:1rem">
           <div><h2>Customer 360</h2><p>Busca un cliente por nombre o WhatsApp para ver su timeline completo</p></div>
         </div>
@@ -627,7 +627,7 @@ tbody tr:last-child td{border-bottom:none}
       </div>
 
       <!-- Visitantes -->
-      <div id="cdp-visitantes" style="display:none">
+      <div id="cdp-visitantes">
         <div class="ph-row">
           <div><h2>Visitantes en tiempo real</h2><p>Comportamiento de usuarios anónimos y identificados</p></div>
         </div>
@@ -3258,6 +3258,8 @@ function cargarCDP(){
       if(d.ok) _cdpEventos = d.eventos || [];
       else _cdpEventos = [];
       cdpTab(_cdpTabActual);
+      // También refrescar visitantes si estamos en esa pestaña
+      if(_cdpTabActual==='visitantes') cdpCargarVisitantes();
     }).catch(function(){ _cdpEventos = []; });
 }
 

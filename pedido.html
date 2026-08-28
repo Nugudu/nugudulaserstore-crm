@@ -295,7 +295,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ob-overlay{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(45,36,96,.5);animation:obFadeIn .3s ease}
 .ob-overlay.active{display:flex}
 @keyframes obFadeIn{from{opacity:0}to{opacity:1}}
-.ob-card{background:#fff;border-radius:16px;padding:24px 20px;width:auto;min-width:280px;max-width:90vw;box-shadow:0 8px 30px rgba(45,36,96,.25);text-align:center}
+.ob-card{background:#fff;border-radius:16px;padding:24px 20px;width:auto;min-width:280px;max-width:90vw;box-shadow:0 8px 30px rgba(45,36,96,.25);text-align:center;position:relative}
+.ob-close{position:absolute;top:10px;right:12px;width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:background .15s}
+.ob-close:hover{background:var(--border)}
 .ob-ico{margin-bottom:12px}
 .ob-title{font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px}
 .ob-desc{font-size:13px;color:var(--muted);margin-bottom:16px}
@@ -303,6 +305,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ob-step{display:flex;align-items:center;gap:10px}
 .ob-step-num{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .ob-step-txt{font-size:14px;font-weight:500;color:var(--text)}
+.ob-code{margin-top:16px;padding:12px;background:#f4f3fa;border-radius:10px;text-align:left}
+.ob-code-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.ob-code-desc{font-size:12px;color:var(--muted);line-height:1.4}
 </style>
 </head>
 <body>
@@ -2794,8 +2799,9 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
  </div>
 
 <!-- ── Onboarding Tour ── -->
-<div class="ob-overlay" id="ob-overlay">
+<div class="ob-overlay" id="ob-overlay" onclick="if(event.target===this)closeTour()">
   <div class="ob-card" id="ob-card">
+    <button class="ob-close" onclick="closeTour()">✕</button>
     <div class="ob-ico">
       <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#2D2460" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
     </div>
@@ -2807,6 +2813,10 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
       <div class="ob-step"><span class="ob-step-num">3</span><span class="ob-step-txt">Agregá al carrito</span></div>
       <div class="ob-step"><span class="ob-step-num">4</span><span class="ob-step-txt">Completá tus datos</span></div>
       <div class="ob-step"><span class="ob-step-num">5</span><span class="ob-step-txt">Elegí el pago</span></div>
+    </div>
+    <div class="ob-code">
+      <div class="ob-code-title">🔑 Tu código de acceso</div>
+      <div class="ob-code-desc">Al finalizar recibirás un código de 4 dígitos. Usalo para consultar tu pedido cuando quieras.</div>
     </div>
   </div>
 </div>

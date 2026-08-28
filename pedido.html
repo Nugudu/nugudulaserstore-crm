@@ -2931,6 +2931,12 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     overlay.classList.remove('active');
     spotlight.style.display='none';
     markDone();
+    // Resetear selección de producto
+    document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
+    var ciColor=document.getElementById('ci-color-sel');
+    if(ciColor)ciColor.classList.remove('show');
+    var colorSel=document.getElementById('color-sel');
+    if(colorSel)colorSel.classList.remove('show');
     // Resetear al catálogo después del tour
     showScreen('s-catalogo');
   }

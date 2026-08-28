@@ -29,6 +29,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .overlay-enviando .spinner{width:44px;height:44px;border-width:4px}
 .overlay-enviando p{font-size:15px;font-weight:600;color:var(--navy);margin-top:4px}
 .overlay-enviando span{font-size:12px;color:var(--muted);margin-top:4px}
+.ov-steps{margin-top:18px;text-align:left;display:flex;flex-direction:column;gap:10px;min-width:220px}
+.ov-step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);opacity:.5;transition:all .3s}
+.ov-step.active{color:var(--navy);font-weight:600;opacity:1}
+.ov-step.done{color:var(--green);opacity:1}
+.ov-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .3s}
+.ov-step.active .ov-dot{border-color:var(--navy);background:var(--navy)}
+.ov-step.done .ov-dot{border-color:var(--green);background:var(--green)}
 .steps{display:flex;align-items:center;margin:14px 0}
 .step{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
 .step-d{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--hint);background:#fff;transition:all .2s}
@@ -772,8 +779,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- Overlay de confirmación instantánea (ver enviar()) -->
 <div class="overlay-enviando" id="overlay-enviando">
   <div class="spinner"></div>
-  <p>Confirmando tu pedido…</p>
-  <span>Un momento, por favor</span>
+  <p id="ov-titulo">Confirmando tu pedido…</p>
+  <span id="ov-sub">Un momento, por favor</span>
+  <div class="ov-steps" id="ov-steps" style="display:none">
+    <div class="ov-step" id="ov-step-1"><span class="ov-dot"></span>Confirmando tu pedido…</div>
+    <div class="ov-step" id="ov-step-2"><span class="ov-dot"></span>Procesando pago…</div>
+    <div class="ov-step" id="ov-step-3"><span class="ov-dot"></span>Redirigiendo a Wompi…</div>
+  </div>
 </div>
 
 <script>
@@ -1973,6 +1985,28 @@ function confirmarPedido(){
   // Texto del overlay según método: transferencia registra una SOLICITUD,
   // tarjeta confirma la orden antes de redirigir a Wompi.
   if(ov){var ovP=ov.querySelector('p');if(ovP)ovP.textContent=_metodoPago==='tarjeta'?'Confirmando tu pedido…':'Registrando tu solicitud…';}
+  // Animación de 3 pasos para pago con tarjeta
+  var stepTimer=null;
+  function ovMostrarPasos(){
+    var stepsEl=document.getElementById('ov-steps');
+    var tit=document.getElementById('ov-titulo');
+    var sub=document.getElementById('ov-sub');
+    if(!stepsEl)return;
+    stepsEl.style.display='flex';
+    if(tit)tit.style.display='none';
+    if(sub)sub.style.display='none';
+    marcarPaso(1);
+  }
+  function marcarPaso(n){
+    for(var i=1;i<=3;i++){
+      var el=document.getElementById('ov-step-'+i);
+      if(!el)continue;
+      el.classList.remove('active','done');
+      if(i<n)el.classList.add('done');
+      else if(i===n)el.classList.add('active');
+    }
+  }
+  if(_metodoPago==='tarjeta')ovMostrarPasos();
 
   var payload={
     action:_metodoPago==='tarjeta'?'pedidoWeb':'solicitudWeb',token:API_TOKEN,nombre:nom,contacto:tel,
@@ -1996,12 +2030,13 @@ function confirmarPedido(){
         codigo_cliente:d.codigo_cliente||''
       };
       if(_cli&&nac)_cli.fechaNac=nac;
-      if(ov)ov.style.display='none';
+      if(_metodoPago==='tarjeta')marcarPaso(2);
 
       if(_metodoPago==='tarjeta'){
         // Si el backend ya devolvió el enlace Wompi (merged call), redirigir directo
         if(d.urlEnlace){
-          window.location.href=d.urlEnlace;
+          marcarPaso(3);
+          setTimeout(function(){window.location.href=d.urlEnlace;},600);
           return;
         }
         btn.textContent='Redirigiendo a Wompi…';
@@ -2014,13 +2049,14 @@ function confirmarPedido(){
         }).then(function(r2){return r2.json();})
         .then(function(wd){
           if(wd.ok&&wd.urlEnlace){
-            window.location.href=wd.urlEnlace;
+            marcarPaso(3);
+            setTimeout(function(){window.location.href=wd.urlEnlace;},600);
           }else{
-            btn.textContent='✓ Confirmar pedido';btn.disabled=false;
+            if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;
             showErr('form','Error al crear enlace de pago: '+(wd.error||'Intenta de nuevo.'));
           }
         }).catch(function(){
-          btn.textContent='✓ Confirmar pedido';btn.disabled=false;
+          if(ov)ov.style.display='none';btn.textContent='✓ Confirmar pedido';btn.disabled=false;
           showErr('form','Error de conexión con Wompi. Intenta de nuevo.');
         });
       }else{

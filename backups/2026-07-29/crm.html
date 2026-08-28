@@ -52,6 +52,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.4rem}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.4rem}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.4rem}
+.cdp-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;position:relative;overflow:hidden;box-shadow:var(--sh)}
 .sc.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
 .sc.clickable:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,36,96,.13)}
@@ -160,7 +161,7 @@ tbody tr:last-child td{border-bottom:none}
   .nb-new{position:absolute;top:4px;right:4px;font-size:9px;padding:1px 5px;min-width:16px;text-align:center;margin-left:0}
   .main{margin-left:0;padding-bottom:58px}
   .topbar{padding:.65rem 1rem;flex-wrap:wrap;row-gap:8px}.content{padding:1rem}
-  .g2,.g4,.g3,.form-grid{grid-template-columns:1fr}
+  .g2,.g4,.g3,.form-grid,.cdp-grid-2{grid-template-columns:1fr}
   .fg.full{grid-column:1}.inv-parties{grid-template-columns:1fr}
 }
 /* Scroll horizontal para toda la info de la tabla de órdenes */
@@ -640,7 +641,7 @@ tbody tr:last-child td{border-bottom:none}
         <div class="g4" id="cdp-v-stats" style="margin-bottom:1.2rem"></div>
         
         <!-- Analytics Row 1: Embudo + Rebote/Duración -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+        <div class="cdp-grid-2" style="margin-bottom:1.2rem">
           <div class="card">
             <div class="card-ttl"><i class="fa-solid fa-filter" style="color:var(--navy)"></i> Embudo de conversión</div>
             <div id="cdp-v-embudo" style="padding:10px 0"></div>
@@ -652,7 +653,7 @@ tbody tr:last-child td{border-bottom:none}
         </div>
         
         <!-- Analytics Row 2: Fuentes + Horas pico -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+        <div class="cdp-grid-2" style="margin-bottom:1.2rem">
           <div class="card">
             <div class="card-ttl"><i class="fa-solid fa-share-nodes" style="color:var(--accent)"></i> Fuentes de tráfico</div>
             <div id="cdp-v-fuentes" style="padding:10px 0"></div>
@@ -3252,14 +3253,17 @@ var _cdpVisitantesPeriodo = 'hoy';
 var _cdpVisitantesTimer = null;
 
 function cargarCDP(){
+  // Si estamos en visitantes, refrescar visitantes directamente
+  if(_cdpTabActual==='visitantes'){
+    cdpCargarVisitantes();
+    return;
+  }
   fetch(GAS+'?action=leerEventos&limite=10000&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok) _cdpEventos = d.eventos || [];
       else _cdpEventos = [];
       cdpTab(_cdpTabActual);
-      // También refrescar visitantes si estamos en esa pestaña
-      if(_cdpTabActual==='visitantes') cdpCargarVisitantes();
     }).catch(function(){ _cdpEventos = []; });
 }
 
@@ -3348,7 +3352,7 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   
   // Métricas de comportamiento
   var metricasHtml='';
-  metricasHtml+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:10px 0">';
+  metricasHtml+='<div class="cdp-grid-2" style="padding:10px 0">';
   metricasHtml+='<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--navy)">'+(analytics.rebote||0)+'%</div><div style="font-size:11px;color:var(--muted)">Tasa de rebote</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Visitantes que solo vieron 1 página</div></div>';
   metricasHtml+='<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--gold)">'+(analytics.duracionProm||0)+' min</div><div style="font-size:11px;color:var(--muted)">Duración promedio</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Tiempo promedio por sesión</div></div>';
   metricasHtml+='</div>';

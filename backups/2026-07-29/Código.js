@@ -76,6 +76,7 @@ function doGet(e) {
     if (action === 'catalogo')      return respond(leerCatalogo());
     if (action === 'buscarCliente') return respond(buscarClienteGAS(p.tel, p.orden));
     if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(p.tel, p.codigo));
+    if (action === 'buscarClienteOrdenSeguro') return respond(buscarClienteOrdenSeguro(p.orden, p.codigo));
     // Boton del correo de notificacion (ver notificarPedidoNuevo): marca la
     // orden como "datos bancarios enviados" -- para que el tracking en
     // index.html lo sepa sin importar el dispositivo -- y redirige derecho a
@@ -166,6 +167,7 @@ function doPost(e) {
     if (action === 'regenerarCodigoCliente') return respond(regenerarCodigoCliente(payload));
     if (action === 'obtenerCodigosLote') return respond(obtenerCodigosLote(payload));
     if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(p.tel || payload.tel, p.codigo || payload.codigo));
+    if (action === 'buscarClienteOrdenSeguro') return respond(buscarClienteOrdenSeguro(p.orden || payload.orden, p.codigo || payload.codigo));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -599,6 +601,43 @@ function buscarClienteSeguro(tel, codigo) {
   return buscarClienteGAS(tel);
 }
 
+// Acción desde pedido.html (modal "consultar mi pedido" y pantalla de teléfono):
+// busca por NÚMERO DE ORDEN/SOLICITUD, exige código de acceso, y si es válido
+// devuelve el historial completo del cliente (igual que buscarClienteGAS).
+function buscarClienteOrdenSeguro(orden, codigo) {
+  try {
+    var ordenNorm = String(orden || '').trim().toUpperCase();
+    if (!ordenNorm) return { ok: true, encontrado: false, error: 'sin_orden' };
+    if (!validarCodigoOrden(ordenNorm, codigo)) {
+      return { ok: true, encontrado: false, error: 'codigo_incorrecto' };
+    }
+    var ordenes = leerOrdenes();
+    var oMatch = ordenes.find(function(o) { return (o.orden || '').toUpperCase() === ordenNorm; });
+    var contacto = null;
+    if (oMatch) contacto = oMatch.contacto;
+    else {
+      var solicitudes = leerSolicitudes();
+      var sMatch = solicitudes.find(function(s) { return (s.ref || '').toUpperCase() === ordenNorm; });
+      if (sMatch) contacto = sMatch.contacto;
+    }
+    if (!contacto) return { ok: true, encontrado: false };
+    return buscarClienteGAS(contacto, ordenNorm);
+  } catch(err) { return { ok: false, error: err.message }; }
+}
+
+// Valida código contra el pedido/solicitud encontrado por orden.
+function validarCodigoOrden(ordenNorm, codigo) {
+  var cod = String(codigo || '').trim();
+  if (!cod || cod.length !== 4) return false;
+  var ordenes = leerOrdenes();
+  var oMatch = ordenes.find(function(o) { return (o.orden || '').toUpperCase() === ordenNorm; });
+  if (oMatch) return validarCodigoCliente(oMatch.contacto, cod);
+  var solicitudes = leerSolicitudes();
+  var sMatch = solicitudes.find(function(s) { return (s.ref || '').toUpperCase() === ordenNorm; });
+  if (sMatch) return validarCodigoCliente(sMatch.contacto, cod);
+  return false;
+}
+
 // Acción desde CRM: obtener código de un cliente por teléfono
 function obtenerCodigoParaCRM(payload) {
   try {
@@ -949,9 +988,8 @@ function guardarSolicitudWeb(payload) {
     // Append directo a la hoja (misma optimización que guardarPedidoWeb).
     var _hojaS = getHojaSolicitudes();
     _hojaS.appendRow([JSON.stringify(solicitud)]);
-    // Correo al llegar la solicitud (paso 3 del flujo web: pantalla de exito
-    // "Solicitud registrada — pago pendiente de verificación"). Va en su
-    // propio try/catch: si falla, nunca bloquea el registro de la solicitud.
+    // Correo inmediato al llegar la solicitud (igual que el de tarjeta), en su
+    // propio try/catch para que nunca bloquee el registro ni el éxito del cliente.
     notificarSolicitudNueva(solicitud);
     return { ok: true, ref: ref, solicitud: ref, codigo_cliente: _codigoCliente || '' };
   } catch(err) { return { ok: false, error: err.message }; }

@@ -63,7 +63,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .fil-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--teal);color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;box-sizing:border-box}
 .filtros-panel{display:none;background:#fff;border:1px solid #e8e5f0;border-radius:var(--rs);padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(45,36,96,.06)}
 .fil-limpiar-row{display:flex;justify-content:flex-end;margin-bottom:10px}
-.fil-limpiar{height:34px;padding:0 14px;border-radius:var(--rs);border:1px solid #c8c5d6;background:#fff;color:#2D2460;font-size:13px;font-weight:600;cursor:pointer;display:none;align-items:center;transition:all .15s}
+.fil-limpiar{height:34px;padding:0 14px;border-radius:999px;border:1px solid #c8c5d6;background:#fff;color:#2D2460;font-size:13px;font-weight:600;cursor:pointer;display:none;align-items:center;transition:all .15s}
 .fil-limpiar:hover{border-color:#2D2460;color:#2D2460}
 .fil-grupo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
 .fil-grupo:last-of-type{margin-bottom:0}
@@ -83,7 +83,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .phone-row{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
 .phone-row input{width:100%;box-sizing:border-box;padding:17px 16px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:17px;outline:none;transition:border .15s,box-shadow .15s}
 .phone-row input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(45,36,96,.1)}
-.phone-row button{width:100%;box-sizing:border-box;padding:17px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(45,36,96,.28);transition:transform .12s ease,box-shadow .12s ease,background .15s}
+.phone-row button{width:100%;box-sizing:border-box;padding:16px 15px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(45,36,96,.22);transition:transform .18s ease,box-shadow .18s ease,background .15s}
 .phone-row button:hover{background:#241d52}
 .phone-row button:active{transform:scale(.97);box-shadow:0 2px 6px rgba(45,36,96,.28)}
 .btn-skip{width:100%;box-sizing:border-box;padding:17px;background:#eeecf9;color:var(--navy);border:1.5px solid var(--navy);border-radius:var(--rs);font-size:17px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 2px 8px rgba(45,36,96,.08);transition:transform .12s ease,background .15s}
@@ -138,7 +138,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .pm-qty-num{font-size:24px;font-weight:700;min-width:40px;text-align:center}
 .pm-qty-total{margin-left:auto;font-size:14px;color:var(--muted)}
 .pm-qty-total strong{color:var(--navy);font-size:18px}
-.pm-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:'DM Sans',sans-serif}
+.pm-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;transition:all .18s ease;box-shadow:0 6px 18px rgba(45,36,96,.22);font-family:'DM Sans',sans-serif}
 .pm-btn:hover{opacity:.9}
 .pm-btn:disabled{opacity:.4;cursor:not-allowed}
 .pm-hint{font-size:11px;color:var(--hint);text-align:center;margin-top:8px}
@@ -206,10 +206,20 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .aviso-transferencia strong{color:#78350f}
 .bc-tag365{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px}
 .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
-.btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .18s ease;box-shadow:0 6px 18px rgba(45,36,96,.22)}
+.btn-main:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(45,36,96,.28)}
+.btn-main:disabled{opacity:.6;cursor:default;transform:none}
 .btn-main:disabled{opacity:.5;cursor:not-allowed}
 .btn-sec{width:100%;padding:12px 16px;background:transparent;color:var(--navy);border:1.5px solid var(--border);border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;transition:all .18s ease;letter-spacing:.2px}
 .btn-sec:hover{border-color:var(--navy);background:#faf9ff;box-shadow:0 4px 14px rgba(45,36,96,.08)}
+.btn-exit-top{background:none;border:1.5px solid var(--border);color:#cc3333;font-size:14px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:999px;transition:all .18s ease}
+.btn-exit-top:hover{border-color:#cc3333;background:#fff5f5}
+.btn-outline{width:100%;padding:12px;background:transparent;color:var(--navy);border:1.5px solid var(--border);border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s ease}
+.btn-outline:hover{border-color:var(--navy);background:#faf9ff}
+.btn-soft{background:none;border:1.5px solid var(--border);color:var(--navy);font-size:14px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:999px;transition:all .18s ease}
+.btn-soft:hover{border-color:var(--navy);background:#faf9ff}
+.btn-soft-danger{background:none;border:1.5px solid #f7c1c1;color:#cc3333;font-size:14px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:999px;transition:all .18s ease}
+.btn-soft-danger:hover{border-color:#cc3333;background:#fff5f5}
 .btn-sec:hover{border-color:#2D2460}
 .btn-wa{width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;text-decoration:none;transition:all .18s ease;box-shadow:0 6px 18px rgba(37,211,102,.28)}
 .btn-wa:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(37,211,102,.34)}
@@ -240,7 +250,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ot-entrega{font-size:12px;color:var(--green);font-weight:600}
 .ot-pend{font-size:10px;font-weight:600;background:#fef6e4;color:var(--amber);padding:2px 8px;border-radius:10px}
 .btn-accion-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.btn-accion{padding:13px 8px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border:none;transition:opacity .15s;text-align:center}
+.btn-accion{padding:13px 8px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border:none;transition:all .18s ease;text-align:center}
 .btn-accion.primary{background:var(--navy);color:#fff}
 .btn-accion.outline{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 /* ÉXITO */
@@ -288,7 +298,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .cart-drawer-item-remove{background:none;border:none;color:var(--coral);font-size:16px;cursor:pointer;padding:2px 6px;margin-left:4px}
 .cart-drawer-footer{border-top:1px solid var(--border);padding:14px 16px}
 .cart-drawer-total{display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px}
-.cart-drawer-btn{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+.cart-drawer-btn{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;box-shadow:0 6px 18px rgba(45,36,96,.22)}
 .cart-drawer-btn:disabled{opacity:.5;cursor:default}
 /* ── Modal consultar mi pedido ── */
 .user-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .25s}
@@ -438,7 +448,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div style="text-align:center;margin-bottom:8px">
           <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
         </div>
-        <button onclick="buscarTel(this)" style="width:100%;box-sizing:border-box;padding:17px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:18px;font-weight:700;cursor:pointer">Buscar</button>
+        <button class="btn-main" onclick="buscarTel(this)" style="font-size:18px;padding:16px;font-weight:700">Buscar</button>
         <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
         <button style="background:none;border:1.5px solid #c8c5d6;color:#2D2460;font-size:15px;font-weight:700;cursor:pointer;margin-top:12px;width:100%;padding:12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#2D2460'" onmouseout="this.style.borderColor='#c8c5d6'" onclick="cancelarConsulta()">← Volver</button>
       </div>
@@ -469,7 +479,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- PASOS -->
 <div class="screen" id="s-form">
-  <div style="display:flex;justify-content:space-between;padding:6px 0 2px"><button onclick="volverDesdeForm()" style="background:none;border:1.5px solid #c8c5d6;color:#2D2460;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#2D2460'" onmouseout="this.style.borderColor='#c8c5d6'">← Volver</button><button onclick="salir()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
+  <div style="display:flex;justify-content:space-between;padding:6px 0 2px"><button class="btn-soft" onclick="volverDesdeForm()">← Volver</button><button class="btn-soft-danger" onclick="salir()">Salir ×</button></div>
   <div class="steps" id="steps">
     <div class="step" id="step1" onclick="irAPaso(1)"><div class="step-d act" id="sd1">1</div><div class="step-l act" id="sl1">Producto</div></div>
     <div class="step-line" id="sl-1"></div>
@@ -524,13 +534,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
       <div id="nueva-dir">
         <div class="fg">
-          <button type="button" id="btn-mi-ubicacion-web" onclick="enviarMiUbicacion()" style="width:100%;padding:11px 12px;border:1.5px solid #a49bc9;border-radius:var(--rs);background:#fff;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg> Compartir mi ubicación actual</button>
+            <button type="button" id="btn-mi-ubicacion-web" class="btn-soft" onclick="enviarMiUbicacion()" style="width:100%;padding:11px 12px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg> Compartir mi ubicación actual</button>
         </div>
         <div class="fg">
           <label>Dirección *</label>
           <div style="display:flex;gap:6px">
             <input id="f-dir" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDirInp()" style="flex:1">
-            <button type="button" onclick="fijarDireccion()" style="padding:0 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap;display:none" title="Fijar ubicacion">Fijar</button>
+            <button type="button" class="btn-soft" onclick="fijarDireccion()" style="padding:0 14px;font-size:12px;white-space:nowrap;display:none" title="Fijar ubicacion">Fijar</button>
           </div>
           <span class="hint" style="margin-top:4px">O escribe la dirección a la que deseas enviar la orden.</span>
         </div>
@@ -659,7 +669,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
-    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salir()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
+    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" class="btn-exit-top" onclick="salir()">Salir ×</button></div>
     <div class="ico" style="display:none"></div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
@@ -700,7 +710,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- MI DISEÑO — buscar por número de orden y ver detalle -->
 <div class="screen" id="s-midiseno" style="display:none">
-  <div style="text-align:right;padding:6px 0 0"><button onclick="salir();return false" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
+  <div style="text-align:right;padding:6px 0 0"><button class="btn-exit-top" onclick="salir();return false">Salir ×</button></div>
 
   <!-- Paso 1: buscar orden -->
   <div id="md-paso1">
@@ -2025,6 +2035,10 @@ function confirmarPedido(){
         _esSolicitud:_metodoPago==='transferencia',
         codigo_cliente:d.codigo_cliente||''
       };
+      // Para el retorno de Wompi: el IIFE no expone _ultimaOrden (se pierde al
+      // recargar la página al volver de Wompi). Guardamos el detalle en
+      // sessionStorage para repoblar la caja de detalles del pedido en s-exito.
+      if(_metodoPago==='tarjeta'){try{sessionStorage.setItem('ngd_ultimaOrden_wompi',JSON.stringify(_ultimaOrden));}catch(e){}}
       if(_cli&&nac)_cli.fechaNac=nac;
       if(_metodoPago==='tarjeta')marcarPaso(2);
 
@@ -2154,13 +2168,37 @@ function mostrarCodigoClienteExito(){
   }
 }
 
+// Observador: muestra el código y el detalle del pedido cuando s-exito carga
+// el pago (Wompi o transferencia), sin modificar mostrarExito ni el IIFE de
+// Retorno Wompi. El retorno oculta #orden-mini en su mostrarExito; este
+// observador lo repuebla y lo re-muestra al detectar "Pago verificado".
+function mostrarDetalleOrdenWompiExito(){
+  var el=document.getElementById('om-contenido');
+  var mini=document.getElementById('orden-mini');
+  if(!el||!mini)return;
+  var raw;try{raw=sessionStorage.getItem('ngd_ultimaOrden_wompi');}catch(e){raw=null;}
+  if(!raw)return;
+  var o;try{o=JSON.parse(raw);}catch(e){return;}
+  if(!o||!o.items)return;
+  el.innerHTML=o.items.map(function(it){
+    return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
+  }).join('')+
+  '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
+  '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
+  '<div class="om-fila"><span>Método</span><span>Tarjeta (Wompi)</span></div>';
+  mini.style.display='block';
+}
+
 // Observador: muestra el código cuando s-exito carga el pago (Wompi o transferencia),
 // sin modificar mostrarExito ni el IIFE de Retorno Wompi.
 (function(){
   var el=document.getElementById('ex-pago-info');
   if(!el)return;
   var obs=new MutationObserver(function(){
-    if(!/verificando/i.test(el.innerHTML)) mostrarCodigoClienteExito();
+    var txt=el.innerHTML||'';
+    if(/verificando/i.test(txt)) return;
+    mostrarCodigoClienteExito();
+    if(/verificado/i.test(txt)) mostrarDetalleOrdenWompiExito();
   });
   obs.observe(el,{childList:true,subtree:true,characterData:true});
 })();
@@ -2914,7 +2952,7 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono (Ej. 7262 6332)" maxlength="30">
     <input class="user-modal-input" id="user-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
     <div style="font-size:13px;color:#555;margin-top:-8px;margin-bottom:12px">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
-    <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:16px;font-weight:700;cursor:pointer">Buscar</button>
+    <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:700;cursor:pointer">Buscar</button>
     <div style="margin-top:12px;text-align:center">
       <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
     </div>

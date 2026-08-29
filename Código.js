@@ -988,9 +988,9 @@ function guardarSolicitudWeb(payload) {
     // Append directo a la hoja (misma optimización que guardarPedidoWeb).
     var _hojaS = getHojaSolicitudes();
     _hojaS.appendRow([JSON.stringify(solicitud)]);
-    // Correo al llegar la solicitud: se DIFERE (no bloquea al cliente). Se
-    // encola y un trigger en segundo plano lo envía ~1 min después.
-    encolarNotificacionSolicitud(solicitud);
+    // Correo inmediato al llegar la solicitud (igual que el de tarjeta), en su
+    // propio try/catch para que nunca bloquee el registro ni el éxito del cliente.
+    notificarSolicitudNueva(solicitud);
     return { ok: true, ref: ref, solicitud: ref, codigo_cliente: _codigoCliente || '' };
   } catch(err) { return { ok: false, error: err.message }; }
 }
@@ -1020,50 +1020,6 @@ function notificarSolicitudNueva(sol) {
   } catch (err) {
     Logger.log('notificarSolicitudNueva: ' + err.message);
   }
-}
-
-// ── Notificación diferida de solicitudes (no bloquea al cliente) ──
-// Encola la solicitud y agenda un trigger que la procesa en segundo plano.
-function encolarNotificacionSolicitud(sol) {
-  try {
-    var props = PropertiesService.getScriptProperties();
-    var cola = [];
-    try { cola = JSON.parse(props.getProperty('SOL_NOTIF_QUEUE') || '[]'); } catch(e) {}
-    cola.push(sol);
-    props.setProperty('SOL_NOTIF_QUEUE', JSON.stringify(cola));
-    // Crear trigger único si no existe ya.
-    var existe = false;
-    var triggers = ScriptApp.getProjectTriggers();
-    for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].getHandlerFunction() === 'procesarNotificacionesSolicitudEnCola') { existe = true; break; }
-    }
-    if (!existe) {
-      ScriptApp.newTrigger('procesarNotificacionesSolicitudEnCola')
-        .timeBased().after(1 * 60 * 1000).create();
-    }
-  } catch (e) {}
-}
-
-// Ejecutado por el trigger: envía los correos encolados y se limpia.
-function procesarNotificacionesSolicitudEnCola() {
-  try {
-    var props = PropertiesService.getScriptProperties();
-    var cola = [];
-    try { cola = JSON.parse(props.getProperty('SOL_NOTIF_QUEUE') || '[]'); } catch(e) {}
-    for (var i = 0; i < cola.length; i++) {
-      try { notificarSolicitudNueva(cola[i]); } catch(e) {}
-    }
-    props.deleteProperty('SOL_NOTIF_QUEUE');
-  } catch (e) {}
-  // Eliminar el trigger que nos invocó (y cualquier otro duplicado).
-  try {
-    var triggers = ScriptApp.getProjectTriggers();
-    for (var j = triggers.length - 1; j >= 0; j--) {
-      if (triggers[j].getHandlerFunction() === 'procesarNotificacionesSolicitudEnCola') {
-        ScriptApp.deleteTrigger(triggers[j]);
-      }
-    }
-  } catch (e) {}
 }
 
 // Convierte una solicitud aprobada en una ORDEN real con pago confirmado.

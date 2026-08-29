@@ -113,17 +113,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .prod-card.sel .pcheck{display:flex}
 /* ── PRODUCT MODAL / BOTTOM-SHEET ── */
 /* ── CODE REMINDER MODAL ── */
-#code-reminder-overlay.open{display:flex;opacity:1}
-.cr-card{background:#fff;border-radius:18px;padding:30px 24px 22px;max-width:340px;width:90%;text-align:center;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.25)}
-.cr-ttl{font-size:19px;font-weight:700;color:var(--navy);margin-bottom:8px;padding:0 14px}
-.cr-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6;padding:0 6px}
-#code-reminder-code{font-size:34px;font-weight:800;color:var(--navy);letter-spacing:7px;margin:0 auto 4px;cursor:pointer;user-select:all;-webkit-user-select:all;font-variant-numeric:tabular-nums}
-#code-reminder-copied{font-size:11px;color:var(--green);margin-bottom:18px;display:none}
-.cr-btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;transition:opacity .15s}
-.cr-btn:hover{opacity:.9}
-.cr-link{font-size:12px;color:var(--muted);cursor:pointer;padding:6px;transition:color .15s}
-.cr-link:hover{color:var(--navy)}
 .pm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:none;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .25s}
+.carrito-toast{position:fixed;left:50%;bottom:26px;translate:-50% 12px;background:var(--navy);color:#fff;font-size:14px;font-weight:600;padding:12px 18px;border-radius:999px;z-index:1400;display:flex;align-items:center;gap:7px;box-shadow:0 10px 28px rgba(45,36,96,.32);opacity:0;pointer-events:none;transition:opacity .28s ease,translate .28s ease}
+.carrito-toast.show{opacity:1;translate:-50% 0}
 .pm-overlay.open{display:flex;opacity:1}
 .pm-sheet{background:#fff;width:100%;max-width:480px;max-height:88vh;border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);box-shadow:0 -4px 24px rgba(0,0,0,.15)}
 .pm-overlay.open .pm-sheet{transform:translateY(0)}
@@ -216,10 +208,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .btn-main{width:100%;padding:15px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .btn-main:disabled{opacity:.5;cursor:not-allowed}
-.btn-sec{width:100%;padding:14px;background:transparent;color:#2D2460;border:1.5px solid #c8c5d6;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;transition:all .15s}
+.btn-sec{width:100%;padding:12px 16px;background:transparent;color:var(--navy);border:1.5px solid var(--border);border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;transition:all .18s ease;letter-spacing:.2px}
+.btn-sec:hover{border-color:var(--navy);background:#faf9ff;box-shadow:0 4px 14px rgba(45,36,96,.08)}
 .btn-sec:hover{border-color:#2D2460}
-.btn-wa{width:100%;padding:15px;background:#25D366;color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;text-decoration:none}
-.btn-outline-teal{width:100%;padding:13px;background:transparent;color:var(--teal);border:1.5px solid var(--teal);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-wa{width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;text-decoration:none;transition:all .18s ease;box-shadow:0 6px 18px rgba(37,211,102,.28)}
+.btn-wa:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(37,211,102,.34)}
+.btn-outline-teal{width:100%;padding:12px;background:transparent;color:var(--teal);border:1.5px solid var(--teal);border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s ease}
+.btn-outline-teal:hover{background:rgba(26,158,143,.08);box-shadow:0 4px 14px rgba(26,158,143,.14)}
 .err-box{background:#fcebeb;color:#a32d2d;border:1px solid #f7c1c1;border-radius:var(--rs);padding:11px 13px;font-size:13px;margin-bottom:12px;display:none}
 /* PANTALLA CLIENTE — mis pedidos + opciones */
 .cli-greeting{text-align:center;padding:16px 0 10px}
@@ -250,6 +245,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .btn-accion.outline{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 /* ÉXITO */
 .success-wrap{text-align:center;padding:20px 8px}
+.exito-acciones{display:flex;gap:10px;margin-top:14px}
+.exito-acciones .btn-outline-teal,.exito-acciones .btn-sec{margin-top:0;flex:1}
 .success-wrap .ico{font-size:56px;margin-bottom:10px}
 .success-wrap h2{font-size:20px;font-weight:800;color:var(--navy);margin-bottom:6px}
 .success-wrap p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:8px}
@@ -301,7 +298,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .user-modal p{margin:0 0 16px;font-size:12px;color:var(--muted)}
 .user-modal-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:12px}
 .user-modal-input:focus{outline:none;border-color:var(--navy)}
-.user-modal-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:16px;font-weight:700;cursor:pointer}
+.user-modal-btn{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;transition:all .18s ease;box-shadow:0 6px 18px rgba(45,36,96,.22)}
+.user-modal-btn:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(45,36,96,.28)}
+.user-modal-btn:disabled{opacity:.6;cursor:default;transform:none}
 .user-modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:0;margin-top:-2px}
 .user-modal-ordenes{margin-top:14px}
 .user-modal-orden{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px;font-size:13px}
@@ -660,7 +659,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <!-- ÉXITO -->
 <div class="screen" id="s-exito">
   <div class="success-wrap">
-    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salirConRecordatorio()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
+    <div style="text-align:right;padding:6px 0 0"><button id="salir-exito-top" onclick="salir()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
     <div class="ico" style="display:none"></div>
     <h2>¡Pedido registrado!</h2>
     <p>Tu número de orden es:</p>
@@ -691,22 +690,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       Para consultar el estado de tu pedido usá tu número de contacto y tu código personal de 4 dígitos.
     </div>
 
-    <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
-    <button class="btn-sec" onclick="salirConRecordatorio()">Salir</button>
+    <div class="exito-acciones">
+      <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
+      <button class="btn-sec" onclick="salir()">Salir</button>
+    </div>
     <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
-  </div>
-</div>
-
-<!-- MODAL RECORDATORIO CÓDIGO (Salir desde s-exito) -->
-<div id="code-reminder-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1300;align-items:center;justify-content:center;opacity:0;transition:opacity .25s">
-  <div class="cr-card">
-    <button onclick="cerrarRecordatorio()" style="position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;background:#f2f0f7;border:none;font-size:15px;cursor:pointer;color:#8a86a0;display:flex;align-items:center;justify-content:center;transition:background .15s" onmouseover="this.style.background='#e6e3f0'" onmouseout="this.style.background='#f2f0f7'">✕</button>
-    <div class="cr-ttl">¿Guardaste tu código?</div>
-    <div class="cr-sub">Este código de 4 dígitos es tu acceso para consultar tus pedidos y diseños después. Tocá el código para copiarlo.</div>
-    <div id="code-reminder-code" onclick="copiarCodigo()" title="Tocar para copiar">----</div>
-    <div id="code-reminder-copied">✓ Copiado al portapapeles</div>
-    <button onclick="salir()" class="cr-btn">Sí, lo guardé</button>
-    <div onclick="salir()" class="cr-link">No, gracias</div>
   </div>
 </div>
 
@@ -1075,48 +1063,20 @@ function buscarTel(btn){
   if(spin)spin.style.display='block';
   var mostrarTracking=consMode&&!desdeYaCliente;
   if(mostrarTracking)mostrarTrackingCargando();
-  var esOrden=/^ORD-/i.test(val);
-  // Si busca por orden → GET normal (sin código)
-  if(esOrden){
-    var param='&orden='+encodeURIComponent(val.toUpperCase());
-    fetch(GAS+'?action=buscarCliente'+param+'&token='+encodeURIComponent(API_TOKEN))
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(spin)spin.style.display='none';
-        if(d.ok&&d.encontrado){
-          _cli=d;_dirs=d.direcciones||[];
-          setContacto(d.contacto||'');
-          if(desdeYaCliente){
-            _yaSoyClienteMode=false;
-            setBtnBuscarEstado(btn,false);
-            if(_carrito.length>0){guardarSesion('s-form',2);showScreen('s-form');setPaso(2);}
-            else{iniciar();}
-          }else{mostrarPantallaCliente(d);}
-        }else{
-          setBtnBuscarEstado(btn,false);
-          if(mostrarTracking){irAConsultar();}
-          showErr(errId,'No encontramos ese numero u orden. Continua como cliente nuevo.');
-        }
-      }).catch(function(){
-        _yaSoyClienteMode=false;
-        if(spin)spin.style.display='none';
-        setBtnBuscarEstado(btn,false);
-        if(mostrarTracking){irAConsultar();showErr(errId,'Hubo un error de conexión. Intentá de nuevo.');}
-        else{nuevoCli();}
-      });
-    return;
-  }
-  // Si busca por teléfono → necesita código de 4 dígitos
+  // Tanto teléfono como número de orden (ORD-/SOL-): SIEMPRE con código de acceso.
   if(!cod || cod.length!==4 || !/^\d{4}$/.test(cod)){
     if(spin)spin.style.display='none';
     setBtnBuscarEstado(btn,false);
-    showErr(errId,'Para buscar por teléfono necesitás tu código personal de 4 dígitos.');
+    showErr(errId,'Ingresá tu código personal de 4 dígitos para consultar.');
     return;
   }
-  // POST con teléfono + código
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:val,codigo:cod})
-  }).then(function(r){return r.json();})
+  var esOrden=/^(ORD|SOL)-/i.test(val);
+  var action = esOrden ? 'buscarClienteOrdenSeguro' : 'buscarClienteSeguro';
+  var payload = esOrden
+    ? {action:action, token:API_TOKEN, orden:val.toUpperCase(), codigo:cod}
+    : {action:action, token:API_TOKEN, tel:val, codigo:cod};
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
     .then(function(d){
       if(spin)spin.style.display='none';
       if(d.ok&&d.encontrado){
@@ -1130,7 +1090,7 @@ function buscarTel(btn){
         }else{mostrarPantallaCliente(d);}
       }else{
         setBtnBuscarEstado(btn,false);
-        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No encontramos ese numero. Continua como cliente nuevo.';
+        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No encontramos ese numero u orden. Continua como cliente nuevo.';
         if(mostrarTracking){irAConsultar();}
         showErr(errId,msg);
       }
@@ -1627,7 +1587,16 @@ function pmContinuar(){
   agregarSeleccionAlCarrito();
   renderCarrito();
   track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty});
+  toastAgregado();
   closePm();
+}
+function toastAgregado(){
+  var t=document.createElement('div');
+  t.className='carrito-toast';
+  t.innerHTML='<svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px"><path d="M0 4a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4zm13.78 1.22a.75.75 0 0 0-1.06 0L7 10.94 5.28 9.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.06 0l6.25-6.25a.75.75 0 0 0 0-1.06z"/></svg> Agregado al carrito';
+  document.body.appendChild(t);
+  requestAnimationFrame(function(){t.classList.add('show');});
+  setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},1700);
 }
 function openPm(){
   var ov=document.getElementById('pm-overlay');
@@ -2213,39 +2182,6 @@ function mostrarCodigoClienteExito(){
     }).catch(function(){});
   }catch(e){}
 })();
-
-// ── Modal de recordatorio al salir de s-exito ──
-function salirConRecordatorio(){
-  var cod=(_ultimaOrden&&_ultimaOrden.codigo_cliente)||_codigoClienteActual||'';
-  if(!cod){ if(typeof salir==='function') salir(); return; }
-  var ov=document.getElementById('code-reminder-overlay');
-  var c=document.getElementById('code-reminder-code');
-  if(c)c.textContent=cod;
-  var cp=document.getElementById('code-reminder-copied');
-  if(cp)cp.style.display='none';
-  ov.style.display='flex';
-  setTimeout(function(){ov.classList.add('open');},10);
-  document.addEventListener('keydown',_escRecordatorio);
-}
-function cerrarRecordatorio(){
-  var ov=document.getElementById('code-reminder-overlay');
-  ov.classList.remove('open');
-  setTimeout(function(){ov.style.display='none';},250);
-  document.removeEventListener('keydown',_escRecordatorio);
-}
-function _escRecordatorio(e){ if(e&&e.key==='Escape') cerrarRecordatorio(); }
-function copiarCodigo(){
-  var cod=(_ultimaOrden&&_ultimaOrden.codigo_cliente)||_codigoClienteActual||'';
-  if(!cod)return;
-  try{
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(cod).then(function(){
-        var cp=document.getElementById('code-reminder-copied');
-        if(cp)cp.style.display='block';
-      }).catch(function(){});
-    }
-  }catch(e){}
-}
 
 // Reinicia el formulario para hacer otro pedido
 function nuevoP(){
@@ -3063,32 +2999,21 @@ function buscarMiPedido(){
   var orden=isOrden?raw.toUpperCase():'';
   // Si parece teléfono pero tiene pocos dígnos y no empieza con ORD, tratar como orden
   if(!isOrden && tel.length>0 && tel.length<4 && !/^7\d{3}$/.test(tel)){orden=raw.toUpperCase();tel='';}
-  // Si busca por teléfono, necesita código de 4 dígitos
-  if(tel && !orden){
-    if(!cod || cod.length!==4 || !/^\d{4}$/.test(cod)){
-      res.innerHTML='<div class="user-modal-no">Para buscar por teléfono necesitás tu código personal de 4 dígitos.</div>';
-      return;
-    }
+  // Tanto teléfono como orden: SIEMPRE código de 4 dígitos.
+  if(!cod || cod.length!==4 || !/^\d{4}$/.test(cod)){
+    res.innerHTML='<div class="user-modal-no">Ingresá tu código personal de 4 dígitos para consultar.</div>';
+    return;
   }
   btn.textContent='Buscando…';btn.disabled=true;res.innerHTML='';
-  // Si busca por orden → GET normal (sin código). Si busca por teléfono → POST con código.
-  if(orden){
-    var url=GAS+'?action=buscarCliente&token='+encodeURIComponent(API_TOKEN)+'&orden='+encodeURIComponent(orden);
-    fetch(url).then(function(r){return r.json();}).then(function(d){
-      btn.textContent='Buscar';btn.disabled=false;
-      if(!d.ok||!d.encontrado){res.innerHTML='<div class="user-modal-no">No se encontraron pedidos para ese dato.</div>';return;}
-      renderResultados(d,res);
-    }).catch(function(){
-      btn.textContent='Buscar';btn.disabled=false;
-      res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';
-    });
-  }else{
-    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:tel,codigo:cod})
-    }).then(function(r){return r.json();}).then(function(d){
+  var action = orden ? 'buscarClienteOrdenSeguro' : 'buscarClienteSeguro';
+  var body = orden
+    ? {action:action, token:API_TOKEN, orden:orden, codigo:cod}
+    : {action:action, token:API_TOKEN, tel:tel, codigo:cod};
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)})
+    .then(function(r){return r.json();}).then(function(d){
       btn.textContent='Buscar';btn.disabled=false;
       if(!d.ok||!d.encontrado){
-        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No se encontraron pedidos para ese teléfono.';
+        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No se encontraron pedidos para ese dato.';
         res.innerHTML='<div class="user-modal-no">'+msg+'</div>';
         return;
       }
@@ -3097,7 +3022,6 @@ function buscarMiPedido(){
       btn.textContent='Buscar';btn.disabled=false;
       res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';
     });
-  }
 }
 function renderResultados(d,res){
   var html='';

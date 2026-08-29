@@ -1066,7 +1066,8 @@ function buscarOrdenWeb(payload) {
           estado: o.estado,
           productos: o.productos,
           cantidad: o.cantidad,
-          precio: o.precio
+          precio: o.precio,
+          codigo_cliente: o.codigo_cliente || ''
         }};
       }
     }

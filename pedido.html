@@ -2139,7 +2139,7 @@ function mostrarExito(){
   var _codeEl=document.getElementById('ex-codigo-cliente');
   if(_codeEl){
     if(!esSol && o.codigo_cliente){
-      _codeEl.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">⭐ Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(o.codigo_cliente)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
+      _codeEl.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="#caa24a" style="vertical-align:middle;margin-right:4px"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.5L12 17.8 6.1 20.1l1.2-6.5L2.5 9l6.6-.9z"/></svg>Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(o.codigo_cliente)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
       _codeEl.style.display='block';
     }else{
       _codeEl.style.display='none';

@@ -2590,11 +2590,21 @@ function enviarDatosPorCorreo(orden){
     document.querySelector('#s-exito .btn-outline-teal').style.display='';
     document.querySelector('#s-exito .btn-sec').style.display='';
     if(orden) notificarAdmin(orden);
+    var _codeEl=document.getElementById('ex-codigo-cliente');
+    if(_codeEl && _ultimaOrden && _ultimaOrden.codigo_cliente){
+      _codeEl.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(_ultimaOrden.codigo_cliente)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
+      _codeEl.style.display='block';
+    }
   }
   function mostrarError(msg){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';
     document.querySelector('#s-exito .btn-outline-teal').style.display='';
     document.querySelector('#s-exito .btn-sec').style.display='';
+    var _codeEl=document.getElementById('ex-codigo-cliente');
+    if(_codeEl && _ultimaOrden && _ultimaOrden.codigo_cliente){
+      _codeEl.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(_ultimaOrden.codigo_cliente)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
+      _codeEl.style.display='block';
+    }
   }
 
   function verificarTransaccionWompi(){

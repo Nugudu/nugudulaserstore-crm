@@ -466,21 +466,58 @@ function descontarStock(sku, cantidad) {
 function buscarClienteGAS(tel, orden) {
   try {
     var ordenes = leerOrdenes();
-    var match   = [];
+    var solicitudes = leerSolicitudes();
+    var match = [];
+
+    // Normaliza una solicitud (transferencia) al formato de orden para reusar el render.
+    function _normSol(s) {
+      var est = s.estadoSolicitud === 'confirmada' ? '2'
+              : s.estadoSolicitud === 'descartada' ? '9'
+              : '0';
+      return {
+        orden:         s.ref || '',
+        estado:        est,
+        productos:     s.productos || [],
+        fecha:         s.fecha || '',
+        fechaEntrega:  '',
+        cantidad:      s.cantidad || 1,
+        precio:        s.precio || 0,
+        total:         s.total || 0,
+        pendientePago: s.estadoSolicitud === 'pendiente',
+        nombre:        s.nombre || '',
+        contacto:      s.contacto || '',
+        fechaNac:      s.fechaNac || '',
+        direccion:     s.direccion || '',
+        zona:          s.zona || '',
+        mapaLink:      s.mapaLink || '',
+        esSolicitud:   true
+      };
+    }
+
     if (orden) {
       var ordenNorm = String(orden).trim().toUpperCase();
       var oMatch = ordenes.find(function(o) { return (o.orden || '').toUpperCase() === ordenNorm; });
       if (oMatch) {
         var telRef = String(oMatch.contacto || '').replace(/\D/g, '');
         match = ordenes.filter(function(o) { return String(o.contacto || '').replace(/\D/g, '') === telRef; });
+      } else {
+        var sMatch = solicitudes.find(function(s) { return (s.ref || '').toUpperCase() === ordenNorm; });
+        if (sMatch) {
+          var telRefS = String(sMatch.contacto || '').replace(/\D/g, '');
+          match = solicitudes.filter(function(s) { return String(s.contacto || '').replace(/\D/g, '') === telRefS; }).map(_normSol);
+        }
       }
     }
     if (!match.length && tel) {
       var telNorm = String(tel).replace(/\D/g, '');
       if (telNorm.length < 4) return { ok: true, encontrado: false };
-      match = ordenes.filter(function(o) {
+      var mOrd = ordenes.filter(function(o) {
         return String(o.contacto || '').replace(/\D/g, '').indexOf(telNorm) >= 0;
       });
+      var mSol = solicitudes.filter(function(s) {
+        return String(s.contacto || '').replace(/\D/g, '').indexOf(telNorm) >= 0;
+      }).map(_normSol);
+      match = mOrd.concat(mSol);
     }
     if (!match.length) return { ok: true, encontrado: false };
     match.sort(function(a, b) { return new Date(b.fecha) - new Date(a.fecha); });
@@ -502,6 +539,7 @@ function buscarClienteGAS(tel, orden) {
         fechaEntrega:  o.fechaEntrega || '',
         cantidad:      o.cantidad     || 1,
         precio:        o.precio       || 0,
+        total:         o.total        || 0,
         pendientePago: o.pendientePago || false
       };
     });
@@ -873,6 +911,10 @@ function guardarSolicitudWeb(payload) {
     var recargoEnvio = parseFloat(payload.recargoEnvio) || 0;
     totalSolicitud += recargoEnvio;
 
+    // Generar código personal de 4 dígitos del cliente (si es nuevo lo crea,
+    // si ya existe conserva el actual). Se guarda en PropertiesService y en la solicitud.
+    var _codigoCliente = generarCodigoCliente(payload.contacto);
+
     var d   = new Date();
     var id  = d.getTime();
     var ref = 'SOL-' + String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '-' + String(id).slice(-4);
@@ -901,6 +943,7 @@ function guardarSolicitudWeb(payload) {
       fechaNac:      String(payload.fechaNac || '').trim(),
       metodoPago:    'transferencia',
       estadoSolicitud: 'pendiente',
+      codigo_cliente: _codigoCliente || '',
       creadoDesde:   'pedidoWeb'
     };
     // Append directo a la hoja (misma optimización que guardarPedidoWeb).
@@ -910,7 +953,7 @@ function guardarSolicitudWeb(payload) {
     // "Solicitud registrada — pago pendiente de verificación"). Va en su
     // propio try/catch: si falla, nunca bloquea el registro de la solicitud.
     notificarSolicitudNueva(solicitud);
-    return { ok: true, ref: ref, solicitud: ref };
+    return { ok: true, ref: ref, solicitud: ref, codigo_cliente: _codigoCliente || '' };
   } catch(err) { return { ok: false, error: err.message }; }
 }
 

@@ -688,7 +688,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
     <!-- Recordatorio de tracking -->
     <div id="ex-tracking" style="display:none;margin-top:12px;padding:12px;background:#f8f6ff;border-radius:10px;border:1px solid #e8e5f0;font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
-      Podes consultar el estado de tu pedido ingresando tu numero de contacto o numero de orden para iniciar sesion
+      Para consultar el estado de tu pedido usá tu número de contacto y tu código personal de 4 dígitos.
     </div>
 
     <button class="btn-outline-teal" onclick="nuevoP()">+ Hacer otro pedido</button>
@@ -2091,6 +2091,7 @@ function confirmarPedido(){
           showErr('form',(err&&err.name==='AbortError')?'La conexión tardó demasiado. Intenta de nuevo.':'Error de conexión con Wompi. Intenta de nuevo.');
         });
       }else{
+        if(ov)ov.style.display='none';
         irAExitoTransferencia();
       }
     }).catch(function(err){
@@ -2177,7 +2178,7 @@ function mostrarCodigoClienteExito(){
   if(!el)return;
   var cod=(_ultimaOrden&&_ultimaOrden.codigo_cliente)||_codigoClienteActual||'';
   if(cod){
-    el.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">⭐ Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(cod)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
+    el.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="#caa24a" style="vertical-align:middle;margin-right:4px"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.5L12 17.8 6.1 20.1l1.2-6.5L2.5 9l6.6-.9z"/></svg>Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(cod)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
     el.style.display='block';
   }else{
     el.style.display='none';
@@ -3106,7 +3107,7 @@ function renderResultados(d,res){
     html+='<div class="user-modal-orden">'+
       '<div class="user-modal-orden-num">'+esc(o.orden)+'</div>'+
       '<div class="user-modal-orden-estado" style="color:'+color+'">'+(_ESTADOS_LABEL[est]||'Pendiente')+'</div>'+
-      '<div class="user-modal-orden-fecha">'+esc(o.fecha||'')+' · $'+(Number(o.precio||0)*Number(o.cantidad||1)).toFixed(2)+'</div>'+
+      '<div class="user-modal-orden-fecha">'+esc(o.fecha||'')+' · $'+(Number(o.total!=null?o.total:(o.precio||0)*(o.cantidad||1))).toFixed(2)+'</div>'+
     '</div>';
   });
   res.innerHTML='<div class="user-modal-ordenes">'+html+'</div>';

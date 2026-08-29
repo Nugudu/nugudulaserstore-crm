@@ -52,7 +52,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .filtros-bar{position:relative}
 .filtros-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .fil-buscar-wrap{position:relative;flex:1;min-width:0}
-.fil-buscar{width:100%;padding:12px 40px 12px 14px;border:1.5px solid #c8c5d6;border-radius:var(--rs);font-size:15px;font-family:'DM Sans',sans-serif;background:#fff;box-sizing:border-box;color:#222;box-shadow:0 1px 4px rgba(45,36,96,.08)}
+.fil-buscar{width:100%;padding:12px 40px 12px 18px;border:1.5px solid #c8c5d6;border-radius:999px;font-size:15px;font-family:'DM Sans',sans-serif;background:#fff;box-sizing:border-box;color:#222;box-shadow:0 2px 10px rgba(45,36,96,.08)}
 .fil-buscar::placeholder{color:#888}
 .fil-buscar:focus{outline:none;border-color:#2D2460;box-shadow:0 2px 8px rgba(45,36,96,.12)}
 .fil-lupa-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#2D2460;display:flex;pointer-events:none}
@@ -81,12 +81,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .phone-card h2{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:10px}
 .phone-card p{font-size:17px;color:var(--text);margin-bottom:24px;line-height:1.75;font-weight:400}
 .phone-row{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
-.phone-row input{width:100%;box-sizing:border-box;padding:17px 16px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:17px;outline:none;transition:border .15s,box-shadow .15s}
+.phone-row input{width:100%;box-sizing:border-box;padding:15px 18px;border:1.5px solid var(--border);border-radius:999px;font-size:17px;outline:none;transition:border .15s,box-shadow .18s;box-shadow:0 2px 10px rgba(45,36,96,.08)}
 .phone-row input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(45,36,96,.1)}
 .phone-row button{width:100%;box-sizing:border-box;padding:16px 15px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(45,36,96,.22);transition:transform .18s ease,box-shadow .18s ease,background .15s}
 .phone-row button:hover{background:#241d52}
 .phone-row button:active{transform:scale(.97);box-shadow:0 2px 6px rgba(45,36,96,.28)}
-.btn-skip{width:100%;box-sizing:border-box;padding:17px;background:#eeecf9;color:var(--navy);border:1.5px solid var(--navy);border-radius:var(--rs);font-size:17px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 2px 8px rgba(45,36,96,.08);transition:transform .12s ease,background .15s}
+.btn-skip{width:100%;box-sizing:border-box;padding:16px;background:#eeecf9;color:var(--navy);border:1.5px solid var(--navy);border-radius:999px;font-size:17px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 4px 14px rgba(45,36,96,.12);transition:transform .18s ease,background .15s}
 .btn-skip:hover{background:#e2ddf7}
 .btn-skip:active{transform:scale(.97)}
 .ce-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
@@ -157,7 +157,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .qty-total strong{color:var(--navy);font-size:16px}
 .fg{margin-bottom:13px}
 .fg label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
-.fg input,.fg select,.fg textarea{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;color:var(--text);background:#fff;outline:none;transition:border .15s}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px 18px;border:1.5px solid var(--border);border-radius:999px;font-size:14px;color:var(--text);background:#fff;outline:none;transition:border .15s,box-shadow .18s;box-shadow:0 2px 10px rgba(45,36,96,.06)}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--navy)}
 .fg .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .fg textarea{resize:none;height:68px}
@@ -167,7 +167,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .dir-del:hover{background:rgba(0,0,0,.08)}
 .do-dir{font-size:13px;font-weight:600}
 .do-zona{font-size:11px;color:var(--muted);margin-top:2px}
-.btn-ndir{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:var(--rs);color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px}
+.btn-ndir{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:999px;color:var(--navy);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px}
 .map-mini{margin-top:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);display:none!important}/* oculto a pedido de Nuria hasta nuevo aviso -- !important para que ningun JS lo pueda mostrar mientras tanto, sin tocar esa logica */
 #leaflet-map-wrap{display:none!important}/* idem: el mapa interactivo no aparece ante el cliente (friccion); reversible quitando esta linea */
 #map-aviso{display:none!important}/* aviso del mapa: sin mapa visible no aplica */
@@ -306,7 +306,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .user-modal{background:#fff;border-radius:14px;width:340px;max-width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.2);padding:24px 20px}
 .user-modal h3{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--navy)}
 .user-modal p{margin:0 0 16px;font-size:12px;color:var(--muted)}
-.user-modal-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:12px}
+.user-modal-input{width:100%;padding:12px 18px;border:1.5px solid var(--border);border-radius:999px;font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:12px;box-shadow:0 2px 10px rgba(45,36,96,.06)}
 .user-modal-input:focus{outline:none;border-color:var(--navy)}
 .user-modal-btn{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;transition:all .18s ease;box-shadow:0 6px 18px rgba(45,36,96,.22)}
 .user-modal-btn:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(45,36,96,.28)}
@@ -381,9 +381,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     </div>
     <button class="btn-main" id="ci-btn-continuar" onclick="continuarCatalogo(this)" style="display:none">Continuar →</button>
     <div style="text-align:center;margin-top:10px">
-      <a href="#" onclick="irAConsultar();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.background='#f4f2fb'" onmouseout="this.style.background='transparent'">Consultar mi pedido</a>
+      <a href="#" onclick="irAConsultar();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;padding:4px 14px;border-radius:999px;transition:all .15s" onmouseover="this.style.background='#f4f2fb'" onmouseout="this.style.background='transparent'">Consultar mi pedido</a>
       <span style="font-size:15px;color:#2D2460;margin:0 6px">|</span>
-      <a href="#" onclick="mostrarMiDiseno();return false" style="font-size:15px;color:var(--navy);text-decoration:none;font-weight:700;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.background='#f4f2fb'" onmouseout="this.style.background='transparent'">Mi diseño →</a>
+      <a href="#" onclick="mostrarMiDiseno();return false" style="font-size:15px;color:var(--navy);text-decoration:none;font-weight:700;padding:4px 14px;border-radius:999px;transition:all .15s" onmouseover="this.style.background='#f4f2fb'" onmouseout="this.style.background='transparent'">Mi diseño →</a>
     </div>
     <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
       Contacta con nuestro equipo al: <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a>
@@ -427,8 +427,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div id="err-phone" class="err-box" style="display:none"></div>
         <button class="btn-skip" onclick="nuevoCli()">Soy cliente nuevo →</button>
         <div style="display:flex;justify-content:space-between;margin-top:10px">
-          <a href="#" onclick="cancelarConsulta();return false" style="font-size:16px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:8px;background:#f4f2fb;transition:all .15s" onmouseover="this.style.background='#ede9fb'" onmouseout="this.style.background='#f4f2fb'">← Volver</a>
-          <a href="#" onclick="_yaSoyClienteMode=true;irAConsultar();return false" style="font-size:16px;color:var(--navy);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:8px;background:#e8f5e9;transition:all .15s" onmouseover="this.style.background='#dcedc8'" onmouseout="this.style.background='#e8f5e9'">Ya soy cliente →</a>
+          <a href="#" onclick="cancelarConsulta();return false" style="font-size:16px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:999px;background:#f4f2fb;transition:all .15s" onmouseover="this.style.background='#ede9fb'" onmouseout="this.style.background='#f4f2fb'">← Volver</a>
+          <a href="#" onclick="_yaSoyClienteMode=true;irAConsultar();return false" style="font-size:16px;color:var(--navy);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:999px;background:#e8f5e9;transition:all .15s" onmouseover="this.style.background='#dcedc8'" onmouseout="this.style.background='#e8f5e9'">Ya soy cliente →</a>
         </div>
         <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--hint);letter-spacing:.5px">la diferencia se lleva</div>
       </div>
@@ -444,13 +444,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="phone-row" style="margin-top:8px">
           <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
         </div>
-        <div style="font-size:13px;color:#555;margin:8px 0">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
+        <div style="font-size:13px;color:#555;margin:8px 0">Por tu seguridad, tu código de 4 dígitos es obligatorio (teléfono u orden).</div>
         <div style="text-align:center;margin-bottom:8px">
           <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
         </div>
         <button class="btn-main" onclick="buscarTel(this)" style="font-size:18px;padding:16px;font-weight:700">Buscar</button>
         <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
-        <button style="background:none;border:1.5px solid #c8c5d6;color:#2D2460;font-size:15px;font-weight:700;cursor:pointer;margin-top:12px;width:100%;padding:12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#2D2460'" onmouseout="this.style.borderColor='#c8c5d6'" onclick="cancelarConsulta()">← Volver</button>
+        <button class="btn-soft" onclick="cancelarConsulta()">← Volver</button>
       </div>
     </div>
   </div>
@@ -458,7 +458,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
 <!-- PANTALLA CLIENTE — tracking de pedidos y opciones -->
 <div class="screen" id="s-cliente">
-  <div style="text-align:right;padding:6px 0 0"><button onclick="salir()" style="background:none;border:1.5px solid #c8c5d6;color:#cc3333;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:8px;transition:all .15s" onmouseover="this.style.borderColor='#cc3333'" onmouseout="this.style.borderColor='#c8c5d6'">Salir ×</button></div>
+  <div style="text-align:right;padding:6px 0 0"><button class="btn-exit-top" onclick="salir()">Salir ×</button></div>
   <div class="cli-greeting">
     <div class="cli-ico" style="display:none"></div>
     <h2 id="cli-nombre-ttl">¡Hola!</h2>
@@ -729,7 +729,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       Ya tienes listo tu dise&ntilde;o? Convierte tu dise&ntilde;o formato SVG en un grabado a l&aacute;ser para tu gorra Nugud&uacute;. Si tu archivo ya est&aacute; en formato SVG revisaremos que sea apto para producci&oacute;n. Si a&uacute;n no esta en ese formato, podemos ayudarte con la conversi&oacute;n para el proceso de grabado a l&aacute;ser. Este servicio esta dirigido para archivos finales listos para producci&oacute;n, por lo que no incluye modificaciones cont&aacute;ctanos por whatsapp <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a> y con gusto te brindamos m&aacute;s informaci&oacute;n.
     </div>
     <div style="text-align:center;margin-top:12px">
-      <a href="#" onclick="salir();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:8px;background:#f4f2fb;transition:all .15s" onmouseover="this.style.background='#ede9fb'" onmouseout="this.style.background='#f4f2fb'">← Volver al catálogo</a>
+      <a href="#" onclick="salir();return false" style="font-size:15px;color:#2D2460;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:999px;background:#f4f2fb;transition:all .15s" onmouseover="this.style.background='#ede9fb'" onmouseout="this.style.background='#f4f2fb'">← Volver al catálogo</a>
     </div>
   </div>
 
@@ -1680,6 +1680,7 @@ function continuarCatalogo(btn){
   }else{
     showScreen('s-phone');
   }
+  if(btn)btn.disabled=false;
 }
 function irAConsultar(){
   showScreen('s-phone');
@@ -2951,7 +2952,7 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <p>Ingresá tu teléfono y código personal, o tu número de orden.</p>
     <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono (Ej. 7262 6332)" maxlength="30">
     <input class="user-modal-input" id="user-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
-    <div style="font-size:13px;color:#555;margin-top:-8px;margin-bottom:12px">Si buscas por # de orden (ORD-...), dejá el código vacío.</div>
+    <div style="font-size:13px;color:#555;margin-top:-8px;margin-bottom:12px">Por tu seguridad, tu código de 4 dígitos es obligatorio (teléfono u orden).</div>
     <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:700;cursor:pointer">Buscar</button>
     <div style="margin-top:12px;text-align:center">
       <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
@@ -3055,7 +3056,8 @@ function buscarMiPedido(){
         res.innerHTML='<div class="user-modal-no">'+msg+'</div>';
         return;
       }
-      renderResultados(d,res);
+      try{cerrarUserModal();}catch(e){}
+      mostrarPantallaCliente(d);
     }).catch(function(){
       btn.textContent='Buscar';btn.disabled=false;
       res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';

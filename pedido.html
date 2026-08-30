@@ -964,11 +964,10 @@ var _svgShare='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" strok
 function compartirProducto(sku){
   var v=_cat.find(function(p){return p.sku===sku;});
   var nom=v?v.nombre:sku;
-  var precio=v?v.precio:0;
+  var txt=esc(nom)+' de Nugudú Store';
   var url=window.location.href.split('?')[0]+'?p='+encodeURIComponent(sku);
-  var txt=esc(nom)+' — $'+precio.toFixed(2)+'\n\n'+url;
   cargarImagenParaCompartir(candidatosFoto(sku,nom),function(archivo){
-    var data={title:nom,text:txt};
+    var data={title:nom,text:txt,url:url};
     if(archivo&&navigator.canShare&&navigator.share&&navigator.canShare({files:[archivo]})){
       data.files=[archivo];
     }

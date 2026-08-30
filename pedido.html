@@ -967,7 +967,7 @@ function compartirProducto(sku){
   var txt=esc(nom)+' de Nugudú Store';
   var url=window.location.href.split('?')[0]+'?p='+encodeURIComponent(sku);
   if(!navigator.share){copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');return;}
-  navigator.share({title:nom,text:txt,url:url}).catch(function(e){
+  navigator.share({title:nom,text:txt+'\n'+url}).catch(function(e){
     if(e&&e.name==='AbortError')return;
     copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');
   });

@@ -966,17 +966,10 @@ function compartirProducto(sku){
   var nom=v?v.nombre:sku;
   var txt=esc(nom)+' de Nugudú Store';
   var url=window.location.href.split('?')[0]+'?p='+encodeURIComponent(sku);
-  cargarImagenParaCompartir(candidatosFoto(sku,nom),function(archivo){
-    var data={title:nom,text:txt,url:url};
-    if(archivo&&navigator.canShare&&navigator.share&&navigator.canShare({files:[archivo]})){
-      data.files=[archivo];
-    }
-    if(!navigator.share){copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');return;}
-    navigator.share(data).catch(function(e){
-      if(e&&e.name==='AbortError')return;
-      if(data.files){delete data.files;navigator.share(data).catch(function(e2){if(e2&&e2.name==='AbortError')return;copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');});}
-      else{copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');}
-    });
+  if(!navigator.share){copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');return;}
+  navigator.share({title:nom,text:txt,url:url}).catch(function(e){
+    if(e&&e.name==='AbortError')return;
+    copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');
   });
 }
 // Baja la foto del producto (misma que muestra la tarjeta) para adjuntarla al

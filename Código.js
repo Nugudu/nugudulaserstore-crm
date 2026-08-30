@@ -609,7 +609,9 @@ function buscarClienteOrdenSeguro(orden, codigo) {
   try {
     var ordenNorm = String(orden || '').trim().toUpperCase();
     if (!ordenNorm) return { ok: true, encontrado: false, error: 'sin_orden' };
-    if (!validarCodigoOrden(ordenNorm, codigo)) {
+    // El número de orden (ORD-/SOL-) es identificador suficiente: el código es
+    // opcional. Solo se valida si se envió uno.
+    if (codigo && !validarCodigoOrden(ordenNorm, codigo)) {
       return { ok: true, encontrado: false, error: 'codigo_incorrecto' };
     }
     var ordenes = leerOrdenes();

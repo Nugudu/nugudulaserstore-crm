@@ -445,7 +445,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="phone-row" style="margin-top:8px">
           <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
         </div>
-        <div style="font-size:13px;color:#555;margin:8px 0">Por tu seguridad, tu código de 4 dígitos es obligatorio (teléfono u orden).</div>
+        <div style="font-size:13px;color:#555;margin:8px 0">Por tu seguridad, el código de 4 dígitos es obligatorio para teléfono. Para nº de orden (ORD-/SOL-) podés dejarlo vacío.</div>
         <div style="text-align:center;margin-bottom:8px">
           <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
         </div>
@@ -812,7 +812,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 </div>
 
 <script>
-var GAS='https://script.google.com/macros/s/AKfycbwupZjKZPnLjoPqF7pXLOpQE4Cj5dt1N5EngMH_Sy50IFOw5J4bmDnHHo9eDe_P1Po/exec';
+var GAS='https://script.google.com/macros/s/AKfycbx7l-kc1blZn_QpF0xMTFeb7vak6jJxHXgjtVDi2qfiiDPUTL_S5vOfs29xTMmmPqDj/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
@@ -1074,14 +1074,15 @@ function buscarTel(btn){
   if(spin)spin.style.display='block';
   var mostrarTracking=consMode&&!desdeYaCliente;
   if(mostrarTracking)mostrarTrackingCargando();
-  // Tanto teléfono como número de orden (ORD-/SOL-): SIEMPRE con código de acceso.
-  if(!cod || cod.length!==4 || !/^\d{4}$/.test(cod)){
+  var esOrden=/^(ORD|SOL)-/i.test(val);
+  // El nº de orden (ORD-/SOL-) es identificador suficiente: código opcional.
+  // Para teléfono el código de 4 dígitos es obligatorio (privacidad).
+  if(!esOrden && (!cod || cod.length!==4 || !/^\d{4}$/.test(cod))){
     if(spin)spin.style.display='none';
     setBtnBuscarEstado(btn,false);
     showErr(errId,'Ingresá tu código personal de 4 dígitos para consultar.');
     return;
   }
-  var esOrden=/^(ORD|SOL)-/i.test(val);
   var action = esOrden ? 'buscarClienteOrdenSeguro' : 'buscarClienteSeguro';
   var payload = esOrden
     ? {action:action, token:API_TOKEN, orden:val.toUpperCase(), codigo:cod}
@@ -2960,7 +2961,7 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <p>Ingresá tu teléfono y código personal, o tu número de orden.</p>
     <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono (Ej. 7262 6332)" maxlength="30">
     <input class="user-modal-input" id="user-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
-    <div style="font-size:13px;color:#555;margin-top:-8px;margin-bottom:12px">Por tu seguridad, tu código de 4 dígitos es obligatorio (teléfono u orden).</div>
+    <div style="font-size:13px;color:#555;margin-top:-8px;margin-bottom:12px">Por tu seguridad, el código de 4 dígitos es obligatorio para teléfono. Para nº de orden (ORD-/SOL-) podés dejarlo vacío.</div>
     <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:700;cursor:pointer">Buscar</button>
     <div style="margin-top:12px;text-align:center">
       <a href="#" onclick="abrirWhatsAppOlvidoCodigo();return false" style="font-size:14px;color:var(--navy);text-decoration:underline;font-weight:600">¿Olvidaste tu código?</a>
@@ -3046,8 +3047,9 @@ function buscarMiPedido(){
   var orden=isOrden?raw.toUpperCase():'';
   // Si parece teléfono pero tiene pocos dígnos y no empieza con ORD, tratar como orden
   if(!isOrden && tel.length>0 && tel.length<4 && !/^7\d{3}$/.test(tel)){orden=raw.toUpperCase();tel='';}
-  // Tanto teléfono como orden: SIEMPRE código de 4 dígitos.
-  if(!cod || cod.length!==4 || !/^\d{4}$/.test(cod)){
+  // El nº de orden (ORD-/SOL-) es identificador suficiente: código opcional.
+  // Para teléfono el código de 4 dígitos es obligatorio (privacidad).
+  if(!isOrden && (!cod || cod.length!==4 || !/^\d{4}$/.test(cod))){
     res.innerHTML='<div class="user-modal-no">Ingresá tu código personal de 4 dígitos para consultar.</div>';
     return;
   }
@@ -3065,7 +3067,8 @@ function buscarMiPedido(){
         return;
       }
       try{cerrarUserModal();}catch(e){}
-      mostrarPantallaCliente(d);
+      try{ mostrarPantallaCliente(d); }
+      catch(err){ renderResultados(d, res); }
     }).catch(function(){
       btn.textContent='Buscar';btn.disabled=false;
       res.innerHTML='<div class="user-modal-no">Error de conexión. Intentá de nuevo.</div>';

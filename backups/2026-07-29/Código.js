@@ -163,7 +163,6 @@ function doPost(e) {
     if (action === 'solicitudWeb')      { return respond(conLock(function(){ return guardarSolicitudWeb(payload); })); }
     if (action === 'confirmarSolicitud'){ return respond(conLock(function(){ return confirmarSolicitudWeb(payload); })); }
     if (action === 'descartarSolicitud'){ return respond(conLock(function(){ return descartarSolicitudWeb(payload); })); }
-    if (action === 'eliminarTriggerCorreo') return respond({ ok: true, eliminados: eliminarTriggerCorreo() });
     if (action === 'obtenerCodigoCliente') return respond(obtenerCodigoParaCRM(payload));
     if (action === 'regenerarCodigoCliente') return respond(regenerarCodigoCliente(payload));
     if (action === 'obtenerCodigosLote') return respond(obtenerCodigosLote(payload));
@@ -1036,19 +1035,6 @@ function notificarSolicitudNueva(sol) {
   } catch (err) {
     Logger.log('notificarSolicitudNueva: ' + err.message);
   }
-}
-
-// Utilidad de limpieza: elimina el trigger de cola de correo (si existe) y
-// limpia la cola. Se invoca una vez con la accion 'eliminarTriggerCorreo'.
-function eliminarTriggerCorreo() {
-  var n = 0;
-  try {
-    ScriptApp.getProjectTriggers().forEach(function(t) {
-      if (t.getHandlerFunction() === 'procesarColaCorreoSolicitud') { ScriptApp.deleteTrigger(t); n++; }
-    });
-    PropertiesService.getScriptProperties().deleteProperty('SOLICITUD_EMAIL_QUEUE');
-  } catch(e) {}
-  return n;
 }
 
 // Convierte una solicitud aprobada en una ORDEN real con pago confirmado.

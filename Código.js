@@ -166,8 +166,8 @@ function doPost(e) {
     if (action === 'obtenerCodigoCliente') return respond(obtenerCodigoParaCRM(payload));
     if (action === 'regenerarCodigoCliente') return respond(regenerarCodigoCliente(payload));
     if (action === 'obtenerCodigosLote') return respond(obtenerCodigosLote(payload));
-    if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(p.tel || payload.tel, p.codigo || payload.codigo));
-    if (action === 'buscarClienteOrdenSeguro') return respond(buscarClienteOrdenSeguro(p.orden || payload.orden, p.codigo || payload.codigo));
+    if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(payload.tel, payload.codigo));
+    if (action === 'buscarClienteOrdenSeguro') return respond(buscarClienteOrdenSeguro(payload.orden, payload.codigo));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });

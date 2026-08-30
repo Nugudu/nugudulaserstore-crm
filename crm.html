@@ -257,7 +257,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="topbar">
     <div><div class="topbar-ttl" id="tb-title">Dashboard</div><div class="topbar-sub" id="tb-sub">DO · CARE · sincronizado</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end" id="topbar-actions">
-      <span style="font-size:12px;color:var(--hint);background:var(--surface2);padding:5px 10px;border-radius:6px;border:1px solid var(--border)"><i class="fa-regular fa-calendar" style="margin-right:4px"></i><span id="fecha-hoy"></span></span>
+      <span style="font-size:12px;font-weight:600;color:var(--navy);background:var(--navy-pale);padding:6px 14px;border-radius:999px;border:1px solid var(--border)"><i class="fa-regular fa-calendar" style="margin-right:4px"></i><span id="fecha-hoy"></span></span>
       <button class="btn btn-outline btn-sm" onclick="syncFromGAS(false)"><i class="fa-solid fa-rotate"></i> Sincronizar</button>
       <button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fa-solid fa-download"></i> PDF</button>
       <button class="btn btn-outline btn-sm" onclick="cerrarSesionGate()" title="Cambiar usuario"><i class="fa-solid fa-right-left"></i> Cambiar usuario</button>
@@ -397,7 +397,7 @@ tbody tr:last-child td{border-bottom:none}
     <div id="panel-pagos" class="panel">
       <div class="ph-row">
         <div><h2>Pagos pendientes</h2><p>Solicitudes de transferencia registradas en la web — verifica el pago y confirma para generar la orden real.</p></div>
-        <div style="display:flex;gap:8px;align-items:center"><input id="sol-q" type="text" placeholder="Buscar ref, nombre, contacto…" oninput="filtrarSolicitudes()" style="border:1px solid var(--bmd);border-radius:var(--rs);padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;min-width:240px"><button class="btn btn-outline btn-sm" onclick="cargarSolicitudes(true)"><i class="fa-solid fa-rotate"></i> Refrescar</button></div>
+        <div style="display:flex;gap:8px;align-items:center"><input id="sol-q" type="text" placeholder="Buscar ref, nombre, contacto…" oninput="filtrarSolicitudes()" style="border:1.5px solid var(--bmd);border-radius:999px;padding:10px 18px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;min-width:240px;box-shadow:0 2px 10px rgba(45,36,96,.06)"><button class="btn btn-outline btn-sm" onclick="cargarSolicitudes(true)"><i class="fa-solid fa-rotate"></i> Refrescar</button></div>
       </div>
       <div id="sol-list"><div class="card"><div class="empty"><i class="fa-regular fa-hourglass-half"></i><p>Cargando solicitudes…</p></div></div></div>
     </div>
@@ -962,7 +962,7 @@ var PANELS  = {
   wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
 };
 var KEY  = 'ngd_crm_v10';
-var GAS  = 'https://script.google.com/macros/s/AKfycby-1P176kDz9mGvXOzaV_25GJ0cWOlNI21PcR5vMYZMKeSCs2aTE71hvxo8wqa73Ouc/exec';
+var GAS  = 'https://script.google.com/macros/s//exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 // Cierra el acceso publico anonimo a los datos de clientes.
 var API_TOKEN = '20448e06ce5e6d46b0c829be92dd00bcd8d521cd';

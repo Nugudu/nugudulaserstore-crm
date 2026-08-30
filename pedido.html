@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Nugudú Store — Hacer pedido</title>
+<meta property="og:title" content="Nugudú Store — Hacer pedido">
+<meta property="og:description" content="Tienda oficial Nugudú. Gorras, parches y más.">
+<meta property="og:image" content="https://www.nugudustore.com/imagenes/logo-nugudu.png">
+<meta property="og:url" content="https://www.nugudustore.com/pedido.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nugudú Store">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nugudú Store">
+<meta name="twitter:description" content="Tienda oficial Nugudú. Gorras, parches y más.">
+<meta name="twitter:image" content="https://www.nugudustore.com/imagenes/logo-nugudu.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -956,9 +966,15 @@ function compartirProducto(sku){
   var nom=v?v.nombre:sku;
   var txt=esc(nom)+' de Nugudú Store';
   var url=window.location.href.split('?')[0]+'?p='+encodeURIComponent(sku);
+  // Detectar iOS/Safari: el Web Share API con archivos mezcla el path interno
+  // del archivo temporal con la URL, generando enlaces rotos. En esos casos solo
+  // compartimos texto + enlace limpio.
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  var shareConFoto=!isIOS&&!isSafari;
   cargarImagenParaCompartir(candidatosFoto(sku,nom),function(archivo){
     var data={title:nom,text:txt,url:url};
-    if(archivo&&navigator.canShare&&navigator.share&&navigator.canShare({files:[archivo]})){
+    if(shareConFoto&&archivo&&navigator.canShare&&navigator.share&&navigator.canShare({files:[archivo]})){
       data.files=[archivo];
     }
     if(!navigator.share){copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');return;}
@@ -1013,10 +1029,26 @@ function abrirSkuPendiente(){
   var v=_cat.find(function(p){return p.sku===_pendienteSku;});
   if(!v) return;
   _pendienteSku='';
+  // Actualizar OG tags con los datos del producto para preview en redes
+  var imgCandidates=candidatosFoto(v.sku,v.nombre);
+  var imgUrl='https://www.nugudustore.com/imagenes/'+imgCandidates[0];
+  actualizarOGTags(v.sku,v.nombre,v.precio,imgUrl);
   showScreen('s-catalogo');
   renderCat();
   elDisInicio(encodeId(v.nombre));
   setTimeout(function(){pmSelColor(v.sku);},400);
+}
+function actualizarOGTags(sku,nombre,precio,imagenUrl){
+  var set=function(prop,content){
+    var el=document.querySelector('meta[property="'+prop+'"]')||document.querySelector('meta[name="'+prop+'"]');
+    if(el)el.setAttribute('content',content);
+  };
+  set('og:title',nombre+' — Nugudú Store');
+  set('og:description','GORRA '+nombre+' de Nugudú Store — $'+precio.toFixed(2));
+  set('og:image',imagenUrl);
+  set('og:url',window.location.href);
+  set('og:type','product');
+  document.title=nombre+' — Nugudú Store';
 }
 
 // ── INIT: caché local al instante + GAS refresca en background (sin bloqueo) ──

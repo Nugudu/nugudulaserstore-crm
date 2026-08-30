@@ -163,6 +163,7 @@ function doPost(e) {
     if (action === 'solicitudWeb')      { return respond(conLock(function(){ return guardarSolicitudWeb(payload); })); }
     if (action === 'confirmarSolicitud'){ return respond(conLock(function(){ return confirmarSolicitudWeb(payload); })); }
     if (action === 'descartarSolicitud'){ return respond(conLock(function(){ return descartarSolicitudWeb(payload); })); }
+    if (action === 'eliminarTriggerCorreo') return respond({ ok: true, eliminados: eliminarTriggerCorreo() });
     if (action === 'obtenerCodigoCliente') return respond(obtenerCodigoParaCRM(payload));
     if (action === 'regenerarCodigoCliente') return respond(regenerarCodigoCliente(payload));
     if (action === 'obtenerCodigosLote') return respond(obtenerCodigosLote(payload));
@@ -1004,10 +1005,8 @@ function guardarSolicitudWeb(payload) {
     // Append directo a la hoja (misma optimización que guardarPedidoWeb).
     var _hojaS = getHojaSolicitudes();
     _hojaS.appendRow([JSON.stringify(solicitud)]);
-    // Correo en segundo plano (cola + trigger) para que el registro responda
-    // al instante y no se bloquee esperando a GmailApp. Nunca se pierde: si la
-    // cola falla, se manda sincrono como respaldo.
-    encolarCorreoSolicitud(solicitud);
+    // Correo instantaneo al llegar la solicitud (comportamiento original).
+    notificarSolicitudNueva(solicitud);
     return { ok: true, ref: ref, solicitud: ref, codigo_cliente: _codigoCliente || '' };
   } catch(err) { return { ok: false, error: err.message }; }
 }
@@ -1039,44 +1038,17 @@ function notificarSolicitudNueva(sol) {
   }
 }
 
-// ── COLA DE CORREO DE SOLICITUDES (segundo plano) ──
-// guardarSolicitudWeb encola en lugar de mandar el correo en linea, para que
-// el registro de la solicitud le responda al cliente al instante. Un trigger
-// cada 1 minuto vacia la cola mandando los correos (con reintento).
-function encolarCorreoSolicitud(sol) {
+// Utilidad de limpieza: elimina el trigger de cola de correo (si existe) y
+// limpia la cola. Se invoca una vez con la accion 'eliminarTriggerCorreo'.
+function eliminarTriggerCorreo() {
+  var n = 0;
   try {
-    var props = PropertiesService.getScriptProperties();
-    var q = [];
-    try { q = JSON.parse(props.getProperty('SOLICITUD_EMAIL_QUEUE') || '[]'); } catch(e) {}
-    q.push(sol);
-    props.setProperty('SOLICITUD_EMAIL_QUEUE', JSON.stringify(q));
-    asegurarTriggerCorreoSolicitud();
-  } catch(e) {
-    notificarSolicitudNueva(sol); // respaldo sincrono si la cola falla
-  }
-}
-function asegurarTriggerCorreoSolicitud() {
-  try {
-    var triggers = ScriptApp.getProjectTriggers();
-    for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].getHandlerFunction() === 'procesarColaCorreoSolicitud') return;
-    }
-    ScriptApp.newTrigger('procesarColaCorreoSolicitud').timeBased().everyMinutes(1).create();
+    ScriptApp.getProjectTriggers().forEach(function(t) {
+      if (t.getHandlerFunction() === 'procesarColaCorreoSolicitud') { ScriptApp.deleteTrigger(t); n++; }
+    });
+    PropertiesService.getScriptProperties().deleteProperty('SOLICITUD_EMAIL_QUEUE');
   } catch(e) {}
-}
-function procesarColaCorreoSolicitud() {
-  try {
-    var props = PropertiesService.getScriptProperties();
-    var q = [];
-    try { q = JSON.parse(props.getProperty('SOLICITUD_EMAIL_QUEUE') || '[]'); } catch(e) { q = []; }
-    if (!q.length) return;
-    var pendientes = [];
-    for (var i = 0; i < q.length; i++) {
-      try { notificarSolicitudNueva(q[i]); }
-      catch(e) { pendientes.push(q[i]); }
-    }
-    props.setProperty('SOLICITUD_EMAIL_QUEUE', JSON.stringify(pendientes));
-  } catch(e) {}
+  return n;
 }
 
 // Convierte una solicitud aprobada en una ORDEN real con pago confirmado.

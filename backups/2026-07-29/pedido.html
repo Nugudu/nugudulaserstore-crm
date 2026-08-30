@@ -966,16 +966,10 @@ function compartirProducto(sku){
   var nom=v?v.nombre:sku;
   var precio=v?v.precio:0;
   var url=window.location.href.split('?')[0]+'?p='+encodeURIComponent(sku);
-  // Texto formateado con la info del producto (sin URL separada para evitar duplicado)
-  var txt="\uD83C\uDDFA Nugudú Store\n\n"+esc(nom)+" — $"+precio.toFixed(2)+"\n\n"+url;
-  // Detectar iOS/Safari: el Web Share API con archivos mezcla el path interno
-  // del archivo temporal con la URL, generando enlaces rotos.
-  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  var isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  var shareConFoto=!isIOS&&!isSafari;
+  var txt=esc(nom)+' — $'+precio.toFixed(2)+'\n\n'+url;
   cargarImagenParaCompartir(candidatosFoto(sku,nom),function(archivo){
     var data={title:nom,text:txt};
-    if(shareConFoto&&archivo&&navigator.canShare&&navigator.share&&navigator.canShare({files:[archivo]})){
+    if(archivo&&navigator.canShare&&navigator.share&&navigator.canShare({files:[archivo]})){
       data.files=[archivo];
     }
     if(!navigator.share){copiarEnlace(url);mostrarAvisoLink('Enlace copiado ✓');return;}

@@ -597,11 +597,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           </div>
         </label>
       </div>
-    </div>
-
-    <div id="email-card-wrap">
-      <div class="card">
-        <div class="card-ttl">Recibir comprobante</div>
+      <div id="email-card-wrap" style="display:none">
+        <hr style="margin:14px 0 0;border:none;border-top:1px solid var(--border)">
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin:14px 0 8px">Recibir comprobante</div>
         <div class="fg"><label>Tu correo electrónico</label><input type="email" id="f-email" placeholder="correo@ejemplo.com" autocomplete="email"></div>
         <div class="hint">Lo usaremos para enviarte la confirmación de tu pedido registrado.</div>
       </div>
@@ -628,6 +626,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 
   <!-- P4: Datos bancarios (solo para transferencia) -->
   <div id="p4" style="display:none">
+    <div style="text-align:right;padding:6px 0 0"><button class="btn-exit-top" onclick="salir()">Salir ×</button></div>
     <div class="card">
       <div class="card-ttl">Datos para transferencia</div>
       <div class="bc-card">
@@ -682,10 +681,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="orden-mini" id="orden-mini">
       <div class="om-ttl">Detalle de tu pedido</div>
       <div id="om-contenido"></div>
+      <!-- Código personal del cliente -->
+      <div id="ex-codigo-cliente" style="display:none"></div>
     </div>
-
-    <!-- Código personal del cliente (solo primer pedido) -->
-    <div id="ex-codigo-cliente" style="display:none"></div>
 
     <!-- Información de pago (cambia según método) -->
     <div id="ex-pago-info"></div>
@@ -810,6 +808,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="ov-step" id="ov-step-1"><span class="ov-dot"></span>Confirmando tu pedido…</div>
     <div class="ov-step" id="ov-step-2"><span class="ov-dot"></span>Procesando pago…</div>
     <div class="ov-step" id="ov-step-3"><span class="ov-dot"></span>Redirigiendo a Wompi…</div>
+  </div>
+  <div class="ov-steps" id="ov-steps-t" style="display:none">
+    <div class="ov-step" id="ov-tstep-1"><span class="ov-dot"></span>Verificando datos…</div>
+    <div class="ov-step" id="ov-tstep-2"><span class="ov-dot"></span>Registrando solicitud…</div>
+    <div class="ov-step" id="ov-tstep-3"><span class="ov-dot"></span>Preparando comprobante…</div>
   </div>
 </div>
 
@@ -2021,28 +2024,37 @@ function confirmarPedido(){
   // Texto del overlay según método: transferencia registra una SOLICITUD,
   // tarjeta confirma la orden antes de redirigir a Wompi.
   if(ov){var ovP=ov.querySelector('p');if(ovP)ovP.textContent=_metodoPago==='tarjeta'?'Confirmando tu pedido…':'Registrando tu solicitud…';}
-  // Animación de 3 pasos para pago con tarjeta
+  // Animación de 3 pasos según método de pago
   var stepTimer=null;
   function ovMostrarPasos(){
-    var stepsEl=document.getElementById('ov-steps');
+    var isTransfer=_metodoPago==='transferencia';
+    var stepsEl=document.getElementById(isTransfer?'ov-steps-t':'ov-steps');
+    var otherEl=document.getElementById(isTransfer?'ov-steps':'ov-steps-t');
     var tit=document.getElementById('ov-titulo');
     var sub=document.getElementById('ov-sub');
+    if(otherEl)otherEl.style.display='none';
     if(!stepsEl)return;
     stepsEl.style.display='flex';
     if(tit)tit.style.display='none';
-    if(sub)sub.style.display='none';
+    if(sub){sub.textContent=isTransfer?'Esto puede tomar unos segundos':'Un momento, por favor';sub.style.display='block';}
     marcarPaso(1);
   }
   function marcarPaso(n){
+    var prefix=_metodoPago==='transferencia'?'ov-tstep-':'ov-step-';
     for(var i=1;i<=3;i++){
-      var el=document.getElementById('ov-step-'+i);
+      var el=document.getElementById(prefix+i);
       if(!el)continue;
       el.classList.remove('active','done');
       if(i<n)el.classList.add('done');
       else if(i===n)el.classList.add('active');
     }
   }
-  if(_metodoPago==='tarjeta')ovMostrarPasos();
+  ovMostrarPasos();
+  // Avance de pasos simulado para transferencia
+  if(_metodoPago==='transferencia'){
+    setTimeout(function(){marcarPaso(2);},1500);
+    setTimeout(function(){marcarPaso(3);},3500);
+  }
 
   var payload={
     action:_metodoPago==='tarjeta'?'pedidoWeb':'solicitudWeb',token:API_TOKEN,nombre:nom,contacto:tel,
@@ -2151,10 +2163,10 @@ function mostrarExito(){
     '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':'Transferencia bancaria')+'</span></div>';
   document.getElementById('orden-mini').style.display='block';
 
-  // Mostrar código personal solo si es pedido nuevo (no solicitud) y tiene código
+  // Mostrar código personal si tiene código (ambos métodos de pago)
   var _codeEl=document.getElementById('ex-codigo-cliente');
   if(_codeEl){
-    if(!esSol && o.codigo_cliente){
+    if(o.codigo_cliente){
       _codeEl.innerHTML='<div style="background:#f8f5ff;border:1.5px dashed #2D2460;border-radius:10px;padding:14px 18px;margin-top:16px;text-align:center"><div style="font-size:12px;color:var(--muted);margin-bottom:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="#caa24a" style="vertical-align:middle;margin-right:4px"><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.5L12 17.8 6.1 20.1l1.2-6.5L2.5 9l6.6-.9z"/></svg>Tu código personal es</div><div style="font-size:28px;font-weight:700;color:var(--navy);letter-spacing:4px">'+esc(o.codigo_cliente)+'</div><div style="font-size:11px;color:var(--muted);margin-top:6px">Guardalo para consultar tus pedidos después</div></div>';
       _codeEl.style.display='block';
     }else{

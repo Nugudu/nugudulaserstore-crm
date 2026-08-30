@@ -2234,16 +2234,28 @@ function mostrarDetalleOrdenWompiExito(){
   mini.style.display='block';
 }
 
-// Observador: muestra el código cuando s-exito carga el pago (Wompi o transferencia),
-// sin modificar mostrarExito ni el IIFE de Retorno Wompi.
+// Observador: muestra el código y el detalle del pedido cuando s-exito carga
+// el pago (Wompi o transferencia), sin modificar mostrarExito ni el IIFE de
+// Retorno Wompi. El retorno oculta #orden-mini en su mostrarExito; este
+// observador lo repuebla y lo re-muestra siempre que el pago no esté verificando.
+// También guarda la sesión para que refrescar mantenga s-exito.
 (function(){
   var el=document.getElementById('ex-pago-info');
   if(!el)return;
   var obs=new MutationObserver(function(){
     var txt=el.innerHTML||'';
     if(/verificando/i.test(txt)) return;
+    // Restaurar _ultimaOrden desde sessionStorage si el IIFE limpió la sesión
+    if(!_ultimaOrden){
+      try{
+        var raw=sessionStorage.getItem('ngd_ultimaOrden_wompi');
+        if(raw) _ultimaOrden=JSON.parse(raw);
+      }catch(e){}
+    }
     mostrarCodigoClienteExito();
-    if(/verificado/i.test(txt)) mostrarDetalleOrdenWompiExito();
+    mostrarDetalleOrdenWompiExito();
+    // Guardar sesión para que refrescar mantenga s-exito
+    try{sessionStorage.setItem(SESSION_KEY,JSON.stringify({screen:'s-exito',paso:0,cli:_cli,dirs:_dirs,ultimaOrden:_ultimaOrden,carrito:_carrito}));}catch(e){}
   });
   obs.observe(el,{childList:true,subtree:true,characterData:true});
 })();

@@ -542,7 +542,8 @@ function buscarClienteGAS(tel, orden) {
         cantidad:      o.cantidad     || 1,
         precio:        o.precio       || 0,
         total:         o.total        || 0,
-        pendientePago: o.pendientePago || false
+        pendientePago: o.pendientePago || false,
+        esSolicitud:   o.esSolicitud || false
       };
     });
     return {

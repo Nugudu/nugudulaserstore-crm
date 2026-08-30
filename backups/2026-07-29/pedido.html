@@ -86,7 +86,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .phone-row button{width:100%;box-sizing:border-box;padding:16px 15px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(45,36,96,.22);transition:transform .18s ease,box-shadow .18s ease,background .15s}
 .phone-row button:hover{background:#241d52}
 .phone-row button:active{transform:scale(.97);box-shadow:0 2px 6px rgba(45,36,96,.28)}
-.btn-skip{width:100%;box-sizing:border-box;padding:16px;background:#eeecf9;color:var(--navy);border:1.5px solid var(--navy);border-radius:999px;font-size:17px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 4px 14px rgba(45,36,96,.12);transition:transform .18s ease,background .15s}
+.btn-skip{width:100%;box-sizing:border-box;padding:16px;background:#eeecf9;color:var(--navy);border:none;border-radius:999px;font-size:17px;font-weight:700;cursor:pointer;margin-top:6px;box-shadow:0 4px 14px rgba(45,36,96,.12);transition:transform .18s ease,background .15s}
 .btn-skip:hover{background:#e2ddf7}
 .btn-skip:active{transform:scale(.97)}
 .ce-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
@@ -249,6 +249,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ot-footer{margin-top:6px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
 .ot-entrega{font-size:12px;color:var(--green);font-weight:600}
 .ot-pend{font-size:10px;font-weight:600;background:#fef6e4;color:var(--amber);padding:2px 8px;border-radius:10px}
+.ot-pend-verif{display:inline-block;margin-top:8px;background:#fff7e6;color:#92600a;border:1px solid #f0d28a;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700}
 .btn-accion-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .btn-accion{padding:13px 8px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border:none;transition:all .18s ease;text-align:center}
 .btn-accion.primary{background:var(--navy);color:#fff}
@@ -450,7 +451,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <button class="btn-main" onclick="buscarTel(this)" style="font-size:18px;padding:16px;font-weight:700">Buscar</button>
         <div id="search-spin" style="display:none;padding:8px 0 0;text-align:center"><div style="width:20px;height:20px;border:2px solid #e4e1ee;border-top-color:#2D2460;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div></div>
-        <button class="btn-soft" onclick="cancelarConsulta()">← Volver</button>
+        <button class="btn-soft" style="width:100%;padding:13px;margin-top:14px;font-size:15px;font-weight:700" onclick="cancelarConsulta()">← Volver</button>
       </div>
     </div>
   </div>
@@ -483,7 +484,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
   <div class="steps" id="steps">
     <div class="step" id="step1" onclick="irAPaso(1)"><div class="step-d act" id="sd1">1</div><div class="step-l act" id="sl1">Producto</div></div>
     <div class="step-line" id="sl-1"></div>
-    <div class="step" id="step2" onclick="irAPaso(2)"><div class="step-d" id="sd2">2</div><div class="step-l" id="sl2">Mis datos</div></div>
+    <div class="step" id="step2" onclick="irAPaso(2)"><div class="step-d" id="sd2">2</div><div class="step-l" id="sl2">Datos</div></div>
     <div class="step-line" id="sl-2"></div>
     <div class="step" id="step3" onclick="irAPaso(3)"><div class="step-d" id="sd3">3</div><div class="step-l" id="sl3">Pago</div></div>
     <div class="step-line" id="sl-3"></div>
@@ -620,7 +621,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     </div>
 
     <button class="btn-main" id="btn-conf" onclick="confirmarPedido()">Continuar →</button>
-    <button class="btn-sec" onclick="editarDatosPaso2()">← Editar mis datos</button>
+      <button class="btn-sec" onclick="editarDatosPaso2()">← Editar datos</button>
   </div>
 
   <!-- P4: Datos bancarios (solo para transferencia) -->
@@ -1147,6 +1148,13 @@ function mostrarPantallaCliente(d){
   function renderOrden(o){
     var est=parseInt(o.estado)||0;
     var prods=(o.productos||[]).join(', ')||'—';
+    if(o.pendientePago){
+      return '<div class="orden-track">'+
+        '<div class="ot-header"><div class="ot-num">'+o.orden+'</div><div class="ot-fecha">'+o.fecha+'</div></div>'+
+        '<div class="ot-prod">'+prods+'<span>· '+o.cantidad+' und · $'+(o.precio*o.cantidad).toFixed(2)+'</span></div>'+
+        '<div class="ot-pend-verif">Pendiente de verificación de pago</div>'+
+        '</div>';
+    }
     var progreso='<div class="ot-progress">';
     ESTADOS_CLI.forEach(function(lbl,i){
       var dc=i<est?'done':i===est?'act':'';

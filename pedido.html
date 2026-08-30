@@ -159,6 +159,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .fg label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
 .fg input,.fg select,.fg textarea{width:100%;padding:12px 18px;border:1.5px solid var(--border);border-radius:999px;font-size:14px;color:var(--text);background:#fff;outline:none;transition:border .15s,box-shadow .18s;box-shadow:0 2px 10px rgba(45,36,96,.06)}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--navy)}
+.fg select{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;padding-right:44px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6585' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 18px center}
+.fg select option{color:#222}
 .fg .hint{font-size:11px;color:var(--hint);margin-top:4px;display:block}
 .fg textarea{resize:none;height:68px}
 .dir-opt{border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;cursor:pointer;margin-bottom:7px;transition:border .15s;background:#fff;position:relative}
@@ -812,7 +814,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 </div>
 
 <script>
-var GAS='https://script.google.com/macros/s/AKfycbzV5eZd2kAcmVr5c4i-RAs64cyuWToDnCOdc7YS4_Xd1EntKw6yXf8UCfq1nJpellDl/exec';
+var GAS='https://script.google.com/macros/s/AKfycbz7VOr7_Cg_cXE4ynxKtFEhR1-SsCPDcYmyxYU1W9ewPvMk6VKC50zX1M2RjJEGY6FL/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
@@ -894,7 +896,15 @@ function restaurarSesion(){
       if(!_catCargado){_cat=fallback();_catCargado=true;}
       renderCat();
       showScreen('s-form');
-      setPaso(r.paso&&r.paso>0?r.paso:1);
+      // (Re)poblar campos del cliente y direcciones para que el resumen y los
+      // inputs no queden vacíos al refrescar la página.
+      if(_cli){document.getElementById('f-nom').value=_cli.nombre||'';document.getElementById('f-tel').value=_cli.contacto||'';document.getElementById('f-nac').value=_cli.fechaNac||'';}
+      if(_dirs&&_dirs.length>0){renderDirsPrev(true);elDir(0);}else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
+      var paso=r.paso&&r.paso>0?r.paso:1;
+      setPaso(paso);
+      var b=document.getElementById('btn-conf');if(b){b.disabled=false;b.textContent='Continuar →';}
+      var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='none';
+      if(paso>=3&&_carrito.length>0){renderResumen();}
       return true;
     }
     if(r.screen==='s-exito'&&r.ultimaOrden){
@@ -1936,6 +1946,10 @@ function selComprobanteVia(v){
 }
 
 function goP3(){
+  // Limpia cualquier estado previo de "Procesando…" para que el botón siempre
+  // llegue activo y listo, sin quedar pegado si venimos de un confirmarPedido.
+  var b=document.getElementById('btn-conf'); if(b){b.disabled=false;b.textContent='Continuar →';}
+  var ov=document.getElementById('overlay-enviando'); if(ov)ov.style.display='none';
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
@@ -1946,6 +1960,15 @@ function goP3(){
   if(!dir){showErr('form','Ingresa tu dirección de entrega.');return;}
   if(!zona){showErr('form','Selecciona la zona de entrega.');return;}
   hideErr('form');
+  renderResumen();
+  setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'auto'});
+}
+function renderResumen(){
+  var nom=(document.getElementById('f-nom').value||'').trim();
+  var tel=(document.getElementById('f-tel').value||'').trim();
+  var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
+  var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
+  var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
@@ -1957,7 +1980,6 @@ function goP3(){
     (recargo?rf('Cargo por zona de envío','+$'+recargo.toFixed(2)):'')+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
-  setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'auto'});
 }
 function rf(l,v){return '<div class="res-fila"><span class="res-lbl">'+l+'</span><span class="res-val">'+v+'</span></div>';}
 

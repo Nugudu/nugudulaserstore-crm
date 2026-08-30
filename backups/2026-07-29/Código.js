@@ -885,9 +885,19 @@ function getHojaSolicitudes() {
 }
 
 function leerSolicitudes() {
+  // Cache 30s (igual que leerOrdenes) para que la consulta de tracking sea rapida.
+  var props = PropertiesService.getScriptProperties();
+  var cached = props.getProperty('SOLICITUDES_CACHE');
+  var cacheExp = parseInt(props.getProperty('SOLICITUDES_CACHE_EXP') || '0');
+  if (cached && Date.now() < cacheExp) {
+    try { return JSON.parse(cached); } catch(e) {}
+  }
   var sheet   = getHojaSolicitudes();
   var lastRow = sheet.getLastRow();
-  if (lastRow < 1) return [];
+  if (lastRow < 1) {
+    try { props.setProperty('SOLICITUDES_CACHE', '[]'); props.setProperty('SOLICITUDES_CACHE_EXP', String(Date.now() + 30000)); } catch(e) {}
+    return [];
+  }
   var values  = sheet.getRange(1, 1, lastRow, 1).getValues();
   var lista   = [];
   for (var i = 0; i < values.length; i++) {
@@ -896,8 +906,9 @@ function leerSolicitudes() {
     try {
       var s = JSON.parse(raw);
       if (s && typeof s === 'object' && !Array.isArray(s)) lista.push(s);
-    } catch(e) { /* fila invalida - se ignora, no rompe el resto */ }
+    } catch(e) { /* fila invalida - se ignora, no rompe el restro */ }
   }
+  try { props.setProperty('SOLICITUDES_CACHE', JSON.stringify(lista)); props.setProperty('SOLICITUDES_CACHE_EXP', String(Date.now() + 30000)); } catch(e) {}
   return lista;
 }
 
@@ -907,11 +918,13 @@ function guardarSolicitudes(lista) {
   if (!lista || !lista.length) return;
   var filas = lista.map(function(s) { return [JSON.stringify(s)]; });
   sheet.getRange(1, 1, filas.length, 1).setValues(filas);
-  // Invalidar cache de leerOrdenes por si se confirmó una solicitud (= nueva ORD-)
+  // Invalidar cache de leerOrdenes y leerSolicitudes por si cambió el historial
   try {
     var props = PropertiesService.getScriptProperties();
     props.deleteProperty('ORDENES_CACHE');
     props.deleteProperty('ORDENES_CACHE_EXP');
+    props.deleteProperty('SOLICITUDES_CACHE');
+    props.deleteProperty('SOLICITUDES_CACHE_EXP');
   } catch(e) {}
 }
 
@@ -991,9 +1004,10 @@ function guardarSolicitudWeb(payload) {
     // Append directo a la hoja (misma optimización que guardarPedidoWeb).
     var _hojaS = getHojaSolicitudes();
     _hojaS.appendRow([JSON.stringify(solicitud)]);
-    // Correo inmediato al llegar la solicitud (igual que el de tarjeta), en su
-    // propio try/catch para que nunca bloquee el registro ni el éxito del cliente.
-    notificarSolicitudNueva(solicitud);
+    // Correo en segundo plano (cola + trigger) para que el registro responda
+    // al instante y no se bloquee esperando a GmailApp. Nunca se pierde: si la
+    // cola falla, se manda sincrono como respaldo.
+    encolarCorreoSolicitud(solicitud);
     return { ok: true, ref: ref, solicitud: ref, codigo_cliente: _codigoCliente || '' };
   } catch(err) { return { ok: false, error: err.message }; }
 }
@@ -1023,6 +1037,46 @@ function notificarSolicitudNueva(sol) {
   } catch (err) {
     Logger.log('notificarSolicitudNueva: ' + err.message);
   }
+}
+
+// ── COLA DE CORREO DE SOLICITUDES (segundo plano) ──
+// guardarSolicitudWeb encola en lugar de mandar el correo en linea, para que
+// el registro de la solicitud le responda al cliente al instante. Un trigger
+// cada 1 minuto vacia la cola mandando los correos (con reintento).
+function encolarCorreoSolicitud(sol) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var q = [];
+    try { q = JSON.parse(props.getProperty('SOLICITUD_EMAIL_QUEUE') || '[]'); } catch(e) {}
+    q.push(sol);
+    props.setProperty('SOLICITUD_EMAIL_QUEUE', JSON.stringify(q));
+    asegurarTriggerCorreoSolicitud();
+  } catch(e) {
+    notificarSolicitudNueva(sol); // respaldo sincrono si la cola falla
+  }
+}
+function asegurarTriggerCorreoSolicitud() {
+  try {
+    var triggers = ScriptApp.getProjectTriggers();
+    for (var i = 0; i < triggers.length; i++) {
+      if (triggers[i].getHandlerFunction() === 'procesarColaCorreoSolicitud') return;
+    }
+    ScriptApp.newTrigger('procesarColaCorreoSolicitud').timeBased().everyMinutes(1).create();
+  } catch(e) {}
+}
+function procesarColaCorreoSolicitud() {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var q = [];
+    try { q = JSON.parse(props.getProperty('SOLICITUD_EMAIL_QUEUE') || '[]'); } catch(e) { q = []; }
+    if (!q.length) return;
+    var pendientes = [];
+    for (var i = 0; i < q.length; i++) {
+      try { notificarSolicitudNueva(q[i]); }
+      catch(e) { pendientes.push(q[i]); }
+    }
+    props.setProperty('SOLICITUD_EMAIL_QUEUE', JSON.stringify(pendientes));
+  } catch(e) {}
 }
 
 // Convierte una solicitud aprobada en una ORDEN real con pago confirmado.

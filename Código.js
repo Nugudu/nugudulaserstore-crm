@@ -1166,17 +1166,14 @@ function descartarSolicitudWeb(payload) {
   var ref = String(payload.ref || '').trim().toUpperCase();
   if (!ref) throw new Error('Falta la referencia de la solicitud.');
   var solicitudes = leerSolicitudes();
+  var idx = -1;
   for (var i = 0; i < solicitudes.length; i++) {
-    if (String(solicitudes[i].ref).trim().toUpperCase() === ref) {
-      if (solicitudes[i].estadoSolicitud === 'pendiente') {
-        solicitudes[i].estadoSolicitud = 'descartada';
-        solicitudes[i].descartadaEn = new Date().toISOString();
-        guardarSolicitudes(solicitudes);
-      }
-      return { ok: true };
-    }
+    if (String(solicitudes[i].ref).trim().toUpperCase() === ref) { idx = i; break; }
   }
-  throw new Error('Solicitud no encontrada: ' + ref);
+  if (idx < 0) throw new Error('Solicitud no encontrada: ' + ref);
+  solicitudes.splice(idx, 1);
+  guardarSolicitudes(solicitudes);
+  return { ok: true };
 }
 
 // Busca una orden por su numero ORD-XXXXX y devuelve el objeto completo.

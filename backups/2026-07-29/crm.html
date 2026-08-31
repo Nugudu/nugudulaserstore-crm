@@ -3506,9 +3506,10 @@ function _cdpBuscarEjecutar(q){
       var nom = o.nombre || '';
       if(!tel || (tel.indexOf(byTel) < 0 && nom.toLowerCase().indexOf(q) < 0)) return;
       if(!clientes[tel]) clientes[tel] = { contacto: o.contacto||tel, nombre: nom, eventos: [] };
-      var yaTieneCompra = clientes[tel].eventos.some(function(e){ return e.evento==='purchase' && e.data && e.data.orden===o.orden; });
-      if(!yaTieneCompra && o.orden){
-        clientes[tel].eventos.push({ ts: o.fecha||'', contacto: o.contacto||tel, evento: 'purchase', data: { orden: o.orden, total: o.total||0 } });
+      var numOrden = o.orden || o.ref || '';
+      var yaTieneCompra = clientes[tel].eventos.some(function(e){ return e.evento==='purchase' && e.data && e.data.orden===numOrden; });
+      if(!yaTieneCompra && numOrden){
+        clientes[tel].eventos.push({ ts: o.fecha||'', contacto: o.contacto||tel, evento: 'purchase', data: { orden: numOrden, total: o.total||0 } });
       }
     });
   }

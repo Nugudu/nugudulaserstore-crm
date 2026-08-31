@@ -1595,6 +1595,8 @@ function renderSolicitudes(lista){
   if (!el) return;
   var pendientes = lista.filter(function(s){ return s.estadoSolicitud==='pendiente'; });
   var resto      = lista.filter(function(s){ return s.estadoSolicitud!=='pendiente'; });
+  pendientes.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+  resto.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
   var badge = document.getElementById('badge-solicitudes');
   if (badge) {
     if (pendientes.length > 0) { badge.style.display='inline-block'; badge.textContent = pendientes.length; }
@@ -2164,6 +2166,7 @@ function renderOrdenes(){
   if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
   if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(zona) d=d.filter(function(o){return o.zona===zona;});
+  d.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
   // El auto-sync corre cada 30s y llamaba a renderOrdenes() sin condición,
   // reconstruyendo la tabla completa (y recreando cada miniatura de foto de
   // cero) aunque no hubiera ningún cambio real — eso causaba el parpadeo.

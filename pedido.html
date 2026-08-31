@@ -2757,6 +2757,8 @@ function enviarDatosPorCorreo(orden){
     document.querySelector('#s-exito .btn-outline-teal').style.display='';
     document.querySelector('#s-exito .btn-sec').style.display='';
     if(orden) notificarAdmin(orden);
+    try{var _u=JSON.parse(sessionStorage.getItem('ngd_ultimaOrden_wompi')||'null');if(_u&&_u.tel)setContacto(_u.tel);}catch(e){}
+    track('purchase',{orden:orden,total:0,items:0});
   }
   function mostrarError(msg){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';

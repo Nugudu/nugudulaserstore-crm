@@ -2035,6 +2035,7 @@ function confirmarPedido(){
 
   if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}
   hideErr('form');
+  setContacto(tel);
 
   var btn=document.getElementById('btn-conf');
   btn.textContent=_metodoPago==='tarjeta'?'Redirigiendo a Wompi…':'Procesando…';
@@ -2094,7 +2095,7 @@ function confirmarPedido(){
         return;
       }
       _ultimaOrden={
-        orden:_metodoPago==='tarjeta'?d.orden:(d.ref||''),nombre:nom,tel:tel,email:email,
+        orden:_metodoPago==='tarjeta'?d.orden:(d.ref||''),nombre:nom,tel:tel,contacto:tel,email:email,
         items:_carrito.slice(),total:total,metodoPago:_metodoPago,
         _esSolicitud:_metodoPago==='transferencia',
         codigo_cliente:d.codigo_cliente||''
@@ -2211,7 +2212,7 @@ function mostrarExito(){
   guardarSesion('s-exito',0);
   showScreen('s-exito');window.scrollTo({top:0,behavior:'auto'});
   if(o.orden&&!o._esSolicitud&&!o._notificado){o._notificado=true;notificarAdmin(o.orden);}
-  if(o.orden) setContacto(o.contacto||'');
+  if(o.orden) setContacto(o.tel||o.contacto||'');
   track('purchase',{orden:o.orden,total:o.total,items:(o.items||[]).length});
 }
 

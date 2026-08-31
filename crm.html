@@ -2682,8 +2682,12 @@ function abrirVentanaFicha(o, mapLink){
   var origin = (location.origin && location.origin !== 'null') ? location.origin : '';
   var fichaBase = origin ? origin + '/' : '';
   var prodsHtml = '';
-  var vistos = {};
+  var cantidades = {};
   (o.productos || []).forEach(function(sku){
+    cantidades[sku] = (cantidades[sku] || 0) + 1;
+  });
+  var vistos = {};
+  Object.keys(cantidades).forEach(function(sku){
     if (vistos[sku]) return; vistos[sku] = true;
     var parts = sku.split('-');
     var sufijo = parts[parts.length - 1];
@@ -2692,10 +2696,11 @@ function abrirVentanaFicha(o, mapLink){
     ['png','jpg','webp'].forEach(function(e){ cands.push(fichaBase + 'imagenes/' + sku + '.' + e); });
     var slugDiseno = parts.length > 1 ? DISENO_SLUG[parts[1]] : null;
     if (slugDiseno) ['png','jpg','webp'].forEach(function(e){ cands.push(fichaBase + 'imagenes/' + slugDiseno + '.' + e); });
+    var cant = cantidades[sku];
     prodsHtml +=
       '<div class="prod">' +
         '<img src="' + cands[0] + '" data-candidatos="' + JSON.stringify(cands).replace(/'/g, '&#39;') + '" data-idx="0" onerror="fb(this)" alt="">' +
-        '<div><div class="sku">' + esc(sku) + '</div>' + (color ? '<div class="col">' + esc(color.nombre) + '</div>' : '') + '</div>' +
+        '<div><div class="sku">' + esc(sku) + '</div>' + (color ? '<div class="col">' + esc(color.nombre) + (cant > 1 ? ' · x' + cant : '') + '</div>' : '') + '</div>' +
       '</div>';
   });
 

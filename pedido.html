@@ -1999,7 +1999,7 @@ function renderResumen(){
   }).join('');
   document.getElementById('resumen').innerHTML=
     prodsHtml+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
-    (recargo?rf('Cargo por zona de envío','+$'+recargo.toFixed(2)):'')+
+    (recargo?rf('Otra zona','+$'+recargo.toFixed(2)):'')+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
 }
@@ -2178,6 +2178,7 @@ function mostrarExito(){
     o.items.map(function(it){
       return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
     }).join('')+
+    (o.recargoEnvio>0?'<div class="om-fila"><span>Otra zona</span><span>+$'+Number(o.recargoEnvio).toFixed(2)+'</span></div>':'')+
     '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
     '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
     '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':'Transferencia bancaria')+'</span></div>';
@@ -2248,6 +2249,7 @@ function mostrarDetalleOrdenWompiExito(){
   el.innerHTML=o.items.map(function(it){
     return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
   }).join('')+
+  (o.recargoEnvio>0?'<div class="om-fila"><span>Otra zona</span><span>+$'+Number(o.recargoEnvio).toFixed(2)+'</span></div>':'')+
   '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
   '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
   '<div class="om-fila"><span>Método</span><span>Tarjeta (Wompi)</span></div>';

@@ -1837,7 +1837,7 @@ function actualizarTotalConEnvio(){
   var sub=totalCarrito();
   var zSel=document.getElementById('f-zona').value;
   var zona=zSel==='otra'?(document.getElementById('f-zonaot').value||'').trim():zSel;
-  var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
+  var recargo=(esZonaEspecial(zona)||zSel==='otra')?RECARGO_ENVIO:0;
   if(recargo>0){
     el.innerHTML='$'+sub.toFixed(2)+' <span style="font-size:12px;font-weight:400;color:var(--muted)">+ $'+recargo.toFixed(2)+' domicilio</span> = <strong style="color:var(--navy)">$'+(sub+recargo).toFixed(2)+'</strong>';
   }else{
@@ -1992,7 +1992,7 @@ function renderResumen(){
   var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
-  var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
+  var recargo=(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
   var prodsHtml=_carrito.map(function(it){
     return rf(it.diseno+' · '+it.color,'x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2));
@@ -2030,7 +2030,7 @@ function confirmarPedido(){
     if(o[c]){var pos=o[c].indexOf(k);if(pos>=0){o[c].splice(pos,1);guardarDirsOcultas(o);}}
   })();
   var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
-  var recargo=esZonaEspecial(zona)?RECARGO_ENVIO:0;
+  var recargo=(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
 
   if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}

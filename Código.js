@@ -1020,12 +1020,14 @@ function notificarSolicitudNueva(sol) {
   try {
     var productos = (sol.productos || []).join(', ');
     var total     = sol.total != null ? sol.total : 0;
+    var codCli    = obtenerCodigoCliente(sol.contacto) || sol.codigo_cliente || '-';
     var asunto = 'Nueva solicitud para verificación de pago (transferencia) - ' + sol.ref;
     var cuerpo =
       'Se registro una solicitud de transferencia en Nugudu Store (pago pendiente de verificar).\n\n' +
       'Referencia: ' + sol.ref + '\n' +
       'Cliente: '    + (sol.nombre    || '-') + '\n' +
       'Contacto: '   + (sol.contacto  || '-') + '\n' +
+      'Código cliente: ' + codCli + '\n' +
       'Direccion: '  + (sol.direccion || '-') + '\n' +
       'Zona: '       + (sol.zona      || '-') + '\n' +
       'Producto(s): '+ (productos     || '-') + '\n' +
@@ -1259,12 +1261,14 @@ function notificarPedidoNuevo(orden) {
   try {
     var productos = (orden.productos || []).join(', ');
     var total     = orden.total != null ? orden.total : (orden.precio || 0) * (orden.cantidad || 1);
+    var codCli    = obtenerCodigoCliente(orden.contacto) || orden.codigo_cliente || '-';
     var asunto = 'Nuevo pedido - ' + orden.orden;
     var cuerpo =
       'Ha llegado un nuevo pedido a Nugudu Store.\n\n' +
       'Orden: '      + orden.orden + '\n' +
       'Cliente: '    + (orden.nombre   || '-') + '\n' +
       'Contacto: '   + (orden.contacto || '-') + '\n' +
+      'Código cliente: ' + codCli + '\n' +
       'Direccion: '  + (orden.direccion|| '-') + '\n' +
       'Zona: '       + (orden.zona     || '-') + '\n' +
       'Producto(s): '+ (productos      || '-') + '\n' +
@@ -1280,6 +1284,7 @@ function notificarPedidoNuevo(orden) {
         '<b>Orden:</b> ' + escHtml(orden.orden) + '<br>' +
         '<b>Cliente:</b> ' + escHtml(orden.nombre || '-') + '<br>' +
         '<b>Contacto:</b> ' + escHtml(orden.contacto || '-') + '<br>' +
+        '<b>Código cliente:</b> ' + escHtml(codCli) + '<br>' +
         '<b>Direccion:</b> ' + escHtml(orden.direccion || '-') + '<br>' +
         '<b>Zona:</b> ' + escHtml(orden.zona || '-') + '<br>' +
         '<b>Producto(s):</b> ' + escHtml(productos || '-') + '<br>' +

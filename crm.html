@@ -3478,6 +3478,17 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
 function cdpBuscar(){
   var q = (document.getElementById('cdp-buscar').value || '').trim().toLowerCase();
   if(!q) return;
+  // Si _solicitudes está vacío, cargarlas primero para no perder SOL pendientes
+  if(!_solicitudes.length){
+    gasCall({method:'GET', params:'action=solicitudes'}, function(err, res){
+      if(!err && Array.isArray(res)) _solicitudes = res;
+      _cdpBuscarEjecutar(q);
+    });
+  }else{
+    _cdpBuscarEjecutar(q);
+  }
+}
+function _cdpBuscarEjecutar(q){
   var byTel = q.replace(/\D/g, '');
   var clientes = {};
   _cdpEventos.forEach(function(e){
@@ -3488,8 +3499,8 @@ function cdpBuscar(){
     if(!clientes[tel]) clientes[tel] = { contacto: e.contacto, nombre: nom, eventos: [] };
     clientes[tel].eventos.push(e);
   });
-  // Fallback: buscar en órdenes y solicitudes si no hay eventos CDP para ese teléfono
-  function _agregarDesdeOrdenes(lista, esSolicitud){
+  // Fallback: buscar en órdenes y solicitudes
+  function _agregarDesdeOrdenes(lista){
     lista.forEach(function(o){
       var tel = String(o.contacto||'').replace(/\D/g,'');
       var nom = o.nombre || '';
@@ -3501,8 +3512,8 @@ function cdpBuscar(){
       }
     });
   }
-  _agregarDesdeOrdenes(_ordenes, false);
-  _agregarDesdeOrdenes(_solicitudes, true);
+  _agregarDesdeOrdenes(_ordenes);
+  _agregarDesdeOrdenes(_solicitudes);
   var lista = Object.keys(clientes);
   if(!lista.length){ document.getElementById('cdp-timeline').innerHTML = '<div class="empty"><i class="fa-solid fa-user-xmark"></i><p>No se encontraron clientes con ese criterio.</p></div>'; return; }
   // Traer códigos personales desde PropertiesService (una sola llamada)
@@ -3510,7 +3521,6 @@ function cdpBuscar(){
     body:JSON.stringify({action:'obtenerCodigosLote',token:API_TOKEN,tels:lista})
   }).then(function(r){return r.json();}).then(function(d){
     var codigos=(d&&d.ok)?(d.codigos||{}) : {};
-    // Inyectar código en cada cliente
     lista.forEach(function(tel){
       if(codigos[tel]) clientes[tel].codigo_cliente = codigos[tel];
     });
@@ -3560,7 +3570,7 @@ function cdpRender360(clientes){
       if(e.evento === 'purchase' && e.data) lbl = 'Compra ' + (e.data.orden || '');
       else if(e.evento === 'product_click' && e.data) lbl = 'Vio ' + (e.data.nombre || '');
       else if(e.evento === 'add_to_cart' && e.data) lbl = 'Agregó ' + (e.data.diseno || '') + ' ' + (e.data.color || '');
-      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><i class="fa-solid ' + ico + '" style="color:' + color + ';width:14px;text-align:center;margin-top:2px"></i><div style="flex:1">' + escHtml(lbl) + '</div><div style="color:var(--hint);white-space:nowrap">' + (e.ts ? e.ts.slice(0, 16).replace('T',' ') : '') + '</div></div>';
+      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)"><i class="fa-solid ' + ico + '" style="color:' + color + ';width:14px;text-align:center;margin-top:2px"></i><div style="flex:1">' + escHtml(lbl) + '</div><div style="color:var(--hint);white-space:nowrap;font-size:11px">' + (e.ts ? e.ts.slice(0,10) + ' ' + horaLocal(e.ts) : '') + '</div></div>';
     });
     html += '</div></div>';
   });

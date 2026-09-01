@@ -639,7 +639,7 @@ tbody tr:last-child td{border-bottom:none}
           <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="hoy" onclick="cdpVisitantesFiltro('hoy')" style="border-color:var(--navy);background:var(--navy);color:#fff">Hoy</button>
           <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="semana" onclick="cdpVisitantesFiltro('semana')">Esta semana</button>
           <button class="btn btn-outline btn-sm cdp-v filt" data-periodo="mes" onclick="cdpVisitantesFiltro('mes')">Este mes</button>
-          <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="cdp-v-actualizar">Auto-refresh: 5s</span>
+          <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="cdp-v-actualizar">Auto-refresh: 15s</span>
         </div>
         <div class="g4" id="cdp-v-stats" style="margin-bottom:1.2rem"></div>
         
@@ -3300,7 +3300,7 @@ function cargarCDP(){
     cdpCargarVisitantes();
     return;
   }
-  fetch(GAS+'?action=leerEventos&limite=10000&token='+encodeURIComponent(API_TOKEN))
+  fetch(GAS+'?action=leerEventos&limite=2000&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok) _cdpEventos = d.eventos || [];
@@ -3327,7 +3327,7 @@ function cdpTab(tab){
   if(tab === 'visitantes'){
     cdpCargarVisitantes();
     // Auto-refresh cada5 segundos
-    _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes();},5000);
+    _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes();},15000);
   }
 }
 
@@ -3343,6 +3343,7 @@ function cdpVisitantesFiltro(periodo){
 }
 
 function cdpCargarVisitantes(){
+  document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
   fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){

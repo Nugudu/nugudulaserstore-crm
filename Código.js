@@ -1952,6 +1952,7 @@ function guardarEventos(payload) {
       var lote = filas.splice(0, 50);
       sheet.getRange(sheet.getLastRow() + 1, 1, lote.length, HOJA_EVENTOS_HEADER.length).setValues(lote);
     }
+    CacheService.getScriptCache().remove('ev_rawDatos');
     return { ok: true, escritos: eventos.length };
   } catch (err) {
     return { ok: false, error: err.message };
@@ -1960,10 +1961,20 @@ function guardarEventos(payload) {
 
 function leerEventos(p) {
   try {
-    var sheet = getHojaEventos();
-    var lastRow = sheet.getLastRow();
-    if (lastRow < 2) return { ok: true, eventos: [] };
-    var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+    var cacheKey = 'ev_rawDatos';
+    var cache = CacheService.getScriptCache();
+    var datos = null;
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      try { datos = JSON.parse(cached); } catch(e) { datos = null; }
+    }
+    if (!datos) {
+      var sheet = getHojaEventos();
+      var lastRow = sheet.getLastRow();
+      if (lastRow < 2) return { ok: true, eventos: [] };
+      datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+      cache.put(cacheKey, JSON.stringify(datos), 30);
+    }
     var eventos = [];
     var filtroContacto = (p.contacto || '').replace(/\D/g, '');
     var limite = parseInt(p.limite) || 5000;
@@ -1995,10 +2006,20 @@ function leerEventos(p) {
 // ══════════════════════════════════════════════════════════════════
 function leerVisitantes(p) {
   try {
-    var sheet = getHojaEventos();
-    var lastRow = sheet.getLastRow();
-    if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
-    var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+    var cacheKey = 'ev_rawDatos';
+    var cache = CacheService.getScriptCache();
+    var datos = null;
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      try { datos = JSON.parse(cached); } catch(e) { datos = null; }
+    }
+    if (!datos) {
+      var sheet = getHojaEventos();
+      var lastRow = sheet.getLastRow();
+      if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
+      datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+      cache.put(cacheKey, JSON.stringify(datos), 30);
+    }
     
     var periodo = p.periodo || 'hoy';
     var ahora = new Date();

@@ -1021,7 +1021,6 @@ function notificarSolicitudNueva(sol) {
     var productos = (sol.productos || []).join(', ');
     var total     = sol.total != null ? sol.total : 0;
     var codCli    = obtenerCodigoCliente(sol.contacto) || sol.codigo_cliente || '-';
-    var recargoEnvio = parseFloat(sol.recargoEnvio) || 0;
     var asunto = 'Nueva solicitud para verificación de pago (transferencia) - ' + sol.ref;
     var cuerpo =
       'Se registro una solicitud de transferencia en Nugudu Store (pago pendiente de verificar).\n\n' +
@@ -1031,7 +1030,6 @@ function notificarSolicitudNueva(sol) {
       'Código cliente: ' + codCli + '\n' +
       'Direccion: '  + (sol.direccion || '-') + '\n' +
       'Zona: '       + (sol.zona      || '-') + '\n' +
-      (recargoEnvio > 0 ? 'Recargo envío: $' + recargoEnvio.toFixed(2) + '\n' : '') +
       'Producto(s): '+ (productos     || '-') + '\n' +
       'Cantidad: '   + (sol.cantidad  || 1) + '\n' +
       'Total: $'     + Number(total).toFixed(2) + '\n' +
@@ -1264,7 +1262,6 @@ function notificarPedidoNuevo(orden) {
     var productos = (orden.productos || []).join(', ');
     var total     = orden.total != null ? orden.total : (orden.precio || 0) * (orden.cantidad || 1);
     var codCli    = obtenerCodigoCliente(orden.contacto) || orden.codigo_cliente || '-';
-    var recargoEnvio = parseFloat(orden.recargoEnvio) || 0;
     var asunto = 'Nuevo pedido - ' + orden.orden;
     var cuerpo =
       'Ha llegado un nuevo pedido a Nugudu Store.\n\n' +
@@ -1274,7 +1271,6 @@ function notificarPedidoNuevo(orden) {
       'Código cliente: ' + codCli + '\n' +
       'Direccion: '  + (orden.direccion|| '-') + '\n' +
       'Zona: '       + (orden.zona     || '-') + '\n' +
-      (recargoEnvio > 0 ? 'Recargo envío: $' + recargoEnvio.toFixed(2) + '\n' : '') +
       'Producto(s): '+ (productos      || '-') + '\n' +
       'Cantidad: '   + (orden.cantidad || 1) + '\n' +
       'Total: $'     + Number(total).toFixed(2) + '\n' +
@@ -1291,7 +1287,6 @@ function notificarPedidoNuevo(orden) {
         '<b>Código cliente:</b> ' + escHtml(codCli) + '<br>' +
         '<b>Direccion:</b> ' + escHtml(orden.direccion || '-') + '<br>' +
         '<b>Zona:</b> ' + escHtml(orden.zona || '-') + '<br>' +
-        (recargoEnvio > 0 ? '<b>Recargo envío:</b> $' + recargoEnvio.toFixed(2) + '<br>' : '') +
         '<b>Producto(s):</b> ' + escHtml(productos || '-') + '<br>' +
         '<b>Cantidad:</b> ' + (orden.cantidad || 1) + '<br>' +
         '<b>Total:</b> $' + Number(total).toFixed(2) + '<br>' +
@@ -1755,26 +1750,14 @@ function notificarPagoConfirmado(payload) {
       if (ordenes[i].orden === ordenId) { orden = ordenes[i]; break; }
     }
     if (!orden) return { ok: false, error: 'Orden no encontrada: ' + ordenId };
-    var productos = (orden.productos || []).join(', ');
-    var total     = orden.total != null ? orden.total : (orden.precio || 0) * (orden.cantidad || 1);
-    var codCli    = obtenerCodigoCliente(orden.contacto) || orden.codigo_cliente || '-';
-    var recargoEnvio = parseFloat(orden.recargoEnvio) || 0;
     var asunto = 'Pago confirmado - ' + orden.orden;
     var cuerpo =
       'Pago confirmado para el pedido ' + orden.orden + '\n\n' +
       'Cliente: ' + (orden.nombre   || '-') + '\n' +
       'Contacto: ' + (orden.contacto || '-') + '\n' +
-      'Código cliente: ' + codCli + '\n' +
-      'Direccion: ' + (orden.direccion || '-') + '\n' +
-      'Zona: ' + (orden.zona || '-') + '\n' +
-      (recargoEnvio > 0 ? 'Recargo envío: $' + recargoEnvio.toFixed(2) + '\n' : '') +
-      'Producto(s): ' + (productos || '-') + '\n' +
-      'Cantidad: ' + (orden.cantidad || 1) + '\n' +
-      'Total: $' + Number(total).toFixed(2) + '\n' +
       'Método de pago: ' + (orden.metodoPago || orden.canal || '-') + '\n' +
-      'Canal: ' + (orden.canal || '-') + '\n' +
+      'Total: $' + Number(orden.total || 0).toFixed(2) + '\n' +
       (orden.email ? ('Correo: ' + orden.email + '\n') : '') +
-      (orden.notas ? ('Notas: ' + orden.notas + '\n') : '') +
       '\nRevisa el CRM para mas detalles.';
     MailApp.sendEmail(NOTIFY_EMAIL, asunto, cuerpo);
     return { ok: true };

@@ -1952,7 +1952,10 @@ function guardarEventos(payload) {
       var lote = filas.splice(0, 50);
       sheet.getRange(sheet.getLastRow() + 1, 1, lote.length, HOJA_EVENTOS_HEADER.length).setValues(lote);
     }
-    CacheService.getScriptCache().remove('ev_rawDatos');
+    CacheService.getScriptCache().remove('ev_processed');
+    CacheService.getScriptCache().remove('ev_visit_hoy');
+    CacheService.getScriptCache().remove('ev_visit_semana');
+    CacheService.getScriptCache().remove('ev_visit_mes');
     return { ok: true, escritos: eventos.length };
   } catch (err) {
     return { ok: false, error: err.message };
@@ -1961,41 +1964,49 @@ function guardarEventos(payload) {
 
 function leerEventos(p) {
   try {
-    var cacheKey = 'ev_rawDatos';
     var cache = CacheService.getScriptCache();
-    var datos = null;
+    var cacheKey = 'ev_processed';
+    var eventos = null;
+    // 1) Intentar cache del resultado procesado (pequeño, ~5-50KB)
     var cached = cache.get(cacheKey);
     if (cached) {
-      try { datos = JSON.parse(cached); } catch(e) { datos = null; }
+      try { eventos = JSON.parse(cached); } catch(e) { eventos = null; }
     }
-    if (!datos) {
+    if (!eventos) {
+      // 2) Cache miss: leer Sheet y procesar
       var sheet = getHojaEventos();
       var lastRow = sheet.getLastRow();
       if (lastRow < 2) return { ok: true, eventos: [] };
-      datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
-      try { cache.put(cacheKey, JSON.stringify(datos), 30); } catch(cErr) {}
+      var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
+      eventos = [];
+      for (var i = 0; i < datos.length; i++) {
+        var row = datos[i];
+        var ev = {
+          ts:         String(row[0] || ''),
+          session_id: String(row[1] || ''),
+          contacto:   String(row[2] || ''),
+          evento:     String(row[3] || ''),
+          data:       row[4] || '{}',
+          url_ref:    String(row[5] || '')
+        };
+        try { ev.data = JSON.parse(ev.data); } catch(e) { ev.data = {}; }
+        eventos.push(ev);
+      }
+      // 3) Guardar procesado en cache (cabe porque es resumen)
+      try { cache.put(cacheKey, JSON.stringify(eventos), 30); } catch(cErr) {}
     }
-    var eventos = [];
+    // 4) Filtrar por contacto si se pide
     var filtroContacto = (p.contacto || '').replace(/\D/g, '');
     var limite = parseInt(p.limite) || 5000;
-    for (var i = 0; i < datos.length && eventos.length < limite; i++) {
-      var row = datos[i];
-      var ev = {
-        ts:         String(row[0] || ''),
-        session_id: String(row[1] || ''),
-        contacto:   String(row[2] || ''),
-        evento:     String(row[3] || ''),
-        data:       row[4] || '{}',
-        url_ref:    String(row[5] || '')
-      };
-      try { ev.data = JSON.parse(ev.data); } catch(e) { ev.data = {}; }
+    var resultado = [];
+    for (var j = 0; j < eventos.length && resultado.length < limite; j++) {
       if (filtroContacto) {
-        var evTel = ev.contacto.replace(/\D/g, '');
+        var evTel = eventos[j].contacto.replace(/\D/g, '');
         if (evTel.indexOf(filtroContacto) < 0) continue;
       }
-      eventos.push(ev);
+      resultado.push(eventos[j]);
     }
-    return { ok: true, eventos: eventos };
+    return { ok: true, eventos: resultado };
   } catch (err) {
     return { ok: false, error: err.message };
   }
@@ -2006,22 +2017,23 @@ function leerEventos(p) {
 // ══════════════════════════════════════════════════════════════════
 function leerVisitantes(p) {
   try {
-    var cacheKey = 'ev_rawDatos';
     var cache = CacheService.getScriptCache();
-    var datos = null;
+    var periodo = p.periodo || 'hoy';
+    var cacheKey = 'ev_visit_' + periodo;
+    // 1) Intentar cache del resultado procesado (pequeño, ~2-10KB)
     var cached = cache.get(cacheKey);
     if (cached) {
-      try { datos = JSON.parse(cached); } catch(e) { datos = null; }
+      try { return JSON.parse(cached); } catch(e) {}
     }
-    if (!datos) {
-      var sheet = getHojaEventos();
-      var lastRow = sheet.getLastRow();
-      if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
-      datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
-      try { cache.put(cacheKey, JSON.stringify(datos), 30); } catch(cErr) {}
+    // 2) Cache miss: leer Sheet y procesar
+    var sheet = getHojaEventos();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      var empty = { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
+      try { cache.put(cacheKey, JSON.stringify(empty), 30); } catch(cErr) {}
+      return empty;
     }
-    
-    var periodo = p.periodo || 'hoy';
+    var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
     var ahora = new Date();
     var filtroDesde = null;
     if (periodo === 'hoy') {
@@ -2189,7 +2201,7 @@ function leerVisitantes(p) {
       if (ls >= mesInicio.getTime()) totalMes++;
     });
     
-    return {
+    var resultado = {
       ok: true,
       visitantes: visitantes,
       stats: {
@@ -2207,6 +2219,9 @@ function leerVisitantes(p) {
         duracionProm: duracionProm
       }
     };
+    // 3) Guardar procesado en cache (cabe porque es resumen)
+    try { cache.put(cacheKey, JSON.stringify(resultado), 30); } catch(cErr) {}
+    return resultado;
   } catch (err) {
     return { ok: false, error: err.message };
   }

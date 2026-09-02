@@ -452,7 +452,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div id="err-consulta" class="err-box" style="display:none"></div>
         <div class="phone-row">
-          <input id="p-tel" type="text" placeholder="WhatsApp (Ej. 7262 6332)" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
+          <input id="p-tel" type="text" placeholder="WhatsApp (8 dígitos, Ej. 72626332)" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
         </div>
         <div class="phone-row" style="margin-top:8px">
           <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
@@ -536,7 +536,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div class="card-ttl">Datos de contacto</div>
       <div class="fg"><label>Nombre completo *</label><input id="f-nom" type="text" placeholder="Ej. María García"></div>
       <div class="fg"><label>Fecha de nacimiento</label><input id="f-nac" type="text" placeholder="DD/MM/AA" maxlength="8" inputmode="numeric" oninput="onNacInput(this)"><span class="hint">Opcional — solo números (ej. 15/03/98)</span><span id="nac-btn" class="nac-btn" style="display:none" onclick="guardarNac()">+ Guardar</span></div>
-      <div class="fg"><label>WhatsApp *</label><input id="f-tel" type="tel" placeholder="+503 7000-0000"><span class="hint">Te notificamos cuando tu pedido esté listo</span></div>
+      <div class="fg"><label>WhatsApp *</label><input id="f-tel" type="tel" placeholder="8 dígitos, Ej. 72626332"><span class="hint">Te notificamos cuando tu pedido esté listo</span></div>
     </div>
     <div class="card">
       <div class="card-ttl">Dirección de entrega</div>
@@ -1973,7 +1973,7 @@ function goP3(){
   var b=document.getElementById('btn-conf'); if(b){b.disabled=false;b.textContent='Continuar →';}
   var ov=document.getElementById('overlay-enviando'); if(ov)ov.style.display='none';
   var nom=(document.getElementById('f-nom').value||'').trim();
-  var tel=(document.getElementById('f-tel').value||'').trim();
+  var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
@@ -1987,7 +1987,7 @@ function goP3(){
 }
 function renderResumen(){
   var nom=(document.getElementById('f-nom').value||'').trim();
-  var tel=(document.getElementById('f-tel').value||'').trim();
+  var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
@@ -2010,7 +2010,7 @@ function confirmarPedido(){
   warmGAS(); // pre-calentar la instancia de GAS para que el registro sea rapido
   var email=(document.getElementById('f-email').value||'').trim();
   var nom=(document.getElementById('f-nom').value||'').trim();
-  var tel=(document.getElementById('f-tel').value||'').trim();
+  var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var nac=(document.getElementById('f-nac').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;

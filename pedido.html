@@ -452,7 +452,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div id="err-consulta" class="err-box" style="display:none"></div>
         <div class="phone-row">
-          <input id="p-tel" type="text" placeholder="WhatsApp (8 dígitos, Ej. 72626332)" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
+          <input id="p-tel" type="text" placeholder="ORD-, SOL- o WhatsApp (Ej. 72626332)" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
         </div>
         <div class="phone-row" style="margin-top:8px">
           <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
@@ -3035,7 +3035,7 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <button class="user-modal-close" onclick="cerrarUserModal()">✕</button>
     <h3>Consultar mi pedido</h3>
     <p>Ingresá tu teléfono y código personal, o tu número de orden.</p>
-    <input class="user-modal-input" id="user-modal-q" type="text" placeholder="Teléfono (Ej. 7262 6332)" maxlength="30">
+    <input class="user-modal-input" id="user-modal-q" type="text" placeholder="ORD-, SOL- o WhatsApp (Ej. 72626332)" maxlength="30">
     <input class="user-modal-input" id="user-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
     <div style="font-size:13px;color:#555;margin-top:-8px;margin-bottom:12px">Por tu seguridad, el código de 4 dígitos es obligatorio para teléfono. Para nº de orden (ORD-/SOL-) podés dejarlo vacío.</div>
     <button class="user-modal-btn" id="user-modal-btn" onclick="buscarMiPedido()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:700;cursor:pointer">Buscar</button>

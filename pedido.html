@@ -1096,17 +1096,18 @@ function mostrarTrackingCargando(){
 function buscarTel(btn){
   setBtnBuscarEstado(btn,true);
   var desdeYaCliente=_yaSoyClienteMode===true;
-  var val=(document.getElementById('p-tel').value||'').trim();
+  var raw=(document.getElementById('p-tel').value||'').trim();
   var cod=(document.getElementById('p-cod')?document.getElementById('p-cod').value:'').trim();
   var consMode=document.getElementById('phone-consulta').style.display==='block';
   var errId=consMode?'consulta':'phone';
-  if(!val){showErr(errId,'Ingresa tu numero de WhatsApp o tu numero de orden.');setBtnBuscarEstado(btn,false);return;}
+  if(!raw){showErr(errId,'Ingresa tu numero de WhatsApp o tu numero de orden.');setBtnBuscarEstado(btn,false);return;}
   hideErr(errId);
   var spin=document.getElementById('search-spin');
   if(spin)spin.style.display='block';
   var mostrarTracking=consMode&&!desdeYaCliente;
   if(mostrarTracking)mostrarTrackingCargando();
-  var esOrden=/^(ORD|SOL)-/i.test(val);
+  var esOrden=/^(ORD|SOL)-/i.test(raw);
+  var val=esOrden?raw:raw.replace(/\D/g,'');
   // El nº de orden (ORD-/SOL-) es identificador suficiente: código opcional.
   // Para teléfono el código de 4 dígitos es obligatorio (privacidad).
   if(!esOrden && (!cod || cod.length!==4 || !/^\d{4}$/.test(cod))){

@@ -1973,7 +1973,7 @@ function leerEventos(p) {
       var lastRow = sheet.getLastRow();
       if (lastRow < 2) return { ok: true, eventos: [] };
       datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
-      cache.put(cacheKey, JSON.stringify(datos), 30);
+      try { cache.put(cacheKey, JSON.stringify(datos), 30); } catch(cErr) {}
     }
     var eventos = [];
     var filtroContacto = (p.contacto || '').replace(/\D/g, '');
@@ -2018,7 +2018,7 @@ function leerVisitantes(p) {
       var lastRow = sheet.getLastRow();
       if (lastRow < 2) return { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
       datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
-      cache.put(cacheKey, JSON.stringify(datos), 30);
+      try { cache.put(cacheKey, JSON.stringify(datos), 30); } catch(cErr) {}
     }
     
     var periodo = p.periodo || 'hoy';

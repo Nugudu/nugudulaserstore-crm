@@ -102,8 +102,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ce-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .ce-name{font-size:15px;font-weight:700;color:var(--green)}
 .ce-info{font-size:12px;color:var(--muted);margin-top:2px}
-.col-ttl{font-size:14px;font-weight:600;color:var(--muted);margin:16px 0 4px;line-height:1.4}
-.col-badge{display:inline-block;background:var(--border);color:var(--muted);font-size:10px;font-weight:600;padding:3px 10px;border-radius:10px;margin-left:8px;letter-spacing:.3px;vertical-align:middle}
+.col-ttl{font-size:14px;font-weight:700;color:var(--navy);margin:16px 0 4px;line-height:1.4}
+.col-badge{display:inline-block;background:var(--navy);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;margin-left:8px;letter-spacing:.3px;vertical-align:middle}
 .ce-banner{background:linear-gradient(135deg,#faf9ff 0%,#f0eefb 100%);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;margin:10px 0 16px;display:flex;align-items:flex-start;gap:12px}
 .ce-icon{flex-shrink:0;width:36px;height:36px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .ce-icon svg{width:18px;height:18px}
@@ -1478,7 +1478,7 @@ function gridCat(){
     html+='<div class="col-sec">';
     html+=ceBannerHtml();
     html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div>';
-    html+='<div style="font-size:11px;color:var(--hint);margin:4px 0 14px;letter-spacing:.4px">la diferencia se lleva</div>';
+    html+='<div style="font-size:12px;color:var(--muted);margin:6px 0 14px;letter-spacing:.5px;font-weight:500">la diferencia se lleva</div>';
     html+='<div class="prod-grid">';
     Object.keys(dis).forEach(function(nom){
       var vs=dis[nom];

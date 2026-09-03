@@ -452,7 +452,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div id="err-consulta" class="err-box" style="display:none"></div>
         <div class="phone-row">
-          <input id="p-tel" type="text" placeholder="ORD-, SOL- o WhatsApp (Ej. 72626332)" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
+          <input id="p-tel" type="text" placeholder="ORD-, SOL- o WhatsApp (Ej. 72626332)" oninput="warmGAS()" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
         </div>
         <div class="phone-row" style="margin-top:8px">
           <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">

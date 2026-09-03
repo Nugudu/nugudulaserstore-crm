@@ -1812,12 +1812,13 @@ function elDir(i){
   if(zDir && zonasStd.indexOf(zDir)>=0){
     fZona.value=zDir;
     if(otraZonaDiv) otraZonaDiv.style.display='none';
-  }else if(zDir){
+  }else{
     fZona.value='otra';
-    if(fZonaOt) fZonaOt.value=zDir;
+    if(fZonaOt) fZonaOt.value=zDir||'Otra zona';
     if(otraZonaDiv) otraZonaDiv.style.display='block';
   }
   onZonaChange();
+  actualizarTotalConEnvio();
 }
 function showNuevaDir(){
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();

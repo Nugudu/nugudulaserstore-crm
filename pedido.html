@@ -1804,6 +1804,20 @@ function elDir(i){
       document.getElementById('map-mini').style.display='block';
     }
   }
+  var zonasStd=['Antiguo Cuscatlán','Colonia Escalón','Merliot','Santa Tecla'];
+  var zDir=(_dirSel.zona||'').trim();
+  var fZona=document.getElementById('f-zona');
+  var fZonaOt=document.getElementById('f-zonaot');
+  var otraZonaDiv=document.getElementById('otra-zona');
+  if(zDir && zonasStd.indexOf(zDir)>=0){
+    fZona.value=zDir;
+    if(otraZonaDiv) otraZonaDiv.style.display='none';
+  }else if(zDir){
+    fZona.value='otra';
+    if(fZonaOt) fZonaOt.value=zDir;
+    if(otraZonaDiv) otraZonaDiv.style.display='block';
+  }
+  onZonaChange();
 }
 function showNuevaDir(){
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();

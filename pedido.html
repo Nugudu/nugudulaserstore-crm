@@ -1553,6 +1553,7 @@ function renderCarrito(){
     '</div>';
   }).join('');
   document.getElementById('carrito-total').textContent='$'+totalCarrito().toFixed(2);
+  actualizarTotalConEnvio();
   actualizarBadgeCarrito();
 }
 function chgQty(d){

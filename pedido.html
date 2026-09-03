@@ -2671,7 +2671,7 @@ function renderDirsPrev(selFirst){
     cont.innerHTML=html;
     wrap.style.display='block';
     document.getElementById('nueva-dir').style.display='none';
-    if(selFirst){_dirSel=arr[0];var fd=document.getElementById('dop-0');if(fd)fd.classList.add('sel');}
+    if(selFirst){elDir(0);}
   }else{
     cont.innerHTML='';
     wrap.style.display='none';

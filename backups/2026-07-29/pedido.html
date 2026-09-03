@@ -104,6 +104,17 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ce-info{font-size:12px;color:var(--muted);margin-top:2px}
 .col-ttl{font-size:13px;font-weight:700;color:var(--navy);margin:14px 0 10px}
 .col-badge{display:inline-block;background:var(--navy);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;letter-spacing:.3px;vertical-align:middle}
+.ce-banner{background:linear-gradient(135deg,#faf9ff 0%,#f0eefb 100%);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;margin:10px 0 16px;display:flex;align-items:flex-start;gap:12px}
+.ce-icon{flex-shrink:0;width:36px;height:36px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.ce-icon svg{width:18px;height:18px}
+.ce-text{flex:1;min-width:0}
+.ce-text p{margin:0;font-size:13px;color:var(--text);line-height:1.5}
+.ce-text strong{color:var(--navy);font-weight:700}
+.ce-fechas{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.ce-fecha{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--navy)}
+.ce-fecha svg{width:12px;height:12px;flex-shrink:0}
+.ce-fecha.past{opacity:.4;text-decoration:line-through}
+.p-fecha{position:absolute;right:36px;bottom:10px;font-size:10px;font-weight:600;color:var(--coral);letter-spacing:.2px}
 .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .prod-card{border:2px solid var(--border);border-radius:var(--rs);padding:12px;cursor:pointer;transition:all .15s;background:#fff;text-align:center;position:relative}
 .prod-card:hover{border-color:var(--navy);transform:translateY(-1px)}
@@ -961,6 +972,27 @@ setInterval(function(){if(!document.hidden)warmGAS();},60000);
 
 // ── COMPARTIR PRODUCTO: icono limpio por tarjeta → enlace directo ?p=SKU ──
 var _svgShare='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>';
+// ── CICLO DE ENTREGA ── Solo Nugudú edita estos valores cada mes
+var _ce={mes:'Septiembre 2026',corte1:11,corte2:25,fechas:[{dia:16,mes:'sep'},{dia:30,mes:'sep'}]};
+var _svgCal='<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>';
+function ceProximaFecha(){
+  var h=new Date(),d=h.getDate(),m=h.getMonth();
+  if(m!==8)return'';// solo septiembre por ahora
+  if(d<=_ce.corte1)return _ce.fechas[0].dia+' '+_ce.fechas[0].mes;
+  if(d<=_ce.corte2)return _ce.fechas[1].dia+' '+_ce.fechas[1].mes;
+  return'Próximamente';
+}
+function ceBannerHtml(){
+  var h=new Date(),d=h.getDate(),m=h.getMonth();
+  if(m!==8)return'';// solo septiembre por ahora
+  var fh='';
+  _ce.fechas.forEach(function(f,i){
+    var esActiva=(i===0&&d<=_ce.corte1)||(i===1&&d>_ce.corte1&&d<=_ce.corte2);
+    var esPasada=(i===0&&d>_ce.corte1)||(i===1&&d>_ce.corte2);
+    fh+='<span class="ce-fecha'+(esPasada?' past':'')+(esActiva?' active':'')+'">'+_svgCal+f.dia+' '+f.mes+'</span>';
+  });
+  return'<div class="ce-banner"><div class="ce-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div><div class="ce-text"><p><strong>Compras hoy, entregamos en nuestra próxima fecha fija.</strong></p><p style="margin-top:2px">Dos entregas al mes.</p><div class="ce-fechas">'+fh+'</div></div></div>';
+}
 function compartirProducto(sku){
   var v=_cat.find(function(p){return p.sku===sku;});
   var nom=v?v.nombre:sku;
@@ -1446,6 +1478,7 @@ function gridCat(){
     html+='<div class="col-sec">';
     html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div>';
     html+='<div style="font-size:11px;color:var(--hint);margin:0 0 14px;letter-spacing:.3px">la diferencia se lleva</div>';
+    html+=ceBannerHtml();
     html+='<div class="prod-grid">';
     Object.keys(dis).forEach(function(nom){
       var vs=dis[nom];
@@ -1460,6 +1493,8 @@ function gridCat(){
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
       html+='<div class="p-dots">'+dots+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
+      var _fEnt=ceProximaFecha();
+      if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
       html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
       if(agot)html+='<div class="p-stock sno">✗ Agotado</div>';
       html+='</div>';

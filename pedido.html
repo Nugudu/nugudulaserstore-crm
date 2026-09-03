@@ -2028,7 +2028,7 @@ function goP3(){
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
-  var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
+  var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   if(!nom){showErr('form','Ingresa tu nombre completo.');return;}
   if(!tel){showErr('form','Ingresa tu número de WhatsApp.');return;}
@@ -2042,7 +2042,7 @@ function renderResumen(){
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
-  var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
+  var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var recargo=(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
@@ -2066,12 +2066,12 @@ function confirmarPedido(){
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var nac=(document.getElementById('f-nac').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
-  var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
+  var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_mapa;
   if(_dirSel&&_dirSel.mapaLink){
-    var dirOk=_dirSel.direccion===dir&&_dirSel.zona===zona;
+    var dirOk=_dirSel.direccion===dir&&(_dirSel.zona===zona||_dirSel.zona===zonaRaw);
     if(dirOk) mapa=_dirSel.mapaLink;
   }
   // Si esta dirección estaba oculta (X roja) y se vuelve a usar en un pedido,

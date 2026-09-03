@@ -452,10 +452,10 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div id="err-consulta" class="err-box" style="display:none"></div>
         <div class="phone-row">
-          <input id="p-tel" type="text" placeholder="ORD-, SOL- o WhatsApp (Ej. 72626332)" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
+          <input id="p-tel" type="text" placeholder="ORD-, SOL- o WhatsApp (Ej. 72626332)" oninput="warmGAS()" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
         </div>
         <div class="phone-row" style="margin-top:8px">
-          <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
+          <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" oninput="prefetchCliente()" onkeydown="if(event.key==='Enter')buscarTel()">
         </div>
         <div style="font-size:13px;color:#555;margin:8px 0">Por tu seguridad, el código de 4 dígitos es obligatorio para teléfono. Para nº de orden (ORD-/SOL-) podés dejarlo vacío.</div>
         <div style="text-align:center;margin-bottom:8px">
@@ -1093,6 +1093,22 @@ function mostrarTrackingCargando(){
   document.getElementById('cli-sub').textContent='Consultando tus pedidos…';
   document.getElementById('cli-ordenes').innerHTML='<div class="cat-spin"><div class="spinner"></div><p style="color:var(--muted);font-size:13px">Buscando tus pedidos…</p></div>';
 }
+var _prefetchPromise=null;
+function prefetchCliente(){
+  var tel=(document.getElementById('p-tel').value||'').trim().replace(/\D/g,'');
+  var cod=(document.getElementById('p-cod')?document.getElementById('p-cod').value:'').trim();
+  if(tel.length<4||cod.length!==4)return;
+  var _ck='ngd_cli_'+tel;
+  try{var _cv=JSON.parse(localStorage.getItem(_ck)||'null');
+    if(_cv && _cv.codigo===cod && Date.now()-_cv.ts<300000)return;
+  }catch(e){}
+  _prefetchPromise=fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:tel,codigo:cod})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.ok&&d.encontrado){try{localStorage.setItem(_ck,JSON.stringify({codigo:cod,data:d,ts:Date.now()}));}catch(e){}}
+    return d;
+  }).catch(function(){return null;}).finally(function(){_prefetchPromise=null;});
+}
 function buscarTel(btn){
   setBtnBuscarEstado(btn,true);
   var desdeYaCliente=_yaSoyClienteMode===true;
@@ -1108,44 +1124,64 @@ function buscarTel(btn){
   if(mostrarTracking)mostrarTrackingCargando();
   var esOrden=/^(ORD|SOL)-/i.test(raw);
   var val=esOrden?raw:raw.replace(/\D/g,'');
-  // El nº de orden (ORD-/SOL-) es identificador suficiente: código opcional.
-  // Para teléfono el código de 4 dígitos es obligatorio (privacidad).
   if(!esOrden && (!cod || cod.length!==4 || !/^\d{4}$/.test(cod))){
     if(spin)spin.style.display='none';
     setBtnBuscarEstado(btn,false);
     showErr(errId,'Ingresá tu código personal de 4 dígitos para consultar.');
     return;
   }
-  var action = esOrden ? 'buscarClienteOrdenSeguro' : 'buscarClienteSeguro';
-  var payload = esOrden
-    ? {action:action, token:API_TOKEN, orden:val.toUpperCase(), codigo:cod}
-    : {action:action, token:API_TOKEN, tel:val, codigo:cod};
-  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(spin)spin.style.display='none';
-      if(d.ok&&d.encontrado){
-        _cli=d;_dirs=d.direcciones||[];
-        setContacto(d.contacto||'');
-        if(desdeYaCliente){
-          _yaSoyClienteMode=false;
-          setBtnBuscarEstado(btn,false);
-          if(_carrito.length>0){guardarSesion('s-form',2);showScreen('s-form');setPaso(2);}
-          else{iniciar();}
-        }else{mostrarPantallaCliente(d);}
-      }else{
-        setBtnBuscarEstado(btn,false);
-        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No encontramos ese numero u orden. Continua como cliente nuevo.';
-        if(mostrarTracking){irAConsultar();}
-        showErr(errId,msg);
-      }
-    }).catch(function(){
-      _yaSoyClienteMode=false;
-      if(spin)spin.style.display='none';
+  function _procesarRespuesta(d){
+    if(spin)spin.style.display='none';
+    if(d.ok&&d.encontrado){
+      _cli=d;_dirs=d.direcciones||[];setContacto(d.contacto||'');
+      if(desdeYaCliente){_yaSoyClienteMode=false;setBtnBuscarEstado(btn,false);if(_carrito.length>0){guardarSesion('s-form',2);showScreen('s-form');setPaso(2);}else{iniciar();}}
+      else{mostrarPantallaCliente(d);}
+    }else{
       setBtnBuscarEstado(btn,false);
-      if(mostrarTracking){irAConsultar();showErr(errId,'Hubo un error de conexión. Intentá de nuevo.');}
-      else{nuevoCli();}
-    });
+      var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No encontramos ese numero u orden. Continua como cliente nuevo.';
+      if(mostrarTracking){irAConsultar();}
+      showErr(errId,msg);
+    }
+  }
+  if(!esOrden){
+    var _ck='ngd_cli_'+val;
+    try{var _cv=JSON.parse(localStorage.getItem(_ck)||'null');
+      if(_cv && _cv.codigo===cod && Date.now()-_cv.ts<300000){
+        if(spin)spin.style.display='none';
+        _procesarRespuesta(_cv.data);
+        return;
+      }
+    }catch(e){}
+    if(_prefetchPromise){
+      var _waitStart=Date.now();
+      (function _esperarPrefetch(){
+        _prefetchPromise.then(function(d){
+          if(d){_procesarRespuesta(d);return;}
+          _hacerFetch();
+        }).catch(function(){_hacerFetch();});
+      })();
+      return;
+    }
+  }
+  function _hacerFetch(){
+    var action=esOrden?'buscarClienteOrdenSeguro':'buscarClienteSeguro';
+    var payload=esOrden
+      ?{action:action,token:API_TOKEN,orden:val.toUpperCase(),codigo:cod}
+      :{action:action,token:API_TOKEN,tel:val,codigo:cod};
+    fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!esOrden&&d.ok&&d.encontrado){try{localStorage.setItem(_ck||('ngd_cli_'+val),JSON.stringify({codigo:cod,data:d,ts:Date.now()}));}catch(e){}}
+        _procesarRespuesta(d);
+      }).catch(function(){
+        _yaSoyClienteMode=false;
+        if(spin)spin.style.display='none';
+        setBtnBuscarEstado(btn,false);
+        if(mostrarTracking){irAConsultar();showErr(errId,'Hubo un error de conexión. Intentá de nuevo.');}
+        else{nuevoCli();}
+      });
+  }
+  _hacerFetch();
 }
 function nuevoCli(){
   limpiarSesion();_cli=null;_dirs=[];setContacto('');
@@ -1553,6 +1589,7 @@ function renderCarrito(){
     '</div>';
   }).join('');
   document.getElementById('carrito-total').textContent='$'+totalCarrito().toFixed(2);
+  actualizarTotalConEnvio();
   actualizarBadgeCarrito();
 }
 function chgQty(d){
@@ -1804,6 +1841,21 @@ function elDir(i){
       document.getElementById('map-mini').style.display='block';
     }
   }
+  var zonasStd=['Antiguo Cuscatlán','Colonia Escalón','Merliot','Santa Tecla'];
+  var zDir=(_dirSel.zona||'').trim();
+  var fZona=document.getElementById('f-zona');
+  var fZonaOt=document.getElementById('f-zonaot');
+  var otraZonaDiv=document.getElementById('otra-zona');
+  if(zDir && zonasStd.indexOf(zDir)>=0){
+    fZona.value=zDir;
+    if(otraZonaDiv) otraZonaDiv.style.display='none';
+  }else{
+    fZona.value='otra';
+    if(fZonaOt) fZonaOt.value=zDir||'Otra zona';
+    if(otraZonaDiv) otraZonaDiv.style.display='block';
+  }
+  onZonaChange();
+  actualizarTotalConEnvio();
 }
 function showNuevaDir(){
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
@@ -1976,7 +2028,7 @@ function goP3(){
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
-  var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
+  var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   if(!nom){showErr('form','Ingresa tu nombre completo.');return;}
   if(!tel){showErr('form','Ingresa tu número de WhatsApp.');return;}
@@ -1990,7 +2042,7 @@ function renderResumen(){
   var nom=(document.getElementById('f-nom').value||'').trim();
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
-  var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
+  var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var recargo=(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
@@ -2014,12 +2066,12 @@ function confirmarPedido(){
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var nac=(document.getElementById('f-nac').value||'').trim();
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
-  var zonaRaw=_dirSel?_dirSel.zona:document.getElementById('f-zona').value;
+  var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_mapa;
   if(_dirSel&&_dirSel.mapaLink){
-    var dirOk=_dirSel.direccion===dir&&_dirSel.zona===zona;
+    var dirOk=_dirSel.direccion===dir&&(_dirSel.zona===zona||_dirSel.zona===zonaRaw);
     if(dirOk) mapa=_dirSel.mapaLink;
   }
   // Si esta dirección estaba oculta (X roja) y se vuelve a usar en un pedido,
@@ -2656,7 +2708,7 @@ function renderDirsPrev(selFirst){
     cont.innerHTML=html;
     wrap.style.display='block';
     document.getElementById('nueva-dir').style.display='none';
-    if(selFirst){_dirSel=arr[0];var fd=document.getElementById('dop-0');if(fd)fd.classList.add('sel');}
+    if(selFirst){elDir(0);}
   }else{
     cont.innerHTML='';
     wrap.style.display='none';
@@ -2742,52 +2794,41 @@ function enviarDatosPorCorreo(orden){
 
   document.getElementById('s-exito').style.display='block';
   document.getElementById('ex-orden').textContent=orden||'...';
-  document.getElementById('ex-pago-info').innerHTML='<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;color:var(--muted)">Verificando pago…</p></div>';
-  document.getElementById('orden-mini').style.display='block';
-  document.getElementById('om-contenido').innerHTML='<div style="color:var(--muted);font-size:13px">Orden <strong>'+esc(orden)+'</strong> — verificando…</div>';
+  document.getElementById('orden-mini').style.display='none';
   document.getElementById('ex-accion-comprobante').style.display='none';
   document.getElementById('ex-tracking').style.display='none';
   document.querySelector('#s-exito .btn-outline-teal').style.display='none';
   document.querySelector('#s-exito .btn-sec').style.display='none';
 
-  function mostrarExito(){
-    if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
-    document.getElementById('orden-mini').style.display='none';
-    document.getElementById('ex-pago-info').innerHTML=
-      '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago verificado con exito. Orden <strong>'+esc(orden)+'</strong>.</div>';
-    document.getElementById('ex-accion-comprobante').style.display='none';
-    document.getElementById('ex-tracking').style.display='block';
-    document.querySelector('#s-exito .btn-outline-teal').style.display='';
-    document.querySelector('#s-exito .btn-sec').style.display='';
-    if(orden) notificarAdmin(orden);
-    try{var _u=JSON.parse(sessionStorage.getItem('ngd_ultimaOrden_wompi')||'null');if(_u&&_u.tel)setContacto(_u.tel);}catch(e){}
-    track('purchase',{orden:orden,total:0,items:0});
-  }
-  function mostrarError(msg){
-    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fcebeb;border-color:#f7c1c1;color:#a32d2d">❌ '+msg+'</div>';
-    document.querySelector('#s-exito .btn-outline-teal').style.display='';
-    document.querySelector('#s-exito .btn-sec').style.display='';
-  }
+  if(sd5){sd5.className='step-d done';sd5.textContent='✓';}
+  document.getElementById('ex-pago-info').innerHTML=
+    '<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago recibido con exito. Orden <strong>'+esc(orden)+'</strong>.</div>';
+  document.getElementById('ex-tracking').style.display='block';
+  document.querySelector('#s-exito .btn-outline-teal').style.display='';
+  document.querySelector('#s-exito .btn-sec').style.display='';
+  if(orden) notificarAdmin(orden);
+  try{var _u=JSON.parse(sessionStorage.getItem('ngd_ultimaOrden_wompi')||'null');if(_u&&_u.tel)setContacto(_u.tel);}catch(e){}
+  track('purchase',{orden:orden,total:0,items:0});
 
-  function verificarTransaccionWompi(){
+  function verificarEnBackground(){
     fetch(GAS+'?action=verificarTransaccion&idTransaccion='+encodeURIComponent(idTransaccion)+'&token='+encodeURIComponent(API_TOKEN)+'&_t='+Date.now())
     .then(function(r){return r.json();})
     .then(function(res){
-      if(res.ok && res.esAprobada) mostrarExito();
-      else mostrarError((res.estado||res.error||'El pago no pudo ser verificado con Wompi.'));
-    }).catch(function(){ mostrarError('No se pudo verificar el pago con Wompi.'); });
+      if(res.ok && res.esAprobada){
+        var el=document.getElementById('ex-pago-info');
+        if(el) el.innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago verificado con exito. Orden <strong>'+esc(orden)+'</strong>.</div>';
+      }
+    }).catch(function(){});
   }
 
   if(hash){
     fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'validarHashWompi',token:API_TOKEN,params:params})
     }).then(function(r){return r.json();})
-    .then(function(res){
-      if(res.ok) verificarTransaccionWompi();
-      else mostrarError(res.error||'El hash no pudo ser validado.');
-    }).catch(function(){ mostrarError('No se pudo verificar el pago.'); });
+    .then(function(){ verificarEnBackground(); })
+    .catch(function(){});
   }else{
-    verificarTransaccionWompi();
+    verificarEnBackground();
   }
 })();
 // ── MI DISEÑO: buscar orden existente y pagar ──

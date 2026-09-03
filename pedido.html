@@ -1108,13 +1108,26 @@ function buscarTel(btn){
   if(mostrarTracking)mostrarTrackingCargando();
   var esOrden=/^(ORD|SOL)-/i.test(raw);
   var val=esOrden?raw:raw.replace(/\D/g,'');
-  // El nº de orden (ORD-/SOL-) es identificador suficiente: código opcional.
-  // Para teléfono el código de 4 dígitos es obligatorio (privacidad).
   if(!esOrden && (!cod || cod.length!==4 || !/^\d{4}$/.test(cod))){
     if(spin)spin.style.display='none';
     setBtnBuscarEstado(btn,false);
     showErr(errId,'Ingresá tu código personal de 4 dígitos para consultar.');
     return;
+  }
+  if(!esOrden){
+    var _ck='ngd_cli_'+val;
+    try{var _cv=JSON.parse(localStorage.getItem(_ck)||'null');
+      if(_cv && _cv.codigo===cod && Date.now()-_cv.ts<300000){
+        if(spin)spin.style.display='none';
+        var d=_cv.data;
+        if(d.ok&&d.encontrado){
+          _cli=d;_dirs=d.direcciones||[];setContacto(d.contacto||'');
+          if(desdeYaCliente){_yaSoyClienteMode=false;setBtnBuscarEstado(btn,false);if(_carrito.length>0){guardarSesion('s-form',2);showScreen('s-form');setPaso(2);}else{iniciar();}}
+          else{mostrarPantallaCliente(d);}
+          return;
+        }
+      }
+    }catch(e){}
   }
   var action = esOrden ? 'buscarClienteOrdenSeguro' : 'buscarClienteSeguro';
   var payload = esOrden
@@ -1125,6 +1138,7 @@ function buscarTel(btn){
     .then(function(d){
       if(spin)spin.style.display='none';
       if(d.ok&&d.encontrado){
+        if(!esOrden){try{localStorage.setItem('ngd_cli_'+val,JSON.stringify({codigo:cod,data:d,ts:Date.now()}));}catch(e){}}
         _cli=d;_dirs=d.direcciones||[];
         setContacto(d.contacto||'');
         if(desdeYaCliente){

@@ -455,7 +455,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <input id="p-tel" type="text" placeholder="ORD-, SOL- o WhatsApp (Ej. 72626332)" oninput="warmGAS()" onkeydown="if(event.key==='Enter')document.getElementById('p-cod').focus()">
         </div>
         <div class="phone-row" style="margin-top:8px">
-          <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" onkeydown="if(event.key==='Enter')buscarTel()">
+          <input id="p-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal (4 dígitos)" maxlength="4" oninput="prefetchCliente()" onkeydown="if(event.key==='Enter')buscarTel()">
         </div>
         <div style="font-size:13px;color:#555;margin:8px 0">Por tu seguridad, el código de 4 dígitos es obligatorio para teléfono. Para nº de orden (ORD-/SOL-) podés dejarlo vacío.</div>
         <div style="text-align:center;margin-bottom:8px">
@@ -1092,6 +1092,23 @@ function mostrarTrackingCargando(){
   document.getElementById('cli-nombre-ttl').textContent='¡Hola!';
   document.getElementById('cli-sub').textContent='Consultando tus pedidos…';
   document.getElementById('cli-ordenes').innerHTML='<div class="cat-spin"><div class="spinner"></div><p style="color:var(--muted);font-size:13px">Buscando tus pedidos…</p></div>';
+}
+var _prefetching=false;
+function prefetchCliente(){
+  if(_prefetching)return;
+  var tel=(document.getElementById('p-tel').value||'').trim().replace(/\D/g,'');
+  var cod=(document.getElementById('p-cod')?document.getElementById('p-cod').value:'').trim();
+  if(tel.length<4||cod.length!==4)return;
+  var _ck='ngd_cli_'+tel;
+  try{var _cv=JSON.parse(localStorage.getItem(_ck)||'null');
+    if(_cv && _cv.codigo===cod && Date.now()-_cv.ts<300000)return;
+  }catch(e){}
+  _prefetching=true;
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:tel,codigo:cod})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.ok&&d.encontrado){try{localStorage.setItem(_ck,JSON.stringify({codigo:cod,data:d,ts:Date.now()}));}catch(e){}}
+  }).catch(function(){}).finally(function(){_prefetching=false;});
 }
 function buscarTel(btn){
   setBtnBuscarEstado(btn,true);

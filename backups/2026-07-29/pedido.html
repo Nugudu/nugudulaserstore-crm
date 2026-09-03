@@ -1476,9 +1476,9 @@ function gridCat(){
     var prods=cols[col],dis={};
     prods.forEach(function(p){if(!dis[p.nombre])dis[p.nombre]=[];dis[p.nombre].push(p);});
     html+='<div class="col-sec">';
+    html+=ceBannerHtml();
     html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div>';
     html+='<div style="font-size:11px;color:var(--hint);margin:4px 0 14px;letter-spacing:.4px">la diferencia se lleva</div>';
-    html+=ceBannerHtml();
     html+='<div class="prod-grid">';
     Object.keys(dis).forEach(function(nom){
       var vs=dis[nom];

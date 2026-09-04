@@ -1407,7 +1407,7 @@ function formatoFechaCorta(iso){
   var partes = iso.slice(0,10).split('-');
   var dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   var d = new Date(parseInt(partes[0]), parseInt(partes[1])-1, parseInt(partes[2]));
-  return dias[d.getDay()] + ' ' + partes[2] + '/' + partes[1];
+  return dias[d.getDay()] + ' ' + partes[2] + '/' + partes[1] + '/' + partes[0];
 }
 
 // Etiqueta de estado de pago — 3 estados: confirmado (verde), comprobante enviado (naranja),

@@ -1014,7 +1014,7 @@ function ceBannerHtml(){
     // Observer por si el valor cambia por GPS (no solo input)
     setInterval(ceCheckDir,800);
   });
-}
+})();
 function compartirProducto(sku){
   var v=_cat.find(function(p){return p.sku===sku;});
   var nom=v?v.nombre:sku;

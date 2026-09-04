@@ -1004,7 +1004,6 @@ function ceBannerHtml(){
     var campo=document.getElementById('f-dir');
     var bloque=document.getElementById('ce-direccion-auto');
     var texto=document.getElementById('ce-dir-texto');
-    var wrapManual=document.getElementById('ce-dir-manual-wrap');
     var btnGps=document.getElementById('btn-mi-ubicacion-web');
     if(!campo||!bloque||!texto)return;
     var _gpsActivo=false;
@@ -1014,10 +1013,8 @@ function ceBannerHtml(){
       if(v&&_gpsActivo){
         texto.textContent=v;
         bloque.style.display='flex';
-        if(wrapManual)wrapManual.style.display='none';
       }else{
         bloque.style.display='none';
-        if(wrapManual)wrapManual.style.display='';
       }
     }
     campo.addEventListener('input',function(){

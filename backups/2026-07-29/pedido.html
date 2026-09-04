@@ -1350,7 +1350,7 @@ function formatFecha(iso){
   var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   var p=iso.slice(0,10).split('-');
   var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
-  return dias[d.getDay()]+' '+p[2]+'/'+p[1];
+  return dias[d.getDay()]+' '+p[2]+'/'+p[1]+'/'+p[0];
 }
 
 function iniciarNuevoPedido(){_cli_guardado=_cli;_dirs_guardados=_dirs;_carrito=[];if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();actualizarBadgeCarrito();showScreen('s-catalogo');}

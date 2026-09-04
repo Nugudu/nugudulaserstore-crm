@@ -565,7 +565,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
           <div><div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:2px">Tu dirección</div><div id="ce-dir-texto" style="font-size:13px;color:var(--text);line-height:1.4"></div></div>
         </div>
-        <div class="fg">
+        <div class="fg" id="ce-dir-manual-wrap">
           <label>Otra dirección de entrega *</label>
           <div style="display:flex;gap:6px">
             <input id="f-dir" type="text" placeholder="Calle, No. de casa, colonia, referencias…" oninput="onDirInp()" style="flex:1">
@@ -1004,14 +1004,26 @@ function ceBannerHtml(){
     var campo=document.getElementById('f-dir');
     var bloque=document.getElementById('ce-direccion-auto');
     var texto=document.getElementById('ce-dir-texto');
+    var wrapManual=document.getElementById('ce-dir-manual-wrap');
+    var btnGps=document.getElementById('btn-mi-ubicacion-web');
     if(!campo||!bloque||!texto)return;
+    var _gpsActivo=false;
+    if(btnGps)btnGps.addEventListener('click',function(){_gpsActivo=true;});
     function ceCheckDir(){
       var v=(campo.value||'').trim();
-      if(v){texto.textContent=v;bloque.style.display='flex';}
-      else{bloque.style.display='none';}
+      if(v&&_gpsActivo){
+        texto.textContent=v;
+        bloque.style.display='flex';
+        if(wrapManual)wrapManual.style.display='none';
+      }else{
+        bloque.style.display='none';
+        if(wrapManual)wrapManual.style.display='';
+      }
     }
-    campo.addEventListener('input',ceCheckDir);
-    // Observer por si el valor cambia por GPS (no solo input)
+    campo.addEventListener('input',function(){
+      if(!_gpsActivo)ceCheckDir();
+    });
+    campo.addEventListener('focus',function(){_gpsActivo=false;});
     setInterval(ceCheckDir,800);
   });
 })();

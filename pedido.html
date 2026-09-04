@@ -996,7 +996,7 @@ function ceBannerHtml(){
     var esPasada=(i===0&&d>_ce.corte1)||(i===1&&d>_ce.corte2);
     fh+='<span class="ce-fecha'+(esPasada?' past':'')+(esActiva?' active':'')+'">'+_svgCal+f.dia+' '+f.mes+'</span>';
   });
-  return'<div class="ce-banner"><div class="ce-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div><div class="ce-text"><p style="display:flex;align-items:center;flex-wrap:wrap;gap:6px"><strong>Compras hoy, entregamos en nuestra próxima fecha fija. Dos entregas al mes '+fh+'</strong></p></div></div>';
+  return'<div class="ce-banner"><div class="ce-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div><div class="ce-text"><p style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--text)">Compras hoy, entregamos en nuestra próxima fecha fija. Dos entregas al mes '+fh+'</p></div></div>';
 }
 // Bloque dinámico: muestra la dirección geocodificada al tocar "Compartir mi ubicación"
 (function(){

@@ -3240,6 +3240,24 @@ function buscarMiPedido(){
     res.innerHTML='<div class="user-modal-no">Ingresá tu código personal de 4 dígitos para consultar.</div>';
     return;
   }
+  // Cache instantáneo: si ya consultamos antes, mostrar de inmediato
+  if(!isOrden){
+    var _ck='ngd_cli_'+tel;
+    try{var _cv=JSON.parse(localStorage.getItem(_ck)||'null');
+      if(_cv && _cv.codigo===cod && Date.now()-_cv.ts<300000){
+        try{cerrarUserModal();}catch(e){}
+        try{mostrarPantallaCliente(_cv.data);}
+        catch(e){renderResultados(_cv.data,res);}
+        // Refrescar en background
+        fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},
+          body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:tel,codigo:cod})
+        }).then(function(r){return r.json();}).then(function(d){
+          if(d.ok&&d.encontrado){try{localStorage.setItem(_ck,JSON.stringify({codigo:cod,data:d,ts:Date.now()}));}catch(e){}}
+        }).catch(function(){});
+        return;
+      }
+    }catch(e){}
+  }
   btn.textContent='Buscando…';btn.disabled=true;res.innerHTML='';
   var action = orden ? 'buscarClienteOrdenSeguro' : 'buscarClienteSeguro';
   var body = orden

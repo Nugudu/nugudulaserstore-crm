@@ -1593,11 +1593,18 @@ function filtrarSolicitudes(){
   renderSolicitudes(f);
 }
 function _getNotificados(){
-  try { return JSON.parse(localStorage.getItem('nugudu_sol_notificadas') || '[]'); } catch(e){ return []; }
+  try {
+    var arr = JSON.parse(localStorage.getItem('nugudu_sol_notificadas') || '[]');
+    var now = Date.now();
+    var vivo = arr.filter(function(n){ return (now - n.ts) < 86400000; });
+    if (vivo.length !== arr.length) localStorage.setItem('nugudu_sol_notificadas', JSON.stringify(vivo));
+    return vivo;
+  } catch(e){ return []; }
 }
 function marcarNotificado(ref){
   var arr = _getNotificados();
-  if (arr.indexOf(ref) === -1) { arr.push(ref); localStorage.setItem('nugudu_sol_notificadas', JSON.stringify(arr)); }
+  var exists = arr.some(function(n){ return n.ref === ref; });
+  if (!exists) { arr.push({ref: ref, ts: Date.now()}); localStorage.setItem('nugudu_sol_notificadas', JSON.stringify(arr)); }
   var card = document.querySelector('[data-sol-ref="'+ref+'"]');
   if (card) { card.style.opacity = '0.4'; card.style.transition = 'opacity .4s'; }
 }
@@ -1605,9 +1612,10 @@ function renderSolicitudes(lista){
   var el = document.getElementById('sol-list');
   if (!el) return;
   var notificados = _getNotificados();
+  var notifRefs = notificados.map(function(n){ return n.ref; });
   var pendientes = lista.filter(function(s){ return s.estadoSolicitud==='pendiente'; });
-  var confSinNot = lista.filter(function(s){ return s.estadoSolicitud==='confirmada' && notificados.indexOf(s.ref)===-1; });
-  var confNot    = lista.filter(function(s){ return s.estadoSolicitud==='confirmada' && notificados.indexOf(s.ref)!==-1; });
+  var confSinNot = lista.filter(function(s){ return s.estadoSolicitud==='confirmada' && notifRefs.indexOf(s.ref)===-1; });
+  var confNot    = lista.filter(function(s){ return s.estadoSolicitud==='confirmada' && notifRefs.indexOf(s.ref)!==-1; });
   var descartadas= lista.filter(function(s){ return s.estadoSolicitud!=='pendiente' && s.estadoSolicitud!=='confirmada'; });
   pendientes.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
   confSinNot.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });

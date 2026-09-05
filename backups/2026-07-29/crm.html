@@ -1592,13 +1592,26 @@ function filtrarSolicitudes(){
   });
   renderSolicitudes(f);
 }
+function _getNotificados(){
+  try { return JSON.parse(localStorage.getItem('nugudu_sol_notificadas') || '[]'); } catch(e){ return []; }
+}
+function marcarNotificado(ref){
+  var arr = _getNotificados();
+  if (arr.indexOf(ref) === -1) { arr.push(ref); localStorage.setItem('nugudu_sol_notificadas', JSON.stringify(arr)); }
+  var card = document.querySelector('[data-sol-ref="'+ref+'"]');
+  if (card) { card.style.opacity = '0.4'; card.style.transition = 'opacity .4s'; }
+}
 function renderSolicitudes(lista){
   var el = document.getElementById('sol-list');
   if (!el) return;
+  var notificados = _getNotificados();
   var pendientes = lista.filter(function(s){ return s.estadoSolicitud==='pendiente'; });
-  var resto      = lista.filter(function(s){ return s.estadoSolicitud!=='pendiente'; });
+  var confSinNot = lista.filter(function(s){ return s.estadoSolicitud==='confirmada' && notificados.indexOf(s.ref)===-1; });
+  var confNot    = lista.filter(function(s){ return s.estadoSolicitud==='confirmada' && notificados.indexOf(s.ref)!==-1; });
+  var descartadas= lista.filter(function(s){ return s.estadoSolicitud!=='pendiente' && s.estadoSolicitud!=='confirmada'; });
   pendientes.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
-  resto.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+  confSinNot.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+  confNot.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
   var badge = document.getElementById('badge-solicitudes');
   if (badge) {
     if (pendientes.length > 0) { badge.style.display='inline-block'; badge.textContent = pendientes.length; }
@@ -1610,7 +1623,13 @@ function renderSolicitudes(lista){
   }
   var html = '';
   pendientes.forEach(function(s){ html += solCard(s, true); });
-  resto.forEach(function(s){ html += solCard(s, false); });
+  confSinNot.forEach(function(s){ html += solCard(s, false); });
+  if (confNot.length) {
+    html += '<details style="margin-top:10px;border:1px solid #e5e7eb;border-radius:8px;padding:0"><summary style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--muted);font-weight:500">Ya notificadas (' + confNot.length + ')</summary><div style="padding:0 10px 10px">';
+    confNot.forEach(function(s){ html += solCard(s, false); });
+    html += '</div></details>';
+  }
+  descartadas.forEach(function(s){ html += solCard(s, false); });
   el.innerHTML = html || '<div class="card"><div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin solicitudes.</p></div></div>';
 }
 function solCard(s, pendiente){
@@ -1630,12 +1649,12 @@ function solCard(s, pendiente){
   } else if (s.estadoSolicitud === 'confirmada') {
     accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">' +
       '<span class="bdg-pago verde">' + _svgCheck + ' Confirmada → ' + escHtml(s.orden || '') + '</span>' +
-      '<a class="btn btn-wa btn-sm" href="' + waLinkConf + '" target="_blank"><i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp</a>' +
+      '<a class="btn btn-wa btn-sm" href="' + waLinkConf + '" target="_blank" onclick="marcarNotificado(\'' + s.ref + '\')"><i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp</a>' +
     '</div>';
   } else {
     accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem"><span class="bdg-pago rojo">Descartada</span></div>';
   }
-  return '<div class="card" style="margin-bottom:10px">' +
+  return '<div class="card" style="margin-bottom:10px" data-sol-ref="' + escHtml(s.ref) + '">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">' +
       '<div>' +
         '<div style="font-family:\'DM Mono\',monospace;font-size:13px">' + escHtml(s.ref) + '</div>' +

@@ -168,6 +168,22 @@ function doPost(e) {
     if (action === 'obtenerCodigosLote') return respond(obtenerCodigosLote(payload));
     if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(payload.tel, payload.codigo));
     if (action === 'buscarClienteOrdenSeguro') return respond(buscarClienteOrdenSeguro(payload.orden, payload.codigo));
+    if (action === 'limpiarEventos') {
+      var ss = abrirSS(SHEET_ORDENES);
+      var sheet = ss.getSheetByName(HOJA_EVENTOS);
+      if (sheet && sheet.getLastRow() > 1) sheet.deleteRows(2, sheet.getLastRow() - 1);
+      return respond({ ok: true, msg: 'eventos_usuario limpiada' });
+    }
+    if (action === 'limpiarSolicitudes') {
+      var ss = abrirSS(SHEET_ORDENES);
+      var sheet = ss.getSheetByName(HOJA_SOLICITUDES);
+      if (sheet) {
+        var lr = sheet.getLastRow();
+        if (lr > 1) sheet.deleteRows(2, lr - 1);
+        sheet.getRange('A1').setValue('[]');
+      }
+      return respond({ ok: true, msg: 'solicitudes limpiada' });
+    }
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });

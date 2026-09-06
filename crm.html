@@ -1586,9 +1586,11 @@ function cargarSolicitudes(showFeedback){
 function filtrarSolicitudes(){
   var q = (document.getElementById('sol-q') ? document.getElementById('sol-q').value : '').toLowerCase().trim();
   if (!q) { renderSolicitudes(_solicitudes); return; }
+  var qDigits = q.replace(/\D/g, '');
   var f = _solicitudes.filter(function(s){
     var hay = [s.ref, s.nombre, s.contacto, s.direccion, s.zona, (s.productos||[]).join(' ')].join(' ').toLowerCase();
-    return hay.indexOf(q) >= 0;
+    var hayDigits = (s.contacto || '').replace(/\D/g, '');
+    return hay.indexOf(q) >= 0 || (qDigits.length >= 4 && hayDigits.indexOf(qDigits) >= 0);
   });
   renderSolicitudes(f);
 }

@@ -865,18 +865,9 @@ function esZonaEspecial(z){return ZONAS_ESPECIALES.some(function(ze){return ze.t
 // ── CDP: EVENTOS DE COMPORTAMIENTO ──
 var _sessionId=(function(){try{var s=sessionStorage.getItem('ngd_session');if(!s){s=Date.now()+'-'+Math.random().toString(36).slice(2,8);sessionStorage.setItem('ngd_session',s);}return s;}catch(e){return Date.now()+'-x';}})();
 var _eventQueue=[],_eventContacto='',_flushTimer=null;
-var _visitorData=null;
+var _visitorData={device:/Mobi|Android/i.test(navigator.userAgent)?'Móvil':'Escritorio',city:'',source:_refV||'Directo'};
+try{fetch('https://ip-api.com/json/?fields=city,country').then(function(r){return r.json();}).then(function(d){if(d&&d.city)_visitorData.city=d.city;}).catch(function(){});}catch(e){}
 function track(evento,data){
-  if(!_visitorData){
-    _visitorData={
-      device:/Mobi|Android/i.test(navigator.userAgent)?'Móvil':'Escritorio',
-      city:'',
-      source:_refV||'Directo'
-    };
-    try{
-      fetch('https://ip-api.com/json/?fields=city,country').then(function(r){return r.json();}).then(function(d){if(d&&d.city)_visitorData.city=d.city;}).catch(function(){});
-    }catch(e){}
-  }
   data=data||{};
   data.device=_visitorData.device;
   data.city=_visitorData.city;

@@ -879,6 +879,7 @@ function setContacto(v){_eventContacto=v||'';}
 function flushEvents(){
   _flushTimer=null;
   if(!_eventQueue.length)return;
+  if(_visitorData.city)_eventQueue.forEach(function(e){if(e.data&&!e.data.city)e.data.city=_visitorData.city;});
   var batch=_eventQueue.slice();_eventQueue=[];
   try{
     var x=new XMLHttpRequest();x.open('POST',GAS,true);x.setRequestHeader('Content-Type','text/plain');

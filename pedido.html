@@ -1542,7 +1542,7 @@ function gridCat(){
       var cat=vs[0].categoria||''; var mat=vs[0].disponibilidad||''; var tec=vs[0].tecnica||'';
       if(cat)html+='<span class="p-spec">'+_svgTag+esc(cat)+'</span>';
       if(mat)html+='<span class="p-spec">'+_svgLeather+esc(mat)+'</span>';
-      if(tec)html+='<span class="p-spec">'+_svgLaser+esc(tec)+'</span>';
+      if(tec)html+='<span class="p-spec">'+_svgLaser+'Grabado con técnica láser</span>';
       html+='</div>';
       html+='<div class="p-dots">'+dots+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
@@ -1722,7 +1722,7 @@ function elDisInicio(nomEnc){
     var cat=vs[0].categoria||''; var mat=vs[0].disponibilidad||''; var tec=vs[0].tecnica||'';
     if(cat)specsHtml+='<span class="pm-spec"><strong>Tipo:</strong> '+_svgTag+esc(cat)+'</span>';
     if(mat)specsHtml+='<span class="pm-spec"><strong>Material:</strong> '+_svgLeather+esc(mat)+'</span>';
-    if(tec)specsHtml+='<span class="pm-spec"><strong>Técnica:</strong> '+_svgLaser+esc(tec)+'</span>';
+    if(tec)specsHtml+='<span class="pm-spec"><strong>Técnica:</strong> '+_svgLaser+'Grabado con técnica láser</span>';
     document.getElementById('pm-specs').innerHTML=specsHtml;
     var opts=vs.map(function(v){
       var agot=v.stock<=0;
@@ -1811,7 +1811,7 @@ function elColInicio(sku){
   var cat=v.categoria||''; var mat=v.disponibilidad||''; var tec=v.tecnica||'';
   if(cat)specsHtml+='<span class="pm-spec"><strong>Tipo:</strong> '+_svgTag+esc(cat)+'</span>';
   if(mat)specsHtml+='<span class="pm-spec"><strong>Material:</strong> '+_svgLeather+esc(mat)+'</span>';
-  if(tec)specsHtml+='<span class="pm-spec"><strong>Técnica:</strong> '+_svgLaser+esc(tec)+'</span>';
+  if(tec)specsHtml+='<span class="pm-spec"><strong>Técnica:</strong> '+_svgLaser+'Grabado con técnica láser</span>';
   document.getElementById('ci-specs').innerHTML=specsHtml;
   document.getElementById('ci-qty-n').textContent=1;
   document.getElementById('ci-qty-t').textContent='$'+v.precio.toFixed(2);

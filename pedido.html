@@ -1719,10 +1719,9 @@ function elDisInicio(nomEnc){
     document.getElementById('pm-nombre').textContent=nombre;
     document.getElementById('pm-precio').textContent='$'+vs[0].precio.toFixed(2);
     var specsHtml='';
-    var cat=vs[0].categoria||''; var mat=vs[0].disponibilidad||''; var tec=vs[0].tecnica||'';
-    if(cat)specsHtml+='<span class="pm-spec"><strong>Tipo:</strong> '+_svgTag+'Gorra estilo '+esc(cat)+'</span>';
-    if(mat)specsHtml+='<span class="pm-spec"><strong>Material:</strong> '+_svgLeather+'Parche de '+esc(mat)+'</span>';
-    if(tec)specsHtml+='<span class="pm-spec"><strong>Técnica:</strong> '+_svgLaser+'Grabado a láser</span>';
+    specsHtml+='<span class="pm-spec"><strong>Tipo:</strong> '+_svgTag+'Gorra estilo Trucker</span>';
+    specsHtml+='<span class="pm-spec"><strong>Material:</strong> '+_svgLeather+'Parche de cuero 100%</span>';
+    specsHtml+='<span class="pm-spec"><strong>Técnica:</strong> '+_svgLaser+'Grabado a láser</span>';
     document.getElementById('pm-specs').innerHTML=specsHtml;
     var opts=vs.map(function(v){
       var agot=v.stock<=0;

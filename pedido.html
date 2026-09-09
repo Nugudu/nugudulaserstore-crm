@@ -132,6 +132,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-btn-add:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(45,36,96,.28)}
 .p-btn-add:active{transform:scale(.97)}
 .p-specs{display:flex;gap:6px;font-size:10px;margin:4px 0;flex-wrap:wrap;justify-content:center}
+.prod-card{padding-bottom:68px}
 .p-spec{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#f4f3fa;border:1px solid var(--border);border-radius:4px;color:var(--muted);white-space:nowrap}
 .p-spec svg{flex-shrink:0}
 #rn-aviso{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1f1a3d;color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:30px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:9999;display:none;max-width:84vw;text-align:center}
@@ -1388,6 +1389,7 @@ function renderCat(){
   if(ci)ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');
   var conts=[document.getElementById('cat-wrap'),document.getElementById('cat-inicio-wrap')];
   conts.forEach(function(cont){if(cont)activarFiltrosCat(cont);});
+  if(_carrito.length>0){renderCarrito();renderCiCarrito();}
 }
 // ── FILTROS + BUSCADOR (Fase 2) ──
 // Todo corre en memoria sobre _cat (cero llamadas a GAS al filtrar). Las
@@ -1667,6 +1669,7 @@ function agregarOtroProducto(){
   if(!agregarSeleccionAlCarrito()) return;
   if(it)track('add_to_cart',it);
   renderCarrito();
+  renderCiCarrito();
   document.getElementById('cat-wrap').scrollIntoView({behavior:'auto',block:'start'});
 }
 function quitarDelCarrito(idx){

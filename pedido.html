@@ -561,7 +561,6 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="card">
       <div class="card-ttl">Datos de contacto</div>
       <div class="fg"><label>Nombre completo *</label><input id="f-nom" type="text" placeholder="Ej. María García"></div>
-      <div class="fg"><label>Fecha de nacimiento</label><input id="f-nac" type="text" placeholder="DD/MM/AA" maxlength="8" inputmode="numeric" oninput="onNacInput(this)"><span class="hint">Opcional — solo números (ej. 15/03/98)</span><span id="nac-btn" class="nac-btn" style="display:none" onclick="guardarNac()">+ Guardar</span></div>
       <div class="fg"><label>WhatsApp *</label><input id="f-tel" type="tel" placeholder="8 dígitos, Ej. 72626332"><span class="hint">Te notificamos cuando tu pedido esté listo</span></div>
     </div>
     <div class="card">
@@ -1904,7 +1903,7 @@ function goP2(btn){
   hideErr('form');
   var cliActivo=_cli||_cli_guardado;
   var dirsActivo=_dirs.length?_dirs:_dirs_guardados;
-  if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';document.getElementById('f-nac').value=cliActivo.fechaNac||'';}
+  if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';}
   if(dirsActivo.length>0){
     renderDirsPrev(true);
     elDir(0);
@@ -1918,7 +1917,7 @@ function editarDatosPaso2(){
   hideErr('form');
   var cliActivo=_cli||_cli_guardado;
   var dirsActivo=_dirs.length?_dirs:_dirs_guardados;
-  if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';document.getElementById('f-nac').value=cliActivo.fechaNac||'';}
+  if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';}
   if(dirsActivo.length>0){renderDirsPrev(true);elDir(0);}else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
   setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'auto'});
 }
@@ -2160,10 +2159,9 @@ function rf(l,v){return '<div class="res-fila"><span class="res-lbl">'+l+'</span
 function confirmarPedido(){
   warmGAS(); // pre-calentar la instancia de GAS para que el registro sea rapido
   var email=(document.getElementById('f-email').value||'').trim();
-  var nom=(document.getElementById('f-nom').value||'').trim();
-  var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
-  var nac=(document.getElementById('f-nac').value||'').trim();
-  var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
+var nom=(document.getElementById('f-nom').value||'').trim();
+   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
+   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
@@ -2230,7 +2228,7 @@ function confirmarPedido(){
   var payload={
     action:_metodoPago==='tarjeta'?'pedidoWeb':'solicitudWeb',token:API_TOKEN,nombre:nom,contacto:tel,
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
-    vendedorRef:_refV,email:email,metodoPago:_metodoPago,fechaNac:nac,
+    vendedorRef:_refV,email:email,metodoPago:_metodoPago,
     recargoEnvio:recargo
   };
 
@@ -2255,7 +2253,7 @@ function confirmarPedido(){
       // recargar la página al volver de Wompi). Guardamos el detalle en
       // sessionStorage para repoblar la caja de detalles del pedido en s-exito.
       if(_metodoPago==='tarjeta'){try{sessionStorage.setItem('ngd_ultimaOrden_wompi',JSON.stringify(_ultimaOrden));}catch(e){}}
-      if(_cli&&nac)_cli.fechaNac=nac;
+      
       if(_metodoPago==='tarjeta')marcarPaso(2);
 
       if(_metodoPago==='tarjeta'){

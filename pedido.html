@@ -1685,6 +1685,8 @@ function agregarRapido(sku){
   guardarSesion('s-catalogo');
   renderCarrito();
   renderCiCarrito();
+  renderCartDrawer();
+  abrirCartDrawer();
   toastAgregado();
 }
 function totalCarrito(){
@@ -1846,6 +1848,8 @@ function pmContinuar(){
   _color=_pmColor;_qty=_pmQty;_diseno=_pmNombre;
   agregarSeleccionAlCarrito();
   renderCarrito();
+  renderCartDrawer();
+  abrirCartDrawer();
   track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty});
   toastAgregado();
   closePm();
@@ -1926,6 +1930,7 @@ function continuarCatalogo(btn){
   if(btn)btn.disabled=true;
   agregarSeleccionAlCarrito();
   renderCarrito();
+  renderCartDrawer();
   if(_carrito.length===0){showErr('form','Elige un diseno y un color antes de continuar.');if(btn)btn.disabled=false;return;}
   hideErr('form');
   track('checkout_start',{items:_carrito.length,total:totalCarrito().toFixed(2)});
@@ -1938,6 +1943,7 @@ function continuarCatalogo(btn){
     guardarSesion('s-form',1);
     showScreen('s-form');setPaso(1);
   }
+  cerrarCartDrawer();
   if(btn)btn.disabled=false;
 }
 function irAConsultar(){
@@ -3308,8 +3314,13 @@ function renderCartDrawer(){
         '<div class="cart-drawer-item-name">'+esc(nom)+'</div>'+
         '<div class="cart-drawer-item-meta">'+esc(col)+' · x'+it.cantidad+'</div>'+
       '</div>'+
-      '<div class="cart-drawer-item-price">$'+(it.precio*it.cantidad).toFixed(2)+'</div>'+
-      '<button class="cart-drawer-item-remove" onclick="drawerQuitar('+i+')" title="Quitar">✕</button>'+
+      '<div class="cart-drawer-qty" style="display:flex;align-items:center;gap:6px;margin-top:4px">'+
+        '<button type="button" onclick="chgCartQty('+i+',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
+        '<span style="min-width:24px;text-align:center;font-weight:600">'+it.cantidad+'</span>'+
+        '<button type="button" onclick="chgCartQty('+i+',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
+        '<span style="color:var(--muted);font-size:12px">$'+(it.precio*it.cantidad).toFixed(2)+'</span>'+
+        '<button type="button" onclick="drawerQuitar('+i+')" style="background:none;border:none;color:var(--coral);font-size:16px;cursor:pointer;padding:2px 6px;margin-left:4px" title="Quitar">✕</button>'+
+      '</div>'+
     '</div>';
   }).join('');
   document.getElementById('cart-drawer-total').textContent='$'+totalCarrito().toFixed(2);
@@ -3437,4 +3448,3 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
 </script>
 </body>
 </html>
-

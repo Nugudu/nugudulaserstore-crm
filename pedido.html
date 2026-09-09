@@ -3325,21 +3325,21 @@ function renderResultados(d,res){
 document.getElementById('user-modal-q').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
 document.getElementById('user-modal-cod').addEventListener('keydown',function(e){if(e.key==='Enter')buscarMiPedido();});
 /* ── Onboarding Tour ── */
-(function(){
-  var STORAGE_KEY='ob_tour_done';
-  var overlay=document.getElementById('ob-overlay');
-  function hasDone(){try{return localStorage.getItem(STORAGE_KEY)==='1';}catch(e){return false;}}
-  function markDone(){try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
-  window.closeTour=function(){
-    overlay.classList.remove('active');
-    markDone();
-  };
-  window.obStartTour=function(){
-    overlay.classList.add('active');
-  };
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeTour();});
-  setTimeout(function(){if(!hasDone())window.obStartTour();},1200);
-})();
+  (function(){
+    var STORAGE_KEY='ob_tour_done';
+    var overlay=document.getElementById('ob-overlay');
+    function hasDone(){try{return localStorage.getItem(STORAGE_KEY)==='1';}catch(e){return false;}}
+    function markDone(){try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
+    window.closeTour=function(){
+      overlay.classList.remove('active');
+      markDone();
+    };
+    window.obStartTour=function(){
+      overlay.classList.add('active');
+    };
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeTour();});
+    // Auto-start removido: el tour se abre solo con el botón "?" (Ver guía de uso)
+  })();
 </script>
 </body>
 </html>

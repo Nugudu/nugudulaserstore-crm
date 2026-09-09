@@ -128,6 +128,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-stock{font-size:10px;margin-top:2px}
 .p-share{position:absolute;right:8px;bottom:9px;width:22px;height:22px;color:var(--hint);background:#fff;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:3;transition:color .15s,border-color .15s}
 .p-share:hover{color:var(--navy);border-color:var(--navy)}
+.p-btn-add{width:100%;margin-top:8px;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s ease;box-shadow:0 4px 12px rgba(45,36,96,.22)}
+.p-btn-add:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(45,36,96,.28)}
+.p-btn-add:active{transform:scale(.97)}
 .p-specs{display:flex;gap:6px;font-size:10px;margin:4px 0;flex-wrap:wrap;justify-content:center}
 .p-spec{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#f4f3fa;border:1px solid var(--border);border-radius:4px;color:var(--muted);white-space:nowrap}
 .p-spec svg{flex-shrink:0}
@@ -1546,6 +1549,7 @@ function gridCat(){
       var _fEnt=ceProximaFecha();
       if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
       html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
+      if(!agot)html+='<button class="p-btn-add" onclick="event.stopPropagation();agregarRapido(\''+vs[0].sku+'\')">Agregar</button>';
       if(agot)html+='<div class="p-stock sno">✗ Agotado</div>';
       html+='</div>';
     });
@@ -1668,6 +1672,17 @@ function quitarDelCarrito(idx){
   _carrito.splice(idx,1);
   guardarSesion('s-catalogo');
   renderCarrito();
+  renderCiCarrito();
+}
+function agregarRapido(sku){
+  var vs=_cat.filter(function(p){return p.sku===sku;});
+  if(!vs.length) return;
+  var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
+  _carrito.push({sku:primerColor.sku,diseno:vs[0].nombre,color:primerColor.color,hex:primerColor.hex,precio:primerColor.precio,cantidad:1});
+  guardarSesion('s-catalogo');
+  renderCarrito();
+  renderCiCarrito();
+  toastAgregado();
 }
 function totalCarrito(){
   return _carrito.reduce(function(sum,it){return sum+it.precio*it.cantidad;},0);
@@ -1677,14 +1692,50 @@ function renderCarrito(){
   if(_carrito.length===0){wrap.style.display='none';actualizarBadgeCarrito();return;}
   wrap.style.display='block';
   document.getElementById('carrito-items').innerHTML=_carrito.map(function(it,i){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
-      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong><br><span style="color:var(--muted)">x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>'+
-      '<button type="button" onclick="quitarDelCarrito('+i+')" style="background:none;border:none;color:var(--coral);font-size:18px;cursor:pointer;padding:4px 8px" title="Quitar">✕</button>'+
+    return '<div class="cart-item" data-idx="'+i+'" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
+      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong></div>'+
+      '<div class="cart-qty" style="display:flex;align-items:center;gap:8px">'+
+        '<button type="button" onclick="chgCartQty('+i+',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
+        '<span style="min-width:24px;text-align:center;font-weight:600">'+it.cantidad+'</span>'+
+        '<button type="button" onclick="chgCartQty('+i+',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
+        '<span style="color:var(--muted);font-size:12px">$'+(it.precio*it.cantidad).toFixed(2)+'</span>'+
+        '<button type="button" onclick="quitarDelCarrito('+i+')" style="background:none;border:none;color:var(--coral);font-size:18px;cursor:pointer;padding:4px 8px" title="Quitar">✕</button>'+
+      '</div>'+
     '</div>';
   }).join('');
   document.getElementById('carrito-total').textContent='$'+totalCarrito().toFixed(2);
   actualizarTotalConEnvio();
   actualizarBadgeCarrito();
+}
+function renderCiCarrito(){
+  var wrap=document.getElementById('ci-carrito-wrap');
+  var itemsEl=document.getElementById('ci-carrito-items');
+  var totalEl=document.getElementById('ci-carrito-total');
+  if(!wrap||!itemsEl||!totalEl) return;
+  if(_carrito.length===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  itemsEl.innerHTML=_carrito.map(function(it,i){
+    return '<div class="cart-item" data-idx="'+i+'" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
+      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong></div>'+
+      '<div class="cart-qty" style="display:flex;align-items:center;gap:8px">'+
+        '<button type="button" onclick="chgCartQty('+i+',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
+        '<span style="min-width:24px;text-align:center;font-weight:600">'+it.cantidad+'</span>'+
+        '<button type="button" onclick="chgCartQty('+i+',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
+        '<span style="color:var(--muted);font-size:12px">$'+(it.precio*it.cantidad).toFixed(2)+'</span>'+
+        '<button type="button" onclick="quitarDelCarrito('+i+')" style="background:none;border:none;color:var(--coral);font-size:18px;cursor:pointer;padding:4px 8px" title="Quitar">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  totalEl.textContent='$'+totalCarrito().toFixed(2);
+}
+function chgCartQty(idx,delta){
+  var it=_carrito[idx];
+  if(!it) return;
+  var mx=Math.min(it.stock||10,10);
+  it.cantidad=Math.max(1,Math.min(mx,it.cantidad+delta));
+  guardarSesion('s-catalogo');
+  renderCarrito();
+  renderCiCarrito();
 }
 function chgQty(d){
   var mx=_color?Math.min(_color.stock||10,10):10;

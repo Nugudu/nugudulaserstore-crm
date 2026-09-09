@@ -1853,7 +1853,9 @@ function continuarCatalogo(btn){
     guardarSesion('s-form',2);
     showScreen('s-form');setPaso(2);
   }else{
-    showScreen('s-phone');
+    // Carrito con items y sin cliente logueado -> directo a Datos (paso 1)
+    guardarSesion('s-form',1);
+    showScreen('s-form');setPaso(1);
   }
   if(btn)btn.disabled=false;
 }

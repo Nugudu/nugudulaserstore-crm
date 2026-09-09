@@ -1608,10 +1608,19 @@ function elDis(nomEnc){
   }).join('');
   document.getElementById('color-opts').innerHTML=opts;
   actualizarFotoPreview(vs[0].sku,nombre);
+  // Preseleccionar primer color con stock
+  var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
+  _color=primerColor;_qty=1;
+  document.getElementById('co-'+primerColor.sku).classList.add('sel');
+  actualizarFotoPreview(primerColor.sku,nombre);
+  document.getElementById('qty-n').textContent=1;
+  document.getElementById('qty-t').textContent='$'+primerColor.precio.toFixed(2);
+  document.getElementById('qty-card').style.display='block';
+  document.getElementById('btn-agregar-otro').style.display='flex';
   document.getElementById('color-sel').classList.add('show');
-  document.getElementById('qty-card').style.display='none';
   document.getElementById('color-sel').scrollIntoView({behavior:'auto',block:'nearest'});
   track('product_click',{nombre:nombre});
+  track('color_select',{sku:primerColor.sku,color:primerColor.color});
 }
 function elCol(sku){
   var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;
@@ -1709,9 +1718,18 @@ function elDisInicio(nomEnc){
     }).join('');
     document.getElementById('ci-color-opts').innerHTML=opts;
     actualizarFotoPreviewInicio(vs[0].sku,nombre);
+    // Preseleccionar primer color con stock
+    var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
+    _pmColor=primerColor;_pmQty=1;_pmSku=primerColor.sku;
+    document.getElementById('ci-co-'+primerColor.sku).classList.add('sel');
+    actualizarFotoPreviewInicio(primerColor.sku,nombre);
+    document.getElementById('ci-qty-n').textContent=1;
+    document.getElementById('ci-qty-t').textContent='$'+primerColor.precio.toFixed(2);
+    document.getElementById('ci-qty-card').style.display='block';
+    document.getElementById('ci-btn-agregar-otro').style.display='flex';
     document.getElementById('ci-color-sel').classList.add('show');
-    document.getElementById('ci-qty-card').style.display='none';
     document.getElementById('ci-color-sel').scrollIntoView({behavior:'auto',block:'nearest'});
+    track('color_select',{sku:primerColor.sku,color:primerColor.color});
   }else{
     document.getElementById('pm-nombre').textContent=nombre;
     document.getElementById('pm-precio').textContent='$'+vs[0].precio.toFixed(2);
@@ -1733,9 +1751,18 @@ function elDisInicio(nomEnc){
     document.getElementById('pm-foto').onerror=function(){imgFallback(this);};
     document.getElementById('pm-qty-n').textContent='1';
     document.getElementById('pm-qty-t').textContent='$'+vs[0].precio.toFixed(2);
-    document.getElementById('pm-btn-continue').disabled=true;
-    document.querySelector('.pm-hint').textContent='Selecciona un color para continuar';
-    document.querySelector('.pm-hint').style.color='var(--hint)';
+    // Preseleccionar primer color con stock
+    var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
+    _pmColor=primerColor;_pmSku=primerColor.sku;_pmQty=1;
+    var elSel=document.getElementById('pm-co-'+primerColor.sku);if(elSel)elSel.classList.add('sel');
+    var candidatos=candidatosFoto(primerColor.sku,nombre);
+    document.getElementById('pm-foto').src='imagenes/'+candidatos[0];
+    document.getElementById('pm-foto').onerror=function(){imgFallback(this);};
+    document.getElementById('pm-qty-n').textContent='1';
+    document.getElementById('pm-qty-t').textContent='$'+primerColor.precio.toFixed(2);
+    document.getElementById('pm-btn-continue').disabled=false;
+    document.querySelector('.pm-hint').textContent=primerColor.color+' · $'+primerColor.precio.toFixed(2);
+    document.querySelector('.pm-hint').style.color='var(--navy)';
     openPm();
   }
   track('product_click',{nombre:nombre});

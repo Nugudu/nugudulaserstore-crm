@@ -1741,6 +1741,7 @@ function chgCartQty(idx,delta){
   guardarSesion('s-catalogo');
   renderCarrito();
   renderCiCarrito();
+  renderCartDrawer();
 }
 function chgQty(d){
   var mx=_color?Math.min(_color.stock||10,10):10;

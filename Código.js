@@ -2164,7 +2164,7 @@ function leerVisitantes(p) {
     
     // Convertir páginas a array ordenado (solo las permitidas)
     var paginasArr = [];
-    var paginasNombres = { s_catalogo: 'Catálogo', s_form: 'Formulario', s_phone: 'Mi pedido', s_exito: '¡Listo!', s_cliente: 'Mis pedidos', add_card: 'Agrego desde tarjeta', add_modal: 'Agrego desde modal', add_cart: 'Agrego desde carrito', checkout_start: 'Continuar pedido', usuario_carrito: 'Usuario de carrito', usuario_consulta: 'Usuario de consulta', cart_open: 'Carrito' };
+    var paginasNombres = { 's-catalogo': 'Catálogo', 's-form': 'Formulario', 's-phone': 'Mi pedido', 's-exito': '¡Listo!', 's-cliente': 'Mis pedidos', add_card: 'Agrego desde tarjeta', add_modal: 'Agrego desde modal', add_cart: 'Agrego desde carrito', checkout_start: 'Continuar pedido', usuario_carrito: 'Usuario de carrito', usuario_consulta: 'Usuario de consulta', cart_open: 'Carrito' };
     Object.keys(paginasConteo).forEach(function(k) {
       if (!paginasNombres[k]) return;
       paginasArr.push({ name: paginasNombres[k], count: paginasConteo[k] });

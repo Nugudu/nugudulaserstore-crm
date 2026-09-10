@@ -587,8 +587,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <div class="fg" id="ce-dir-manual-wrap">
           <label>Otra dirección de entrega</label>
-          <div style="display:flex;gap:6px">
-            <input id="f-dir" type="text" placeholder="Calle, colonia, urbanización…" oninput="onDirInp()" style="flex:1">
+          <div style="position:relative;display:flex;gap:6px">
+            <input id="f-dir" type="text" placeholder="Calle, colonia, urbanización…" oninput="onDirInp()" style="flex:1;padding-right:28px">
+            <span id="f-dir-clear" onclick="limpiarDireccion()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;font-size:16px;line-height:1;padding:4px" title="Limpiar dirección">✕</span>
             <button type="button" class="btn-soft" onclick="fijarDireccion()" style="padding:0 14px;font-size:12px;white-space:nowrap;display:none" title="Fijar ubicacion">Fijar</button>
           </div>
           <span class="hint" style="margin-top:4px">O escribe la dirección donde quieres recibir tu orden.</span>
@@ -2064,6 +2065,15 @@ function onDirInp(){
   clearTimeout(_dt);var v=(document.getElementById('f-dir').value||'').trim();if(v.length<5)return;
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
   _dt=setTimeout(fijarDireccion,800);
+  var clr=document.getElementById('f-dir-clear');if(clr)clr.style.display=v.length>0?'block':'none';
+}
+function limpiarDireccion(){
+  document.getElementById('f-dir').value='';
+  document.getElementById('f-zona').value='';
+  document.getElementById('otra-zona').style.display='none';
+  var clr=document.getElementById('f-dir-clear');if(clr)clr.style.display='none';
+  actualizarTotalConEnvio();
+  actualizarResumenP2();
 }
 // Cambio de zona de envío: muestra el campo "otra zona" si corresponde y,
 // si ya hay una dirección escrita, re-ubica el mapa con la zona nueva.
@@ -2096,6 +2106,9 @@ function actualizarTotalConEnvio(){
 function actualizarResumenP2(){
   var el=document.getElementById('p2-resumen');
   if(!el)return;
+  var dirInp=document.getElementById('f-dir');
+  var clr=document.getElementById('f-dir-clear');
+  if(clr&&dirInp)clr.style.display=(dirInp.value||'').trim().length>0?'block':'none';
   var sub=totalCarrito();
   var zSel=document.getElementById('f-zona').value;
   var zona=zSel==='otra'?(document.getElementById('f-zonaot').value||'').trim():zSel;

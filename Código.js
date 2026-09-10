@@ -2020,6 +2020,10 @@ function leerVisitantes(p) {
     var cache = CacheService.getScriptCache();
     var periodo = p.periodo || 'hoy';
     var cacheKey = 'ev_visit_' + periodo;
+    // Invalidar caché si se fuerza refresh
+    if (p.refresh) {
+      try { cache.remove(cacheKey); } catch(e) {}
+    }
     // 1) Intentar cache del resultado procesado (pequeño, ~2-10KB)
     var cached = cache.get(cacheKey);
     if (cached) {

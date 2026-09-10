@@ -556,6 +556,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div class="card" id="carrito-wrap" style="display:none">
       <div class="card-ttl">Tu pedido</div>
       <div id="carrito-items"></div>
+      <div id="carrito-envio" style="font-size:11px;color:#166534;padding:8px 0 4px;border-top:1px solid var(--border);margin-top:4px"></div>
       <div class="res-total"><span>Total</span><span id="carrito-total">$0.00</span></div>
     </div>
     <button class="btn-main" onclick="goP2(this)">Continuar →</button>
@@ -615,6 +616,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
       </div>
       <div class="fg"><label>Notas adicionales</label><textarea id="f-notas" placeholder="Referencias, instrucciones especiales, horario disponible…"></textarea></div>
+    </div>
+    <div class="card" id="p2-resumen-card">
+      <div id="p2-resumen"></div>
     </div>
     <button class="btn-main" onclick="goP3()">Revisar pedido →</button>
     <button class="btn-sec" onclick="goP1()">← Cambiar producto</button>
@@ -1709,6 +1713,8 @@ function renderCarrito(){
     '</div>';
   }).join('');
   document.getElementById('carrito-total').textContent='$'+totalCarrito().toFixed(2);
+  var shipEl=document.getElementById('carrito-envio');
+  if(shipEl) shipEl.innerHTML=textoEnvioHtml();
   actualizarTotalConEnvio();
   actualizarBadgeCarrito();
 }
@@ -1995,6 +2001,7 @@ function goP2(btn){
     elDir(0);
   }else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
   setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'auto'});
+  actualizarResumenP2();
 }
 // "← Editar mis datos" (paso 3): vuelve al paso 2 sin exigir carrito lleno.
 // goP2() valida el carrito y se quedaba mudo si el cliente volvía tras un
@@ -2006,6 +2013,7 @@ function editarDatosPaso2(){
   if(cliActivo){document.getElementById('f-nom').value=cliActivo.nombre||'';document.getElementById('f-tel').value=cliActivo.contacto||'';}
   if(dirsActivo.length>0){renderDirsPrev(true);elDir(0);}else{document.getElementById('dirs-prev-wrap').style.display='none';document.getElementById('nueva-dir').style.display='block';}
   setPaso(2);guardarSesion('s-form',2);window.scrollTo({top:0,behavior:'auto'});
+  actualizarResumenP2();
 }
 function elDir(i){
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
@@ -2065,7 +2073,7 @@ function onZonaChange(){
   var v=(document.getElementById('f-dir').value||'').trim();
   if(v.length>=5){ clearTimeout(_dt); _dt=setTimeout(fijarDireccion,150); }
   actualizarTotalConEnvio();
-  // Actualizar resumen en paso 3 si está visible
+  actualizarResumenP2();
   if(document.getElementById('p3').style.display==='block'){
     renderResumen();
   }
@@ -2083,6 +2091,24 @@ function actualizarTotalConEnvio(){
     el.textContent='$'+sub.toFixed(2);
   }
 }
+function actualizarResumenP2(){
+  var el=document.getElementById('p2-resumen');
+  if(!el)return;
+  var sub=totalCarrito();
+  var zSel=document.getElementById('f-zona').value;
+  var zona=zSel==='otra'?(document.getElementById('f-zonaot').value||'').trim():zSel;
+  var recargo=(esZonaEspecial(zona)||zSel==='otra')?RECARGO_ENVIO:0;
+  var total=(sub+recargo).toFixed(2);
+  var html='<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>Subtotal</span><span>$'+sub.toFixed(2)+'</span></div>';
+  if(recargo>0){
+    html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#166534"><span>Envío</span><span>+$'+recargo.toFixed(2)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:8px 0 0;border-top:1px solid var(--border);margin-top:4px"><span>Total</span><span style="color:var(--navy)">$'+total+'</span></div>';
+  }else{
+    html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#166534"><span>Envío</span><span>$0</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:8px 0 0;border-top:1px solid var(--border);margin-top:4px"><span>Total</span><span style="color:var(--navy)">$'+total+'</span></div>';
+  }
+  el.innerHTML=html;
+}
 // Escritura en "otra zona": re-ubica el mapa con la zona que se está
 // escribiendo (también ignora el orden de llenado del formulario).
 function onZonaOtraInput(){
@@ -2090,6 +2116,7 @@ function onZonaOtraInput(){
   var v=(document.getElementById('f-dir').value||'').trim();
   if(v.length>=5){ clearTimeout(_dt); _dt=setTimeout(fijarDireccion,600); }
   actualizarTotalConEnvio();
+  actualizarResumenP2();
   if(document.getElementById('p3').style.display==='block'){
     renderResumen();
   }
@@ -2241,9 +2268,7 @@ function renderResumen(){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
       '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong></div>'+
       '<div style="display:flex;align-items:center;gap:8px">'+
-        '<button type="button" onclick="chgCartQty('+i+',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
-        '<span style="min-width:24px;text-align:center;font-weight:600">'+it.cantidad+'</span>'+
-        '<button type="button" onclick="chgCartQty('+i+',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
+        '<span style="font-weight:600">'+it.cantidad+'</span>'+
         '<span style="color:var(--muted);font-size:12px">$'+(it.precio*it.cantidad).toFixed(2)+'</span>'+
       '</div>'+
     '</div>';
@@ -3239,6 +3264,7 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <div class="cart-drawer-empty">Tu carrito está vacío</div>
   </div>
   <div class="cart-drawer-footer" id="cart-drawer-footer" style="display:none">
+    <div id="cart-drawer-envio" style="font-size:11px;color:#166534;padding:6px 0 0;border-top:1px solid var(--border);margin-bottom:6px"></div>
     <div class="cart-drawer-total"><span>Total</span><span id="cart-drawer-total">$0.00</span></div>
     <button class="cart-drawer-btn" id="cart-drawer-btn" onclick="continuarCatalogo(this)">Continuar pedido →</button>
   </div>
@@ -3313,6 +3339,9 @@ function cerrarCartDrawer(instant){
     drawer.classList.remove('open');
   }
 }
+function textoEnvioHtml(){
+  return '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M22 8V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2h-2v2a2 2 0 0 1-2 2h-2"/><polyline points="15 10 17 12 13 16"/></svg> Envío $0 en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.';
+}
 function renderCartDrawer(){
   var items=document.getElementById('cart-drawer-items');
   var footer=document.getElementById('cart-drawer-footer');
@@ -3339,6 +3368,8 @@ function renderCartDrawer(){
     '</div>';
   }).join('');
   document.getElementById('cart-drawer-total').textContent='$'+totalCarrito().toFixed(2);
+  var shipEl=document.getElementById('cart-drawer-envio');
+  if(shipEl) shipEl.innerHTML=textoEnvioHtml();
   footer.style.display='block';
   actualizarBadgeCarrito();
 }

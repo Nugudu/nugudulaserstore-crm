@@ -3292,24 +3292,27 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
 <script>
 /* ── Drawer carrito ── */
 function abrirCartDrawer(){
+  var overlay=document.getElementById('cart-drawer-overlay');
+  var drawer=document.getElementById('cart-drawer');
+  // Restaurar estilos para animación
+  drawer.style.transition='';
+  drawer.style.display='';
+  overlay.style.display='';
   renderCartDrawer();
-  document.getElementById('cart-drawer-overlay').classList.add('open');
-  document.getElementById('cart-drawer').classList.add('open');
+  overlay.classList.add('open');
+  drawer.classList.add('open');
 }
 function cerrarCartDrawer(instant){
   var overlay=document.getElementById('cart-drawer-overlay');
   var drawer=document.getElementById('cart-drawer');
   if(instant){
-    // Ocultar INMEDIATO sin transición
+    // Ocultar INMEDIATO y PERMANENTE hasta próxima apertura
     overlay.style.display='none';
     drawer.style.transition='none';
     drawer.style.display='none';
     overlay.classList.remove('open');
     drawer.classList.remove('open');
-    // Restaurar transición para próxima apertura
-    drawer.style.transition='';
-    drawer.style.display='';
-    overlay.style.display='';
+    // NO restauramos display ni transition aquí - se restaura en abrirCartDrawer
   }else{
     overlay.classList.remove('open');
     drawer.classList.remove('open');

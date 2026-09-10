@@ -1942,6 +1942,7 @@ function continuarCatalogo(btn){
   cerrarCartDrawer(true);
   // 4. Forzar paint del estado "catálogo oculto + drawer cerrado" ANTES de mostrar Datos
   requestAnimationFrame(() => {
+    console.log('[continuarCatalogo] Ejecutando showScreen s-form, _cli:', _cli);
     if(_cli){
       guardarSesion('s-form',2);
       showScreen('s-form');setPaso(2);

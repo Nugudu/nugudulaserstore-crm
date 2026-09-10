@@ -3300,11 +3300,16 @@ function cerrarCartDrawer(instant){
   var overlay=document.getElementById('cart-drawer-overlay');
   var drawer=document.getElementById('cart-drawer');
   if(instant){
+    // Ocultar INMEDIATO sin transición
+    overlay.style.display='none';
+    drawer.style.transition='none';
+    drawer.style.display='none';
     overlay.classList.remove('open');
     drawer.classList.remove('open');
-    drawer.style.transition='none';
-    drawer.offsetHeight; // force reflow
+    // Restaurar transición para próxima apertura
     drawer.style.transition='';
+    drawer.style.display='';
+    overlay.style.display='';
   }else{
     overlay.classList.remove('open');
     drawer.classList.remove('open');

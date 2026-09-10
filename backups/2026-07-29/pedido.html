@@ -1673,7 +1673,7 @@ function agregarSeleccionAlCarrito(){
 function agregarOtroProducto(){
   var it=_color?{sku:_color.sku,diseno:_diseno,color:_color.color,cantidad:_qty}:null;
   if(!agregarSeleccionAlCarrito()) return;
-  if(it)track('add_to_cart',it);
+  if(it)track('add_to_cart',{sku:it.sku,diseno:it.diseno,color:it.color,cantidad:it.cantidad,from:'card'});
   renderCarrito();
   renderCiCarrito();
   document.getElementById('cat-wrap').scrollIntoView({behavior:'auto',block:'start'});
@@ -1860,7 +1860,7 @@ function pmContinuar(){
   renderCarrito();
   renderCartDrawer();
   abrirCartDrawer();
-  track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty});
+  track('add_to_cart',{sku:_pmSku,diseno:_pmNombre,color:_pmColor.color,cantidad:_pmQty,from:'modal'});
   toastAgregado();
   closePm();
 }
@@ -1930,7 +1930,7 @@ function ciAgregarOtro(){
   var it=_color?{sku:_color.sku,diseno:_diseno,color:_color.color,cantidad:_qty}:null;
   agregarSeleccionAlCarrito();
   renderCarrito();
-  if(it)track('add_to_cart',it);
+  if(it)track('add_to_cart',{sku:it.sku,diseno:it.diseno,color:it.color,cantidad:it.cantidad,from:'cart'});
   _diseno=null;_color=null;
   document.getElementById('ci-color-sel').classList.remove('show');
   document.getElementById('ci-qty-card').style.display='none';
@@ -1953,6 +1953,7 @@ function continuarCatalogo(btn){
   if(btn)btn.disabled=false;
 }
 function irAConsultar(){
+  track('usuario_consulta');
   showScreen('s-phone');
   document.getElementById('phone-bienvenida').style.display='none';
   document.getElementById('phone-consulta').style.display='block';
@@ -3346,6 +3347,7 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
 <script>
 /* ── Drawer carrito ── */
 function abrirCartDrawer(){
+  track('cart_open');
   var overlay=document.getElementById('cart-drawer-overlay');
   var drawer=document.getElementById('cart-drawer');
   // Restaurar estilos para animación
@@ -3421,6 +3423,7 @@ function actualizarBadgeCarrito(){
 
 /* ── Modal identificar cliente recurrente ── */
 function abrirUsuarioModal(){
+  track('usuario_carrito');
   document.getElementById('usuario-modal-tel').value='';
   document.getElementById('usuario-modal-cod').value='';
   document.getElementById('usuario-modal-err').style.display='none';

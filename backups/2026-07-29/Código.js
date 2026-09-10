@@ -2091,6 +2091,8 @@ function leerVisitantes(p) {
       }
       
       var page = dataObj.screen || '';
+      if (!page && evento === 'add_to_cart' && dataObj.from) page = 'add_' + dataObj.from;
+      if (!page && ['checkout_start','usuario_carrito','usuario_consulta','cart_open'].indexOf(evento) >= 0) page = evento;
       if (page) paginasConteo[page] = (paginasConteo[page] || 0) + 1;
       
       // Embudo
@@ -2162,7 +2164,7 @@ function leerVisitantes(p) {
     
     // Convertir páginas a array ordenado
     var paginasArr = [];
-    var paginasNombres = { s_catalogo: 'Catálogo', s_cliente: 'Datos', s_envio: 'Envío', s_pago: 'Pago', s_exito: '¡Listo!', s_consulta: 'Consulta', s_midsenio: 'Mi diseño' };
+    var paginasNombres = { s_catalogo: 'Catálogo', s_form: 'Formulario', s_phone: 'Mi pedido', s_midiseno: 'Mi diseño', s_exito: '¡Listo!', s_cliente: 'Mis pedidos', add_card: 'Agrego desde tarjeta', add_modal: 'Agrego desde modal', add_cart: 'Agrego desde carrito', checkout_start: 'Continuar pedido', usuario_carrito: 'Usuario de carrito', usuario_consulta: 'Usuario de consulta', cart_open: 'Carrito' };
     Object.keys(paginasConteo).forEach(function(k) {
       paginasArr.push({ name: paginasNombres[k] || k, count: paginasConteo[k] });
     });

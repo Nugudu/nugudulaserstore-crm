@@ -3269,8 +3269,22 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <div id="cart-drawer-envio" style="font-size:11px;color:#166534;padding:6px 0 0;border-top:1px solid var(--border);margin-bottom:6px"></div>
     <div class="cart-drawer-total"><span>Total</span><span id="cart-drawer-total">$0.00</span></div>
     <button class="cart-drawer-btn" id="cart-drawer-btn" onclick="continuarCatalogo(this)">Continuar pedido →</button>
+    <button class="cart-drawer-btn" id="cart-drawer-usuario" onclick="abrirUsuarioModal()" style="background:transparent;color:var(--navy);border:1px solid var(--navy);margin-top:8px">👤 Ya soy cliente</button>
   </div>
  </div>
+
+<!-- ── Modal identificar cliente recurrente ── -->
+<div class="user-modal-overlay" id="usuario-modal-overlay" onclick="cerrarUsuarioModal(event)">
+  <div class="user-modal" onclick="event.stopPropagation()">
+    <button class="user-modal-close" onclick="cerrarUsuarioModal()">✕</button>
+    <h3>Identificarse</h3>
+    <p>Ingresá tu WhatsApp y código para cargar tus datos automáticamente.</p>
+    <input class="user-modal-input" id="usuario-modal-tel" type="tel" placeholder="WhatsApp (Ej. 72626332)" maxlength="15">
+    <input class="user-modal-input" id="usuario-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
+    <div id="usuario-modal-err" class="err-box" style="display:none"></div>
+    <button class="user-modal-btn" id="usuario-modal-btn" onclick="buscarClienteRecurrente()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:700;cursor:pointer">Identificarme</button>
+  </div>
+</div>
 
 <!-- ── Onboarding Tour ── -->
 <div class="ob-overlay" id="ob-overlay" onclick="if(event.target===this)closeTour()">
@@ -3386,6 +3400,51 @@ function actualizarBadgeCarrito(){
   var n=_carrito?_carrito.length:0;
   b.textContent=n;
   b.style.display=n>0?'flex':'none';
+}
+
+/* ── Modal identificar cliente recurrente ── */
+function abrirUsuarioModal(){
+  document.getElementById('usuario-modal-tel').value='';
+  document.getElementById('usuario-modal-cod').value='';
+  document.getElementById('usuario-modal-err').style.display='none';
+  document.getElementById('usuario-modal-overlay').classList.add('open');
+  setTimeout(function(){document.getElementById('usuario-modal-tel').focus();},100);
+}
+function cerrarUsuarioModal(e){
+  if(e&&e.target&&e.target!==document.getElementById('usuario-modal-overlay'))return;
+  document.getElementById('usuario-modal-overlay').classList.remove('open');
+}
+function buscarClienteRecurrente(){
+  var btn=document.getElementById('usuario-modal-btn');
+  var errEl=document.getElementById('usuario-modal-err');
+  var tel=(document.getElementById('usuario-modal-tel').value||'').trim().replace(/\D/g,'');
+  var cod=(document.getElementById('usuario-modal-cod').value||'').trim();
+  if(!tel||tel.length<8){errEl.textContent='Ingresá tu número de WhatsApp.';errEl.style.display='block';return;}
+  if(!cod||cod.length!==4||!/^\d{4}$/.test(cod)){errEl.textContent='Ingresá tu código de 4 dígitos.';errEl.style.display='block';return;}
+  errEl.style.display='none';
+  btn.disabled=true;btn.textContent='Buscando…';
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'buscarClienteSeguro',token:API_TOKEN,tel:tel,codigo:cod})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      btn.disabled=false;btn.textContent='Identificarme';
+      if(d.ok&&d.encontrado){
+        _cli=d;_dirs=d.direcciones||[];setContacto(d.contacto||'');
+        cerrarUsuarioModal();
+        cerrarCartDrawer(true);
+        guardarSesion('s-form',2);
+        showScreen('s-form');setPaso(2);
+        document.getElementById('f-nom').value=d.nombre||'';
+        document.getElementById('f-tel').value=d.contacto||'';
+        if(_dirs.length>0){renderDirsPrev(true);elDir(0);}
+        actualizarResumenP2();
+      }else{
+        var msg=d.error==='codigo_incorrecto'?'Código incorrecto. Intentá de nuevo.':'No encontramos ese número. Continuá como cliente nuevo.';
+        errEl.textContent=msg;errEl.style.display='block';
+      }
+    }).catch(function(){
+      btn.disabled=false;btn.textContent='Identificarme';
+      errEl.textContent='Error de conexión. Intentá de nuevo.';errEl.style.display='block';
+    });
 }
 
 /* ── Modal consultar mi pedido ── */

@@ -3466,16 +3466,8 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   horasHtml+='<div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px">Hora del día (0-23)</div>';
   document.getElementById('cdp-v-horas').innerHTML=horasHtml;
   
-  // Páginas más vistas (barras horizontales) — mapeo en frontend
-  var paginasBackend=analytics.paginas||[];
-  var paginasMap={'s-catalogo':'Catálogo','s-form':'Formulario',add_card:'Agrego desde tarjeta',add_modal:'Agrego desde modal',add_cart:'Agrego desde carrito',checkout_start:'Continuar pedido',usuario_carrito:'Usuario de carrito',usuario_consulta:'Usuario de consulta'};
-  var paginasConteo={};
-  paginasBackend.forEach(function(pg){
-    var name=pg.name||'';
-    var friendly=paginasMap[name];
-    if(friendly) paginasConteo[friendly]=(paginasConteo[friendly]||0)+pg.count;
-  });
-  var paginas=Object.keys(paginasConteo).map(function(k){return{name:k,count:paginasConteo[k]};}).sort(function(a,b){return b.count-a.count;});
+  // Páginas más vistas (barras horizontales) — backend ya envía nombres amigables
+  var paginas=analytics.paginas||[];
   var paginasHtml='';
   var maxPag=paginas.length?paginas[0].count:1;
   var pagColores=['var(--navy)','#6366f1','var(--gold)','#22c55e','#f97316','#ec4899'];

@@ -2017,24 +2017,12 @@ function leerEventos(p) {
 // ══════════════════════════════════════════════════════════════════
 function leerVisitantes(p) {
   try {
-    var cache = CacheService.getScriptCache();
     var periodo = p.periodo || 'hoy';
-    var cacheKey = 'ev_visit_' + periodo;
-    // Invalidar caché si se fuerza refresh
-    if (p.refresh) {
-      try { cache.remove(cacheKey); } catch(e) {}
-    }
-    // 1) Intentar cache del resultado procesado (pequeño, ~2-10KB)
-    var cached = cache.get(cacheKey);
-    if (cached) {
-      try { return JSON.parse(cached); } catch(e) {}
-    }
-    // 2) Cache miss: leer Sheet y procesar
+    // Leer Sheet y procesar (sin caché — datos siempre frescos)
     var sheet = getHojaEventos();
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) {
       var empty = { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
-      try { cache.put(cacheKey, JSON.stringify(empty), 30); } catch(cErr) {}
       return empty;
     }
     var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
@@ -2226,8 +2214,6 @@ function leerVisitantes(p) {
         duracionProm: duracionProm
       }
     };
-    // 3) Guardar procesado en cache (cabe porque es resumen)
-    try { cache.put(cacheKey, JSON.stringify(resultado), 30); } catch(cErr) {}
     return resultado;
   } catch (err) {
     return { ok: false, error: err.message };

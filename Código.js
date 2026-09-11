@@ -2154,12 +2154,10 @@ function leerVisitantes(p) {
       horasArr.push({ hour: h, count: horasConteo[h] || 0 });
     }
     
-    // Convertir páginas a array ordenado (solo las 8 permitidas)
+    // Convertir páginas a array ordenado — claves crudas (el frontend traduce)
     var paginasArr = [];
-    var paginasPermitidas = { 's-catalogo': 'Catálogo', 's-form': 'Formulario', add_card: 'Agrego desde tarjeta', add_modal: 'Agrego desde modal', add_cart: 'Agrego desde carrito', checkout_start: 'Continuar pedido', usuario_carrito: 'Usuario de carrito', usuario_consulta: 'Usuario de consulta' };
     Object.keys(paginasConteo).forEach(function(k) {
-      if (!paginasPermitidas[k]) return;
-      paginasArr.push({ name: paginasPermitidas[k], count: paginasConteo[k] });
+      paginasArr.push({ name: k, count: paginasConteo[k] });
     });
     paginasArr.sort(function(a, b) { return b.count - a.count; });
     

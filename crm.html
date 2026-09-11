@@ -3468,7 +3468,7 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   
   // Páginas más vistas (barras horizontales) — mapeo y filtro en frontend
   var paginasRaw=analytics.paginas||[];
-  var paginasMap={'s-catalogo':'Catálogo','s-form':'Formulario',add_card:'Agrego desde tarjeta',add_modal:'Agrego desde modal',add_cart:'Agrego desde carrito',checkout_start:'Continuar pedido',usuario_carrito:'Usuario de carrito',usuario_consulta:'Usuario de consulta'};
+  var paginasMap={'s-catalogo':'Catálogo','s-form':'Formulario',add_card:'Agrego desde tarjeta',add_modal:'Agrego desde modal',add_cart:'Agrego desde carrito',checkout_start:'Continuar pedido',usuario_carrito:'Usuario de carrito',usuario_consulta:'Usuario de consulta','s-exito':'¡Listo!','s-cliente':'Mis pedidos'};
   var paginasConteo={};
   paginasRaw.forEach(function(pg){
     var name=pg.name||'';

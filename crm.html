@@ -3466,8 +3466,15 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   horasHtml+='<div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px">Hora del día (0-23)</div>';
   document.getElementById('cdp-v-horas').innerHTML=horasHtml;
   
-  // Páginas más vistas (barras horizontales)
-  var paginas=analytics.paginas||[];
+  // Páginas más vistas (barras horizontales) — calculado del frontend
+  var paginasMap={};
+  var paginasNombres={'s-catalogo':'Catálogo','s-form':'Formulario','s-phone':'Mi pedido','s-exito':'¡Listo!','s-cliente':'Mis pedidos',add_card:'Agrego desde tarjeta',add_modal:'Agrego desde modal',add_cart:'Agrego desde carrito',checkout_start:'Continuar pedido',usuario_carrito:'Usuario de carrito',usuario_consulta:'Usuario de consulta',cart_open:'Carrito'};
+  visitantes.forEach(function(v){
+    var lp=v.lastPage||'';
+    if(!lp||lp==='s-midiseno')return;
+    paginasMap[lp]=(paginasMap[lp]||0)+1;
+  });
+  var paginas=Object.keys(paginasMap).map(function(k){return{name:paginasNombres[k]||k,count:paginasMap[k]};}).sort(function(a,b){return b.count-a.count;});
   var paginasHtml='';
   var maxPag=paginas.length?paginas[0].count:1;
   var pagColores=['var(--navy)','#6366f1','var(--gold)','#22c55e','#f97316','#ec4899'];
@@ -3475,7 +3482,7 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
     var pct=maxPag>0?Math.round((pg.count/maxPag)*100):0;
     var color=pagColores[i%pagColores.length];
     paginasHtml+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
-    paginasHtml+='<div style="width:80px;font-size:12px;font-weight:600">'+pg.name+'</div>';
+    paginasHtml+='<div style="width:150px;font-size:12px;font-weight:600">'+pg.name+'</div>';
     paginasHtml+='<div style="flex:1;background:var(--border);border-radius:4px;height:18px;overflow:hidden">';
     paginasHtml+='<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px"></div>';
     paginasHtml+='</div>';

@@ -3298,8 +3298,8 @@ if(window._wompiReturn){var el=document.getElementById('salir-exito-top');if(el)
     <button class="user-modal-close" onclick="cerrarUsuarioModal()">✕</button>
     <h3>Identificarse</h3>
     <p>Ingresá tu WhatsApp y código para cargar tus datos automáticamente.</p>
-    <input class="user-modal-input" id="usuario-modal-tel" type="tel" placeholder="WhatsApp (Ej. 72626332)" maxlength="15">
-    <input class="user-modal-input" id="usuario-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px">
+    <input class="user-modal-input" id="usuario-modal-tel" type="tel" placeholder="WhatsApp (Ej. 72626332)" maxlength="15" oninput="onUsuarioTelInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('usuario-modal-cod').focus();}">
+    <input class="user-modal-input" id="usuario-modal-cod" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Código personal de 4 dígitos" maxlength="4" style="margin-bottom:14px" oninput="onUsuarioCodInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();buscarClienteRecurrente();}">
     <div id="usuario-modal-err" class="err-box" style="display:none"></div>
     <button class="user-modal-btn" id="usuario-modal-btn" onclick="buscarClienteRecurrente()" style="width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:700;cursor:pointer">Identificarme</button>
   </div>
@@ -3434,6 +3434,14 @@ function abrirUsuarioModal(){
 function cerrarUsuarioModal(e){
   if(e&&e.target&&e.target!==document.getElementById('usuario-modal-overlay'))return;
   document.getElementById('usuario-modal-overlay').classList.remove('open');
+}
+function onUsuarioTelInput(){
+  var tel=document.getElementById('usuario-modal-tel').value.replace(/\D/g,'');
+  if(tel.length>=8)document.getElementById('usuario-modal-cod').focus();
+}
+function onUsuarioCodInput(){
+  var cod=document.getElementById('usuario-modal-cod').value.trim();
+  if(cod.length===4&&/^\d{4}$/.test(cod))buscarClienteRecurrente();
 }
 function buscarClienteRecurrente(){
   var btn=document.getElementById('usuario-modal-btn');

@@ -3374,7 +3374,7 @@ function cdpVisitantesFiltro(periodo){
 
 function cdpCargarVisitantes(){
   document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
-  fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN))
+  fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&refresh=1&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});

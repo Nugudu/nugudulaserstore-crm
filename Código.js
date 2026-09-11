@@ -2166,12 +2166,12 @@ function leerVisitantes(p) {
       horasArr.push({ hour: h, count: horasConteo[h] || 0 });
     }
     
-    // Convertir páginas a array ordenado
+    // Convertir páginas a array ordenado (solo las 8 permitidas)
     var paginasArr = [];
-    var paginasNombres = { 's-catalogo': 'Catálogo', 's-form': 'Formulario', 's-phone': 'Mi pedido', 's-exito': '¡Listo!', 's-cliente': 'Mis pedidos', add_card: 'Agrego desde tarjeta', add_modal: 'Agrego desde modal', add_cart: 'Agrego desde carrito', checkout_start: 'Continuar pedido', usuario_carrito: 'Usuario de carrito', usuario_consulta: 'Usuario de consulta', cart_open: 'Carrito' };
+    var paginasPermitidas = { 's-catalogo': 'Catálogo', 's-form': 'Formulario', add_card: 'Agrego desde tarjeta', add_modal: 'Agrego desde modal', add_cart: 'Agrego desde carrito', checkout_start: 'Continuar pedido', usuario_carrito: 'Usuario de carrito', usuario_consulta: 'Usuario de consulta' };
     Object.keys(paginasConteo).forEach(function(k) {
-      if (k === 's-midiseno') return;
-      paginasArr.push({ name: paginasNombres[k] || k, count: paginasConteo[k] });
+      if (!paginasPermitidas[k]) return;
+      paginasArr.push({ name: paginasPermitidas[k], count: paginasConteo[k] });
     });
     paginasArr.sort(function(a, b) { return b.count - a.count; });
     

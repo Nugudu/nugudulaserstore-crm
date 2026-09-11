@@ -3374,7 +3374,7 @@ function cdpVisitantesFiltro(periodo){
 
 function cdpCargarVisitantes(){
   document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
-  fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&refresh=1&token='+encodeURIComponent(API_TOKEN))
+  fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
@@ -3466,15 +3466,8 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   horasHtml+='<div style="text-align:center;font-size:10px;color:var(--muted);margin-top:4px">Hora del día (0-23)</div>';
   document.getElementById('cdp-v-horas').innerHTML=horasHtml;
   
-  // Páginas más vistas (barras horizontales) — calculado del frontend
-  var paginasMap={};
-  var paginasNombres={'s-catalogo':'Catálogo','s-form':'Formulario','s-phone':'Mi pedido','s-exito':'¡Listo!','s-cliente':'Mis pedidos',add_card:'Agrego desde tarjeta',add_modal:'Agrego desde modal',add_cart:'Agrego desde carrito',checkout_start:'Continuar pedido',usuario_carrito:'Usuario de carrito',usuario_consulta:'Usuario de consulta',cart_open:'Carrito'};
-  visitantes.forEach(function(v){
-    var lp=v.lastPage||'';
-    if(!lp||lp==='s-midiseno')return;
-    paginasMap[lp]=(paginasMap[lp]||0)+1;
-  });
-  var paginas=Object.keys(paginasMap).map(function(k){return{name:paginasNombres[k]||k,count:paginasMap[k]};}).sort(function(a,b){return b.count-a.count;});
+  // Páginas más vistas (barras horizontales) — del backend analytics.paginas
+  var paginas=analytics.paginas||[];
   var paginasHtml='';
   var maxPag=paginas.length?paginas[0].count:1;
   var pagColores=['var(--navy)','#6366f1','var(--gold)','#22c55e','#f97316','#ec4899'];

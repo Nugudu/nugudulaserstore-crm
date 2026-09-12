@@ -173,6 +173,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .pm-btn:hover{opacity:.9}
 .pm-btn:disabled{opacity:.4;cursor:not-allowed}
 .pm-hint{font-size:11px;color:var(--hint);text-align:center;margin-top:8px}
+.p-envio-detalle{font-size:11px;color:#b91c1c;text-align:center;margin-top:4px;cursor:pointer;user-select:none}
+.p-envio-detalle-text{display:none;font-size:10px;line-height:1.3;margin-top:2px;color:#166534}
+.p-envio-detalle.open .p-envio-detalle-text{display:block}
+.p-envio-detalle.open::after{content:" ▴"}
+.p-envio-detalle:not(.open)::after{content:" ▾"}
 .color-sel{background:#f4f3fa;border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:12px;display:none}
 .color-sel.show{display:block}
 .cs-ttl{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px}
@@ -453,7 +458,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Agregar al carrito</button>
         <div class="pm-hint">Selecciona un color para continuar</div>
-        <div style="font-size:11px;color:#b91c1c;text-align:center;margin-top:4px;line-height:1.3">Envío otra zona +$3<br>(SV-SS, SV-LI)</div>
+        <div style="font-size:11px;color:#166534;text-align:center;margin-top:4px;line-height:1.3">Envío $0 en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div>
       </div>
     </div>
   </div>
@@ -1559,7 +1564,7 @@ function gridCat(){
       if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
       html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
       if(!agot)html+='<button class="p-btn-add" onclick="event.stopPropagation();agregarRapido(\''+vs[0].sku+'\')">Agregar</button>';
-      if(!agot)html+='<div style="font-size:11px;color:#b91c1c;text-align:center;margin-top:4px;line-height:1.3">Envío otra zona +$3<br>(SV-SS, SV-LI)</div>';
+      if(!agot)html+='<div class="p-envio-detalle" onclick="event.stopPropagation();this.classList.toggle(\'open\')">Envío detalle<div class="p-envio-detalle-text">Envío $0 en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div></div>';
       if(agot)html+='<div class="p-stock sno">✗ Agotado</div>';
       html+='</div>';
     });

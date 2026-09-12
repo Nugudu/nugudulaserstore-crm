@@ -579,7 +579,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
       <div id="nueva-dir">
         <div class="fg">
-            <button type="button" id="btn-mi-ubicacion-web" class="btn-soft" onclick="enviarMiUbicacion()" style="width:100%;padding:11px 12px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg> Compartir mi ubicación actual</button>
+            <button type="button" id="btn-mi-ubicacion-web" class="btn-soft" onclick="enviarMiUbicacion()" style="width:100%;padding:11px 12px;font-size:13px;display:none;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg> Compartir mi ubicación actual</button>
             <span class="hint" style="margin-top:4px;display:block">Se llenará tu dirección automáticamente</span>
         </div>
         <div id="ce-direccion-auto" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--rs);padding:10px 12px;margin:8px 0;align-items:flex-start;gap:8px">
@@ -587,13 +587,13 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <div><div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:2px">Tu dirección</div><div id="ce-dir-texto" style="font-size:13px;color:var(--text);line-height:1.4"></div></div>
         </div>
         <div class="fg" id="ce-dir-manual-wrap">
-          <label>Otra dirección de entrega</label>
+          <label>Dirección de entrega</label>
           <div style="position:relative;display:flex;gap:6px">
             <input id="f-dir" type="text" placeholder="Calle, colonia, urbanización…" oninput="onDirInp()" style="flex:1;padding-right:28px">
             <span id="f-dir-clear" onclick="limpiarDireccion()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;font-size:16px;line-height:1;padding:4px" title="Limpiar dirección">✕</span>
             <button type="button" class="btn-soft" onclick="fijarDireccion()" style="padding:0 14px;font-size:12px;white-space:nowrap;display:none" title="Fijar ubicacion">Fijar</button>
           </div>
-          <span class="hint" style="margin-top:4px">O escribe la dirección donde quieres recibir tu orden.</span>
+          <span class="hint" style="margin-top:4px">Escribe la dirección donde quieres recibir tu orden.</span>
         </div>
         <div class="fg">
           <label>Zona de envío *</label>

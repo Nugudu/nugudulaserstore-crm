@@ -154,7 +154,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .pm-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);z-index:2;transition:background .15s}
 .pm-close:hover{background:var(--border)}
 .pm-body{padding:0 16px 20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;position:relative}
-.pm-foto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border)}
+.pm-foto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);cursor:zoom-in}
+.zoom-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:9999;justify-content:center;align-items:center;flex-direction:column}
+.zoom-overlay.open{display:flex}
+.zoom-overlay img{max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;-webkit-user-select:none;user-select:none;touch-action:pinch-zoom}
+.zoom-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;z-index:10000;padding:4px 8px;line-height:1}
 .pm-nombre{font-size:18px;font-weight:700;margin-bottom:4px}
 .pm-precio{font-size:20px;font-weight:800;color:var(--navy);margin-bottom:12px}
 .pm-section{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
@@ -442,7 +446,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div class="pm-handle"></div>
       <button class="pm-close" onclick="closePm()">✕</button>
       <div class="pm-body">
-        <img class="pm-foto" id="pm-foto" alt="">
+        <img class="pm-foto" id="pm-foto" alt="" onclick="openZoom(this.src)">
         <div class="pm-nombre" id="pm-nombre"></div>
         <div class="pm-precio" id="pm-precio"></div>
         <div class="pm-section">Detalles</div>
@@ -462,6 +466,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       </div>
     </div>
   </div>
+</div>
+
+<!-- ZOOM FULLSCREEN -->
+<div class="zoom-overlay" id="zoom-overlay" onclick="if(event.target===this)closeZoom()">
+  <button class="zoom-close" onclick="closeZoom()">✕</button>
+  <img id="zoom-img" src="" alt="" onclick="event.stopPropagation()">
 </div>
 
 <!-- PHONE CHECK — bienvenida -->
@@ -1897,6 +1907,17 @@ function closePm(){
   ov.classList.remove('open');
   document.body.style.overflow='';
   setTimeout(function(){ov.style.display='none';},300);
+}
+function openZoom(src){
+  var z=document.getElementById('zoom-overlay');
+  document.getElementById('zoom-img').src=src;
+  z.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeZoom(){
+  var z=document.getElementById('zoom-overlay');
+  z.classList.remove('open');
+  document.body.style.overflow='';
 }
 function elColInicio(sku){
   var v=_cat.find(function(p){return p.sku===sku;});if(!v)return;

@@ -2022,7 +2022,7 @@ function leerVisitantes(p) {
     var sheet = getHojaEventos();
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) {
-      var empty = { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
+      var empty = { ok: true, visitantes: [], stats: { activos: 0, hoy: 0, semana: 0, mes: 0 }, analytics: { fuentes: [], redes: [], horas: [], paginas: [], embudo: {}, rebote: 0, duracionProm: 0 } };
       return empty;
     }
     var datos = sheet.getRange(2, 1, lastRow - 1, HOJA_EVENTOS_HEADER.length).getValues();
@@ -2041,6 +2041,7 @@ function leerVisitantes(p) {
     var sesiones = {};
     var todosSinFiltro = {};
     var fuentesConteo = {};
+    var redesConteo = {};
     var horasConteo = {};
     var paginasConteo = {};
     var embudo = { page_view: 0, product_click: 0, color_select: 0, add_to_cart: 0, checkout_start: 0, purchase: 0 };
@@ -2076,6 +2077,9 @@ function leerVisitantes(p) {
       // Analytics: fuentes, horas, páginas (sin filtro de período)
       var source = dataObj.source || urlRef || 'Directo';
       fuentesConteo[source] = (fuentesConteo[source] || 0) + 1;
+      
+      var red = dataObj.redSocial || '';
+      if (red) redesConteo[red] = (redesConteo[red] || 0) + 1;
       
       if (tsDate) {
         var hora = tsDate.getHours();
@@ -2148,6 +2152,13 @@ function leerVisitantes(p) {
     });
     fuentesArr.sort(function(a, b) { return b.count - a.count; });
     
+    // Convertir redes sociales a array ordenado
+    var redesArr = [];
+    Object.keys(redesConteo).forEach(function(k) {
+      redesArr.push({ name: k, count: redesConteo[k] });
+    });
+    redesArr.sort(function(a, b) { return b.count - a.count; });
+    
     // Convertir horas a array (0-23)
     var horasArr = [];
     for (var h = 0; h < 24; h++) {
@@ -2205,6 +2216,7 @@ function leerVisitantes(p) {
       },
       analytics: {
         fuentes: fuentesArr,
+        redes: redesArr,
         horas: horasArr,
         paginas: paginasArr,
         embudo: embudo,

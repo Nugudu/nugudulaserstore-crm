@@ -667,6 +667,12 @@ tbody tr:last-child td{border-bottom:none}
           </div>
         </div>
         
+        <!-- Analytics Row 2b: Redes sociales -->
+        <div class="card chart-full" style="margin-bottom:1.2rem">
+          <div class="card-ttl"><i class="fa-solid fa-mobile-screen-button" style="color:#e1306c"></i> Redes sociales</div>
+          <div id="cdp-v-redes" style="padding:10px 0"></div>
+        </div>
+        
         <!-- Analytics Row 3: Páginas más vistas -->
         <div class="card" style="margin-bottom:1.2rem">
           <div class="card-ttl"><i class="fa-solid fa-chart-bar" style="color:var(--navy)"></i> Páginas más vistas</div>
@@ -3448,6 +3454,26 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
     fuentesHtml+='</div>';
   });
   document.getElementById('cdp-v-fuentes').innerHTML=fuentesHtml||'<div style="color:var(--muted);text-align:center;padding:20px">Sin datos</div>';
+  
+  // Redes sociales (barras horizontales con iconos)
+  var redes=analytics.redes||[];
+  var redesHtml='';
+  var maxRede=redes.length?redes[0].count:1;
+  var redesColores={'Facebook':'#1877F2','Instagram':'#E1306C','TikTok':'#010101','YouTube':'#FF0000'};
+  var redesIconos={'Facebook':'fa-brands fa-facebook','Instagram':'fa-brands fa-instagram','TikTok':'fa-brands fa-tiktok','YouTube':'fa-brands fa-youtube'};
+  redes.forEach(function(r,i){
+    var pct=maxRede>0?Math.round((r.count/maxRede)*100):0;
+    var color=redesColores[r.name]||'var(--navy)';
+    var icono=redesIconos[r.name]||'fa-solid fa-globe';
+    redesHtml+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    redesHtml+='<div style="width:90px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px"><i class="'+icono+'" style="color:'+color+';font-size:14px"></i>'+r.name+'</div>';
+    redesHtml+='<div style="flex:1;background:var(--border);border-radius:4px;height:20px;overflow:hidden">';
+    redesHtml+='<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px;transition:width .4s"></div>';
+    redesHtml+='</div>';
+    redesHtml+='<div style="width:30px;font-size:13px;font-weight:700;text-align:right">'+r.count+'</div>';
+    redesHtml+='</div>';
+  });
+  document.getElementById('cdp-v-redes').innerHTML=redesHtml||'<div style="color:var(--muted);text-align:center;padding:20px"><i class="fa-solid fa-mobile-screen-button" style="font-size:24px;margin-bottom:8px;display:block;opacity:.3"></i>Sin datos de redes sociales</div>';
   
   // Horas pico (barras verticales)
   var horas=analytics.horas||[];

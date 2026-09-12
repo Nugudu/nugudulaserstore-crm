@@ -904,13 +904,15 @@ function esZonaEspecial(z){return ZONAS_ESPECIALES.some(function(ze){return ze.t
 // ── CDP: EVENTOS DE COMPORTAMIENTO ──
 var _sessionId=(function(){try{var s=sessionStorage.getItem('ngd_session');if(!s){s=Date.now()+'-'+Math.random().toString(36).slice(2,8);sessionStorage.setItem('ngd_session',s);}return s;}catch(e){return Date.now()+'-x';}})();
 var _eventQueue=[],_eventContacto='',_flushTimer=null;
-var _visitorData={device:/Mobi|Android/i.test(navigator.userAgent)?'Móvil':'Escritorio',city:'',source:_refV||'Directo'};
+var _redSocial=(function(){var ua=navigator.userAgent||'';var ref=(document.referrer||'').toLowerCase();if(/FBAN|FBAV|FB_IAB/i.test(ua)||ref.indexOf('facebook.com')>=0||ref.indexOf('fb.com')>=0)return'Facebook';if(/Instagram/i.test(ua)||ref.indexOf('instagram.com')>=0)return'Instagram';if(/TikTok/i.test(ua)||ref.indexOf('tiktok.com')>=0)return'TikTok';if(ref.indexOf('youtube.com')>=0||ref.indexOf('youtu.be')>=0)return'YouTube';return'';})();
+var _visitorData={device:/Mobi|Android/i.test(navigator.userAgent)?'Móvil':'Escritorio',city:'',source:_refV||'Directo',redSocial:_redSocial};
 try{fetch('https://ipwho.is/').then(function(r){return r.json();}).then(function(d){if(d&&d.city)_visitorData.city=d.city;}).catch(function(){});}catch(e){}
 function track(evento,data){
   data=data||{};
   data.device=_visitorData.device;
   data.city=_visitorData.city;
   data.source=_visitorData.source;
+  data.redSocial=_visitorData.redSocial||'';
   _eventQueue.push({ts:new Date().toISOString(),session_id:_sessionId,contacto:_eventContacto,evento:evento,data:data,url_ref:_refV});
   if(!_flushTimer)_flushTimer=setTimeout(flushEvents,10000);
 }

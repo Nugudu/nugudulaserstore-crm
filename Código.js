@@ -2079,6 +2079,7 @@ function leerVisitantes(p) {
       fuentesConteo[source] = (fuentesConteo[source] || 0) + 1;
       
       var red = dataObj.redSocial || '';
+      if (red === 'Facebook' || red === 'Instagram') red = 'Meta';
       if (red) redesConteo[red] = (redesConteo[red] || 0) + 1;
       
       if (tsDate) {

@@ -3459,8 +3459,8 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   var redes=analytics.redes||[];
   var redesHtml='';
   var maxRede=redes.length?redes[0].count:1;
-  var redesColores={'Facebook':'#1877F2','Instagram':'#E1306C','TikTok':'#010101','YouTube':'#FF0000'};
-  var redesIconos={'Facebook':'fa-brands fa-facebook','Instagram':'fa-brands fa-instagram','TikTok':'fa-brands fa-tiktok','YouTube':'fa-brands fa-youtube'};
+  var redesColores={'Meta':'#1877F2','TikTok':'#010101','YouTube':'#FF0000'};
+  var redesIconos={'Meta':'fa-brands fa-meta','TikTok':'fa-brands fa-tiktok','YouTube':'fa-brands fa-youtube'};
   redes.forEach(function(r,i){
     var pct=maxRede>0?Math.round((r.count/maxRede)*100):0;
     var color=redesColores[r.name]||'var(--navy)';

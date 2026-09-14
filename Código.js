@@ -2018,7 +2018,12 @@ function leerEventos(p) {
 function leerVisitantes(p) {
   try {
     var periodo = p.periodo || 'hoy';
-    // Leer Sheet y procesar (sin caché — datos siempre frescos)
+    var cacheKey = 'cdp_visitantes_' + periodo;
+    var forceRefresh = p.refresh === '1' || p.refresh === 1;
+    if (!forceRefresh) {
+      var cached = CacheService.getScriptCache().get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    }
     var sheet = getHojaEventos();
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) {
@@ -2225,6 +2230,7 @@ function leerVisitantes(p) {
         duracionProm: duracionProm
       }
     };
+    try { CacheService.getScriptCache().put(cacheKey, JSON.stringify(resultado), 60); } catch(e) {}
     return resultado;
   } catch (err) {
     return { ok: false, error: err.message };

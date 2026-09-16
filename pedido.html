@@ -193,6 +193,14 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .copt{display:flex;align-items:center;gap:7px;padding:7px 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
 .copt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .cswatch{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
+.p-sizes{display:flex;gap:5px;justify-content:center;margin:6px 0}
+.p-size{width:32px;height:28px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;background:#fff;transition:all .15s}
+.p-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+.p-size.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+.pm-sizes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pm-size{display:flex;align-items:center;justify-content:center;min-width:40px;height:36px;padding:0 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
+.pm-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
+.pm-size.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 .qty-row{display:flex;align-items:center;gap:12px;padding:4px 0}
 .qty-btn{width:38px;height:38px;border:1px solid var(--border);border-radius:9px;background:#fff;font-size:20px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .qty-num{font-size:22px;font-weight:700;min-width:36px;text-align:center}
@@ -562,6 +570,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <img class="cs-foto" id="cs-foto" alt="" style="display:none">
       <div class="cs-ttl">Elige el color para <strong id="cs-nom"></strong></div>
       <div class="color-opts" id="color-opts"></div>
+      <div class="cs-ttl" style="margin-top:10px">Talla</div>
+      <div class="pm-sizes" id="size-opts"></div>
     </div>
     <div class="card" id="qty-card" style="display:none">
       <div class="card-ttl">Cantidad</div>
@@ -899,7 +909,7 @@ var _refV = (function(){
   try { return (new URLSearchParams(location.search).get('v') || '').trim().toUpperCase(); }
   catch(e){ return ''; }
 })();
-var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_mapa='',_dirSel=null,_ultimaOrden=null,_yaSoyClienteMode=false;
+var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_tallaSel='M',_mapa='',_dirSel=null,_ultimaOrden=null,_yaSoyClienteMode=false;
 var RECARGO_ENVIO=3;
 var ZONAS_ESPECIALES=['Zaragoza, La Libertad','San José Villa Nueva, La Libertad','Lourdes, Libertad Central','Mejicanos, San Salvador','Soyapango, San Salvador','Bernal, San Salvador','Constitución, San Salvador','San Marcos, San Salvador'];
 function esZonaEspecial(z){return ZONAS_ESPECIALES.some(function(ze){return ze.toLowerCase()===z.toLowerCase();});}
@@ -1578,6 +1588,10 @@ function gridCat(){
       if(tec)html+='<span class="p-spec">'+_svgLaser+'Grabado a Láser</span>';
       html+='</div>';
       html+='<div class="p-dots">'+dots+'</div>';
+      var allTallas=['S','M','L','XL'];
+      var prodTallas=vs[0].tallas||['M'];
+      var tallasHtml=allTallas.map(function(t){var disp=prodTallas.indexOf(t)>=0;return '<div class="p-size'+(disp?' sel':'')+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';}).join('');
+      html+='<div class="p-sizes">'+tallasHtml+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
       var _fEnt=ceProximaFecha();
       if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
@@ -1634,7 +1648,7 @@ function elDis(nomEnc){
   nombre=nombre.nombre;
   document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
   var el=document.getElementById('pc-'+encodeId(nombre)); if(el)el.classList.add('sel');
-  _diseno=nombre;_color=null;
+  _diseno=nombre;_color=null;_tallaSel='M';
   var vs=_cat.filter(function(p){return p.nombre===nombre;});
   document.getElementById('cs-nom').textContent=nombre;
   var opts=vs.map(function(v){
@@ -1645,6 +1659,11 @@ function elDis(nomEnc){
     '</div>';
   }).join('');
   document.getElementById('color-opts').innerHTML=opts;
+  var allTallas=['S','M','L','XL'];
+  var prodTallas=vs[0].tallas||['M'];
+  _tallaSel=prodTallas.length===1?prodTallas[0]:'M';
+  var tallasHtml=allTallas.map(function(t){var disp=prodTallas.indexOf(t)>=0;return '<div class="pm-size'+(disp?(t===_tallaSel?' sel':''):' disabled')+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';}).join('');
+  document.getElementById('size-opts').innerHTML=tallasHtml;
   actualizarFotoPreview(vs[0].sku,nombre);
   // Preseleccionar primer color con stock
   var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
@@ -1673,6 +1692,18 @@ function elCol(sku){
   document.getElementById('qty-card').scrollIntoView({behavior:'auto',block:'nearest'});
   track('color_select',{sku:sku,color:v.color});
 }
+function elTalla(t){
+  var tallasProd=_color?(_color.tallas||['M']):['M'];
+  if(tallasProd.indexOf(t)<0) return;
+  _tallaSel=t;
+  document.querySelectorAll('.pm-size').forEach(function(el){el.classList.remove('sel');if(el.dataset.talla===t)el.classList.add('sel');});
+}
+function elTallaCard(t,el){
+  if(el&&el.classList.contains('disabled')) return;
+  _tallaSel=t;
+  var card=el.closest('.prod-card');
+  if(card) card.querySelectorAll('.p-size').forEach(function(s){s.classList.remove('sel');if(s.dataset.talla===t)s.classList.add('sel');});
+}
 // ── CARRITO (varios productos por pedido) ──
 // Antes solo se podia pedir un producto a la vez. Ahora se puede agregar mas
 // de uno al mismo pedido (ej. un gorro para la pareja, otro para un hijo)
@@ -1685,7 +1716,7 @@ var _carrito=[];
 // seleccionado todavia (nada que agregar).
 function agregarSeleccionAlCarrito(){
   if(!_color) return false;
-  _carrito.push({sku:_color.sku,diseno:_diseno,color:_color.color,hex:_color.hex,precio:_color.precio,cantidad:_qty});
+  _carrito.push({sku:_color.sku,diseno:_diseno,color:_color.color,hex:_color.hex,precio:_color.precio,cantidad:_qty,talla:_tallaSel||'M'});
   guardarSesion('s-catalogo');
   _color=null;_qty=1;
   document.querySelectorAll('.prod-card').forEach(function(c){c.classList.remove('sel');});
@@ -1713,7 +1744,9 @@ function agregarRapido(sku){
   var vs=_cat.filter(function(p){return p.sku===sku;});
   if(!vs.length) return;
   var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
-  _carrito.push({sku:primerColor.sku,diseno:vs[0].nombre,color:primerColor.color,hex:primerColor.hex,precio:primerColor.precio,cantidad:1});
+  var tallasProd=primerColor.tallas||['M'];
+  var tallaDefault=tallasProd.length===1?tallasProd[0]:'M';
+  _carrito.push({sku:primerColor.sku,diseno:vs[0].nombre,color:primerColor.color,hex:primerColor.hex,precio:primerColor.precio,cantidad:1,talla:tallaDefault});
   guardarSesion('s-catalogo');
   renderCarrito();
   renderCiCarrito();
@@ -1730,7 +1763,7 @@ function renderCarrito(){
   wrap.style.display='block';
   document.getElementById('carrito-items').innerHTML=_carrito.map(function(it,i){
     return '<div class="cart-item" data-idx="'+i+'" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
-      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong></div>'+
+      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+' · '+esc(it.talla||'M')+'</strong></div>'+
       '<div class="cart-qty" style="display:flex;align-items:center;gap:8px">'+
         '<button type="button" onclick="chgCartQty('+i+',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
         '<span style="min-width:24px;text-align:center;font-weight:600">'+it.cantidad+'</span>'+
@@ -1755,7 +1788,7 @@ function renderCiCarrito(){
   wrap.style.display='block';
   itemsEl.innerHTML=_carrito.map(function(it,i){
     return '<div class="cart-item" data-idx="'+i+'" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
-      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+'</strong></div>'+
+      '<div><strong>'+esc(it.diseno)+' · '+esc(it.color)+' · '+esc(it.talla||'M')+'</strong></div>'+
       '<div class="cart-qty" style="display:flex;align-items:center;gap:8px">'+
         '<button type="button" onclick="chgCartQty('+i+',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
         '<span style="min-width:24px;text-align:center;font-weight:600">'+it.cantidad+'</span>'+
@@ -3432,7 +3465,7 @@ function renderCartDrawer(){
     return '<div class="cart-drawer-item">'+
       '<div class="cart-drawer-item-info">'+
         '<div class="cart-drawer-item-name">'+esc(nom)+'</div>'+
-        '<div class="cart-drawer-item-meta">'+esc(col)+' · x'+it.cantidad+'</div>'+
+        '<div class="cart-drawer-item-meta">'+esc(col)+' · '+esc(it.talla||'M')+' · x'+it.cantidad+'</div>'+
       '</div>'+
       '<div class="cart-drawer-qty" style="display:flex;align-items:center;gap:6px;margin-top:4px">'+
         '<button type="button" onclick="chgCartQty('+i+',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+

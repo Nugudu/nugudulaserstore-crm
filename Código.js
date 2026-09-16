@@ -410,7 +410,8 @@ function leerCatalogo() {
         stock:     parseInt(obj['STOCK'])     || 0,
         categoria: String(obj['CATEGORIA'] || '').trim(),
         tecnica:   String(obj['TECNICA']   || '').trim(),
-        disponibilidad: String(obj['DISPONIBILIDAD'] || '').trim()
+        disponibilidad: String(obj['DISPONIBILIDAD'] || '').trim(),
+        tallas:    String(obj['TALLAS']    || 'M').split(',').map(function(t){return t.trim();}).filter(function(t){return t;})
       });
     }
     var _result = { ok: true, productos: productos };

@@ -1182,7 +1182,7 @@ window.addEventListener('DOMContentLoaded',function(){
 function fallback(){
   var D=[{n:'GORRA KAAN',s:'RSV-KA'},{n:'GORRA MUUK',s:'RSV-MU'},{n:'GORRA IKAL',s:'RSV-IKA'},{n:'GORRA SAAN',s:'RSV-SA'},{n:'GORRA KIN',s:'RSV-KI'},{n:'GORRA OXAN',s:'RSV-OX'}];
   var C=[{color:'Negro',hex:'#1a1a1a',sfx:'NG'},{color:'Gris',hex:'#6b7280',sfx:'GR'}];
-  var o=[];D.forEach(function(x){C.forEach(function(c){o.push({sku:x.s+'-'+c.sfx,nombre:x.n,coleccion:'Raíces SV',color:c.color,hex:c.hex,precio:25,stock:10});});});
+  var o=[];D.forEach(function(x){C.forEach(function(c){o.push({sku:x.s+'-'+c.sfx,nombre:x.n,coleccion:'Raíces SV',color:c.color,hex:c.hex,precio:25,stock:[10],tallas:['M']});});});
   return o;
 }
 
@@ -1572,7 +1572,11 @@ function gridCat(){
     html+='<div class="prod-grid">';
     Object.keys(dis).forEach(function(nom){
       var vs=dis[nom];
-      var agot=vs.every(function(v){return v.stock<=0;});
+      // Agotado si TODAS las tallas de TODOS los colores tienen stock 0
+      var agot=vs.every(function(v){
+        var stk=Array.isArray(v.stock)?v.stock:[v.stock||0];
+        return stk.every(function(s){return s<=0;});
+      });
       var dots=vs.map(function(v){return '<div class="cdot" style="background:'+v.hex+'" title="'+v.color+'"></div>';}).join('');
       var candidatos=candidatosFoto(vs[0].sku,nom);
       var candAttr=JSON.stringify(candidatos).replace(/'/g,'&#39;');
@@ -1590,7 +1594,12 @@ function gridCat(){
       html+='<div class="p-dots">'+dots+'</div>';
       var allTallas=['S','M','L','XL'];
       var prodTallas=vs[0].tallas||['M'];
-      var tallasHtml=allTallas.map(function(t){var disp=prodTallas.indexOf(t)>=0;return '<div class="p-size'+(disp?' sel':'')+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';}).join('');
+      var tallasHtml=allTallas.map(function(t){
+        var disp=prodTallas.indexOf(t)>=0;
+        var sinStock=disp?stockPorTalla(vs[0],t)<=0:false;
+        var cls=disp?(sinStock?'p-size disabled':'p-size sel'):'p-size disabled';
+        return '<div class="'+cls+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';
+      }).join('');
       html+='<div class="p-sizes">'+tallasHtml+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
       var _fEnt=ceProximaFecha();
@@ -1606,6 +1615,15 @@ function gridCat(){
   return html;
 }
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+// Devuelve el stock de una talla especifica. prod.stock es un array paralelo a prod.tallas.
+function stockPorTalla(prod,talla){
+  var tallas=prod.tallas||['M'];
+  var stock=Array.isArray(prod.stock)?prod.stock:[prod.stock||0];
+  var idx=tallas.indexOf(talla);
+  if(idx<0)idx=0;
+  while(stock.length<=idx)stock.push(0);
+  return stock[idx];
+}
 // Construye la lista de archivos a probar, en orden de prioridad:
 // 1) la foto EXACTA del SKU/color (ej. RSV-IKA-GR.png) — la foto real del
 //    producto terminado (gorra + parche), la mas fiel a lo que se va a llevar.
@@ -1652,24 +1670,42 @@ function elDis(nomEnc){
   var vs=_cat.filter(function(p){return p.nombre===nombre;});
   document.getElementById('cs-nom').textContent=nombre;
   var opts=vs.map(function(v){
-    var agot=v.stock<=0;
-    var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Últimas '+v.stock:'';
+    var stkArr=Array.isArray(v.stock)?v.stock:[v.stock||0];
+    var agot=stkArr.every(function(s){return s<=0;});
+    var totalStk=stkArr.reduce(function(a,b){return a+b;},0);
+    var lbl=agot?'Agotado':totalStk>0&&totalStk<=3?'Últimas '+totalStk:'';
     return '<div class="copt'+(agot?' agotado':'')+'" id="co-'+v.sku+'" '+(agot?'style="opacity:.4;pointer-events:none"':'')+' onclick="elCol(\''+v.sku+'\')">'+
       '<div class="cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
     '</div>';
   }).join('');
   document.getElementById('color-opts').innerHTML=opts;
-  var allTallas=['S','M','L','XL'];
-  var prodTallas=vs[0].tallas||['M'];
-  _tallaSel=prodTallas.length===1?prodTallas[0]:'M';
-  var tallasHtml=allTallas.map(function(t){var disp=prodTallas.indexOf(t)>=0;return '<div class="pm-size'+(disp?(t===_tallaSel?' sel':''):' disabled')+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';}).join('');
-  document.getElementById('size-opts').innerHTML=tallasHtml;
-  actualizarFotoPreview(vs[0].sku,nombre);
+  // Preseleccionar primer color con stock total > 0
+  var primerColor=vs.find(function(v){
+    var stk=Array.isArray(v.stock)?v.stock:[v.stock||0];
+    return stk.some(function(s){return s>0;});
+  })||vs[0];
+  _color=primerColor;
   // Preseleccionar primer color con stock
-  var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
-  _color=primerColor;_qty=1;
+  var allTallas=['S','M','L','XL'];
+  var prodTallas=primerColor.tallas||['M'];
+  // Encontrar primera talla con stock en el primer color
+  var primerTalla=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
+  _tallaSel=primerTalla;
+  var tallasHtml=allTallas.map(function(t){
+    var disp=prodTallas.indexOf(t)>=0;
+    var sinStock=disp?stockPorTalla(primerColor,t)<=0:false;
+    var cls=disp?(sinStock?'pm-size disabled':(t===primerTalla?'pm-size sel':'pm-size')):'pm-size disabled';
+    return '<div class="'+cls+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';
+  }).join('');
+  document.getElementById('size-opts').innerHTML=tallasHtml;
+  actualizarFotoPreview(primerColor.sku,nombre);
+  _qty=1;
   document.getElementById('co-'+primerColor.sku).classList.add('sel');
   actualizarFotoPreview(primerColor.sku,nombre);
+  var stkSel=stockPorTalla(primerColor,primerTalla);
+  var lblStk=stkSel<=0?'Agotado':stkSel<=3?'Últimas '+stkSel:'';
+  document.querySelector('.pm-hint').textContent=primerColor.color+' · '+primerTalla+' · $'+primerColor.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
+  document.querySelector('.pm-hint').style.color=stkSel<=0?'var(--coral)':'var(--navy)';
   document.getElementById('qty-n').textContent=1;
   document.getElementById('qty-t').textContent='$'+primerColor.precio.toFixed(2);
   document.getElementById('qty-card').style.display='block';
@@ -1685,6 +1721,22 @@ function elCol(sku){
   document.querySelectorAll('.copt').forEach(function(c){c.classList.remove('sel');});
   document.getElementById('co-'+sku).classList.add('sel');
   actualizarFotoPreview(sku,_diseno);
+  // Actualizar tallas: deshabilitar las que no tienen stock para este color
+  var allTallas=['S','M','L','XL'];
+  var prodTallas=v.tallas||['M'];
+  var nuevaTalla=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(v,t)>0;})||prodTallas[0]||'M';
+  _tallaSel=nuevaTalla;
+  var tallasHtml=allTallas.map(function(t){
+    var disp=prodTallas.indexOf(t)>=0;
+    var sinStock=disp?stockPorTalla(v,t)<=0:false;
+    var cls=disp?(sinStock?'pm-size disabled':(t===nuevaTalla?'pm-size sel':'pm-size')):'pm-size disabled';
+    return '<div class="'+cls+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';
+  }).join('');
+  document.getElementById('size-opts').innerHTML=tallasHtml;
+  var stkSel=stockPorTalla(v,nuevaTalla);
+  var lblStk=stkSel<=0?'Agotado':stkSel<=3?'Últimas '+stkSel:'';
+  document.querySelector('.pm-hint').textContent=v.color+' · '+nuevaTalla+' · $'+v.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
+  document.querySelector('.pm-hint').style.color=stkSel<=0?'var(--coral)':'var(--navy)';
   document.getElementById('qty-n').textContent=1;
   document.getElementById('qty-t').textContent='$'+v.precio.toFixed(2);
   document.getElementById('qty-card').style.display='block';
@@ -1697,6 +1749,19 @@ function elTalla(t){
   if(tallasProd.indexOf(t)<0) return;
   _tallaSel=t;
   document.querySelectorAll('.pm-size').forEach(function(el){el.classList.remove('sel');if(el.dataset.talla===t)el.classList.add('sel');});
+  // Actualizar hint y limite de cantidad segun stock de la talla
+  if(_color){
+    var stk=stockPorTalla(_color,t);
+    var lblStk=stk<=0?'Agotado':stk<=3?'Últimas '+stk:'';
+    document.querySelector('.pm-hint').textContent=_color.color+' · '+t+' · $'+_color.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
+    document.querySelector('.pm-hint').style.color=stk<=0?'var(--coral)':'var(--navy)';
+    // Ajustar cantidad si excede stock de la nueva talla
+    if(_qty>stk&&stk>0){_qty=stk;}
+    if(stk<=0){_qty=0;}
+    if(_qty<1)_qty=1;
+    document.getElementById('qty-n').textContent=_qty;
+    document.getElementById('qty-t').textContent='$'+(_color.precio*_qty).toFixed(2);
+  }
 }
 function elTallaCard(t,el){
   if(el&&el.classList.contains('disabled')) return;
@@ -1743,9 +1808,10 @@ function quitarDelCarrito(idx){
 function agregarRapido(sku){
   var vs=_cat.filter(function(p){return p.sku===sku;});
   if(!vs.length) return;
-  var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
+  var primerColor=vs[0];
   var tallasProd=primerColor.tallas||['M'];
-  var tallaDefault=tallasProd.length===1?tallasProd[0]:'M';
+  var allTallas=['S','M','L','XL'];
+  var tallaDefault=allTallas.find(function(t){return tallasProd.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
   _carrito.push({sku:primerColor.sku,diseno:vs[0].nombre,color:primerColor.color,hex:primerColor.hex,precio:primerColor.precio,cantidad:1,talla:tallaDefault});
   guardarSesion('s-catalogo');
   renderCarrito();
@@ -1803,7 +1869,9 @@ function renderCiCarrito(){
 function chgCartQty(idx,delta){
   var it=_carrito[idx];
   if(!it) return;
-  var mx=Math.min(it.stock||10,10);
+  var prod=_cat.find(function(p){return p.sku===it.sku;});
+  var mx=prod?Math.min(stockPorTalla(prod,it.talla||'M'),10):10;
+  if(mx<=0)mx=1;
   it.cantidad=Math.max(1,Math.min(mx,it.cantidad+delta));
   guardarSesion('s-catalogo');
   renderCarrito();
@@ -1811,7 +1879,8 @@ function chgCartQty(idx,delta){
   renderCartDrawer();
 }
 function chgQty(d){
-  var mx=_color?Math.min(_color.stock||10,10):10;
+  var mx=_color?Math.min(stockPorTalla(_color,_tallaSel),10):10;
+  if(mx<=0)mx=1;
   _qty=Math.max(1,Math.min(mx,_qty+d));
   document.getElementById('qty-n').textContent=_qty;
   document.getElementById('qty-t').textContent='$'+(_color?(_color.precio*_qty).toFixed(2):'0.00');
@@ -1834,8 +1903,10 @@ function elDisInicio(nomEnc){
   if(_tourActivo()){
     document.getElementById('ci-cs-nom').textContent=nombre;
     var opts=vs.map(function(v){
-      var agot=v.stock<=0;
-      var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Ultimas '+v.stock:'';
+      var stkArr=Array.isArray(v.stock)?v.stock:[v.stock||0];
+      var agot=stkArr.every(function(s){return s<=0;});
+      var totalStk=stkArr.reduce(function(a,b){return a+b;},0);
+      var lbl=agot?'Agotado':totalStk>0&&totalStk<=3?'Ultimas '+totalStk:'';
       return '<div class="copt'+(agot?' agotado':'')+'" id="ci-co-'+v.sku+'" '+(agot?'style="opacity:.4;pointer-events:none"':'')+' onclick="elColInicio(\''+v.sku+'\')">'+
         '<div class="cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
       '</div>';
@@ -1843,7 +1914,10 @@ function elDisInicio(nomEnc){
     document.getElementById('ci-color-opts').innerHTML=opts;
     actualizarFotoPreviewInicio(vs[0].sku,nombre);
     // Preseleccionar primer color con stock
-    var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
+    var primerColor=vs.find(function(v){
+      var stk=Array.isArray(v.stock)?v.stock:[v.stock||0];
+      return stk.some(function(s){return s>0;});
+    })||vs[0];
     _pmColor=primerColor;_pmQty=1;_pmSku=primerColor.sku;
     document.getElementById('ci-co-'+primerColor.sku).classList.add('sel');
     actualizarFotoPreviewInicio(primerColor.sku,nombre);
@@ -1863,8 +1937,10 @@ function elDisInicio(nomEnc){
     specsHtml+='<span class="pm-spec"><strong>Técnica:</strong> '+_svgLaser+'Grabado a láser</span>';
     document.getElementById('pm-specs').innerHTML=specsHtml;
     var opts=vs.map(function(v){
-      var agot=v.stock<=0;
-      var lbl=agot?'Agotado':v.stock>0&&v.stock<=3?'Últimas '+v.stock:'';
+      var stkArr=Array.isArray(v.stock)?v.stock:[v.stock||0];
+      var agot=stkArr.every(function(s){return s<=0;});
+      var totalStk=stkArr.reduce(function(a,b){return a+b;},0);
+      var lbl=agot?'Agotado':totalStk>0&&totalStk<=3?'Últimas '+totalStk:'';
       return '<div class="pm-copt'+(agot?' agotado':'')+'" id="pm-co-'+v.sku+'" onclick="pmSelColor(\''+v.sku+'\')">'+
         '<div class="pm-cswatch" style="background:'+v.hex+'"></div>'+esc(v.color)+(lbl?'<span style="font-size:10px;opacity:.7"> · '+lbl+'</span>':'')+
       '</div>';
@@ -1876,17 +1952,22 @@ function elDisInicio(nomEnc){
     document.getElementById('pm-qty-n').textContent='1';
     document.getElementById('pm-qty-t').textContent='$'+vs[0].precio.toFixed(2);
     // Preseleccionar primer color con stock
-    var primerColor=vs.find(function(v){return v.stock>0;})||vs[0];
+    var primerColor=vs.find(function(v){
+      var stk=Array.isArray(v.stock)?v.stock:[v.stock||0];
+      return stk.some(function(s){return s>0;});
+    })||vs[0];
     _pmColor=primerColor;_pmSku=primerColor.sku;_pmQty=1;
     var elSel=document.getElementById('pm-co-'+primerColor.sku);if(elSel)elSel.classList.add('sel');
     var candidatos=candidatosFoto(primerColor.sku,nombre);
     document.getElementById('pm-foto').src='imagenes/'+candidatos[0];
     document.getElementById('pm-foto').onerror=function(){imgFallback(this);};
+    var stkFirst=stockPorTalla(primerColor,_tallaSel);
+    var lblStk=stkFirst<=0?'Agotado':stkFirst<=3?'Últimas '+stkFirst:'';
+    document.querySelector('.pm-hint').textContent=primerColor.color+' · $'+primerColor.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
+    document.querySelector('.pm-hint').style.color=stkFirst<=0?'var(--coral)':'var(--navy)';
     document.getElementById('pm-qty-n').textContent='1';
     document.getElementById('pm-qty-t').textContent='$'+primerColor.precio.toFixed(2);
     document.getElementById('pm-btn-continue').disabled=false;
-    document.querySelector('.pm-hint').textContent=primerColor.color+' · $'+primerColor.precio.toFixed(2);
-    document.querySelector('.pm-hint').style.color='var(--navy)';
     openPm();
   }
   track('product_click',{nombre:nombre});
@@ -1898,15 +1979,18 @@ function pmSelColor(sku){
   var el=document.getElementById('pm-co-'+sku);if(el)el.classList.add('sel');
   var candidatos=candidatosFoto(sku,_pmNombre);
   var foto=document.getElementById('pm-foto');if(foto){foto.src='imagenes/'+candidatos[0];}
+  var stkSel=stockPorTalla(v,_tallaSel);
+  var lblStk=stkSel<=0?'Agotado':stkSel<=3?'Últimas '+stkSel:'';
   var qn=document.getElementById('pm-qty-n');if(qn)qn.textContent='1';
   var qt=document.getElementById('pm-qty-t');if(qt)qt.textContent='$'+v.precio.toFixed(2);
   var btn=document.getElementById('pm-btn-continue');if(btn)btn.disabled=false;
-  document.querySelector('.pm-hint').textContent=v.color+' · $'+v.precio.toFixed(2);
-  document.querySelector('.pm-hint').style.color='var(--navy)';
+  document.querySelector('.pm-hint').textContent=v.color+' · $'+v.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
+  document.querySelector('.pm-hint').style.color=stkSel<=0?'var(--coral)':'var(--navy)';
   track('color_select',{sku:sku,color:v.color});
 }
 function pmChgQty(d){
-  var mx=_pmColor?Math.min(_pmColor.stock||10,10):10;
+  var mx=_pmColor?Math.min(stockPorTalla(_pmColor,_tallaSel),10):10;
+  if(mx<=0)mx=1;
   _pmQty=Math.max(1,Math.min(mx,_pmQty+d));
   document.getElementById('pm-qty-n').textContent=_pmQty;
   document.getElementById('pm-qty-t').textContent='$'+(_pmColor?(_pmColor.precio*_pmQty).toFixed(2):'0.00');
@@ -1990,7 +2074,8 @@ function actualizarFotoPreviewInicio(sku,nombreDiseno){
   img.src='imagenes/'+candidatos[0];
 }
 function ciChgQty(d){
-  var mx=_color?Math.min(_color.stock||10,10):10;
+  var mx=_color?Math.min(stockPorTalla(_color,_tallaSel),10):10;
+  if(mx<=0)mx=1;
   _qty=Math.max(1,Math.min(mx,_qty+d));
   document.getElementById('ci-qty-n').textContent=_qty;
   document.getElementById('ci-qty-t').textContent='$'+(_color?(_color.precio*_qty).toFixed(2):'0.00');

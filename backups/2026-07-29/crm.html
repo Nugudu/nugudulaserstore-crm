@@ -970,7 +970,7 @@ var PANELS  = {
   wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
 };
 var KEY  = 'ngd_crm_v10';
-var GAS  = 'https://script.google.com/macros/s/AKfycbwCY7pxz7E9bu92Oi_zNfWQN5Pluf8dBJ6gHJ7jwOrpPqN5b8r5Vpg2_IMA3Y6HDUt3/exec';
+var GAS  = 'https://script.google.com/macros/s/AKfycbz4qWOitCwd82P7gCA0Ef17_tv1EE1CSjCtXIeGJKTjf-WjHoJS7kdo_nXqnfu3r_lv/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 // Cierra el acceso publico anonimo a los datos de clientes.
 var API_TOKEN = '20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
@@ -3331,9 +3331,9 @@ function syncYRender(panel, btn){
 }
 
 function cargarCDP(){
-  // Si estamos en visitantes, refrescar visitantes directamente
+  fetch(GAS+'?action=ping&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
   if(_cdpTabActual==='visitantes'){
-    cdpCargarVisitantes();
+    cdpCargarVisitantes(true);
     return;
   }
   fetch(GAS+'?action=leerEventos&limite=2000&token='+encodeURIComponent(API_TOKEN))
@@ -3361,9 +3361,8 @@ function cdpTab(tab){
   if(tab === 'funnel') cdpRenderFunnel();
   if(tab === 'segmentos') cdpRenderSegmentos();
   if(tab === 'visitantes'){
-    cdpCargarVisitantes();
-    // Auto-refresh cada5 segundos
-    _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes();},15000);
+    cdpCargarVisitantes(true);
+    _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes(false);},15000);
   }
 }
 
@@ -3375,12 +3374,13 @@ function cdpVisitantesFiltro(periodo){
   });
   var titulos={hoy:'Visitantes de hoy',semana:'Visitantes de esta semana',mes:'Visitantes de este mes'};
   document.getElementById('cdp-v-title').textContent=titulos[periodo]||'Visitantes';
-  cdpCargarVisitantes();
+  cdpCargarVisitantes(true);
 }
 
-function cdpCargarVisitantes(){
+function cdpCargarVisitantes(forceRefresh){
   document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
-  fetch(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&refresh=1&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN))
+  var url=GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+(forceRefresh?'&refresh=1':'')+'&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN);
+  fetch(url)
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
@@ -3459,8 +3459,8 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   var redes=analytics.redes||[];
   var redesHtml='';
   var maxRede=redes.length?redes[0].count:1;
-  var redesColores={'Facebook':'#1877F2','Instagram':'#E1306C','TikTok':'#010101','YouTube':'#FF0000'};
-  var redesIconos={'Facebook':'fa-brands fa-facebook','Instagram':'fa-brands fa-instagram','TikTok':'fa-brands fa-tiktok','YouTube':'fa-brands fa-youtube'};
+  var redesColores={'Meta':'#1877F2','TikTok':'#010101','YouTube':'#FF0000'};
+  var redesIconos={'Meta':'fa-brands fa-meta','TikTok':'fa-brands fa-tiktok','YouTube':'fa-brands fa-youtube'};
   redes.forEach(function(r,i){
     var pct=maxRede>0?Math.round((r.count/maxRede)*100):0;
     var color=redesColores[r.name]||'var(--navy)';

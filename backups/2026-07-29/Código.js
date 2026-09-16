@@ -407,10 +407,11 @@ function leerCatalogo() {
         color:     String(obj['COLOR']     || '').trim(),
         hex:       String(obj['HEX']       || '#333333').trim(),
         precio:    parseFloat(obj['PRECIO'])  || 0,
-        stock:     parseInt(obj['STOCK'])     || 0,
+        stock:     String(obj['STOCK'] || '0').split(',').map(function(s){ return parseInt(s.trim()) || 0; }),
         categoria: String(obj['CATEGORIA'] || '').trim(),
         tecnica:   String(obj['TECNICA']   || '').trim(),
-        disponibilidad: String(obj['DISPONIBILIDAD'] || '').trim()
+        disponibilidad: String(obj['DISPONIBILIDAD'] || '').trim(),
+        tallas:    String(obj['TALLAS']    || 'M').split(',').map(function(t){return t.trim();}).filter(function(t){return t;})
       });
     }
     var _result = { ok: true, productos: productos };
@@ -438,9 +439,10 @@ function descontarStockPorNuevasOrdenes(anteriores, nuevas) {
   } catch(err) { Logger.log('descontarStockPorNuevasOrdenes: ' + err.message); }
 }
 
-// Resta 'cantidad' del STOCK de un SKU en la hoja Catalogo. Nunca deja el
-// stock en negativo. Si el SKU no existe en el catalogo, no hace nada.
-function descontarStock(sku, cantidad) {
+// Resta 'cantidad' del STOCK de un SKU en la hoja Catalogo. Soporta stock
+// por talla (array paralelo a TALLAS). Si se pasa talla, descuenta de esa
+// posicion. Si no se pasa, descuenta de la primera posicion (compatibilidad).
+function descontarStock(sku, cantidad, talla) {
   try {
     var ss    = abrirSS(SHEET_CATALOGO);
     var sheet = ss.getSheetByName(HOJA_CATALOGO);
@@ -450,14 +452,27 @@ function descontarStock(sku, cantidad) {
     var headers  = data[0].map(function(h) { return String(h).toUpperCase().trim().replace(/\s+/g,'_'); });
     var colSku   = headers.indexOf('SKU_BASE'); if (colSku < 0) colSku = headers.indexOf('SKU');
     var colStock = headers.indexOf('STOCK');
+    var colTallas = headers.indexOf('TALLAS');
     if (colSku < 0 || colStock < 0) return;
     var skuNorm = String(sku).trim().toUpperCase();
     if (!skuNorm) return;
     for (var r = 1; r < data.length; r++) {
       if (String(data[r][colSku]).trim().toUpperCase() !== skuNorm) continue;
-      var actual = parseInt(data[r][colStock]) || 0;
+      var stockRaw = String(data[r][colStock] || '0');
+      var stockArr = stockRaw.split(',').map(function(s){ return parseInt(s.trim()) || 0; });
+      // Determinar indice de la talla a descontar
+      var idx = 0; // default: primera posicion
+      if (talla && colTallas >= 0) {
+        var tallasArr = String(data[r][colTallas] || 'M').split(',').map(function(t){ return t.trim().toUpperCase(); });
+        var pos = tallasArr.indexOf(String(talla).trim().toUpperCase());
+        if (pos >= 0) idx = pos;
+      }
+      // Asegurar que el array tenga suficientes posiciones
+      while (stockArr.length <= idx) stockArr.push(0);
+      var actual = stockArr[idx];
       var nuevo  = Math.max(0, actual - (parseInt(cantidad) || 1));
-      sheet.getRange(r + 1, colStock + 1).setValue(nuevo);
+      stockArr[idx] = nuevo;
+      sheet.getRange(r + 1, colStock + 1).setValue(stockArr.join(','));
       // Invalidar cache del catálogo para que la próxima llamada lea stock actualizado
       try { PropertiesService.getScriptProperties().deleteProperty('CATALOGO_CACHE'); } catch(e) {}
       return;
@@ -753,8 +768,23 @@ function guardarPedidoWeb(payload) {
       if (!producto) return { ok: false, error: 'Producto no disponible: ' + skuSolicitado };
       var cant = parseInt(itemsSolicitados[i].cantidad) || 1;
       if (cant < 1) cant = 1;
-      itemsValidados.push({ sku: producto.sku, precio: producto.precio, cantidad: cant });
+      var tallaItem = String(itemsSolicitados[i].talla || 'M').trim().toUpperCase();
+      // Validar stock por talla
+      var tallasProd = producto.tallas || ['M'];
+      var stockProd  = Array.isArray(producto.stock) ? producto.stock : [producto.stock || 0];
+      var tallaIdx = tallasProd.indexOf(tallaItem);
+      if (tallaIdx < 0) tallaIdx = 0;
+      while (stockProd.length <= tallaIdx) stockProd.push(0);
+      var stockDisponible = stockProd[tallaIdx];
+      itemsValidados.push({ sku: producto.sku, precio: producto.precio, cantidad: cant, talla: tallaItem, stockDisponible: stockDisponible });
     }
+
+    // Verificar stock suficiente por talla antes de crear la orden
+    var sinStock = [];
+    itemsValidados.forEach(function(it) {
+      if (it.stockDisponible < it.cantidad) sinStock.push(it.sku + ' t:' + it.talla + ' (stock: ' + it.stockDisponible + ')');
+    });
+    if (sinStock.length) return { ok: false, error: 'Stock insuficiente para: ' + sinStock.join(', ') };
 
     // productos: un elemento del arreglo por CADA unidad (repetido segun la
     // cantidad de cada item) -- asi el conteo de stock/reportes que ya
@@ -818,7 +848,7 @@ function guardarPedidoWeb(payload) {
     // leerOrdenes/guardarOrdenes para lecturas/actualizaciones completas.
     var _hoja = getHojaDatos();
     _hoja.appendRow([JSON.stringify(nuevaOrden)]);
-    itemsValidados.forEach(function(it){ descontarStock(it.sku, it.cantidad); });
+    itemsValidados.forEach(function(it){ descontarStock(it.sku, it.cantidad, it.talla); });
     // Para TARJETA se salta el correo "Nuevo pedido": el pago se confirma en
     // segundos via webhook Wompi, que ya manda el correo "Pago confirmado".
     // Asi el boton no espera el envio de correo (MailApp ~1-4s) y va mas
@@ -1105,8 +1135,16 @@ function confirmarSolicitudWeb(payload) {
     for (var j = 0; j < catalogo.productos.length; j++) {
       if (String(catalogo.productos[j].sku).trim().toUpperCase() === String(it.sku).toUpperCase()) { producto = catalogo.productos[j]; break; }
     }
-    if (!producto) sinStock.push(it.sku);
-    else if ((producto.stock || 0) < it.cantidad) sinStock.push(it.sku + ' (stock: ' + producto.stock + ')');
+    if (!producto) { sinStock.push(it.sku); return; }
+    // Validar stock por talla
+    var tallaIt = String(it.talla || 'M').trim().toUpperCase();
+    var tallasProd = producto.tallas || ['M'];
+    var stockProd  = Array.isArray(producto.stock) ? producto.stock : [producto.stock || 0];
+    var tallaIdx = tallasProd.indexOf(tallaIt);
+    if (tallaIdx < 0) tallaIdx = 0;
+    while (stockProd.length <= tallaIdx) stockProd.push(0);
+    var stockDisp = stockProd[tallaIdx];
+    if (stockDisp < it.cantidad) sinStock.push(it.sku + ' t:' + tallaIt + ' (stock: ' + stockDisp + ')');
   });
   if (sinStock.length) throw new Error('Stock insuficiente para: ' + sinStock.join(', '));
 
@@ -1154,7 +1192,7 @@ function confirmarSolicitudWeb(payload) {
   };
   ordenes.unshift(nuevaOrden);
   guardarOrdenes(ordenes);
-  (sol.items || []).forEach(function(it){ descontarStock(it.sku, it.cantidad); });
+  (sol.items || []).forEach(function(it){ descontarStock(it.sku, it.cantidad, it.talla); });
   notificarPedidoNuevo(nuevaOrden);
 
   solicitudes[idx].estadoSolicitud = 'confirmada';
@@ -2018,7 +2056,12 @@ function leerEventos(p) {
 function leerVisitantes(p) {
   try {
     var periodo = p.periodo || 'hoy';
-    // Leer Sheet y procesar (sin caché — datos siempre frescos)
+    var cacheKey = 'cdp_visitantes_' + periodo;
+    var forceRefresh = p.refresh === '1' || p.refresh === 1;
+    if (!forceRefresh) {
+      var cached = CacheService.getScriptCache().get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    }
     var sheet = getHojaEventos();
     var lastRow = sheet.getLastRow();
     if (lastRow < 2) {
@@ -2079,6 +2122,7 @@ function leerVisitantes(p) {
       fuentesConteo[source] = (fuentesConteo[source] || 0) + 1;
       
       var red = dataObj.redSocial || '';
+      if (red === 'Facebook' || red === 'Instagram') red = 'Meta';
       if (red) redesConteo[red] = (redesConteo[red] || 0) + 1;
       
       if (tsDate) {
@@ -2224,6 +2268,7 @@ function leerVisitantes(p) {
         duracionProm: duracionProm
       }
     };
+    try { CacheService.getScriptCache().put(cacheKey, JSON.stringify(resultado), 60); } catch(e) {}
     return resultado;
   } catch (err) {
     return { ok: false, error: err.message };

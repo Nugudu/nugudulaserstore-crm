@@ -123,6 +123,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-foto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:0;margin-bottom:0;background:#f4f3fa;display:block;border:none;border-bottom:1px solid var(--border)}
 .p-nombre{font-size:14px;font-weight:700;margin-bottom:4px}
 .p-dots{display:flex;gap:5px;justify-content:center;margin:5px 0 3px}
+.p-color-size{display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0}
+.p-color-size .p-dots{margin:0}
+.p-separator{width:40px;height:1px;background:var(--border);margin:8px auto}
 .cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12)}
 .p-precio{font-size:15px;font-weight:700;color:var(--navy)}
 .p-stock{font-size:10px;margin-top:2px}
@@ -133,7 +136,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-btn-add:active{transform:scale(.97)}
 .p-specs{display:flex;gap:6px;font-size:10px;margin:4px 0;flex-wrap:wrap;justify-content:center}
 .prod-card{padding-bottom:56px}
-.prod-card .p-nombre,.prod-card .p-specs,.prod-card .p-dots,.prod-card .p-precio,.prod-card .p-btn-add,.prod-card .p-envio-detalle,.prod-card .p-stock,.prod-card .p-fecha{padding-left:10px;padding-right:10px}
+.prod-card .p-nombre,.prod-card .p-specs,.prod-card .p-color-size,.prod-card .p-talla-tag,.prod-card .p-precio,.prod-card .p-btn-add,.prod-card .p-envio-detalle,.prod-card .p-stock,.prod-card .p-fecha,.prod-card .p-separator{padding-left:10px;padding-right:10px}
 .prod-card .p-nombre{padding-top:12px}
 .p-spec{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#f4f3fa;border:1px solid var(--border);border-radius:4px;color:var(--muted);white-space:nowrap}
 .p-spec svg{flex-shrink:0}
@@ -193,7 +196,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .copt{display:flex;align-items:center;gap:7px;padding:7px 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
 .copt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .cswatch{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
-.p-sizes{display:flex;gap:6px;justify-content:center;margin:6px 0}
+.p-sizes{display:flex;gap:6px;justify-content:center;margin:0}
 .p-size{min-width:34px;height:30px;display:flex;align-items:center;justify-content:center;padding:0 8px;border:2px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;background:#fff;transition:all .15s}
 .p-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .p-size.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
@@ -901,7 +904,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 </div>
 
 <script>
-var GAS='https://script.google.com/macros/s/AKfycbz_Crk3gQyZyxGp4RrIqN8Vr15doVVjOFTUYeljo6FV8QjuXI9cxDScGmtt0nyj7Cs5/exec';
+var GAS='https://script.google.com/macros/s/AKfycbysZodLIAwqRmlzm7rFktUy2qDkbt3w22nXEfnmeTE/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
@@ -1596,7 +1599,6 @@ function gridCat(){
       if(mat)html+='<span class="p-spec">'+_svgLeather+'Cuero 100%</span>';
       if(tec)html+='<span class="p-spec">'+_svgLaser+'Grabado a Láser</span>';
       html+='</div>';
-      html+='<div class="p-dots">'+dots+'</div>';
       var allTallas=getAllTallas();
       var prodTallas=vs[0].tallas||['M'];
       var tallasHtml=allTallas.map(function(t){
@@ -1605,9 +1607,10 @@ function gridCat(){
         var cls=disp?(sinStock?'p-size disabled':'p-size sel'):'p-size disabled';
         return '<div class="'+cls+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';
       }).join('');
-      html+='<div class="p-sizes">'+tallasHtml+'</div>';
+      html+='<div class="p-color-size"><div class="p-dots">'+dots+'</div><div class="p-sizes">'+tallasHtml+'</div></div>';
       var _tallaTag=vs[0].tallaTag||'';
       if(_tallaTag) html+='<div class="p-talla-tag">'+esc(_tallaTag)+'</div>';
+      html+='<div class="p-separator"></div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
       var _fEnt=ceProximaFecha();
       if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';

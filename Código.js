@@ -411,7 +411,29 @@ function leerCatalogo() {
         categoria: String(obj['CATEGORIA'] || '').trim(),
         tecnica:   String(obj['TECNICA']   || '').trim(),
         disponibilidad: String(obj['DISPONIBILIDAD'] || '').trim(),
-        tallas:    String(obj['TALLAS']    || 'M').split(',').map(function(t){return t.trim();}).filter(function(t){return t;})
+        tallas:    (function(){
+          var raw = String(obj['TALLAS'] || 'M');
+          var nombres = [];
+          var tags = [];
+          raw.split(',').forEach(function(t){
+            var parts = t.trim().split('|');
+            var nombre = parts[0].trim();
+            var tag = (parts[1] || '').trim();
+            if (nombre) nombres.push(nombre);
+            if (tag) tags.push(tag);
+          });
+          return nombres.length ? nombres : ['M'];
+        })(),
+        tallaTag:  (function(){
+          var raw = String(obj['TALLAS'] || '');
+          var tags = [];
+          raw.split(',').forEach(function(t){
+            var parts = t.trim().split('|');
+            var tag = (parts[1] || '').trim();
+            if (tag) tags.push(tag);
+          });
+          return tags.length ? tags[0] : '';
+        })()
       });
     }
     var _result = { ok: true, productos: productos };

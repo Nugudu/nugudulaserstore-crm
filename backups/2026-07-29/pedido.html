@@ -193,10 +193,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .copt{display:flex;align-items:center;gap:7px;padding:7px 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
 .copt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .cswatch{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
-.p-sizes{display:flex;gap:5px;justify-content:center;margin:6px 0}
-.p-size{width:32px;height:28px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;background:#fff;transition:all .15s}
+.p-sizes{display:flex;gap:6px;justify-content:center;margin:6px 0}
+.p-size{min-width:34px;height:30px;display:flex;align-items:center;justify-content:center;padding:0 8px;border:2px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;background:#fff;transition:all .15s}
 .p-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .p-size.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+.p-talla-tag{font-size:10px;color:var(--muted);margin-top:2px;text-align:center;font-weight:500}
 .pm-sizes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .pm-size{display:flex;align-items:center;justify-content:center;min-width:40px;height:36px;padding:0 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
 .pm-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
@@ -464,6 +465,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         <div class="pm-specs" id="pm-specs"></div>
         <div class="pm-section">Color</div>
         <div class="pm-colors" id="pm-colors"></div>
+        <div class="pm-section">Talla</div>
+        <div class="pm-sizes" id="pm-size-opts"></div>
+        <div class="p-talla-tag" id="pm-talla-tag"></div>
         <div class="pm-section">Cantidad</div>
         <div class="pm-qty">
           <button class="pm-qty-btn" onclick="pmChgQty(-1)">−</button>
@@ -572,6 +576,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
       <div class="color-opts" id="color-opts"></div>
       <div class="cs-ttl" style="margin-top:10px">Talla</div>
       <div class="pm-sizes" id="size-opts"></div>
+      <div class="p-talla-tag" id="inline-talla-tag"></div>
     </div>
     <div class="card" id="qty-card" style="display:none">
       <div class="card-ttl">Cantidad</div>
@@ -896,7 +901,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 </div>
 
 <script>
-var GAS='https://script.google.com/macros/s/AKfycbz4qWOitCwd82P7gCA0Ef17_tv1EE1CSjCtXIeGJKTjf-WjHoJS7kdo_nXqnfu3r_lv/exec';
+var GAS='https://script.google.com/macros/s/AKfycbyt3bbUmI-Z11BUNQ1yuORM6TNG1znWxUmqt3LY9MVe4XrnMEwdk3I1bcxbdvGS1nnF/exec';
 // Token compartido con Code_1.gs — sin esto el backend rechaza la llamada.
 var API_TOKEN='20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 var WA='50376837604';
@@ -1004,7 +1009,7 @@ function volverDesdeForm(){
 var CACHE_KEY='ngd_cat_v1';
 function cargarCatalogoCache(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'null');}catch(e){return null;}}
 function guardarCatalogoCache(c){try{localStorage.setItem(CACHE_KEY,JSON.stringify(c));}catch(e){}}
-function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock+':'+(c[i].categoria||'')+':'+(c[i].tecnica||'')+':'+(c[i].coleccion||'')+':'+(c[i].disponibilidad||'');}return s;}
+function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock+':'+(c[i].categoria||'')+':'+(c[i].tecnica||'')+':'+(c[i].coleccion||'')+':'+(c[i].disponibilidad||'')+':'+(c[i].tallas||[]).join(',');}return s;}
 
 // ── WARM-UP DE GAS: evita el arranque en frio (2-3s) en busquedas pedido/Mi
 // Diseno. Un ping barato mantiene la instancia caliente mientras la pagina
@@ -1592,7 +1597,7 @@ function gridCat(){
       if(tec)html+='<span class="p-spec">'+_svgLaser+'Grabado a Láser</span>';
       html+='</div>';
       html+='<div class="p-dots">'+dots+'</div>';
-      var allTallas=['S','M','L','XL'];
+      var allTallas=getAllTallas();
       var prodTallas=vs[0].tallas||['M'];
       var tallasHtml=allTallas.map(function(t){
         var disp=prodTallas.indexOf(t)>=0;
@@ -1601,6 +1606,8 @@ function gridCat(){
         return '<div class="'+cls+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';
       }).join('');
       html+='<div class="p-sizes">'+tallasHtml+'</div>';
+      var _tallaTag=vs[0].tallaTag||'';
+      if(_tallaTag) html+='<div class="p-talla-tag">'+esc(_tallaTag)+'</div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
       var _fEnt=ceProximaFecha();
       if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
@@ -1623,6 +1630,16 @@ function stockPorTalla(prod,talla){
   if(idx<0)idx=0;
   while(stock.length<=idx)stock.push(0);
   return stock[idx];
+}
+// Devuelve todas las tallas únicas del catálogo (soporta rango como S-M y个体 como M)
+function getAllTallas(){
+  var seen=[];var map={};
+  _cat.forEach(function(p){
+    (p.tallas||['M']).forEach(function(t){
+      if(!map[t]){map[t]=true;seen.push(t);}
+    });
+  });
+  return seen.length?seen:['M'];
 }
 // Construye la lista de archivos a probar, en orden de prioridad:
 // 1) la foto EXACTA del SKU/color (ej. RSV-IKA-GR.png) — la foto real del
@@ -1686,7 +1703,7 @@ function elDis(nomEnc){
   })||vs[0];
   _color=primerColor;
   // Preseleccionar primer color con stock
-  var allTallas=['S','M','L','XL'];
+  var allTallas=getAllTallas();
   var prodTallas=primerColor.tallas||['M'];
   // Encontrar primera talla con stock en el primer color
   var primerTalla=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
@@ -1698,6 +1715,9 @@ function elDis(nomEnc){
     return '<div class="'+cls+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';
   }).join('');
   document.getElementById('size-opts').innerHTML=tallasHtml;
+  var _inTag=primerColor.tallaTag||'';
+  var _inTagEl=document.getElementById('inline-talla-tag');
+  if(_inTagEl){_inTagEl.textContent=_inTag;_inTagEl.style.display=_inTag?'block':'none';}
   actualizarFotoPreview(primerColor.sku,nombre);
   _qty=1;
   document.getElementById('co-'+primerColor.sku).classList.add('sel');
@@ -1722,7 +1742,7 @@ function elCol(sku){
   document.getElementById('co-'+sku).classList.add('sel');
   actualizarFotoPreview(sku,_diseno);
   // Actualizar tallas: deshabilitar las que no tienen stock para este color
-  var allTallas=['S','M','L','XL'];
+  var allTallas=getAllTallas();
   var prodTallas=v.tallas||['M'];
   var nuevaTalla=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(v,t)>0;})||prodTallas[0]||'M';
   _tallaSel=nuevaTalla;
@@ -1733,6 +1753,9 @@ function elCol(sku){
     return '<div class="'+cls+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';
   }).join('');
   document.getElementById('size-opts').innerHTML=tallasHtml;
+  var _inTag2=v.tallaTag||'';
+  var _inTagEl2=document.getElementById('inline-talla-tag');
+  if(_inTagEl2){_inTagEl2.textContent=_inTag2;_inTagEl2.style.display=_inTag2?'block':'none';}
   var stkSel=stockPorTalla(v,nuevaTalla);
   var lblStk=stkSel<=0?'Agotado':stkSel<=3?'Últimas '+stkSel:'';
   document.querySelector('.pm-hint').textContent=v.color+' · '+nuevaTalla+' · $'+v.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
@@ -1810,7 +1833,7 @@ function agregarRapido(sku){
   if(!vs.length) return;
   var primerColor=vs[0];
   var tallasProd=primerColor.tallas||['M'];
-  var allTallas=['S','M','L','XL'];
+  var allTallas=getAllTallas();
   var tallaDefault=allTallas.find(function(t){return tallasProd.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
   _carrito.push({sku:primerColor.sku,diseno:vs[0].nombre,color:primerColor.color,hex:primerColor.hex,precio:primerColor.precio,cantidad:1,talla:tallaDefault});
   guardarSesion('s-catalogo');
@@ -1961,9 +1984,24 @@ function elDisInicio(nomEnc){
     var candidatos=candidatosFoto(primerColor.sku,nombre);
     document.getElementById('pm-foto').src='imagenes/'+candidatos[0];
     document.getElementById('pm-foto').onerror=function(){imgFallback(this);};
-    var stkFirst=stockPorTalla(primerColor,_tallaSel);
+    // Tallas en modal
+    var allTallas=getAllTallas();
+    var prodTallas=primerColor.tallas||['M'];
+    var primerTallaModal=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
+    _tallaSel=primerTallaModal;
+    var tallasHtmlModal=allTallas.map(function(t){
+      var disp=prodTallas.indexOf(t)>=0;
+      var sinStock=disp?stockPorTalla(primerColor,t)<=0:false;
+      var cls=disp?(sinStock?'pm-size disabled':(t===primerTallaModal?'pm-size sel':'pm-size')):'pm-size disabled';
+      return '<div class="'+cls+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';
+    }).join('');
+    document.getElementById('pm-size-opts').innerHTML=tallasHtmlModal;
+    var _tallaTagModal=primerColor.tallaTag||'';
+    var _tagEl=document.getElementById('pm-talla-tag');
+    if(_tagEl){_tagEl.textContent=_tallaTagModal;_tagEl.style.display=_tallaTagModal?'block':'none';}
+    var stkFirst=stockPorTalla(primerColor,primerTallaModal);
     var lblStk=stkFirst<=0?'Agotado':stkFirst<=3?'Últimas '+stkFirst:'';
-    document.querySelector('.pm-hint').textContent=primerColor.color+' · $'+primerColor.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
+    document.querySelector('.pm-hint').textContent=primerColor.color+' · '+primerTallaModal+' · $'+primerColor.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
     document.querySelector('.pm-hint').style.color=stkFirst<=0?'var(--coral)':'var(--navy)';
     document.getElementById('pm-qty-n').textContent='1';
     document.getElementById('pm-qty-t').textContent='$'+primerColor.precio.toFixed(2);
@@ -1979,12 +2017,27 @@ function pmSelColor(sku){
   var el=document.getElementById('pm-co-'+sku);if(el)el.classList.add('sel');
   var candidatos=candidatosFoto(sku,_pmNombre);
   var foto=document.getElementById('pm-foto');if(foto){foto.src='imagenes/'+candidatos[0];}
-  var stkSel=stockPorTalla(v,_tallaSel);
+  // Actualizar tallas en modal: deshabilitar las que no tienen stock para este color
+  var allTallas=getAllTallas();
+  var prodTallas=v.tallas||['M'];
+  var nuevaTallaModal=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(v,t)>0;})||prodTallas[0]||'M';
+  _tallaSel=nuevaTallaModal;
+  var tallasHtmlModal=allTallas.map(function(t){
+    var disp=prodTallas.indexOf(t)>=0;
+    var sinStock=disp?stockPorTalla(v,t)<=0:false;
+    var cls=disp?(sinStock?'pm-size disabled':(t===nuevaTallaModal?'pm-size sel':'pm-size')):'pm-size disabled';
+    return '<div class="'+cls+'" data-talla="'+t+'" onclick="elTalla(\''+t+'\')">'+t+'</div>';
+  }).join('');
+  var sizeEl=document.getElementById('pm-size-opts');if(sizeEl)sizeEl.innerHTML=tallasHtmlModal;
+  var _tallaTagModal2=v.tallaTag||'';
+  var _tagEl2=document.getElementById('pm-talla-tag');
+  if(_tagEl2){_tagEl2.textContent=_tallaTagModal2;_tagEl2.style.display=_tallaTagModal2?'block':'none';}
+  var stkSel=stockPorTalla(v,nuevaTallaModal);
   var lblStk=stkSel<=0?'Agotado':stkSel<=3?'Últimas '+stkSel:'';
   var qn=document.getElementById('pm-qty-n');if(qn)qn.textContent='1';
   var qt=document.getElementById('pm-qty-t');if(qt)qt.textContent='$'+v.precio.toFixed(2);
   var btn=document.getElementById('pm-btn-continue');if(btn)btn.disabled=false;
-  document.querySelector('.pm-hint').textContent=v.color+' · $'+v.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
+  document.querySelector('.pm-hint').textContent=v.color+' · '+nuevaTallaModal+' · $'+v.precio.toFixed(2)+(lblStk?' · '+lblStk:'');
   document.querySelector('.pm-hint').style.color=stkSel<=0?'var(--coral)':'var(--navy)';
   track('color_select',{sku:sku,color:v.color});
 }

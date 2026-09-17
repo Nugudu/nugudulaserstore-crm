@@ -1594,7 +1594,7 @@ function gridCat(){
       if(tec)html+='<span class="p-spec">'+_svgLaser+'Grabado a Láser</span>';
       html+='</div>';
       html+='<div class="p-dots">'+dots+'</div>';
-      var allTallas=['S','M','L','XL'];
+      var allTallas=getAllTallas();
       var prodTallas=vs[0].tallas||['M'];
       var tallasHtml=allTallas.map(function(t){
         var disp=prodTallas.indexOf(t)>=0;
@@ -1625,6 +1625,16 @@ function stockPorTalla(prod,talla){
   if(idx<0)idx=0;
   while(stock.length<=idx)stock.push(0);
   return stock[idx];
+}
+// Devuelve todas las tallas únicas del catálogo (soporta rango como S-M y个体 como M)
+function getAllTallas(){
+  var seen=[];var map={};
+  _cat.forEach(function(p){
+    (p.tallas||['M']).forEach(function(t){
+      if(!map[t]){map[t]=true;seen.push(t);}
+    });
+  });
+  return seen.length?seen:['M'];
 }
 // Construye la lista de archivos a probar, en orden de prioridad:
 // 1) la foto EXACTA del SKU/color (ej. RSV-IKA-GR.png) — la foto real del
@@ -1688,7 +1698,7 @@ function elDis(nomEnc){
   })||vs[0];
   _color=primerColor;
   // Preseleccionar primer color con stock
-  var allTallas=['S','M','L','XL'];
+  var allTallas=getAllTallas();
   var prodTallas=primerColor.tallas||['M'];
   // Encontrar primera talla con stock en el primer color
   var primerTalla=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
@@ -1724,7 +1734,7 @@ function elCol(sku){
   document.getElementById('co-'+sku).classList.add('sel');
   actualizarFotoPreview(sku,_diseno);
   // Actualizar tallas: deshabilitar las que no tienen stock para este color
-  var allTallas=['S','M','L','XL'];
+  var allTallas=getAllTallas();
   var prodTallas=v.tallas||['M'];
   var nuevaTalla=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(v,t)>0;})||prodTallas[0]||'M';
   _tallaSel=nuevaTalla;
@@ -1812,7 +1822,7 @@ function agregarRapido(sku){
   if(!vs.length) return;
   var primerColor=vs[0];
   var tallasProd=primerColor.tallas||['M'];
-  var allTallas=['S','M','L','XL'];
+  var allTallas=getAllTallas();
   var tallaDefault=allTallas.find(function(t){return tallasProd.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
   _carrito.push({sku:primerColor.sku,diseno:vs[0].nombre,color:primerColor.color,hex:primerColor.hex,precio:primerColor.precio,cantidad:1,talla:tallaDefault});
   guardarSesion('s-catalogo');
@@ -1964,7 +1974,7 @@ function elDisInicio(nomEnc){
     document.getElementById('pm-foto').src='imagenes/'+candidatos[0];
     document.getElementById('pm-foto').onerror=function(){imgFallback(this);};
     // Tallas en modal
-    var allTallas=['S','M','L','XL'];
+    var allTallas=getAllTallas();
     var prodTallas=primerColor.tallas||['M'];
     var primerTallaModal=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
     _tallaSel=primerTallaModal;
@@ -1994,7 +2004,7 @@ function pmSelColor(sku){
   var candidatos=candidatosFoto(sku,_pmNombre);
   var foto=document.getElementById('pm-foto');if(foto){foto.src='imagenes/'+candidatos[0];}
   // Actualizar tallas en modal: deshabilitar las que no tienen stock para este color
-  var allTallas=['S','M','L','XL'];
+  var allTallas=getAllTallas();
   var prodTallas=v.tallas||['M'];
   var nuevaTallaModal=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(v,t)>0;})||prodTallas[0]||'M';
   _tallaSel=nuevaTallaModal;

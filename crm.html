@@ -431,7 +431,7 @@ tbody tr:last-child td{border-bottom:none}
             <div style="width:52px;height:52px;background:var(--teal);border-radius:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:22px;color:#fff"><i class="fa-solid fa-motorcycle"></i></div>
             <h3 style="font-size:20px;font-weight:700;margin-bottom:.5rem">Acceso Repartidor</h3>
             <p style="font-size:13px;color:var(--muted);margin-bottom:1.5rem">Ingresa tu código para ver y reportar tus entregas.</p>
-            <div class="fg" style="margin-bottom:1rem"><label>Código de repartidor</label><input id="rep-codigo" type="text" placeholder="Ej. REP-01" style="text-align:center;font-size:16px;font-family:'DM Mono',monospace" onkeydown="if(event.key==='Enter')loginRep()"></div>
+            <div class="fg" style="margin-bottom:1rem"><label>Código de repartidor</label><input id="rep-codigo" type="text" placeholder="Ej. R@#1" style="text-align:center;font-size:16px;font-family:'DM Mono',monospace" onkeydown="if(event.key==='Enter')loginRep()"></div>
             <button class="btn btn-teal" style="width:100%;justify-content:center" onclick="loginRep()"><i class="fa-solid fa-arrow-right-to-bracket"></i> Ingresar</button>
             <div id="rep-err" class="alert err" style="margin-top:1rem"></div>
           </div>
@@ -819,16 +819,18 @@ tbody tr:last-child td{border-bottom:none}
 // ═══════════════════════════════════════════════
 
 // Código único de la administradora — CÁMBIALO antes de compartir el link.
-var ADMIN_CODE = 'N4';
+var ADMIN_CODE = 'AV@#1';
 
 // Códigos individuales de vendedoras — agrega/quita líneas según tu equipo.
 // Formato: 'CODIGO': 'Nombre a mostrar'
 var VENDEDORAS = {
-  'N1': 'Vendedora 1',
-  'N2': 'Vendedora 2'
+  'V1': 'Vendedora 1',
+  'V2': 'Vendedora 2',
+  'V3': 'Vendedora 3'
 };
 
-var PRODUCCION_CODE = 'P1';
+var PRODUCCION_CODE = 'P@#1';
+var REPARTIDOR_CODE = 'R@#1';
 
 var _gateRol = null; // 'admin' | 'vendedora' | 'produccion' | 'repartidor'
 
@@ -2563,6 +2565,7 @@ function cpMsg(id){
 function loginRep(){
   var cod=(document.getElementById('rep-codigo').value||'').trim().toUpperCase();
   if(!cod){ var e=document.getElementById('rep-err'); e.textContent='Ingresa tu código.'; e.style.display='flex'; setTimeout(function(){e.style.display='none';},3000); return; }
+  if(cod!==REPARTIDOR_CODE){ var e=document.getElementById('rep-err'); e.textContent='Código incorrecto.'; e.style.display='flex'; setTimeout(function(){e.style.display='none';},3000); return; }
   _repCodigo=cod;
   try{sessionStorage.setItem(REP_SESSION_KEY,cod);}catch(e){}
   document.getElementById('rep-login-wrap').style.display='none';

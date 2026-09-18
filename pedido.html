@@ -3808,5 +3808,10 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     // Auto-start removido: el tour se abre solo con el botón "?" (Ver guía de uso)
   })();
 </script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+</script>
 </body>
 </html>

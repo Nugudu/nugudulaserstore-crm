@@ -1,7 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+(function(){
+  var V='20260917b';
+  var s=sessionStorage.getItem('_pv');
+  if(s&&s!==V){sessionStorage.removeItem('_pv');window.location.replace(window.location.pathname+'?v='+Date.now());return;}
+  sessionStorage.setItem('_pv',V);
+  if(window.location.search){window.history.replaceState({},'',window.location.pathname);}
+})();
+</script>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Nugudú Store — Hacer pedido</title>
 <meta property="og:title" content="Nugudú Store — Hacer pedido">
@@ -123,6 +135,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-foto{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:0;margin-bottom:0;background:#f4f3fa;display:block;border:none;border-bottom:1px solid var(--border)}
 .p-nombre{font-size:14px;font-weight:700;margin-bottom:4px}
 .p-dots{display:flex;gap:5px;justify-content:center;margin:5px 0 3px}
+.p-color-size{display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0}
+.p-color-size .p-dots{margin:0}
+.p-separator{width:40px;height:1px;background:var(--border);margin:8px auto}
 .cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12)}
 .p-precio{font-size:15px;font-weight:700;color:var(--navy)}
 .p-stock{font-size:10px;margin-top:2px}
@@ -133,7 +148,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-btn-add:active{transform:scale(.97)}
 .p-specs{display:flex;gap:6px;font-size:10px;margin:4px 0;flex-wrap:wrap;justify-content:center}
 .prod-card{padding-bottom:56px}
-.prod-card .p-nombre,.prod-card .p-specs,.prod-card .p-dots,.prod-card .p-precio,.prod-card .p-btn-add,.prod-card .p-envio-detalle,.prod-card .p-stock,.prod-card .p-fecha{padding-left:10px;padding-right:10px}
+.prod-card .p-nombre,.prod-card .p-specs,.prod-card .p-color-size,.prod-card .p-talla-tag,.prod-card .p-precio,.prod-card .p-btn-add,.prod-card .p-envio-detalle,.prod-card .p-stock,.prod-card .p-fecha,.prod-card .p-separator{padding-left:10px;padding-right:10px}
 .prod-card .p-nombre{padding-top:12px}
 .p-spec{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#f4f3fa;border:1px solid var(--border);border-radius:4px;color:var(--muted);white-space:nowrap}
 .p-spec svg{flex-shrink:0}
@@ -193,7 +208,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .copt{display:flex;align-items:center;gap:7px;padding:7px 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
 .copt.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .cswatch{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
-.p-sizes{display:flex;gap:6px;justify-content:center;margin:6px 0}
+.p-sizes{display:flex;gap:6px;justify-content:center;margin:0}
 .p-size{min-width:34px;height:30px;display:flex;align-items:center;justify-content:center;padding:0 8px;border:2px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;background:#fff;transition:all .15s}
 .p-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .p-size.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
@@ -1006,10 +1021,10 @@ function volverDesdeForm(){
 }
 
 // ── CACHÉ DEL CATÁLOGO: instantáneo en visitas repetidas, siempre fresco ──
-var CACHE_KEY='ngd_cat_v1';
+var CACHE_KEY='ngd_cat_v2';
 function cargarCatalogoCache(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'null');}catch(e){return null;}}
 function guardarCatalogoCache(c){try{localStorage.setItem(CACHE_KEY,JSON.stringify(c));}catch(e){}}
-function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock+':'+(c[i].categoria||'')+':'+(c[i].tecnica||'')+':'+(c[i].coleccion||'')+':'+(c[i].disponibilidad||'')+':'+(c[i].tallas||[]).join(',');}return s;}
+function firmaCatalogo(c){var s=''+(c?c.length:0);for(var i=0;c&&i<c.length;i++){s+='|'+c[i].sku+':'+c[i].precio+':'+c[i].stock+':'+(c[i].categoria||'')+':'+(c[i].tecnica||'')+':'+(c[i].coleccion||'')+':'+(c[i].disponibilidad||'')+':'+(c[i].tallas||[]).join(',')+':'+(c[i].tallaTag||'');}return s;}
 
 // ── WARM-UP DE GAS: evita el arranque en frio (2-3s) en busquedas pedido/Mi
 // Diseno. Un ping barato mantiene la instancia caliente mientras la pagina
@@ -1596,7 +1611,6 @@ function gridCat(){
       if(mat)html+='<span class="p-spec">'+_svgLeather+'Cuero 100%</span>';
       if(tec)html+='<span class="p-spec">'+_svgLaser+'Grabado a Láser</span>';
       html+='</div>';
-      html+='<div class="p-dots">'+dots+'</div>';
       var allTallas=getAllTallas();
       var prodTallas=vs[0].tallas||['M'];
       var tallasHtml=allTallas.map(function(t){
@@ -1605,9 +1619,10 @@ function gridCat(){
         var cls=disp?(sinStock?'p-size disabled':'p-size sel'):'p-size disabled';
         return '<div class="'+cls+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';
       }).join('');
-      html+='<div class="p-sizes">'+tallasHtml+'</div>';
+      html+='<div class="p-color-size"><div class="p-dots">'+dots+'</div><div class="p-sizes">'+tallasHtml+'</div></div>';
       var _tallaTag=vs[0].tallaTag||'';
       if(_tallaTag) html+='<div class="p-talla-tag">'+esc(_tallaTag)+'</div>';
+      html+='<div class="p-separator"></div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
       var _fEnt=ceProximaFecha();
       if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
@@ -3792,6 +3807,11 @@ document.getElementById('user-modal-cod').addEventListener('keydown',function(e)
     document.addEventListener('keydown',function(e){if(e.key==='Escape')closeTour();});
     // Auto-start removido: el tour se abre solo con el botón "?" (Ver guía de uso)
   })();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
 </script>
 </body>
 </html>

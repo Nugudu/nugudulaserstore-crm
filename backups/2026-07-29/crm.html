@@ -1475,7 +1475,7 @@ var COLOR_MAP={
 };
 // Mapeo del codigo de diseno (segmento central del SKU, ej. RSV-KA-NG → KA)
 // al nombre de archivo en la carpeta imagenes/ — son las mismas fotos que
-// usa pedido.html (kaan.jpg, muuk.jpg, etc.), asi no hay que duplicarlas.
+// usa tienda.html (kaan.jpg, muuk.jpg, etc.), asi no hay que duplicarlas.
 var DISENO_SLUG={'KA':'kaan','MU':'muuk','IKA':'ikal','SA':'saan','KI':'kin','OX':'oxan'};
 // Miniatura con respaldo automatico: primero intenta la foto EXACTA del SKU/color
 // (ej. RSV-IKA-GR.png), luego el dibujo generico del diseno (ej. ikal.png), luego
@@ -1588,7 +1588,7 @@ function enviarDatosBancarios(id){
 }
 
 // ── PAGOS PENDIENTES (solicitudes de transferencia) ──
-// Las solicitudes (ref SOL-…) llegan de pedido.html cuando el cliente elige
+// Las solicitudes (ref SOL-…) llegan de tienda.html cuando el cliente elige
 // transferencia: NO crean orden al instante. Aquí se verifica el pago y se
 // confirma (se crea la ORD-… real con pagoConfirmado) o se descarta.
 var _solicitudes = [];
@@ -2283,7 +2283,7 @@ function irATracking(id){
 // ── EDITAR ORDEN ────────────────────────────────────────────────────────
 // Corrige nombre/contacto/dirección/zona/cantidad/notas de una orden ya
 // guardada (útil ej. si el cliente escribió mal su dirección desde
-// pedido.html). Reusa la acción 'update' del backend, la misma que ya usa
+// tienda.html). Reusa la acción 'update' del backend, la misma que ya usa
 // el switch de producción — no requiere ningún cambio en Code_1.gs.
 function abrirEditarOrden(id){
   var o=_ordenes.filter(function(x){return x.id===id;})[0];
@@ -2327,7 +2327,7 @@ function abrirEditarOrden(id){
   if(coordsPrevias){
     mostrarCoordsMapaEdit(coordsPrevias);
   } else if (o.direccion) {
-    // La orden no trae coordenadas guardadas (ej. vino de pedido.html con
+    // La orden no trae coordenadas guardadas (ej. vino de tienda.html con
     // solo texto de direccion, sin que LocationIQ encontrara un resultado
     // exacto en su momento) -- se geocodifica automaticamente al abrir el
     // modal para completar la caja, pero el campo sigue 100% editable.

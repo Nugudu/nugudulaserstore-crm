@@ -1,7 +1,7 @@
 // Nugudú Store — Service Worker
-// Intercepta pedido.html para siempre servir la versión más reciente
+// Intercepta tienda.html para siempre servir la versión más reciente
 var CACHE_NAME = 'ngd-v20260917b';
-var ALWAYS_FRESH = ['pedido.html', 'crm.html'];
+var ALWAYS_FRESH = ['tienda.html', 'crm.html'];
 
 self.addEventListener('install', function(e) {
   self.skipWaiting();
@@ -22,7 +22,7 @@ self.addEventListener('fetch', function(e) {
   var url = new URL(e.request.url);
   var path = url.pathname.split('/').pop();
 
-  // Para pedido.html y crm.html: SIEMPRE ir a la red (nunca caché)
+  // Para tienda.html y crm.html: SIEMPRE ir a la red (nunca caché)
   if (ALWAYS_FRESH.indexOf(path) >= 0) {
     e.respondWith(
       fetch(e.request).catch(function() {

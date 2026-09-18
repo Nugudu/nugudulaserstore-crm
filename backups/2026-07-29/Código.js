@@ -21,12 +21,12 @@ var API_TOKEN        = '20448e06ce5e6d46b0c829be92dd00bcd8d521cd';
 // como 'pk.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') antes de implementar.
 var LOCATIONIQ_KEY   = 'pk.566487b350cf28d6d4744b6bb40266aa';
 // Codigos de vendedoras que pueden compartir su propio link publico de
-// pedido.html (ej. pedido.html?v=N1) y que una venta por ese canal quede
+// tienda.html (ej. tienda.html?v=V1) y que una venta por ese canal quede
 // atribuida a ellas en vez del generico 'WEB'. Deben coincidir con los
-// codigos de VENDEDORAS en index.html (N4 es el codigo de administracion,
+// codigos de VENDEDORAS en crm.html (AV@#1 es el codigo de administracion,
 // se incluye por si alguna vez comparte su propio link tambien). Agregar
 // mas vendedoras aca es un solo cambio, en esta lista nada mas.
-var CODIGOS_VENDEDORAS_WEB = ['N1', 'N2', 'N4'];
+var CODIGOS_VENDEDORAS_WEB = ['V1', 'V2', 'V3', 'AV@#1'];
 
 // WOMPI — credenciales (obtenidas de panel.wompi.sv → tu negocio → App ID / API Secret)
 var WOMPPI_APP_ID     = '302497f6-ddc3-45bc-9fad-cd65b73bd937';

@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+(function(){
+  var V='20260917b';
+  var s=sessionStorage.getItem('_pv');
+  if(s&&s!==V){sessionStorage.removeItem('_pv');window.location.replace(window.location.pathname+'?v='+Date.now());return;}
+  sessionStorage.setItem('_pv',V);
+  if(window.location.search){window.history.replaceState({},'',window.location.pathname);}
+})();
+</script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">

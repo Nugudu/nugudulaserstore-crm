@@ -127,6 +127,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ce-fecha svg{width:12px;height:12px;flex-shrink:0}
 .ce-fecha.past{opacity:.4;text-decoration:line-through}
 .p-fecha{position:absolute;left:8px;bottom:10px;font-size:10px;font-weight:600;color:var(--coral);letter-spacing:.2px;display:flex;align-items:center;gap:3px}
+.ver-mas-btn{text-align:center;padding:14px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;letter-spacing:.5px;transition:opacity .15s}
+.ver-mas-btn:hover{opacity:.7}
+.vm-hidden{display:none!important}
 .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .prod-card{border:none;border-radius:var(--rs);padding:0;cursor:pointer;transition:all .15s;background:#fff;text-align:center;position:relative;overflow:hidden}
 .prod-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);transform:translateY(-1px)}
@@ -932,6 +935,7 @@ var _refV = (function(){
   catch(e){ return ''; }
 })();
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_tallaSel='M',_mapa='',_dirSel=null,_ultimaOrden=null,_yaSoyClienteMode=false;
+var _verMasVisibles=12,_verMasStep=12;
 // Catálogo embebido — datos frescos sin dependencia de API en la primera carga
 var _CAT_EMBED=[{"sku": "CL-BAR.3-GR", "nombre": "GORRA ¡VISCA BARCA!", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [9], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.3-NG", "nombre": "GORRA ¡VISCA BARCA!", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.2-NG", "nombre": "GORRA VISCA BARCA", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.2-GR", "nombre": "GORRA VISCA BARCA", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-HM-NG", "nombre": "GORRA HALA MADRID", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-HM-GR", "nombre": "GORRA HALA MADRID", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-CHM-GR", "nombre": "GORRA ¡HALA MADRID!", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-CHM-NG", "nombre": "GORRA ¡HALA MADRID!", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-MDR-GR", "nombre": "GORRA REAL MADRID", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-MDR-NG", "nombre": "GORRA REAL MADRID", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR-GR", "nombre": "GORRA BARCELONA", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR-NG", "nombre": "GORRA BARCELONA", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-TRU-NG", "nombre": "GORRA TRUCKER", "coleccion": "Gorra", "color": "Negro", "hex": "#1a1a1a", "precio": 12.99, "stock": [10], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-TRU-GR", "nombre": "GORRA TRUCKER", "coleccion": "Gorra", "color": "Gris", "hex": "#6b7282", "precio": 12.99, "stock": [10], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-CACL", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Café Claro", "hex": "#a17345", "precio": 16.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-CAFE", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Café", "hex": "#3a2a20", "precio": 16.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-BEI", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Beage", "hex": "#cbab8d", "precio": 16.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-IKA-NG", "nombre": "GORRA IKAL", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-IKA-GR", "nombre": "GORRA IKAL", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7282", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-SA-NG", "nombre": "GORRA SAAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-SA-GR", "nombre": "GORRA SAAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7283", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KI-NG", "nombre": "GORRA KIN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KI-GR", "nombre": "GORRA KIN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7284", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-OX-NG", "nombre": "GORRA OXAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-OX-GR", "nombre": "GORRA OXAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-MU-GR", "nombre": "GORRA MUUK", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-MU-NG", "nombre": "GORRA MUUK", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KA-NG", "nombre": "GORRA KAAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KA-GR", "nombre": "GORRA KAAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}];
 var RECARGO_ENVIO=3;
@@ -1456,6 +1460,7 @@ function renderCat(){
   if(ci)ci.innerHTML=html.replace(/elDis\(/g,'elDisInicio(');
   var conts=[document.getElementById('cat-wrap'),document.getElementById('cat-inicio-wrap')];
   conts.forEach(function(cont){if(cont)activarFiltrosCat(cont);});
+  aplicarVerMas();
   if(_carrito.length>0){renderCarrito();renderCiCarrito();}
 }
 // ── FILTROS + BUSCADOR (Fase 2) ──
@@ -1581,6 +1586,38 @@ function aplicarFiltros(bar,cont,estado){
   });
   var msg=bar.querySelector('.fil-msg');
   if(msg)msg.style.display=vis===0?'block':'none';
+  aplicarVerMas();
+}
+function aplicarVerMas(){
+  _verMasVisibles=12;
+  var cont=document.getElementById('cat-wrap');
+  if(!cont) return;
+  cont.querySelectorAll('.vm-hidden').forEach(function(c){c.classList.remove('vm-hidden');});
+  var cards=[].slice.call(cont.querySelectorAll('.prod-card'));
+  var visFiltro=cards.filter(function(c){return c.style.display!=='none';});
+  visFiltro.forEach(function(c,i){if(i>=_verMasVisibles) c.classList.add('vm-hidden');});
+  var oldBtn=document.getElementById('ver-mas-btn');
+  if(oldBtn) oldBtn.remove();
+  if(visFiltro.length>_verMasVisibles){
+    var btn=document.createElement('div');
+    btn.id='ver-mas-btn';
+    btn.className='ver-mas-btn';
+    btn.textContent='VER MÁS';
+    btn.onclick=function(){verMasCargar();};
+    cont.appendChild(btn);
+  }
+}
+function verMasCargar(){
+  _verMasVisibles+=_verMasStep;
+  var cont=document.getElementById('cat-wrap');
+  if(!cont) return;
+  var cards=[].slice.call(cont.querySelectorAll('.prod-card'));
+  var visFiltro=cards.filter(function(c){return c.style.display!=='none';});
+  visFiltro.forEach(function(c,i){if(i<_verMasVisibles) c.classList.remove('vm-hidden');});
+  if(visFiltro.length<=_verMasVisibles){
+    var btn=document.getElementById('ver-mas-btn');
+    if(btn) btn.style.display='none';
+  }
 }
 function normTxt(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function gridCat(){

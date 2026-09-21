@@ -138,7 +138,9 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-color-size{display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0}
 .p-color-size .p-dots{margin:0}
 .p-separator{width:40px;height:1px;background:var(--border);margin:8px auto}
-.cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12)}
+.cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12);cursor:pointer;transition:all .15s;position:relative;flex-shrink:0}
+.cdot::after{content:'';position:absolute;inset:-10px;border-radius:50%}
+.cdot.sel{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
 .p-precio{font-size:15px;font-weight:700;color:var(--navy)}
 .p-stock{font-size:10px;margin-top:2px}
 .p-share{position:absolute;right:8px;bottom:9px;width:22px;height:22px;color:var(--hint);background:#fff;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:3;transition:color .15s,border-color .15s}
@@ -1594,11 +1596,11 @@ function gridCat(){
         var stk=Array.isArray(v.stock)?v.stock:[v.stock||0];
         return stk.every(function(s){return s<=0;});
       });
-      var dots=vs.map(function(v){return '<div class="cdot" style="background:'+v.hex+'" title="'+v.color+'"></div>';}).join('');
+      var dots=vs.map(function(v,i){return '<div class="cdot'+(i===0?' sel':'')+'" style="background:'+v.hex+'" title="'+v.color+'" data-sku="'+v.sku+'" onclick="event.stopPropagation();elColorCard(\''+v.sku+'\',this)"></div>';}).join('');
       var candidatos=candidatosFoto(vs[0].sku,nom);
       var candAttr=JSON.stringify(candidatos).replace(/'/g,'&#39;');
       var attrs=' data-col="'+esc((vs[0].coleccion||'').toLowerCase())+'" data-cat="'+esc((vs[0].categoria||'').toLowerCase())+'" data-tec="'+esc((vs[0].tecnica||'').toLowerCase())+'" data-nom="'+esc(nom.toLowerCase())+'"';
-      html+='<div class="prod-card'+(agot?' agotado':'')+'"'+attrs+' id="pc-'+encodeId(nom)+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
+      html+='<div class="prod-card'+(agot?' agotado':'')+'"'+attrs+' id="pc-'+encodeId(nom)+'" data-selected-sku="'+vs[0].sku+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
       html+='<div class="pcheck">✓</div>';
       html+='<img class="p-foto" loading="lazy" decoding="async" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
@@ -1616,7 +1618,7 @@ function gridCat(){
         var cls=disp?(sinStock?'p-size disabled':'p-size sel'):'p-size disabled';
         return '<div class="'+cls+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';
       }).join('');
-      html+='<div class="p-color-size"><div class="p-dots">'+dots+'</div><div class="p-sizes">'+tallasHtml+'</div></div>';
+      html+='<div class="p-color-size"><div class="p-sizes">'+tallasHtml+'</div><div class="p-dots">'+dots+'</div></div>';
       var _tallaTag=vs[0].tallaTag||'';
       if(_tallaTag) html+='<div class="p-talla-tag">'+esc(_tallaTag)+'</div>';
       html+='<div class="p-separator"></div>';
@@ -1804,6 +1806,34 @@ function elTallaCard(t,el){
   var card=el.closest('.prod-card');
   if(card) card.querySelectorAll('.p-size').forEach(function(s){s.classList.remove('sel');if(s.dataset.talla===t)s.classList.add('sel');});
 }
+function elColorCard(sku,el){
+  var prod=_cat.find(function(p){return p.sku===sku;});
+  if(!prod) return;
+  var card=el.closest('.prod-card');
+  if(!card) return;
+  card.querySelectorAll('.cdot').forEach(function(d){d.classList.remove('sel');});
+  el.classList.add('sel');
+  var img=card.querySelector('.p-foto');
+  if(img){
+    var candidatos=candidatosFoto(sku,prod.nombre);
+    img.setAttribute('data-candidatos',JSON.stringify(candidatos));
+    img.dataset.idx='0';
+    img.onerror=function(){imgFallback(img);};
+    img.src='imagenes/'+candidatos[0];
+  }
+  card.dataset.selectedSku=sku;
+  var allTallas=getAllTallas();
+  var prodTallas=prod.tallas||['M'];
+  card.querySelectorAll('.p-size').forEach(function(s){
+    var t=s.dataset.talla;
+    var disp=prodTallas.indexOf(t)>=0;
+    var sinStock=disp?stockPorTalla(prod,t)<=0:false;
+    s.classList.remove('sel','disabled');
+    if(!disp||sinStock) s.classList.add('disabled');
+  });
+  var firstAvail=card.querySelector('.p-size:not(.disabled)');
+  if(firstAvail) firstAvail.classList.add('sel');
+}
 // ── CARRITO (varios productos por pedido) ──
 // Antes solo se podia pedir un producto a la vez. Ahora se puede agregar mas
 // de uno al mismo pedido (ej. un gorro para la pareja, otro para un hijo)
@@ -1844,10 +1874,16 @@ function agregarRapido(sku){
   var vs=_cat.filter(function(p){return p.sku===sku;});
   if(!vs.length) return;
   var primerColor=vs[0];
-  var tallasProd=primerColor.tallas||['M'];
+  var card=document.getElementById('pc-'+encodeId(primerColor.nombre));
+  var selectedSku=card?card.dataset.selectedSku:sku;
+  var realProd=_cat.find(function(p){
+    return p.sku===selectedSku;
+  }) || primerColor;
+  var tallasProd=realProd.tallas||['M'];
   var allTallas=getAllTallas();
-  var tallaDefault=allTallas.find(function(t){return tallasProd.indexOf(t)>=0&&stockPorTalla(primerColor,t)>0;})||'M';
-  _carrito.push({sku:primerColor.sku,diseno:vs[0].nombre,color:primerColor.color,hex:primerColor.hex,precio:primerColor.precio,cantidad:1,talla:tallaDefault});
+  var tallaSel=card?card.querySelector('.p-size.sel'):null;
+  var tallaDefault=tallaSel?tallaSel.dataset.talla:allTallas.find(function(t){return tallasProd.indexOf(t)>=0&&stockPorTalla(realProd,t)>0;})||'M';
+  _carrito.push({sku:realProd.sku,diseno:realProd.nombre,color:realProd.color,hex:realProd.hex,precio:realProd.precio,cantidad:1,talla:tallaDefault});
   guardarSesion('s-catalogo');
   renderCarrito();
   renderCiCarrito();

@@ -1061,6 +1061,17 @@ function ceProximaFecha(){
   if(d<=_ce.corte2)return _ce.fechas[1].dia+' '+_ce.fechas[1].mes;
   return'Próximamente';
 }
+function ceFechaEstandar(){
+  var h=new Date();
+  var added=0;
+  while(added<3){
+    h.setDate(h.getDate()+1);
+    var dow=h.getDay();
+    if(dow!==0&&dow!==6) added++;
+  }
+  var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return h.getDate()+' '+meses[h.getMonth()];
+}
 function ceBannerHtml(){
   var h=new Date(),d=h.getDate(),m=h.getMonth();
   if(m!==8)return'';// solo septiembre por ahora
@@ -1623,8 +1634,13 @@ function gridCat(){
       if(_tallaTag) html+='<div class="p-talla-tag">'+esc(_tallaTag)+'</div>';
       html+='<div class="p-separator"></div>';
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
-      var _fEnt=ceProximaFecha();
-      if(_fEnt&&_fEnt!=='Próximamente')html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
+      var _tec=vs[0].tecnica||'';
+      if(_tec){
+        var _fEnt=ceProximaFecha();
+        if(_fEnt&&_fEnt!=='Próximamente') html+='<span class="p-fecha">'+_svgCal+_fEnt+'</span>';
+      } else {
+        html+='<span class="p-fecha">'+_svgCal+ceFechaEstandar()+'</span>';
+      }
       html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
       if(!agot)html+='<button class="p-btn-add" onclick="event.stopPropagation();agregarRapido(\''+vs[0].sku+'\')">Agregar</button>';
       if(!agot)html+='<div class="p-envio-detalle" onclick="event.stopPropagation();this.classList.toggle(\'open\')">Envío detalle<div class="p-envio-detalle-text">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div></div>';

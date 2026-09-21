@@ -1590,32 +1590,34 @@ function aplicarFiltros(bar,cont,estado){
 }
 function aplicarVerMas(){
   _verMasVisibles=12;
-  var cont=document.getElementById('cat-wrap');
-  if(!cont) return;
-  cont.querySelectorAll('.vm-hidden').forEach(function(c){c.classList.remove('vm-hidden');});
-  var cards=[].slice.call(cont.querySelectorAll('.prod-card'));
-  var visFiltro=cards.filter(function(c){return c.style.display!=='none';});
-  visFiltro.forEach(function(c,i){if(i>=_verMasVisibles) c.classList.add('vm-hidden');});
-  var oldBtn=document.getElementById('ver-mas-btn');
-  if(oldBtn) oldBtn.remove();
-  if(visFiltro.length>_verMasVisibles){
-    var btn=document.createElement('div');
-    btn.id='ver-mas-btn';
-    btn.className='ver-mas-btn';
-    btn.textContent='VER MÁS';
-    btn.onclick=function(){verMasCargar();};
-    cont.appendChild(btn);
-  }
+  ['cat-wrap','cat-inicio-wrap'].forEach(function(id){
+    var cont=document.getElementById(id);
+    if(!cont) return;
+    cont.querySelectorAll('.vm-hidden').forEach(function(c){c.classList.remove('vm-hidden');});
+    var cards=[].slice.call(cont.querySelectorAll('.prod-card'));
+    var visFiltro=cards.filter(function(c){return c.style.display!=='none';});
+    visFiltro.forEach(function(c,i){if(i>=_verMasVisibles) c.classList.add('vm-hidden');});
+    var oldBtn=cont.querySelector('#ver-mas-btn');
+    if(oldBtn) oldBtn.remove();
+    if(visFiltro.length>_verMasVisibles){
+      var btn=document.createElement('div');
+      btn.id='ver-mas-btn';
+      btn.className='ver-mas-btn';
+      btn.textContent='VER MÁS';
+      btn.onclick=function(){verMasCargar(id);};
+      cont.appendChild(btn);
+    }
+  });
 }
-function verMasCargar(){
+function verMasCargar(contId){
   _verMasVisibles+=_verMasStep;
-  var cont=document.getElementById('cat-wrap');
+  var cont=document.getElementById(contId||'cat-wrap');
   if(!cont) return;
   var cards=[].slice.call(cont.querySelectorAll('.prod-card'));
   var visFiltro=cards.filter(function(c){return c.style.display!=='none';});
   visFiltro.forEach(function(c,i){if(i<_verMasVisibles) c.classList.remove('vm-hidden');});
   if(visFiltro.length<=_verMasVisibles){
-    var btn=document.getElementById('ver-mas-btn');
+    var btn=cont.querySelector('#ver-mas-btn');
     if(btn) btn.style.display='none';
   }
 }

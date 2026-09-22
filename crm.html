@@ -1012,7 +1012,7 @@ function fetchWithTimeout(url, options, timeoutMs){
   timeoutMs = timeoutMs || 15000;
   var controller = new AbortController();
   var id = setTimeout(function(){ controller.abort(); }, timeoutMs);
-  return fetch(url, { ...options, signal: controller.signal })
+  return fetch(url, { ...(options || {}), signal: controller.signal })
     .finally(function(){ clearTimeout(id); });
 }
 

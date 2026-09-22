@@ -3327,6 +3327,8 @@ var _cdpEventos = [];
 var _cdpTabActual = 'visitantes';
 var _cdpVisitantesPeriodo = 'hoy';
 var _cdpVisitantesTimer = null;
+var _cdpVisitantesReq = false;
+var _cdpVisitantesTieneDatos = false;
 
 function syncYRender(panel, btn){
   if(btn){
@@ -3393,14 +3395,28 @@ function cdpVisitantesFiltro(periodo){
 }
 
 function cdpCargarVisitantes(forceRefresh){
+  if(_cdpVisitantesReq) return;
+  _cdpVisitantesReq = true;
   document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
   var url=GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+(forceRefresh?'&refresh=1':'')+'&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN);
   fetch(url)
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
-      else cdpRenderVisitantes([],{},{});
-    }).catch(function(){cdpRenderVisitantes([],{},{});});
+      try{
+        if(d && d.ok){
+          _cdpVisitantesTieneDatos = true;
+          cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
+        }else if(!_cdpVisitantesTieneDatos){
+          cdpRenderVisitantes([],{},{});
+        }
+      }finally{
+        _cdpVisitantesReq = false;
+      }
+    })
+    .catch(function(){
+      _cdpVisitantesReq = false;
+      if(!_cdpVisitantesTieneDatos) cdpRenderVisitantes([],{},{});
+    });
 }
 
 function cdpRenderVisitantes(visitantes,stats,analytics){

@@ -1008,14 +1008,6 @@ function loadLocal(){
   try{ var r=localStorage.getItem(KEY); if(r)_ordenes=JSON.parse(r); }catch(e){ _ordenes=[]; }
 }
 
-function fetchWithTimeout(url, options, timeoutMs){
-  timeoutMs = timeoutMs || 15000;
-  var controller = new AbortController();
-  var id = setTimeout(function(){ controller.abort(); }, timeoutMs);
-  return fetch(url, { ...(options || {}), signal: controller.signal })
-    .finally(function(){ clearTimeout(id); });
-}
-
 // ── GAS API calls ──────────────────────────
 function gasCall(opts, cb) {
   var xhr = new XMLHttpRequest();
@@ -3335,7 +3327,6 @@ var _cdpEventos = [];
 var _cdpTabActual = 'visitantes';
 var _cdpVisitantesPeriodo = 'hoy';
 var _cdpVisitantesTimer = null;
-var _cdpEventosLoaded = false;
 
 function syncYRender(panel, btn){
   if(btn){
@@ -3355,15 +3346,23 @@ function syncYRender(panel, btn){
 }
 
 function cargarCDP(){
+  fetch(GAS+'?action=ping&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
   if(_cdpTabActual==='visitantes'){
     cdpCargarVisitantes(true);
-  }else{
-    cdpTab(_cdpTabActual);
+    return;
   }
+  fetch(GAS+'?action=leerEventos&limite=2000&token='+encodeURIComponent(API_TOKEN))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.ok) _cdpEventos = d.eventos || [];
+      else _cdpEventos = [];
+      cdpTab(_cdpTabActual);
+    }).catch(function(){ _cdpEventos = []; });
 }
 
 function cdpTab(tab){
   _cdpTabActual = tab;
+  // Limpiar timer de visitantes si existe
   if(_cdpVisitantesTimer){clearInterval(_cdpVisitantesTimer);_cdpVisitantesTimer=null;}
   var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos', 'visitantes':'cdp-visitantes' };
   ['360','funnel','segmentos','visitantes'].forEach(function(t){
@@ -3374,39 +3373,13 @@ function cdpTab(tab){
       else{ btn.style.borderColor = ''; btn.style.background = ''; btn.style.color = ''; }
     }
   });
+  if(tab === 'funnel') cdpRenderFunnel();
+  if(tab === 'segmentos') cdpRenderSegmentos();
   if(tab === 'visitantes'){
     cdpCargarVisitantes(true);
     _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes(false);},15000);
-  }else{
-    if(!_cdpEventosLoaded && (tab==='funnel'||tab==='360'||tab==='segmentos')){
-      _cdpEventosLoaded=true;
-      var panel=document.getElementById(secciones[tab]);
-      if(panel) panel.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando eventos…</div>';
-      fetchWithTimeout(GAS+'?action=leerEventos&limite=2000&token='+encodeURIComponent(API_TOKEN))
-        .then(function(r){return r.json();})
-        .then(function(d){
-          _cdpEventos = d.eventos || [];
-          cdpRenderAll();
-        })
-        .catch(function(){
-          _cdpEventosLoaded=false;
-          _cdpEventos = [];
-          cdpRenderAll();
-        });
-    }else if(_cdpEventosLoaded){
-      cdpRenderAll();
-    }
   }
 }
-document.addEventListener('visibilitychange',function(){
-  if(_cdpTabActual!=='visitantes') return;
-  if(document.hidden && _cdpVisitantesTimer){
-    clearInterval(_cdpVisitantesTimer); _cdpVisitantesTimer=null;
-  }else if(!document.hidden && !_cdpVisitantesTimer){
-    cdpCargarVisitantes(false);
-    _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes(false);},15000);
-  }
-});
 
 function cdpVisitantesFiltro(periodo){
   _cdpVisitantesPeriodo = periodo;
@@ -3420,64 +3393,14 @@ function cdpVisitantesFiltro(periodo){
 }
 
 function cdpCargarVisitantes(forceRefresh){
-  var cacheKey='ngd_cdp_visitantes_'+_cdpVisitantesPeriodo;
-  var cached=null;
-  try{
-    var raw=localStorage.getItem(cacheKey);
-    if(raw){
-      var obj=JSON.parse(raw);
-      if(Date.now()-obj.ts<300000) cached=obj.data;
-    }
-  }catch(e){}
-
-  if(cached){
-    cdpRenderVisitantes(cached.visitantes||[], cached.stats||{}, cached.analytics||{});
-    if(!forceRefresh){
-      fetchWithTimeout(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&refresh=0&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN))
-        .then(function(r){return r.json();})
-        .then(function(d){
-          if(d.ok){
-            try{localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}
-            cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
-          }
-        })
-        .catch(function(){});
-      return;
-    }
-  }
-
-  var showSpinner=!cached;
-  if(showSpinner){
-    document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
-  }else{
-    var updating=document.getElementById('cdp-v-updating');
-    if(!updating){
-      var bar=document.getElementById('cdp-v-stats');
-      if(bar){
-        var el=document.createElement('div');
-        el.id='cdp-v-updating';
-        el.style.cssText='position:absolute;top:6px;right:8px;font-size:11px;color:var(--muted);background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px';
-        el.textContent='Actualizando…';
-        bar.appendChild(el);
-      }
-    }
-  }
-
-  fetchWithTimeout(GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+'&refresh='+(forceRefresh?1:0)+'&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN))
+  document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
+  var url=GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+(forceRefresh?'&refresh=1':'')+'&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN);
+  fetch(url)
     .then(function(r){return r.json();})
     .then(function(d){
-      var upd=document.getElementById('cdp-v-updating'); if(upd)upd.remove();
-      if(d.ok){
-        try{localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}
-        cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
-      }else{
-        if(!cached) cdpRenderVisitantes([],{},{});
-      }
-    })
-    .catch(function(){
-      var upd=document.getElementById('cdp-v-updating'); if(upd)upd.remove();
-      if(!cached) cdpRenderVisitantes([],{},{});
-    });
+      if(d.ok) cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
+      else cdpRenderVisitantes([],{},{});
+    }).catch(function(){cdpRenderVisitantes([],{},{});});
 }
 
 function cdpRenderVisitantes(visitantes,stats,analytics){

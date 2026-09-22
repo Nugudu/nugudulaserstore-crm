@@ -1937,6 +1937,7 @@ function agregarRapido(sku){
   var tallaSel=card?card.querySelector('.p-size.sel'):null;
   var tallaDefault=tallaSel?tallaSel.dataset.talla:allTallas.find(function(t){return tallasProd.indexOf(t)>=0&&stockPorTalla(realProd,t)>0;})||'M';
   _carrito.push({sku:realProd.sku,diseno:realProd.nombre,color:realProd.color,hex:realProd.hex,precio:realProd.precio,cantidad:1,talla:tallaDefault});
+  track('add_to_cart',{sku:realProd.sku,diseno:realProd.nombre,color:realProd.color,cantidad:1,from:'rapido'});
   guardarSesion('s-catalogo');
   renderCarrito();
   renderCiCarrito();
@@ -2081,6 +2082,7 @@ function elDisInicio(nomEnc){
       return stk.some(function(s){return s>0;});
     })||vs[0];
     _pmColor=primerColor;_pmSku=primerColor.sku;_pmQty=1;
+    track('color_select',{sku:primerColor.sku,color:primerColor.color});
     var elSel=document.getElementById('pm-co-'+primerColor.sku);if(elSel)elSel.classList.add('sel');
     var candidatos=candidatosFoto(primerColor.sku,nombre);
     document.getElementById('pm-foto').src='imagenes/'+candidatos[0];

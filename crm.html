@@ -3447,7 +3447,7 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   // Métricas de comportamiento
   var metricasHtml='';
   metricasHtml+='<div class="cdp-grid-2" style="padding:10px 0">';
-  metricasHtml+='<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--navy)">'+(analytics.rebote||0)+'%</div><div style="font-size:11px;color:var(--muted)">Tasa de rebote</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Visitantes que solo vieron 1 página</div></div>';
+  metricasHtml+='<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--navy)">'+(analytics.rebote||0)+'%</div><div style="font-size:11px;color:var(--muted)">Tasa de rebote</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Sesiones con 1 o menos eventos registrados</div></div>';
   metricasHtml+='<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--gold)">'+(analytics.duracionProm||0)+' min</div><div style="font-size:11px;color:var(--muted)">Duración promedio</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Tiempo promedio por sesión</div></div>';
   metricasHtml+='</div>';
   document.getElementById('cdp-v-metricas').innerHTML=metricasHtml;

@@ -936,6 +936,8 @@ var _refV = (function(){
 })();
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_tallaSel='M',_mapa='',_dirSel=null,_ultimaOrden=null,_yaSoyClienteMode=false;
 var _verMasVisibles=12,_verMasStep=12;
+var _impressiones=new Set();
+var _productObs=null;
 // Catálogo embebido — datos frescos sin dependencia de API en la primera carga
 var _CAT_EMBED=[{"sku": "CL-BAR.3-GR", "nombre": "GORRA ¡VISCA BARCA!", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [9], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.3-NG", "nombre": "GORRA ¡VISCA BARCA!", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.2-NG", "nombre": "GORRA VISCA BARCA", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.2-GR", "nombre": "GORRA VISCA BARCA", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-HM-NG", "nombre": "GORRA HALA MADRID", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-HM-GR", "nombre": "GORRA HALA MADRID", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-CHM-GR", "nombre": "GORRA ¡HALA MADRID!", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-CHM-NG", "nombre": "GORRA ¡HALA MADRID!", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-MDR-GR", "nombre": "GORRA REAL MADRID", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-MDR-NG", "nombre": "GORRA REAL MADRID", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR-GR", "nombre": "GORRA BARCELONA", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR-NG", "nombre": "GORRA BARCELONA", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-TRU-NG", "nombre": "GORRA TRUCKER", "coleccion": "Gorra", "color": "Negro", "hex": "#1a1a1a", "precio": 12.99, "stock": [10], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-TRU-GR", "nombre": "GORRA TRUCKER", "coleccion": "Gorra", "color": "Gris", "hex": "#6b7282", "precio": 12.99, "stock": [10], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-CACL", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Café Claro", "hex": "#a17345", "precio": 16.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-CAFE", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Café", "hex": "#3a2a20", "precio": 16.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-BEI", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Beage", "hex": "#cbab8d", "precio": 16.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-IKA-NG", "nombre": "GORRA IKAL", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-IKA-GR", "nombre": "GORRA IKAL", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7282", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-SA-NG", "nombre": "GORRA SAAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-SA-GR", "nombre": "GORRA SAAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7283", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KI-NG", "nombre": "GORRA KIN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KI-GR", "nombre": "GORRA KIN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7284", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-OX-NG", "nombre": "GORRA OXAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-OX-GR", "nombre": "GORRA OXAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-MU-GR", "nombre": "GORRA MUUK", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-MU-NG", "nombre": "GORRA MUUK", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KA-NG", "nombre": "GORRA KAAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KA-GR", "nombre": "GORRA KAAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 22.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}];
 var RECARGO_ENVIO=3;
@@ -1169,11 +1171,11 @@ function abrirSkuPendiente(){
   var v=_cat.find(function(p){return p.sku===_pendienteSku;});
   if(!v) return;
   _pendienteSku='';
-  // Actualizar OG tags con los datos del producto para preview en redes
   var imgCandidates=candidatosFoto(v.sku,v.nombre);
   var imgUrl='https://www.nugudustore.com/imagenes/'+imgCandidates[0];
   actualizarOGTags(v.sku,v.nombre,v.precio,imgUrl);
-  showScreen('s-catalogo');
+  var catVisible=document.getElementById('s-catalogo');
+  if(catVisible&&catVisible.style.display!=='block') showScreen('s-catalogo');
   renderCat();
   elDisInicio(encodeId(v.nombre));
   setTimeout(function(){pmSelColor(v.sku);},400);
@@ -1214,6 +1216,7 @@ window.addEventListener('DOMContentLoaded',function(){
     renderCat();
   }
   abrirSkuPendiente();
+  setupProductImpressions();
 });
 
 function fallback(){return _CAT_EMBED;}
@@ -1450,6 +1453,29 @@ function iniciar(){
 // nombre visible del producto (que puede cambiar en Sheets sin avisar),
 // para que renombrar "KAAN" a "GORRA KAAN" en Sheets NO rompa la foto.
 var DISENO_SLUG={'KA':'kaan','MU':'muuk','IKA':'ikal','SA':'saan','KI':'kin','OX':'oxan'};
+function setupProductImpressions(){
+  if(!('IntersectionObserver' in window)||_productObs)return;
+  _productObs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      var card=e.target;
+      var sku=card.dataset.selectedSku;
+      if(!sku||_impressiones.has(sku))return;
+      _impressiones.add(sku);
+      var nombre=card.dataset.nom||'';
+      var coleccion=card.dataset.col||'';
+      track('product_impression',{sku:sku,nombre:nombre,coleccion:coleccion});
+    });
+  },{threshold:0.5});
+}
+function observeCards(){
+  if(!_productObs)return;
+  ['cat-wrap','cat-inicio-wrap'].forEach(function(id){
+    var cont=document.getElementById(id);
+    if(!cont)return;
+    cont.querySelectorAll('.prod-card').forEach(function(card){_productObs.observe(card);});
+  });
+}
 // ── CATÁLOGO ──
 function renderCat(){
   var html=barraFiltrosCat()+gridCat();
@@ -1459,6 +1485,7 @@ function renderCat(){
   var conts=[document.getElementById('cat-wrap'),document.getElementById('cat-inicio-wrap')];
   conts.forEach(function(cont){if(cont)activarFiltrosCat(cont);});
   aplicarVerMas();
+  observeCards();
   if(_carrito.length>0){renderCarrito();renderCiCarrito();}
 }
 // ── FILTROS + BUSCADOR (Fase 2) ──

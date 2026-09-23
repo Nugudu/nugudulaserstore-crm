@@ -420,8 +420,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .bnr-slide{min-width:100%;width:100%;flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;line-height:0}
 .bnr-slide img{width:100%;border-radius:var(--rs);display:block;-webkit-user-drag:none;user-select:none;pointer-events:none}
 .bnr-slide img.bnr-miss{opacity:.35;min-height:80px;background:var(--border)}
-.bnr-bar{position:absolute;left:10px;right:10px;bottom:8px;height:4px;background:rgba(255,255,255,.45);border-radius:999px;overflow:hidden;z-index:2;pointer-events:none;box-shadow:0 0 0 1px rgba(45,36,96,.12)}
-.bnr-bar-thumb{position:absolute;top:0;left:0;height:100%;background:var(--navy);border-radius:999px;width:20%;transition:left .18s ease,width .18s ease}
+.bnr-dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;align-items:center;gap:12px;z-index:3;pointer-events:none}
+.bnr-dot{pointer-events:auto;-webkit-appearance:none;appearance:none;width:9px;height:9px;padding:0;margin:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.9);background:rgba(255,255,255,.28);cursor:pointer;box-shadow:0 1px 3px rgba(22,3,64,.25);transition:background .15s ease,transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.bnr-dot:hover{background:rgba(255,255,255,.55);transform:scale(1.12)}
+.bnr-dot:active{transform:scale(.96)}
+.bnr-dot.is-active,.bnr-dot[aria-current="true"]{background:var(--navy);border-color:#fff;transform:scale(1.2);box-shadow:0 1px 4px rgba(22,3,64,.35)}
+.bnr-dot:focus-visible{outline:2px solid var(--navy);outline-offset:3px}
 </style>
 </head>
 <body>
@@ -1684,31 +1688,42 @@ function bannerCarouselHtml(){
       '<img src="'+(b.img||'')+'" alt="Nugudú Store" draggable="false" onerror="this.classList.add(\'bnr-miss\')">'+
     '</div>';
   }
-  var bar=(n>1)?'<div class="bnr-bar"><div class="bnr-bar-thumb" style="width:'+(100/n)+'%;left:0%"></div></div>':'';
+  var dots='';
+  if(n>1){
+    dots='<div class="bnr-dots" role="tablist" aria-label="Seleccionar banner">';
+    for(var j=0;j<n;j++){
+      var dj=list[j]||{};
+      var dfile=String(dj.img||'').split('/').pop();
+      var dOn=(j===_bnrIdx);
+      dots+='<button type="button" class="bnr-dot'+(dOn?' is-active':'')+'" role="tab" '+
+        'aria-label="Banner '+(j+1)+' de '+n+': '+dfile+'" aria-current="'+(dOn?'true':'false')+'" '+
+        'data-bnr-dot="'+j+'" onclick="event.stopPropagation();bannerGo('+j+');"></button>';
+    }
+    dots+='</div>';
+  }
   return '<div class="bnr-carousel" data-bnr-count="'+n+'">'+
     '<div class="bnr-viewport">'+
       '<div class="bnr-track">'+slides+'</div>'+
     '</div>'+
-    bar+
+    dots+
   '</div>';
 }
 function bannerUpdateBar(car){
   if(!car)return;
   var vp=car.querySelector('.bnr-viewport');
-  var thumb=car.querySelector('.bnr-bar-thumb');
   var n=(_BANNERS||[]).length;
-  if(!vp||!thumb||n<=1){if(thumb&&n<=1)thumb.style.display='none';return;}
+  if(!vp||n<=1)return;
   var cw=vp.clientWidth||1;
-  var sw=vp.scrollWidth||1;
-  var ratio=Math.min(1,cw/sw);
-  var maxS=Math.max(0,sw-cw);
-  var pos=maxS>0?(vp.scrollLeft/maxS):0;
-  thumb.style.width=(ratio*100)+'%';
-  thumb.style.left=(pos*(100-ratio*100))+'%';
   var idx=Math.round(vp.scrollLeft/cw);
   if(idx<0)idx=0;
   if(idx>n-1)idx=n-1;
   _bnrIdx=idx;
+  var dots=car.querySelectorAll('.bnr-dot');
+  for(var d=0;d<dots.length;d++){
+    var on=(d===idx);
+    dots[d].classList.toggle('is-active',on);
+    dots[d].setAttribute('aria-current',on?'true':'false');
+  }
 }
 function bannerApply(){
   var n=(_BANNERS||[]).length;
@@ -1756,6 +1771,7 @@ function abrirDesdeBanner(sku){
   document.addEventListener('pointerdown',function(e){
     var car=e.target&&e.target.closest&&e.target.closest('.bnr-carousel');
     if(!car)return;
+    if(e.target.closest&&e.target.closest('.bnr-dot'))return;
     var vp=car.querySelector('.bnr-viewport');
     if(!vp)return;
     drag={x:e.clientX,y:e.clientY,sl:vp.scrollLeft,moved:false,car:car,vp:vp,target:e.target,pid:e.pointerId};

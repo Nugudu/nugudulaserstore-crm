@@ -194,6 +194,19 @@ tbody tr:last-child td{border-bottom:none}
 .prod-opt{padding:3px 9px;transition:background .15s,color .15s;background:var(--surface2);color:var(--hint)}
 .prod-opt.activo-prod{background:#f97316;color:#fff}
 .prod-opt.activo-listo{background:#22c55e;color:#fff}
+/* Navegación del visitante (CDP) — flecha discreta en Última página */
+.cdp-nav-arrow{
+  background:none;border:none;color:var(--hint);cursor:pointer;
+  font-size:15px;line-height:1;padding:0 1px 0 3px;vertical-align:middle;
+  opacity:.75;font-weight:600;
+}
+.cdp-nav-arrow:hover,.cdp-nav-arrow:focus{color:var(--navy);opacity:1;outline:none}
+.cdp-nav-list{max-height:min(52vh,420px);overflow-y:auto;margin:.75rem 0 0;padding:0;list-style:none}
+.cdp-nav-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.cdp-nav-item:last-child{border-bottom:none}
+.cdp-nav-time{color:var(--hint);font-size:11px;white-space:nowrap;min-width:64px;padding-top:2px;font-family:'DM Mono',monospace}
+.cdp-nav-msg{flex:1;color:var(--text)}
+.cdp-nav-meta{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -3328,6 +3341,10 @@ var _cdpEventos = [];
 var _cdpEventosTieneDatos = false;
 var _cdpEventosReq = false;
 var _cdpEventosOnDone = null;
+// Visitantes en memoria (v.session se pierde si solo se renderiza la tabla)
+var _cdpVisitantes = [];
+var _cdpNavSession = '';
+var _cdpNavReqSeq = 0;
 
 var _cdpTabActual = 'visitantes';
 var _cdpVisitantesPeriodo = 'hoy';
@@ -3658,6 +3675,7 @@ document.addEventListener('visibilitychange', function(){
 });
 
 function cdpRenderVisitantes(visitantes,stats,analytics){
+  _cdpVisitantes = visitantes || [];
   // Stats
   var statsHtml='';
   var statItems=[
@@ -3790,12 +3808,12 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
   // Tabla de visitantes
   var body=document.getElementById('cdp-v-body');
   var empty=document.getElementById('cdp-v-empty');
-  if(!visitantes.length){body.innerHTML='';empty.style.display='block';return;}
+  if(!visitantes.length){_cdpVisitantes=[];body.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  
+
   var paginas={'s-catalogo':'Catálogo','s-form':'Formulario','s-phone':'Mi pedido','s-exito':'¡Listo!','s-cliente':'Mis pedidos',add_card:'Agrego desde tarjeta',add_modal:'Agrego desde modal',add_cart:'Agrego desde carrito',checkout_start:'Continuar pedido',usuario_carrito:'Usuario de carrito',usuario_consulta:'Usuario de consulta',cart_open:'Carrito'};
   var html='';
-  visitantes.forEach(function(v){
+  visitantes.forEach(function(v, vIdx){
     var status=v.isActive?'<span style="display:inline-flex;align-items:center;gap:5px;color:#22c55e;font-weight:600"><i class="fa-solid fa-circle" style="font-size:8px"></i>En línea</span>':'<span style="display:inline-flex;align-items:center;gap:5px;color:var(--muted)"><i class="fa-solid fa-circle" style="font-size:8px;opacity:.3"></i>'+v.minutesAgo+' min</span>';
     var city=v.city||'—';
     var page=paginas[v.lastPage]||v.lastPage||'—';
@@ -3807,7 +3825,7 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
     html+='<tr style="border-bottom:1px solid var(--border)">';
     html+='<td style="padding:8px 6px">'+status+'</td>';
     html+='<td style="padding:8px 6px">'+city+'</td>';
-    html+='<td style="padding:8px 6px">'+page+'</td>';
+    html+='<td style="padding:8px 6px">'+page+'<button type="button" class="cdp-nav-arrow" data-idx="'+vIdx+'" data-session="'+escHtml(v.session||'')+'" title="Ver navegación del visitante" aria-label="Ver navegación del visitante">›</button></td>';
     html+='<td style="padding:8px 6px">'+collection+'</td>';
     html+='<td style="padding:8px 6px;text-align:center">'+device+'</td>';
     html+='<td style="padding:8px 6px;text-align:center">'+source+'</td>';
@@ -3816,6 +3834,176 @@ function cdpRenderVisitantes(visitantes,stats,analytics){
     html+='</tr>';
   });
   body.innerHTML=html;
+  // Delegación única en tbody (no duplica listeners al re-render)
+  body.onclick=function(ev){
+    var btn=ev.target&&ev.target.closest?ev.target.closest('.cdp-nav-arrow'):null;
+    if(!btn)return;
+    var idx=parseInt(btn.getAttribute('data-idx'),10);
+    abrirNavegacionVisitante(idx);
+  };
+}
+
+// ── Navegación del visitante (modal por session_id) ──
+// Solo lee datos ya en _cdpEventos o usa cdpRefrescarEventos() una vez al abrir.
+// No consulta por visitante, no agrega timers de auto-refresh ni polling.
+
+function cdpNavPagina(screenId){
+  var paginas={'s-catalogo':'Catálogo','s-form':'Formulario','s-phone':'Mi pedido','s-exito':'¡Listo!','s-cliente':'Mis pedidos',add_card:'Agrego desde tarjeta',add_modal:'Agrego desde modal',add_cart:'Agrego desde carrito',checkout_start:'Continuar pedido',usuario_carrito:'Usuario de carrito',usuario_consulta:'Usuario de consulta',cart_open:'Carrito'};
+  if(!screenId) return '';
+  return paginas[screenId] || screenId;
+}
+
+function cdpNavEtiqueta(e){
+  var d=e&&e.data?e.data:{};
+  var tipo=e?String(e.evento||''):'';
+  switch(tipo){
+    case 'page_view':
+      var p=cdpNavPagina(d.screen);
+      return p?('Visitó '+p):'Visita de página';
+    case 'product_impression':
+      return d.nombre?('Vio en catálogo: '+d.nombre):'Impresión de producto';
+    case 'product_click':
+      return d.nombre?('Vio '+d.nombre):'Vio producto';
+    case 'color_select':
+      var meta=[];
+      if(d.color)meta.push(d.color);
+      if(d.sku)meta.push(d.sku);
+      return meta.length?('Eligió color: '+meta.join(' · ')):'Eligió color';
+    case 'add_to_cart':
+      var bits=[];
+      if(d.diseno)bits.push(d.diseno);
+      if(d.color)bits.push(d.color);
+      if(d.sku)bits.push(d.sku);
+      if(d.cantidad!=null)bits.push('×'+d.cantidad);
+      return bits.length?('Agregó al carrito: '+bits.join(' ')):'Agregó al carrito';
+    case 'checkout_start':
+      var it=[];
+      if(d.items!=null)it.push(d.items+' ítems');
+      if(d.total!=null)it.push('$'+d.total);
+      return it.length?('Inició pedido ('+it.join(' · ')+')'):'Inició pedido';
+    case 'purchase':
+      return d.orden?('Compra '+d.orden):'Compra';
+    case 'cart_open':
+      return 'Abrió el carrito';
+    case 'usuario_consulta':
+      return 'Consulta de usuario';
+    case 'usuario_carrito':
+      return 'Usuario en carrito';
+    case 'midiseno_view':
+      return d.orden?('Vio midiseño '+d.orden):'Vio midiseño';
+    case 'midiseno_pago':
+      return d.orden?('Pago de midiseño '+d.orden):'Pago de midiseño';
+    default:
+      // No inventar: mostrar el tipo real si no hay mapeo
+      return tipo || 'Evento';
+  }
+}
+
+function cdpNavMetaExtra(e){
+  var d=e&&e.data?e.data:{};
+  var partes=[];
+  if(e&&e.evento==='page_view'&&d.screen)partes.push(d.screen);
+  if(d.coleccion)partes.push(d.coleccion);
+  if(d.nombre&&e&&e.evento!=='product_click'&&e&&e.evento!=='product_impression')partes.push(d.nombre);
+  if(d.metodo)partes.push(d.metodo);
+  if(d.from)partes.push('desde '+d.from);
+  return partes.join(' · ');
+}
+
+function cdpNavHtmlVisitante(v){
+  var bits=[];
+  if(v.city)bits.push(escHtml(v.city));
+  if(v.device)bits.push(escHtml(v.device));
+  return bits.length?bits.join(' · '):'Visitante anónimo';
+}
+
+function cdpNavPintarLoading(){
+  document.getElementById('cdp-nav-sub').innerHTML='Visitante anónimo';
+  document.getElementById('cdp-nav-body').innerHTML='<div style="text-align:center;padding:28px 8px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin" style="font-size:22px;display:block;margin-bottom:10px"></i>Cargando eventos de la sesión…</div>';
+  document.getElementById('cdp-nav-foot').textContent='';
+}
+
+function cdpNavPintarError(msg){
+  document.getElementById('cdp-nav-body').innerHTML='<div style="text-align:center;padding:24px 8px;color:var(--coral)"><i class="fa-solid fa-triangle-exclamation" style="font-size:22px;display:block;margin-bottom:8px"></i>'+escHtml(msg||'No se pudieron cargar los eventos.')+'</div>';
+  document.getElementById('cdp-nav-foot').textContent='';
+}
+
+function cdpNavPintarResultado(v){
+  if(!v){
+    cdpNavPintarError('No se encontró la sesión del visitante.');
+    return;
+  }
+  document.getElementById('cdp-nav-sub').innerHTML=cdpNavHtmlVisitante(v);
+  var sid=String(v.session||'');
+  var evs=_cdpEventos.filter(function(e){return e&&String(e.session_id||'')===sid;});
+  evs.sort(function(a,b){return String(a.ts||'')<String(b.ts||'')?-1:1;});
+  var body=document.getElementById('cdp-nav-body');
+  var foot=document.getElementById('cdp-nav-foot');
+  if(!evs.length){
+    body.innerHTML='<div class="empty" style="padding:28px 8px"><i class="fa-solid fa-route"></i><p>No hay eventos registrados para esta sesión en los datos disponibles.</p></div>';
+    foot.textContent='Eventos registrados: 0';
+    return;
+  }
+  var html='<ul class="cdp-nav-list">';
+  for(var i=0;i<evs.length;i++){
+    var e=evs[i];
+    var hora=e.ts?horaLocal(e.ts):'';
+    var msg=escHtml(cdpNavEtiqueta(e));
+    var extra=cdpNavMetaExtra(e);
+    html+='<li class="cdp-nav-item"><span class="cdp-nav-time">'+escHtml(hora)+'</span><span class="cdp-nav-msg">'+msg+(extra?'<span class="cdp-nav-meta">'+escHtml(extra)+'</span>':'')+'</span></li>';
+  }
+  html+='</ul>';
+  // Si el conteo de la tabla es mayor, puede ser corte de limite=2000 (documentado, sin tocar backend)
+  if(v.events!=null&&evs.length<v.events){
+    html+='<div style="margin-top:10px;font-size:11.5px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:8px 10px">Se muestran '+evs.length+' de '+v.events+' eventos contados en Visitantes. Puede haber un corte del límite de lectura de eventos.</div>';
+  }
+  body.innerHTML=html;
+  foot.textContent='Eventos registrados: '+evs.length;
+}
+
+function abrirNavegacionVisitante(idx){
+  var v=_cdpVisitantes[idx];
+  if(!v||!v.session)return;
+  _cdpNavSession=String(v.session);
+  _cdpNavReqSeq++;
+  var seq=_cdpNavReqSeq;
+  var ov=document.getElementById('modal-nav-visitante-overlay');
+  if(!ov)return;
+  ov.style.display='flex';
+  cdpNavPintarLoading();
+  if(_cdpEventos&&_cdpEventos.length){
+    cdpNavPintarResultado(v);
+    return;
+  }
+  // Sin eventos en memoria: una sola carga con el mecanismo existente
+  var settled=false;
+  var timeoutMs=CDP_TIMEOUT_MS+3000;
+  var timer=setTimeout(function(){
+    if(settled||seq!==_cdpNavReqSeq)return;
+    settled=true;
+    cdpNavPintarError('Tiempo de espera agotado al cargar los eventos. Intenta de nuevo.');
+  },timeoutMs);
+  cdpRefrescarEventos(function(){
+    if(settled||seq!==_cdpNavReqSeq)return;
+    settled=true;
+    clearTimeout(timer);
+    // Releer por sesión: la lista pudo refrescarse con el auto-refresh de Visitantes
+    var actual=null;
+    for(var i=0;i<_cdpVisitantes.length;i++){
+      if(String(_cdpVisitantes[i].session||'')===_cdpNavSession){actual=_cdpVisitantes[i];break;}
+    }
+    if(!_cdpEventosTieneDatos){
+      cdpNavPintarError('No se pudieron cargar los eventos. Revisa la conexión e intenta de nuevo.');
+      return;
+    }
+    cdpNavPintarResultado(actual||v);
+  });
+}
+
+function cerrarNavegacionVisitante(){
+  _cdpNavReqSeq++;
+  var ov=document.getElementById('modal-nav-visitante-overlay');
+  if(ov)ov.style.display='none';
 }
 
 // ── Customer 360 ──
@@ -4162,6 +4350,23 @@ function exportarSegmentosCSV(){
     <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:1rem">
       <button class="btn btn-outline" onclick="cerrarModalLimpiar()">Cancelar</button>
       <button class="btn" onclick="ejecutarLimpieza()" style="background:#a32d2d;color:#fff;border-color:#a32d2d;font-weight:600"><i class="fa-solid fa-trash-can"></i> Confirmar</button>
+    </div>
+  </div>
+</div>
+<!-- Modal: Navegación del visitante (CDP → Visitantes ›) -->
+<div id="modal-nav-visitante-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)cerrarNavegacionVisitante()">
+  <div role="dialog" aria-modal="true" aria-labelledby="cdp-nav-title" style="background:var(--surface);border-radius:var(--r);padding:1.35rem 1.5rem;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:.15rem">
+      <div>
+        <h3 id="cdp-nav-title" style="font-size:16px;font-weight:700;margin-bottom:.2rem">Navegación del visitante</h3>
+        <p id="cdp-nav-sub" style="font-size:13px;color:var(--muted);margin:0">Visitante anónimo</p>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="cerrarNavegacionVisitante()" aria-label="Cerrar" style="flex-shrink:0;padding:6px 10px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="cdp-nav-body"></div>
+    <div id="cdp-nav-foot" style="margin-top:.85rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:12.5px;font-weight:600;color:var(--navy)"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem">
+      <button type="button" class="btn btn-outline" onclick="cerrarNavegacionVisitante()">Cerrar</button>
     </div>
   </div>
 </div>

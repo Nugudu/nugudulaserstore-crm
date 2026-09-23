@@ -411,6 +411,17 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ob-code{margin-top:16px;padding:12px;background:#f4f3fa;border-radius:10px;text-align:left}
 .ob-code-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .ob-code-desc{font-size:12px;color:var(--muted);line-height:1.4}
+/* ── Carrusel de banners (misma zona que banner_image2) ── */
+.bnr-carousel{position:relative;width:100%;border-radius:var(--rs);margin-bottom:14px;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:pan-y}
+.bnr-track{display:flex;will-change:transform;transition:transform .32s cubic-bezier(.22,.8,.3,1)}
+.bnr-carousel.bnr-dragging .bnr-track{transition:none}
+.bnr-slide{min-width:100%;width:100%;flex:0 0 100%;line-height:0}
+.bnr-slide img{width:100%;border-radius:var(--rs);display:block;-webkit-user-drag:none;user-select:none;pointer-events:none}
+.bnr-slide img.bnr-miss{opacity:.35;min-height:80px;background:var(--border)}
+.bnr-nav{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:none;background:rgba(22,3,64,.55);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;opacity:.92;padding:0}
+.bnr-nav:hover{background:rgba(22,3,64,.8);opacity:1}
+.bnr-prev{left:8px}
+.bnr-next{right:8px}
 </style>
 </head>
 <body>
@@ -1647,6 +1658,126 @@ function verMasCargar(contId){
   }
 }
 function normTxt(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+// ── CARRUSEL DE BANNERS ──
+// Orden confirmado: image2 (sin SKU) + 4 banners con SKU de catálogo existente.
+// Dinámico: agregar/quitar entradas en _BANNERS no requiere tocar la estructura.
+var _BANNERS=[
+  {img:'imagenes/banner_image2.jpg',sku:null},
+  {img:'imagenes/banner_clasico_01.jpg',sku:'CL-HM-NG'},
+  {img:'imagenes/banner_barcelona_01.jpg',sku:'CL-BAR.2-NG'},
+  {img:'imagenes/banner_cafe_01.jpg',sku:'GRR-COR-CAFE'},
+  {img:'imagenes/banner_trueno_01.jpg',sku:'GRR-TRU-NG'}
+];
+var _bnrIdx=0;
+function bannerCarouselHtml(){
+  var list=_BANNERS||[];
+  var n=list.length;
+  if(!n)return'';
+  if(_bnrIdx>n-1)_bnrIdx=0;
+  if(_bnrIdx<0)_bnrIdx=0;
+  var slides='';
+  for(var i=0;i<n;i++){
+    var b=list[i]||{};
+    var sku=b.sku?String(b.sku):'';
+    var dataSku=sku?' data-sku="'+sku.replace(/"/g,'&quot;')+'"':'';
+    slides+='<div class="bnr-slide"'+dataSku+' data-idx="'+i+'">'+
+      '<img src="'+(b.img||'')+'" alt="Nugudú Store" draggable="false" onerror="this.classList.add(\'bnr-miss\')">'+
+    '</div>';
+  }
+  var showN=n>1&&_bnrIdx<n-1;
+  var showP=n>1&&_bnrIdx>0;
+  var nav=(n>1)?
+    ('<button type="button" class="bnr-nav bnr-prev" aria-label="Banner anterior"'+(showP?'':' style="display:none"')+' onclick="bannerPrev()" title="Anterior"></button>'+
+     '<button type="button" class="bnr-nav bnr-next" aria-label="Banner siguiente"'+(showN?'':' style="display:none"')+' onclick="bannerNext()" title="Siguiente"></button>')
+    :'';
+  return '<div class="bnr-carousel" data-bnr-count="'+n+'">'+
+    '<div class="bnr-track" style="transform:translate3d(-'+(_bnrIdx*100)+'%,0,0)">'+slides+'</div>'+
+    nav+
+  '</div>';
+}
+function bannerApply(){
+  var n=(_BANNERS||[]).length;
+  if(!n)return;
+  if(_bnrIdx<0)_bnrIdx=0;
+  if(_bnrIdx>n-1)_bnrIdx=n-1;
+  var tracks=document.querySelectorAll('.bnr-track');
+  for(var t=0;t<tracks.length;t++)tracks[t].style.transform='translate3d(-'+(_bnrIdx*100)+'%,0,0)';
+  var cars=document.querySelectorAll('.bnr-carousel');
+  for(var c=0;c<cars.length;c++){
+    var prev=cars[c].querySelector('.bnr-prev');
+    var next=cars[c].querySelector('.bnr-next');
+    if(prev)prev.style.display=(n<=1||_bnrIdx<=0)?'none':'flex';
+    if(next)next.style.display=(n<=1||_bnrIdx>=n-1)?'none':'flex';
+  }
+}
+function bannerGo(i){
+  var n=(_BANNERS||[]).length;
+  if(!n)return;
+  _bnrIdx=i|0;
+  if(_bnrIdx<0)_bnrIdx=0;
+  if(_bnrIdx>n-1)_bnrIdx=n-1;
+  bannerApply();
+}
+function bannerNext(){bannerGo(_bnrIdx+1);}
+function bannerPrev(){bannerGo(_bnrIdx-1);}
+function abrirDesdeBanner(sku){
+  if(!sku||!_cat||!_cat.length)return;
+  var v=null;
+  for(var i=0;i<_cat.length;i++){
+    if(_cat[i].sku===sku){v=_cat[i];break;}
+  }
+  if(!v)return;
+  elDis(encodeId(v.nombre));
+  if(document.getElementById('co-'+v.sku))elCol(v.sku);
+}
+(function(){
+  var drag=null;
+  var TH=12;
+  document.addEventListener('pointerdown',function(e){
+    var car=e.target&&e.target.closest&&e.target.closest('.bnr-carousel');
+    if(!car)return;
+    if(e.target.closest('.bnr-nav'))return;
+    drag={x:e.clientX,y:e.clientY,idx:_bnrIdx,moved:false,car:car,target:e.target,pid:e.pointerId};
+    try{car.setPointerCapture(e.pointerId);}catch(err){}
+  },true);
+  document.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    var dx=e.clientX-drag.x;
+    var dy=e.clientY-drag.y;
+    if(!drag.moved&&Math.abs(dx)>TH&&Math.abs(dx)>Math.abs(dy)){
+      drag.moved=true;
+      drag.car.classList.add('bnr-dragging');
+    }
+    if(!drag.moved)return;
+    var w=drag.car.clientWidth||1;
+    var pct=(drag.idx-(dx/w))*100;
+    var tracks=drag.car.querySelectorAll('.bnr-track');
+    for(var i=0;i<tracks.length;i++)tracks[i].style.transform='translate3d(-'+pct+'%,0,0)';
+  },true);
+  function endDrag(e){
+    if(!drag)return;
+    var d=drag;drag=null;
+    try{if(d.car.releasePointerCapture)d.car.releasePointerCapture(d.pid);}catch(err){}
+    d.car.classList.remove('bnr-dragging');
+    if(!d.moved){
+      var slide=d.target&&d.target.closest&&d.target.closest('.bnr-slide');
+      if(slide&&slide.getAttribute('data-sku'))abrirDesdeBanner(slide.getAttribute('data-sku'));
+      bannerApply();
+      return;
+    }
+    var dx=e.clientX-d.x;
+    var w=d.car.clientWidth||1;
+    if(Math.abs(dx)>w*0.18){ if(dx<0)bannerNext(); else bannerPrev(); }
+    else bannerApply();
+  }
+  document.addEventListener('pointerup',endDrag,true);
+  document.addEventListener('pointercancel',function(){
+    if(!drag)return;
+    var d=drag;drag=null;
+    d.car.classList.remove('bnr-dragging');
+    bannerApply();
+  },true);
+})();
 function gridCat(){
   var cols={};
   _cat.forEach(function(p){if(!cols[p.coleccion])cols[p.coleccion]=[];cols[p.coleccion].push(p);});
@@ -1658,7 +1789,7 @@ function gridCat(){
     html+='<div class="col-sec">';
     if(_primeraCol){
       html+=ceBannerHtml();
-      html+='<img src="imagenes/banner_image2.jpg" alt="Nugudú Store" style="width:100%;border-radius:var(--rs);margin-bottom:14px;display:block">';
+      html+=bannerCarouselHtml();
       _primeraCol=false;
     }
     html+='<div class="col-ttl">'+esc(col)+'<span class="col-badge">Colección activa</span></div>';

@@ -884,6 +884,7 @@ var NAV_POR_ROL = {
 var GATE_SESSION_KEY = 'ngd_gate_sesion';
 var REP_SESSION_KEY = 'ngd_rep_sesion';
 var CRM_PAGE_KEY = 'ngd_crm_page';
+var CDP_TAB_KEY = 'ngd_cdp_tab';
 function concederAcceso(rol, nombre){
   document.getElementById('access-gate').style.display = 'none';
   document.getElementById('app-shell').style.display = 'block';
@@ -3348,11 +3349,19 @@ function syncYRender(panel, btn){
 }
 
 function cargarCDP(){
+  var _tabGuardada = null;
+  try { _tabGuardada = localStorage.getItem(CDP_TAB_KEY); } catch(e) {}
+  if(_tabGuardada==='funnel'||_tabGuardada==='360'||_tabGuardada==='segmentos'||_tabGuardada==='visitantes'){
+    _cdpTabActual = _tabGuardada;
+  } else {
+    _cdpTabActual = 'visitantes';
+  }
   fetch(GAS+'?action=ping&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
   if(_cdpTabActual==='visitantes'){
     cdpCargarVisitantes(true);
     return;
   }
+  cdpTab(_cdpTabActual);
   fetch(GAS+'?action=leerEventos&limite=2000&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){
@@ -3364,6 +3373,7 @@ function cargarCDP(){
 
 function cdpTab(tab){
   _cdpTabActual = tab;
+  try { localStorage.setItem(CDP_TAB_KEY, tab); } catch(e) {}
   // Limpiar timer de visitantes si existe
   if(_cdpVisitantesTimer){clearInterval(_cdpVisitantesTimer);_cdpVisitantesTimer=null;}
   var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos', 'visitantes':'cdp-visitantes' };

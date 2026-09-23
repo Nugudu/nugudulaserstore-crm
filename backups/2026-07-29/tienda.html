@@ -412,16 +412,16 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .ob-code-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .ob-code-desc{font-size:12px;color:var(--muted);line-height:1.4}
 /* ── Carrusel de banners (misma zona que banner_image2) ── */
-.bnr-carousel{position:relative;width:100%;border-radius:var(--rs);margin-bottom:14px;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:pan-y}
-.bnr-track{display:flex;will-change:transform;transition:transform .32s cubic-bezier(.22,.8,.3,1)}
-.bnr-carousel.bnr-dragging .bnr-track{transition:none}
-.bnr-slide{min-width:100%;width:100%;flex:0 0 100%;line-height:0}
+.bnr-carousel{position:relative;width:100%;border-radius:var(--rs);margin-bottom:14px;user-select:none;-webkit-user-select:none}
+.bnr-viewport{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;border-radius:var(--rs);touch-action:pan-x pan-y}
+.bnr-viewport::-webkit-scrollbar{display:none}
+.bnr-carousel.bnr-dragging .bnr-viewport{scroll-snap-type:none}
+.bnr-track{display:flex}
+.bnr-slide{min-width:100%;width:100%;flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;line-height:0}
 .bnr-slide img{width:100%;border-radius:var(--rs);display:block;-webkit-user-drag:none;user-select:none;pointer-events:none}
 .bnr-slide img.bnr-miss{opacity:.35;min-height:80px;background:var(--border)}
-.bnr-nav{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:none;background:rgba(22,3,64,.55);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;opacity:.92;padding:0}
-.bnr-nav:hover{background:rgba(22,3,64,.8);opacity:1}
-.bnr-prev{left:8px}
-.bnr-next{right:8px}
+.bnr-bar{position:absolute;left:10px;right:10px;bottom:8px;height:4px;background:rgba(255,255,255,.45);border-radius:999px;overflow:hidden;z-index:2;pointer-events:none;box-shadow:0 0 0 1px rgba(45,36,96,.12)}
+.bnr-bar-thumb{position:absolute;top:0;left:0;height:100%;background:var(--navy);border-radius:999px;width:20%;transition:left .18s ease,width .18s ease}
 </style>
 </head>
 <body>
@@ -1684,30 +1684,45 @@ function bannerCarouselHtml(){
       '<img src="'+(b.img||'')+'" alt="Nugudú Store" draggable="false" onerror="this.classList.add(\'bnr-miss\')">'+
     '</div>';
   }
-  var showN=n>1&&_bnrIdx<n-1;
-  var showP=n>1&&_bnrIdx>0;
-  var nav=(n>1)?
-    ('<button type="button" class="bnr-nav bnr-prev" aria-label="Banner anterior"'+(showP?'':' style="display:none"')+' onclick="bannerPrev()" title="Anterior"></button>'+
-     '<button type="button" class="bnr-nav bnr-next" aria-label="Banner siguiente"'+(showN?'':' style="display:none"')+' onclick="bannerNext()" title="Siguiente"></button>')
-    :'';
+  var bar=(n>1)?'<div class="bnr-bar"><div class="bnr-bar-thumb" style="width:'+(100/n)+'%;left:0%"></div></div>':'';
   return '<div class="bnr-carousel" data-bnr-count="'+n+'">'+
-    '<div class="bnr-track" style="transform:translate3d(-'+(_bnrIdx*100)+'%,0,0)">'+slides+'</div>'+
-    nav+
+    '<div class="bnr-viewport">'+
+      '<div class="bnr-track">'+slides+'</div>'+
+    '</div>'+
+    bar+
   '</div>';
+}
+function bannerUpdateBar(car){
+  if(!car)return;
+  var vp=car.querySelector('.bnr-viewport');
+  var thumb=car.querySelector('.bnr-bar-thumb');
+  var n=(_BANNERS||[]).length;
+  if(!vp||!thumb||n<=1){if(thumb&&n<=1)thumb.style.display='none';return;}
+  var cw=vp.clientWidth||1;
+  var sw=vp.scrollWidth||1;
+  var ratio=Math.min(1,cw/sw);
+  var maxS=Math.max(0,sw-cw);
+  var pos=maxS>0?(vp.scrollLeft/maxS):0;
+  thumb.style.width=(ratio*100)+'%';
+  thumb.style.left=(pos*(100-ratio*100))+'%';
+  var idx=Math.round(vp.scrollLeft/cw);
+  if(idx<0)idx=0;
+  if(idx>n-1)idx=n-1;
+  _bnrIdx=idx;
 }
 function bannerApply(){
   var n=(_BANNERS||[]).length;
   if(!n)return;
   if(_bnrIdx<0)_bnrIdx=0;
   if(_bnrIdx>n-1)_bnrIdx=n-1;
-  var tracks=document.querySelectorAll('.bnr-track');
-  for(var t=0;t<tracks.length;t++)tracks[t].style.transform='translate3d(-'+(_bnrIdx*100)+'%,0,0)';
   var cars=document.querySelectorAll('.bnr-carousel');
   for(var c=0;c<cars.length;c++){
-    var prev=cars[c].querySelector('.bnr-prev');
-    var next=cars[c].querySelector('.bnr-next');
-    if(prev)prev.style.display=(n<=1||_bnrIdx<=0)?'none':'flex';
-    if(next)next.style.display=(n<=1||_bnrIdx>=n-1)?'none':'flex';
+    var vp=cars[c].querySelector('.bnr-viewport');
+    if(vp){
+      var w=vp.clientWidth||1;
+      vp.scrollLeft=_bnrIdx*w;
+    }
+    bannerUpdateBar(cars[c]);
   }
 }
 function bannerGo(i){
@@ -1727,8 +1742,13 @@ function abrirDesdeBanner(sku){
     if(_cat[i].sku===sku){v=_cat[i];break;}
   }
   if(!v)return;
-  elDis(encodeId(v.nombre));
-  if(document.getElementById('co-'+v.sku))elCol(v.sku);
+  if(_tourActivo()){
+    elDisInicio(encodeId(v.nombre));
+    if(document.getElementById('ci-co-'+v.sku))elColInicio(v.sku);
+  }else{
+    elDisInicio(encodeId(v.nombre));
+    pmSelColor(v.sku);
+  }
 }
 (function(){
   var drag=null;
@@ -1736,9 +1756,10 @@ function abrirDesdeBanner(sku){
   document.addEventListener('pointerdown',function(e){
     var car=e.target&&e.target.closest&&e.target.closest('.bnr-carousel');
     if(!car)return;
-    if(e.target.closest('.bnr-nav'))return;
-    drag={x:e.clientX,y:e.clientY,idx:_bnrIdx,moved:false,car:car,target:e.target,pid:e.pointerId};
-    try{car.setPointerCapture(e.pointerId);}catch(err){}
+    var vp=car.querySelector('.bnr-viewport');
+    if(!vp)return;
+    drag={x:e.clientX,y:e.clientY,sl:vp.scrollLeft,moved:false,car:car,vp:vp,target:e.target,pid:e.pointerId};
+    try{vp.setPointerCapture(e.pointerId);}catch(err){}
   },true);
   document.addEventListener('pointermove',function(e){
     if(!drag)return;
@@ -1749,33 +1770,37 @@ function abrirDesdeBanner(sku){
       drag.car.classList.add('bnr-dragging');
     }
     if(!drag.moved)return;
-    var w=drag.car.clientWidth||1;
-    var pct=(drag.idx-(dx/w))*100;
-    var tracks=drag.car.querySelectorAll('.bnr-track');
-    for(var i=0;i<tracks.length;i++)tracks[i].style.transform='translate3d(-'+pct+'%,0,0)';
+    drag.vp.scrollLeft=drag.sl-dx;
+    bannerUpdateBar(drag.car);
+    if(e.cancelable)e.preventDefault();
   },true);
   function endDrag(e){
     if(!drag)return;
     var d=drag;drag=null;
-    try{if(d.car.releasePointerCapture)d.car.releasePointerCapture(d.pid);}catch(err){}
+    try{if(d.vp.releasePointerCapture)d.vp.releasePointerCapture(d.pid);}catch(err){}
     d.car.classList.remove('bnr-dragging');
     if(!d.moved){
       var slide=d.target&&d.target.closest&&d.target.closest('.bnr-slide');
       if(slide&&slide.getAttribute('data-sku'))abrirDesdeBanner(slide.getAttribute('data-sku'));
-      bannerApply();
+      bannerUpdateBar(d.car);
       return;
     }
-    var dx=e.clientX-d.x;
-    var w=d.car.clientWidth||1;
-    if(Math.abs(dx)>w*0.18){ if(dx<0)bannerNext(); else bannerPrev(); }
-    else bannerApply();
+    var w=d.vp.clientWidth||1;
+    var idx=Math.round(d.vp.scrollLeft/w);
+    bannerGo(idx);
   }
   document.addEventListener('pointerup',endDrag,true);
   document.addEventListener('pointercancel',function(){
     if(!drag)return;
     var d=drag;drag=null;
     d.car.classList.remove('bnr-dragging');
-    bannerApply();
+    bannerUpdateBar(d.car);
+  },true);
+  document.addEventListener('scroll',function(e){
+    var t=e.target;
+    if(t&&t.classList&&t.classList.contains('bnr-viewport')){
+      bannerUpdateBar(t.closest('.bnr-carousel'));
+    }
   },true);
 })();
 function gridCat(){

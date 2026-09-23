@@ -1200,6 +1200,7 @@ function go(name){
   if(name==='openwa'){ cargarConfigOpenWa(); }
   if(name==='wompi'){ cargarConfigWompi(); }
   if(name==='cdp'){ cargarCDP(); }
+  else if(typeof cdpDetenerTimerVisitantes==='function'){ cdpDetenerTimerVisitantes(); }
 }
 
 // ── OPENWA CONFIG ──
@@ -3324,27 +3325,266 @@ function generarPdfReporteSku(data, sku, foto){
 // CDP — CUSTOMER DATA PLATFORM
 // ══════════════════════════════════════════════════════════════════
 var _cdpEventos = [];
+var _cdpEventosTieneDatos = false;
+var _cdpEventosReq = false;
+var _cdpEventosOnDone = null;
 
 var _cdpTabActual = 'visitantes';
 var _cdpVisitantesPeriodo = 'hoy';
 var _cdpVisitantesTimer = null;
 var _cdpVisitantesReq = false;
 var _cdpVisitantesTieneDatos = false;
+var _cdpVisitantesPendiente = false;
+var _cdpVisitantesIntento = 0;
+var _cdpVisitantesOnDone = null;
+var _cdpSyncYRenderTimer = null;
+
+// Fase 1 estabilidad CDP: timeout/red controlados (sin tocar backend ni TTL).
+var CDP_TIMEOUT_MS = 20000;
+var CDP_MAX_INTENTOS = 2;
+var CDP_RETRY_MS = 1500;
+var CDP_TICK_MS = 15000;
+
+function cdpFetchJSON(url, timeoutMs){
+  timeoutMs = timeoutMs || CDP_TIMEOUT_MS;
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = null;
+  var timeoutPromise = new Promise(function(_, reject){
+    timer = setTimeout(function(){
+      if(ctrl){ try { ctrl.abort(); } catch(e) {} }
+      reject({ cdpError: 'timeout' });
+    }, timeoutMs);
+  });
+  var fetchPromise = fetch(url, ctrl ? { signal: ctrl.signal } : undefined);
+  return Promise.race([fetchPromise, timeoutPromise])
+    .then(function(r){
+      clearTimeout(timer);
+      return r.json().then(function(d){
+        return { ok: true, data: d, httpOk: r.ok };
+      }, function(){
+        return { ok: false, error: 'json' };
+      });
+    })
+    .catch(function(err){
+      clearTimeout(timer);
+      if(err && err.cdpError === 'timeout') return { ok: false, error: 'timeout' };
+      if(err && err.name === 'AbortError') return { ok: false, error: 'timeout' };
+      if(err && err.cdpError) return { ok: false, error: err.cdpError };
+      return { ok: false, error: 'network' };
+    });
+}
+
+function cdpPonerEstadoVisitantes(html){
+  var el = document.getElementById('cdp-v-actualizar');
+  if(el) el.innerHTML = html;
+}
+
+function cdpHoraCorta(){
+  try {
+    return new Date().toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch(e) {
+    return '';
+  }
+}
+
+function cdpEstadoAutoRefresh(){
+  return ' · Auto-refresh: 15s';
+}
+
+function cdpIniciarTimerVisitantes(){
+  cdpDetenerTimerVisitantes();
+  if(document.hidden){
+    cdpPonerEstadoVisitantes('<i class="fa-solid fa-pause"></i> Auto-refresh en pausa (pestaña oculta)');
+    return;
+  }
+  _cdpVisitantesTimer = setInterval(function(){
+    if(document.hidden) return;
+    if(_cdpTabActual !== 'visitantes') return;
+    cdpCargarVisitantes(false);
+  }, CDP_TICK_MS);
+}
+
+function cdpDetenerTimerVisitantes(){
+  if(_cdpVisitantesTimer){
+    clearInterval(_cdpVisitantesTimer);
+    _cdpVisitantesTimer = null;
+  }
+}
+
+function cdpMostrarCargandoVisitantes(){
+  if(_cdpVisitantesTieneDatos){
+    cdpPonerEstadoVisitantes('<i class="fa-solid fa-spinner fa-spin"></i> Actualizando…');
+    return;
+  }
+  cdpPonerEstadoVisitantes('<i class="fa-solid fa-spinner fa-spin"></i> Cargando…');
+  var stats = document.getElementById('cdp-v-stats');
+  if(stats){
+    stats.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);grid-column:1/-1"><i class="fa-solid fa-spinner fa-spin"></i> Cargando visitantes…</div>';
+  }
+}
+
+function cdpMostrarErrorVisitantes(tipo){
+  var vacio = document.getElementById('cdp-v-empty');
+  if(_cdpVisitantesTieneDatos){
+    var detalle = tipo === 'timeout'
+      ? 'Tiempo de espera agotado'
+      : (tipo === 'server' ? 'Respuesta inválida del servidor' : 'Sin conexión');
+    cdpPonerEstadoVisitantes(
+      '<i class="fa-solid fa-triangle-exclamation" style="color:#f97316"></i> ' +
+      detalle + ' · mostrando datos anteriores' + cdpEstadoAutoRefresh()
+    );
+    if(vacio && vacio.style.display !== 'none'){
+      // no tocar la tabla si ya hay render válido
+    }
+    return;
+  }
+  cdpPonerEstadoVisitantes('<i class="fa-solid fa-triangle-exclamation" style="color:#f97316"></i> Sin conexión');
+  var stats = document.getElementById('cdp-v-stats');
+  if(stats){
+    var motivo = tipo === 'timeout'
+      ? 'La petición superó el tiempo máximo (timeout).'
+      : (tipo === 'server' ? 'El servidor devolvió una respuesta no válida.' : 'Error de red.');
+    stats.innerHTML =
+      '<div class="card" style="grid-column:1/-1;text-align:center;padding:24px">' +
+      '<i class="fa-solid fa-triangle-exclamation" style="color:#f97316;font-size:28px;margin-bottom:10px;display:block"></i>' +
+      '<div style="font-weight:600;margin-bottom:6px;color:var(--navy)">No se pudo cargar Visitantes</div>' +
+      '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">' + motivo + '</div>' +
+      '<div style="color:var(--muted);font-size:13px;margin-bottom:14px">Esto no significa 0 visitantes: es un error temporal.</div>' +
+      '<button class="btn btn-outline btn-sm" onclick="cdpCargarVisitantes(true)"><i class="fa-solid fa-rotate"></i> Reintentar</button>' +
+      '</div>';
+  }
+  if(vacio) vacio.style.display = 'none';
+}
+
+function cdpProcesarRespuestaVisitantes(res, intento){
+  if(res.ok && res.data && res.data.ok){
+    _cdpVisitantesTieneDatos = true;
+    _cdpVisitantesIntento = 0;
+    var d = res.data;
+    cdpRenderVisitantes(d.visitantes || [], d.stats || {}, d.analytics || {});
+    cdpPonerEstadoVisitantes('Actualizado ' + cdpHoraCorta() + cdpEstadoAutoRefresh());
+    cdpFinalizarCargaVisitantes();
+    return;
+  }
+  var esErrorRed = res.error === 'timeout' || res.error === 'network' || res.error === 'json';
+  if(esErrorRed && intento < CDP_MAX_INTENTOS){
+    setTimeout(function(){
+      cdpIntentarVisitantes(false, intento + 1);
+    }, CDP_RETRY_MS);
+    return;
+  }
+  cdpFinalizarCargaVisitantes();
+  if(res.ok && res.data && res.data.ok === false){
+    cdpMostrarErrorVisitantes('server');
+    return;
+  }
+  cdpMostrarErrorVisitantes(res.error === 'timeout' ? 'timeout' : 'network');
+}
+
+function cdpFinalizarCargaVisitantes(){
+  _cdpVisitantesReq = false;
+  if(_cdpVisitantesPendiente){
+    _cdpVisitantesPendiente = false;
+    cdpCargarVisitantes(true);
+    return;
+  }
+  var cb = _cdpVisitantesOnDone;
+  _cdpVisitantesOnDone = null;
+  if(cb) cb();
+}
+
+function cdpIntentarVisitantes(forceRefresh, intento){
+  _cdpVisitantesIntento = intento;
+  cdpMostrarCargandoVisitantes();
+  var url = GAS + '?action=leerVisitantes&periodo=' + _cdpVisitantesPeriodo +
+    (forceRefresh ? '&refresh=1' : '') + '&_t=' + Date.now() +
+    '&token=' + encodeURIComponent(API_TOKEN);
+  cdpFetchJSON(url, CDP_TIMEOUT_MS).then(function(res){
+    cdpProcesarRespuestaVisitantes(res, intento);
+  });
+}
+
+function cdpCargarVisitantes(forceRefresh, onDone){
+  if(typeof onDone === 'function') _cdpVisitantesOnDone = onDone;
+  if(_cdpVisitantesReq){
+    if(forceRefresh) _cdpVisitantesPendiente = true;
+    return;
+  }
+  _cdpVisitantesReq = true;
+  cdpIntentarVisitantes(forceRefresh, 1);
+}
+
+function cdpRefrescarEventos(onDone){
+  if(typeof onDone === 'function'){
+    if(_cdpEventosOnDone){
+      var prev = _cdpEventosOnDone;
+      _cdpEventosOnDone = function(){ prev(); onDone(); };
+    } else {
+      _cdpEventosOnDone = onDone;
+    }
+  }
+  if(_cdpEventosReq) return;
+  _cdpEventosReq = true;
+  cdpFetchJSON(GAS+'?action=leerEventos&limite=2000&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN), CDP_TIMEOUT_MS)
+    .then(function(res){
+      _cdpEventosReq = false;
+      if(res.ok && res.data && res.data.ok){
+        _cdpEventos = res.data.eventos || [];
+        _cdpEventosTieneDatos = true;
+      }
+      var cb = _cdpEventosOnDone;
+      _cdpEventosOnDone = null;
+      if(cb) cb();
+    });
+}
+
+function cdpActualizarSeccionActiva(onDone){
+  var tab = _cdpTabActual;
+  if(tab === 'visitantes'){
+    cdpCargarVisitantes(true, onDone);
+    return;
+  }
+  if(tab === '360'){
+    cdpRefrescarEventos(onDone);
+    return;
+  }
+  cdpRefrescarEventos(function(){
+    if(tab === 'funnel') cdpRenderFunnel();
+    else if(tab === 'segmentos') cdpRenderSegmentos();
+    if(onDone) onDone();
+  });
+}
 
 function syncYRender(panel, btn){
+  if(_cdpSyncYRenderTimer) return;
+  if(panel === 'cdp'){
+    _cdpSyncYRenderTimer = true;
+    if(btn){
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando…';
+      btn.disabled = true;
+    }
+    cdpActualizarSeccionActiva(function(){
+      _cdpSyncYRenderTimer = null;
+      if(btn){
+        btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Actualizar';
+        btn.disabled = false;
+      }
+    });
+    return;
+  }
   if(btn){
-    var orig = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando…';
     btn.disabled = true;
   }
   syncFromGAS(true);
-  var check = setInterval(function(){
-    if(btn) btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Actualizar';
-    if(btn) btn.disabled = false;
-    clearInterval(check);
+  _cdpSyncYRenderTimer = setTimeout(function(){
+    _cdpSyncYRenderTimer = null;
+    if(btn){
+      btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Actualizar';
+      btn.disabled = false;
+    }
     if(panel==='clientes') renderClientes();
     else if(panel==='inventario') renderInventario();
-    else if(panel==='cdp') cargarCDP();
   }, 1500);
 }
 
@@ -3356,26 +3596,26 @@ function cargarCDP(){
   } else {
     _cdpTabActual = 'visitantes';
   }
-  fetch(GAS+'?action=ping&token='+encodeURIComponent(API_TOKEN)).catch(function(){});
   if(_cdpTabActual==='visitantes'){
-    cdpCargarVisitantes(true);
+    cdpCargarVisitantes(!_cdpVisitantesTieneDatos);
+    cdpIniciarTimerVisitantes();
+    return;
+  }
+  if(_cdpTabActual==='360'){
+    cdpTab('360');
     return;
   }
   cdpTab(_cdpTabActual);
-  fetch(GAS+'?action=leerEventos&limite=2000&token='+encodeURIComponent(API_TOKEN))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.ok) _cdpEventos = d.eventos || [];
-      else _cdpEventos = [];
-      cdpTab(_cdpTabActual);
-    }).catch(function(){ _cdpEventos = []; });
+  cdpRefrescarEventos(function(){
+    if(_cdpTabActual==='funnel') cdpRenderFunnel();
+    else if(_cdpTabActual==='segmentos') cdpRenderSegmentos();
+  });
 }
 
 function cdpTab(tab){
   _cdpTabActual = tab;
   try { localStorage.setItem(CDP_TAB_KEY, tab); } catch(e) {}
-  // Limpiar timer de visitantes si existe
-  if(_cdpVisitantesTimer){clearInterval(_cdpVisitantesTimer);_cdpVisitantesTimer=null;}
+  cdpDetenerTimerVisitantes();
   var secciones = { '360':'cdp-360', 'funnel':'cdp-funnel', 'segmentos':'cdp-segmentos', 'visitantes':'cdp-visitantes' };
   ['360','funnel','segmentos','visitantes'].forEach(function(t){
     var el = document.getElementById(secciones[t]); if(el) el.style.display = t === tab ? 'block' : 'none';
@@ -3389,7 +3629,7 @@ function cdpTab(tab){
   if(tab === 'segmentos') cdpRenderSegmentos();
   if(tab === 'visitantes'){
     cdpCargarVisitantes(true);
-    _cdpVisitantesTimer=setInterval(function(){cdpCargarVisitantes(false);},15000);
+    cdpIniciarTimerVisitantes();
   }
 }
 
@@ -3404,30 +3644,18 @@ function cdpVisitantesFiltro(periodo){
   cdpCargarVisitantes(true);
 }
 
-function cdpCargarVisitantes(forceRefresh){
-  if(_cdpVisitantesReq) return;
-  _cdpVisitantesReq = true;
-  document.getElementById('cdp-v-stats').innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</div>';
-  var url=GAS+'?action=leerVisitantes&periodo='+_cdpVisitantesPeriodo+(forceRefresh?'&refresh=1':'')+'&_t='+Date.now()+'&token='+encodeURIComponent(API_TOKEN);
-  fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(d){
-      try{
-        if(d && d.ok){
-          _cdpVisitantesTieneDatos = true;
-          cdpRenderVisitantes(d.visitantes||[],d.stats||{},d.analytics||{});
-        }else if(!_cdpVisitantesTieneDatos){
-          cdpRenderVisitantes([],{},{});
-        }
-      }finally{
-        _cdpVisitantesReq = false;
-      }
-    })
-    .catch(function(){
-      _cdpVisitantesReq = false;
-      if(!_cdpVisitantesTieneDatos) cdpRenderVisitantes([],{},{});
-    });
-}
+document.addEventListener('visibilitychange', function(){
+  if(_cdpTabActual !== 'visitantes') return;
+  var panel = document.getElementById('panel-cdp');
+  if(!panel || !panel.classList.contains('active')) return;
+  if(document.hidden){
+    cdpDetenerTimerVisitantes();
+    cdpPonerEstadoVisitantes('<i class="fa-solid fa-pause"></i> Auto-refresh en pausa (pestaña oculta)');
+  } else {
+    cdpIniciarTimerVisitantes();
+    cdpCargarVisitantes(false);
+  }
+});
 
 function cdpRenderVisitantes(visitantes,stats,analytics){
   // Stats

@@ -165,6 +165,23 @@ tbody tr:last-child td{border-bottom:none}
 .empty{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
 .empty i{font-size:32px;display:block;margin-bottom:.75rem;opacity:.3}
 .empty p{font-size:13px}
+/* Marketing — Contenido */
+.mkt-card{background:var(--surface);border:1px solid #e8e5f0;border-radius:var(--r);padding:16px;box-shadow:0 2px 8px rgba(45,36,96,.05);position:relative}
+.mkt-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.mkt-ig::before{background:#E1306C}.mkt-fb::before{background:#1877F2}.mkt-tt::before{background:#111}.mkt-ot::before{background:var(--navy)}
+.mkt-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.mkt-meta{font-size:12px;color:var(--muted);margin-bottom:10px}
+.mkt-kv{font-size:12.5px;color:var(--text);margin-bottom:3px}
+.mkt-kv span{color:var(--muted)}
+.mkt-estado{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:20px}
+.mkt-estado.pub{background:var(--green-pale);color:var(--green)}
+.mkt-estado.borr{background:var(--gold-pale);color:var(--amber)}
+.mkt-estado.arch{background:var(--surface2);color:var(--muted)}
+.mkt-res-note{font-size:11.5px;color:var(--muted);background:var(--navy-pale);border:1px solid #d9d4f0;border-radius:var(--rs);padding:8px 12px;margin-bottom:12px;line-height:1.45}
+.mkt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px}
+.mkt-grid .mc{text-align:center}
+.mkt-grid .mv{font-size:22px}
+@media(max-width:768px){.mkt-grid{grid-template-columns:1fr 1fr}}
 .chart-full{margin-bottom:1.4rem}
 @media(max-width:768px){
   .sidebar{width:100%;height:58px;flex-direction:row;top:auto;bottom:0;overflow-x:auto;overflow-y:hidden;padding:0;-webkit-overflow-scrolling:touch}
@@ -258,6 +275,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('analytics')" id="nav-analytics"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
   <div class="nav" onclick="go('reportes')" id="nav-reportes"><i class="fa-solid fa-calendar-days"></i> Reportes</div>
   <div class="nav" onclick="go('cdp')" id="nav-cdp"><i class="fa-solid fa-database"></i> CDP</div>
+  <div class="nav" onclick="go('marketing')" id="nav-marketing"><i class="fa-solid fa-bullhorn"></i> Marketing</div>
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
   <div class="sb-sec">Configuración</div>
   <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
@@ -725,6 +743,101 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
+    <!-- MARKETING → CONTENIDO -->
+    <div id="panel-marketing" class="panel">
+      <div class="ph-row">
+        <div><h2>Marketing · Contenido</h2><p>Registra publicaciones en redes y revisa el resultado global de Nugudú Store.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="mktAbrirFormulario()"><i class="fa-solid fa-plus"></i> Nuevo contenido</button>
+          <button class="btn btn-outline btn-sm" onclick="cargarMarketing(true)"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+        </div>
+      </div>
+
+      <!-- RESULTADO NUGUDÚ (global, sin atribución por contenido) -->
+      <div class="card" style="margin-bottom:1.25rem">
+        <div class="card-ttl"><i class="fa-solid fa-chart-line" style="color:var(--navy)"></i> RESULTADO NUGUDÚ</div>
+        <div class="mkt-res-note">
+          <strong>Resultado global de la tienda</strong> (no atribuido a un contenido individual).
+          Sesiones, productos vistos, checkouts y compras provienen del tracking de Nugudú Store;
+          ingresos se calculan sobre las órdenes existentes. Atribuir estos números a un reel/post
+          concreto requiere una fuente de atribución confiable que aún no existe.
+        </div>
+        <div class="fg" style="max-width:180px;margin-bottom:12px">
+          <label>Período</label>
+          <select id="mkt-periodo" onchange="cargarMarketingResultado()">
+            <option value="hoy" selected>Hoy</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mes</option>
+          </select>
+        </div>
+        <div class="mkt-grid" id="mkt-resultado">
+          <div class="mc"><div class="ml">Sesiones</div><div class="mv" style="color:var(--navy)">—</div></div>
+          <div class="mc"><div class="ml">Productos vistos</div><div class="mv" style="color:#6366f1">—</div></div>
+          <div class="mc"><div class="ml">Checkouts</div><div class="mv" style="color:#f97316">—</div></div>
+          <div class="mc"><div class="ml">Compras</div><div class="mv" style="color:var(--green)">—</div></div>
+          <div class="mc"><div class="ml">Ingresos</div><div class="mv" style="color:var(--gold)">—</div></div>
+        </div>
+        <div id="mkt-resultado-estado" style="font-size:11.5px;color:var(--muted)"></div>
+      </div>
+
+      <!-- Formulario registro contenido -->
+      <div class="card" id="mkt-form-card" style="display:none;margin-bottom:1.25rem">
+        <div class="card-ttl"><i class="fa-solid fa-pen-to-square" style="color:var(--navy)"></i> <span id="mkt-form-ttl">Registrar contenido</span></div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="fg full"><label>Nombre / título *</label><input id="mkt-titulo" type="text" placeholder="Reel — Raíces SV" maxlength="120"></div>
+          <div class="fg"><label>Plataforma *</label>
+            <select id="mkt-plataforma">
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Otra">Otra</option>
+            </select>
+          </div>
+          <div class="fg"><label>Tipo de contenido *</label>
+            <select id="mkt-tipo">
+              <option value="Reel">Reel</option>
+              <option value="Post">Post</option>
+              <option value="Story">Story</option>
+              <option value="Video">Video</option>
+              <option value="Carrusel">Carrusel</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="fg"><label>Fecha de publicación *</label><input id="mkt-fecha" type="date"></div>
+          <div class="fg"><label>Estado</label>
+            <select id="mkt-estado">
+              <option value="publicado">Publicado</option>
+              <option value="borrador">Borrador</option>
+              <option value="archivado">Archivado</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Campaña</label><input id="mkt-campana" type="text" placeholder="Raíces SV" maxlength="80"></div>
+          <div class="fg full"><label>URL de la publicación</label><input id="mkt-url" type="url" placeholder="https://instagram.com/reel/xxxxx" maxlength="500"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="mktGuardarContenido()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+          <button class="btn btn-outline btn-sm" onclick="mktCerrarFormulario()">Cancelar</button>
+          <button class="btn btn-outline btn-sm" id="mkt-btn-eliminar" style="display:none;color:#a32d2d;border-color:#f7c1c1" onclick="mktEliminarContenido()"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+        </div>
+      </div>
+
+      <!-- Lista de contenidos -->
+      <div class="ph-row" style="margin-bottom:.75rem">
+        <div><h2 style="font-size:15px">Contenidos registrados</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="mkt-buscar" type="text" placeholder="Buscar título, campaña…" oninput="mktRenderLista()" style="border:1.5px solid var(--bmd);border-radius:999px;padding:8px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;min-width:180px">
+          <select id="mkt-filtro-plataforma" onchange="mktRenderLista()" style="border:1.5px solid var(--bmd);border-radius:999px;padding:8px 12px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--surface);outline:none">
+            <option value="">Todas</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="TikTok">TikTok</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+      </div>
+      <div id="mkt-lista"><div class="card"><div class="empty"><i class="fa-solid fa-bullhorn"></i><p>Sin contenidos registrados. Usa «Nuevo contenido».</p></div></div></div>
+    </div>
+
     <!-- REGISTRO DE VENTA -->
     <div id="panel-registroventa" class="panel">
       <div class="ph-row">
@@ -993,6 +1106,7 @@ var PANELS  = {
   analytics:    ['Analytics','Productos más vendidos y canales'],
   reportes:     ['Reportes','Análisis por rango de fechas'],
   cdp:          ['CDP','Customer Data Platform — comportamiento y segmentos'],
+  marketing:    ['Marketing','Contenido publicado y resultado de la tienda'],
   registroventa:['Registro de venta','Genera y comparte con tus clientes'],
   openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes'],
   wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
@@ -1118,6 +1232,7 @@ function syncFromGAS(silent) {
         if (active.id === 'panel-inventario') renderInventario();
         if (active.id === 'panel-overview')   renderOvCharts();
         if (active.id === 'panel-reportes')   filtrarReporte();
+        if (active.id === 'panel-marketing')  mktRefrescarIngresosLocales();
       }
     }
     setSyncUI('ok', silent);
@@ -1214,6 +1329,7 @@ function go(name){
   if(name==='wompi'){ cargarConfigWompi(); }
   if(name==='cdp'){ cargarCDP(); }
   else if(typeof cdpDetenerTimerVisitantes==='function'){ cdpDetenerTimerVisitantes(); }
+  if(name==='marketing'){ cargarMarketing(); }
 }
 
 // ── OPENWA CONFIG ──
@@ -4303,6 +4419,288 @@ function exportarSegmentosCSV(){
   var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'segmentos_clientes.csv'; a.click();
   URL.revokeObjectURL(a.href);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MARKETING — Contenido + RESULTADO NUGUDÚ (aislado en crm.html)
+// Sin Leads. Sin atribución automática de resultados a un contenido.
+// ══════════════════════════════════════════════════════════════════
+var MKT_KEY = 'ngd_mkt_contenido_v1';
+var _mktLista = [];
+var _mktEditandoId = null;
+var _mktResultadoCargando = false;
+
+function mktCargarLocal(){
+  try {
+    var r = localStorage.getItem(MKT_KEY);
+    _mktLista = r ? JSON.parse(r) : [];
+    if (!Array.isArray(_mktLista)) _mktLista = [];
+  } catch(e) { _mktLista = []; }
+}
+function mktGuardarLocal(){
+  try { localStorage.setItem(MKT_KEY, JSON.stringify(_mktLista)); } catch(e) {}
+}
+function mktUid(){
+  return 'mkt_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function cargarMarketing(forceResultado){
+  mktCargarLocal();
+  mktRenderLista();
+  mktCerrarFormulario();
+  cargarMarketingResultado(forceResultado === true);
+}
+
+function mktAbrirFormulario(id){
+  _mktEditandoId = id || null;
+  var card = document.getElementById('mkt-form-card');
+  if (!card) return;
+  card.style.display = 'block';
+  document.getElementById('mkt-form-ttl').textContent = id ? 'Editar contenido' : 'Registrar contenido';
+  document.getElementById('mkt-btn-eliminar').style.display = id ? 'inline-flex' : 'none';
+  if (id) {
+    var c = _mktLista.find(function(x){ return x.id === id; });
+    if (c) {
+      document.getElementById('mkt-titulo').value = c.titulo || '';
+      document.getElementById('mkt-plataforma').value = c.plataforma || 'Instagram';
+      document.getElementById('mkt-tipo').value = c.tipo || 'Reel';
+      document.getElementById('mkt-fecha').value = (c.fecha || '').slice(0, 10);
+      document.getElementById('mkt-campana').value = c.campana || '';
+      document.getElementById('mkt-url').value = c.url || '';
+      document.getElementById('mkt-estado').value = c.estado || 'publicado';
+    }
+  } else {
+    document.getElementById('mkt-titulo').value = '';
+    document.getElementById('mkt-plataforma').value = 'Instagram';
+    document.getElementById('mkt-tipo').value = 'Reel';
+    document.getElementById('mkt-fecha').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('mkt-campana').value = '';
+    document.getElementById('mkt-url').value = '';
+    document.getElementById('mkt-estado').value = 'publicado';
+  }
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setTimeout(function(){ var t = document.getElementById('mkt-titulo'); if (t) t.focus(); }, 80);
+}
+
+function mktCerrarFormulario(){
+  var card = document.getElementById('mkt-form-card');
+  if (card) card.style.display = 'none';
+  _mktEditandoId = null;
+}
+
+function mktGuardarContenido(){
+  var titulo = (document.getElementById('mkt-titulo').value || '').trim();
+  var fecha = document.getElementById('mkt-fecha').value || '';
+  if (!titulo) { showToast('Indica un nombre o título para el contenido'); return; }
+  if (!fecha) { showToast('Indica la fecha de publicación'); return; }
+  var url = (document.getElementById('mkt-url').value || '').trim();
+  if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+  var rec = {
+    id: _mktEditandoId || mktUid(),
+    titulo: titulo,
+    plataforma: document.getElementById('mkt-plataforma').value || 'Instagram',
+    tipo: document.getElementById('mkt-tipo').value || 'Reel',
+    fecha: fecha,
+    campana: (document.getElementById('mkt-campana').value || '').trim(),
+    url: url,
+    estado: document.getElementById('mkt-estado').value || 'publicado',
+    actualizado: Date.now()
+  };
+  if (_mktEditandoId) {
+    var i = _mktLista.findIndex(function(x){ return x.id === _mktEditandoId; });
+    if (i >= 0) rec.creado = _mktLista[i].creado || Date.now();
+    else rec.creado = Date.now();
+    if (i >= 0) _mktLista[i] = rec; else _mktLista.unshift(rec);
+  } else {
+    rec.creado = Date.now();
+    _mktLista.unshift(rec);
+  }
+  var fueEdicion = !!_mktEditandoId;
+  mktGuardarLocal();
+  mktRenderLista();
+  mktCerrarFormulario();
+  showToast(fueEdicion ? 'Contenido actualizado' : 'Contenido registrado');
+}
+
+function mktEliminarContenido(){
+  if (!_mktEditandoId) return;
+  var c = _mktLista.find(function(x){ return x.id === _mktEditandoId; });
+  if (!c) return;
+  if (!confirm('¿Eliminar el contenido «' + c.titulo + '»?')) return;
+  _mktLista = _mktLista.filter(function(x){ return x.id !== _mktEditandoId; });
+  mktGuardarLocal();
+  mktRenderLista();
+  mktCerrarFormulario();
+  showToast('Contenido eliminado');
+}
+
+function mktFechaCorta(iso){
+  if (!iso) return '—';
+  try {
+    var p = String(iso).slice(0, 10).split('-');
+    if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
+  } catch(e) {}
+  return String(iso).slice(0, 10);
+}
+
+function mktClasePlataforma(p){
+  if (p === 'Instagram') return 'mkt-ig';
+  if (p === 'Facebook') return 'mkt-fb';
+  if (p === 'TikTok') return 'mkt-tt';
+  return 'mkt-ot';
+}
+
+function mktEstadoLabel(e){
+  if (e === 'borrador') return { cls: 'borr', txt: 'Borrador' };
+  if (e === 'archivado') return { cls: 'arch', txt: 'Archivado' };
+  return { cls: 'pub', txt: 'Publicado' };
+}
+
+function mktNormalizarUrl(u){
+  if (!u) return '';
+  if (/^https?:\/\//i.test(u)) return u;
+  return 'https://' + u;
+}
+
+function mktRenderLista(){
+  var el = document.getElementById('mkt-lista');
+  if (!el) return;
+  var q = (document.getElementById('mkt-buscar') ? document.getElementById('mkt-buscar').value : '').toLowerCase().trim();
+  var pl = document.getElementById('mkt-filtro-plataforma') ? document.getElementById('mkt-filtro-plataforma').value : '';
+  var lista = _mktLista.slice().sort(function(a, b){ return (b.fecha || '').localeCompare(a.fecha || '') || (b.creado || 0) - (a.creado || 0); });
+  if (pl) lista = lista.filter(function(c){ return c.plataforma === pl; });
+  if (q) {
+    lista = lista.filter(function(c){
+      return [c.titulo, c.campana, c.plataforma, c.tipo, c.url].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+  if (!lista.length) {
+    el.innerHTML = '<div class="card"><div class="empty"><i class="fa-solid fa-bullhorn"></i><p>' +
+      (q || pl ? 'Sin resultados con ese filtro.' : 'Sin contenidos registrados. Usa «Nuevo contenido».') + '</p></div></div>';
+    return;
+  }
+  var html = '';
+  lista.forEach(function(c){
+    var est = mktEstadoLabel(c.estado);
+    var url = mktNormalizarUrl(c.url);
+    var meta = escHtml(c.plataforma || '') + ' · ' + mktFechaCorta(c.fecha);
+    html += '<div class="mkt-card ' + mktClasePlataforma(c.plataforma) + '" style="margin-bottom:10px" data-mkt-id="' + escHtml(c.id) + '">';
+    html += '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">';
+    html += '<div style="flex:1;min-width:200px">';
+    html += '<div class="mkt-title">' + escHtml(c.titulo || '') + '</div>';
+    html += '<div class="mkt-meta">' + meta + '</div>';
+    if (c.campana) html += '<div class="mkt-kv"><span>Campaña:</span> ' + escHtml(c.campana) + '</div>';
+    if (c.tipo) html += '<div class="mkt-kv"><span>Tipo:</span> ' + escHtml(c.tipo) + '</div>';
+    if (c.url) html += '<div class="mkt-kv" style="word-break:break-all"><span>URL:</span> ' + escHtml(c.url.replace(/^https?:\/\//i, '')) + '</div>';
+    html += '</div>';
+    html += '<div style="text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end">';
+    html += '<span class="mkt-estado ' + est.cls + '">' + escHtml(est.txt) + '</span>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
+    if (c.url) {
+      html += '<a class="btn btn-outline btn-xs" href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver publicación</a>';
+    }
+    html += '<button class="btn btn-outline btn-xs" onclick="mktAbrirFormulario(\'' + escHtml(c.id) + '\')"><i class="fa-solid fa-pen"></i> Editar</button>';
+    html += '</div></div></div>';
+    // RESULTADO NUGUDÚ en tarjeta: solo nota de no-atribución (no inventamos métricas por contenido)
+    html += '<div class="mkt-res-note" style="margin-top:12px;margin-bottom:0">';
+    html += '<strong>RESULTADO NUGUDÚ</strong> — los resultados de la tienda (sesiones, productos vistos, checkouts, compras, ingresos) se muestran de forma <strong>global</strong> arriba. ';
+    html += 'Hoy no existe atribución confiable de esas métricas a esta publicación individual.';
+    html += '</div>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function mktPeriodoCorte(periodo){
+  var d = new Date();
+  if (periodo === 'hoy') {
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+  }
+  if (periodo === 'semana') return new Date(Date.now() - 7 * 86400000).toISOString();
+  if (periodo === 'mes') return new Date(Date.now() - 30 * 86400000).toISOString();
+  return d.toISOString();
+}
+
+function mktIngresosPeriodo(periodo){
+  var corte = mktPeriodoCorte(periodo);
+  var suma = 0;
+  (_ordenes || []).forEach(function(o){
+    if (!o.fecha || o.fecha < corte) return;
+    if (o.consumoInterno) return;
+    // Misma fórmula que Reportes/Inventario/Clientes: precio × cantidad
+    var t = (parseFloat(o.precio) || 0) * (parseInt(o.cantidad) || 0);
+    if (isFinite(t)) suma += t;
+  });
+  return suma;
+}
+
+function mktSetResultado(vals, nota){
+  var el = document.getElementById('mkt-resultado');
+  if (!el) return;
+  var items = [
+    { label: 'Sesiones', value: vals.sesiones, color: 'var(--navy)' },
+    { label: 'Productos vistos', value: vals.productos, color: '#6366f1' },
+    { label: 'Checkouts', value: vals.checkouts, color: '#f97316' },
+    { label: 'Compras', value: vals.compras, color: 'var(--green)' },
+    { label: 'Ingresos', value: '$' + (vals.ingresos || 0).toFixed(2), color: 'var(--gold)' }
+  ];
+  var html = '';
+  items.forEach(function(it){
+    html += '<div class="mc"><div class="ml">' + it.label + '</div><div class="mv" style="color:' + it.color + '">' +
+      (it.value === null || it.value === undefined ? '—' : it.value) + '</div></div>';
+  });
+  el.innerHTML = html;
+  var est = document.getElementById('mkt-resultado-estado');
+  if (est) est.textContent = nota || '';
+}
+
+function mktRefrescarIngresosLocales(){
+  // Sync de órdenes: solo recalcular ingresos locales, sin nueva petición a leerVisitantes.
+  var periodo = document.getElementById('mkt-periodo') ? document.getElementById('mkt-periodo').value : 'hoy';
+  var grid = document.getElementById('mkt-resultado');
+  if (!grid) return;
+  var mcs = grid.querySelectorAll('.mc');
+  if (mcs.length < 5) return;
+  var ing = mktIngresosPeriodo(periodo);
+  var mv = mcs[4].querySelector('.mv');
+  if (mv) mv.textContent = '$' + ing.toFixed(2);
+}
+
+function cargarMarketingResultado(force){
+  if (_mktResultadoCargando) return;
+  var periodo = document.getElementById('mkt-periodo') ? document.getElementById('mkt-periodo').value : 'hoy';
+  // Ingresos siempre desde órdenes locales (datos existentes)
+  var ingresos = mktIngresosPeriodo(periodo);
+  // Sesiones / productos / checkouts / compras: leerVisitantes (embudo) — misma fuente que CDP, sin modificarla
+  _mktResultadoCargando = true;
+  mktSetResultado({ sesiones: '…', productos: '…', checkouts: '…', compras: '…', ingresos: ingresos }, 'Cargando comportamiento de la tienda…');
+  var url = GAS + '?action=leerVisitantes&periodo=' + encodeURIComponent(periodo) +
+    (force ? '&refresh=1' : '') + '&_t=' + Date.now() + '&token=' + encodeURIComponent(API_TOKEN);
+  cdpFetchJSON(url, CDP_TIMEOUT_MS).then(function(res){
+    _mktResultadoCargando = false;
+    var embudo = {};
+    var ok = res && res.ok && res.data && res.data.ok;
+    if (ok) embudo = (res.data.analytics && res.data.analytics.embudo) || {};
+    var vals = {
+      sesiones: ok ? (res.data.stats && (res.data.stats[periodo] || res.data.stats.hoy) || (res.data.visitantes || []).length) : null,
+      productos: ok ? (embudo.product_click || 0) : null,
+      checkouts: ok ? (embudo.checkout_start || 0) : null,
+      compras: ok ? (embudo.purchase || 0) : null,
+      ingresos: ingresos
+    };
+    // stats keys are activos/hoy/semana/mes
+    if (ok) {
+      var st = res.data.stats || {};
+      if (periodo === 'hoy') vals.sesiones = st.hoy != null ? st.hoy : vals.sesiones;
+      else if (periodo === 'semana') vals.sesiones = st.semana != null ? st.semana : vals.sesiones;
+      else if (periodo === 'mes') vals.sesiones = st.mes != null ? st.mes : vals.sesiones;
+    }
+    var nota = ok
+      ? 'Actualizado · resultado global de Nugudú Store · no atribuido a un contenido individual.'
+      : 'No se pudo cargar el comportamiento de la tienda. Ingresos muestran órdenes locales. Intenta «Actualizar».';
+    mktSetResultado(vals, nota);
+  });
 }
 </script>
 <div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>

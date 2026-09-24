@@ -764,7 +764,7 @@ tbody tr:last-child td{border-bottom:none}
         </div>
         <div class="fg" style="max-width:180px;margin-bottom:12px">
           <label>Período</label>
-          <select id="mkt-periodo" onchange="cargarMarketingResultado()">
+          <select id="mkt-periodo" onchange="cargarMarketingResultado();mktRenderLista()">
             <option value="hoy" selected>Hoy</option>
             <option value="semana">Esta semana</option>
             <option value="mes">Este mes</option>
@@ -4423,7 +4423,8 @@ function exportarSegmentosCSV(){
 
 // ══════════════════════════════════════════════════════════════════
 // MARKETING — Contenido + RESULTADO NUGUDÚ (aislado en crm.html)
-// Sin Leads. Sin atribución automática de resultados a un contenido.
+// Sin Leads. Fase 1B: métricas por contenido (last-touch) desde _cdpEventos + _ordenes,
+// sin peticiones nuevas a GAS. Los eventos previos a Fase 1A no traen content_id.
 // ══════════════════════════════════════════════════════════════════
 var MKT_KEY = 'ngd_mkt_contenido_v1';
 var MKT_TOMB_KEY = 'ngd_mkt_tumbas_v1';
@@ -4751,6 +4752,7 @@ function mktRenderLista(){
     return;
   }
   var html = '';
+  var periodoCard = document.getElementById('mkt-periodo') ? document.getElementById('mkt-periodo').value : 'hoy';
   lista.forEach(function(c){
     var est = mktEstadoLabel(c.estado);
     var url = mktNormalizarUrl(c.url);
@@ -4772,11 +4774,18 @@ function mktRenderLista(){
     }
     html += '<button class="btn btn-outline btn-xs" onclick="mktAbrirFormulario(\'' + escHtml(c.id) + '\')"><i class="fa-solid fa-pen"></i> Editar</button>';
     html += '</div></div></div>';
-    // RESULTADO NUGUDÚ en tarjeta: solo nota de no-atribución (no inventamos métricas por contenido)
+    // Fase 1B: métricas individuales del contenido (atribución last-touch por
+    // content_id; los eventos sin content_id no se atribuyen a esta tarjeta).
+    var met = mktMetricasContenido(c.id, periodoCard);
     html += '<div class="mkt-res-note" style="margin-top:12px;margin-bottom:0">';
-    html += '<strong>RESULTADO NUGUDÚ</strong> — los resultados de la tienda (sesiones, productos vistos, checkouts, compras, ingresos) se muestran de forma <strong>global</strong> arriba. ';
-    html += 'Hoy no existe atribución confiable de esas métricas a esta publicación individual.';
-    html += '</div>';
+    html += '<strong>RESULTADO DEL CONTENIDO</strong>';
+    html += '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:5px">';
+    html += '<span><span style="color:var(--muted)">Sesiones:</span> <b>' + met.sesiones + '</b></span>';
+    html += '<span><span style="color:var(--muted)">Productos vistos:</span> <b>' + met.productos + '</b></span>';
+    html += '<span><span style="color:var(--muted)">Checkouts:</span> <b>' + met.checkouts + '</b></span>';
+    html += '<span><span style="color:var(--muted)">Compras:</span> <b>' + met.compras + '</b></span>';
+    html += '<span><span style="color:var(--muted)">Ingresos:</span> <b>$' + met.ingresos.toFixed(2) + '</b></span>';
+    html += '</div></div>';
     html += '</div>';
   });
   el.innerHTML = html;
@@ -4804,6 +4813,52 @@ function mktIngresosPeriodo(periodo){
     if (isFinite(t)) suma += t;
   });
   return suma;
+}
+
+// Fase 1B: métricas individuales por contenido registrado (atribución last-touch).
+// Fuente única: _cdpEventos (ventana ya cargada por el CDP) + _ordenes.
+// Sin peticiones nuevas a GAS. Reglas aprobadas:
+// - Sesiones: session_id únicos de eventos con este content_id en el periodo.
+// - Productos vistos: eventos product_click (misma definición del CDP).
+// - Checkouts: eventos checkout_start.
+// - Compras: eventos purchase deduplicados por data.orden (sin sintéticos:
+//   sólo purchase reales de _cdpEventos; jamás se derivan de _ordenes).
+// - Ingresos: MISMA fórmula que mktIngresosPeriodo (precio × cantidad,
+//   fecha >= corte, excluir consumoInterno) restringida a órdenes atribuidas.
+// - Eventos sin content_id (previos a Fase 1A) no se atribuyen a nadie.
+function mktMetricasContenido(cid, periodo){
+  var res = { sesiones: 0, productos: 0, checkouts: 0, compras: 0, ingresos: 0 };
+  if (!cid) return res;
+  var corte = mktPeriodoCorte(periodo);
+  var eventos = _cdpEventos || [];
+  var sesiones = {}, ordenes = {}, n = 0;
+  for (var i = 0; i < eventos.length; i++){
+    var e = eventos[i];
+    if (!e || !e.data || e.data.content_id !== cid) continue;
+    if (!e.ts || e.ts < corte) continue;
+    if (e.session_id) sesiones[e.session_id] = true;
+    if (e.evento === 'product_click') res.productos++;
+    else if (e.evento === 'checkout_start') res.checkouts++;
+    else if (e.evento === 'purchase'){
+      ordenes[e.data.orden ? String(e.data.orden) : '@' + n] = true;
+      n++;
+    }
+  }
+  res.sesiones = Object.keys(sesiones).length;
+  res.compras = Object.keys(ordenes).length;
+  Object.keys(ordenes).forEach(function(numOrden){
+    if (numOrden.charAt(0) === '@') return; // purchase sin orden: cuenta en compras, no en ingresos
+    for (var j = 0; j < (_ordenes || []).length; j++){
+      var o = _ordenes[j];
+      if (String(o.orden || o.ref || '') !== numOrden) continue;
+      if (!o.fecha || o.fecha < corte) continue;
+      if (o.consumoInterno) continue;
+      var t = (parseFloat(o.precio) || 0) * (parseInt(o.cantidad) || 0);
+      if (isFinite(t)) res.ingresos += t;
+      break;
+    }
+  });
+  return res;
 }
 
 function mktSetResultado(vals, nota){

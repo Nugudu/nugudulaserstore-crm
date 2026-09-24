@@ -5,6 +5,15 @@
 (function(){
   var V='20260917b';
   var s=sessionStorage.getItem('_pv');
+  // D1: guardar la query original antes de cualquier redirect/replaceState.
+  // Los consumidores (?v=, ?p=) la leen con window.__d1qs(). Un ?v=<timestamp>
+  // es el cache-bust de version: no pisa el stash previo.
+  try{
+    var qs0=window.location.search;
+    if(qs0 && !/^\?v=\d+$/.test(qs0)){ sessionStorage.setItem('_qs_stash',qs0); }
+    else if(!qs0){ sessionStorage.removeItem('_qs_stash'); }
+  }catch(e){}
+  window.__d1qs=function(){try{return sessionStorage.getItem('_qs_stash')||window.location.search;}catch(e){return window.location.search;}};
   if(s&&s!==V){sessionStorage.removeItem('_pv');window.location.replace(window.location.pathname+'?v='+Date.now());return;}
   sessionStorage.setItem('_pv',V);
   if(window.location.search){window.history.replaceState({},'',window.location.pathname);}
@@ -946,8 +955,31 @@ var WA='50376837604';
 // en la URL, queda vacio y el pedido se guarda como siempre (canal digital
 // organico, sin vendedora asociada).
 var _refV = (function(){
-  try { return (new URLSearchParams(location.search).get('v') || '').trim().toUpperCase(); }
+  try { return (new URLSearchParams(window.__d1qs()).get('v') || '').trim().toUpperCase(); }
   catch(e){ return ''; }
+})();
+// Fase 1A: atribucion de contenido (last-touch, ventana/TTL de 30 dias).
+// Lee ?c= desde window.__d1qs() (D1) y lo persiste en localStorage.
+// - ?c= valido (^mkt_[a-z0-9_]+$, case-insensitive): reemplaza al anterior
+//   y reinicia el TTL de 30 dias.
+// - ?c= invalido: NO borra el contenido vigente; se conserva el ultimo.
+// - sin ?c=: se conserva el ultimo contenido mientras este vigente.
+// - TTL expirado: no se atribuye nada hasta recibir un ?c= valido nuevo.
+// - Valor valido se normaliza a minusculas: mkt_RAICES -> mkt_raices.
+var _contentId=(function(){
+  var K='ngd_content_id_v1', TTL=30*864e5, c='', raw='';
+  try{ raw=(new URLSearchParams(window.__d1qs()).get('c')||'').trim(); }catch(e){}
+  if(/^mkt_[a-z0-9_]+$/i.test(raw)){
+    raw=raw.toLowerCase(); // normalizacion canonica a minusculas
+    c=raw;
+    try{ localStorage.setItem(K,JSON.stringify({id:raw,ts:Date.now()})); }catch(e){}
+  } else {
+    try{
+      var s=JSON.parse(localStorage.getItem(K)||'null');
+      if(s&&typeof s.id==='string'&&/^mkt_[a-z0-9_]+$/i.test(s.id)&&typeof s.ts==='number'&&(Date.now()-s.ts)<TTL) c=s.id.toLowerCase();
+    }catch(e){}
+  }
+  return c;
 })();
 var _cat=[],_catCargado=false,_cli=null,_dirs=[],_diseno=null,_color=null,_qty=1,_tallaSel='M',_mapa='',_dirSel=null,_ultimaOrden=null,_yaSoyClienteMode=false;
 var _verMasVisibles=12,_verMasStep=12;
@@ -971,6 +1003,7 @@ function track(evento,data){
   data.city=_visitorData.city;
   data.source=_visitorData.source;
   data.redSocial=_visitorData.redSocial||'';
+  if(_contentId)data.content_id=_contentId; // Fase 1A: atribucion last-touch
   _eventQueue.push({ts:new Date().toISOString(),session_id:_sessionId,contacto:_eventContacto,evento:evento,data:data,url_ref:_refV});
   if(!_flushTimer)_flushTimer=setTimeout(flushEvents,10000);
 }
@@ -1210,7 +1243,7 @@ function actualizarOGTags(sku,nombre,precio,imagenUrl){
 
 // ── INIT: datos embebidos al instante + GAS refresca en background ──
 window.addEventListener('DOMContentLoaded',function(){
-  var q=window.location.search.match(/[?&]p=([^&]+)/);
+  var q=window.__d1qs().match(/[?&]p=([^&]+)/);
   if(q) _pendienteSku=decodeURIComponent(q[1]);
   var cache=cargarCatalogoCache();
   _cat=(cache&&cache.length)?cache:_CAT_EMBED; _catCargado=true;

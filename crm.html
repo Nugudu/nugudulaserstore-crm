@@ -823,7 +823,7 @@ tbody tr:last-child td{border-bottom:none}
 
       <!-- Lista de contenidos -->
       <div class="ph-row" style="margin-bottom:.75rem">
-        <div><h2 style="font-size:15px">Contenidos registrados</h2></div>
+        <div><h2 style="font-size:15px">Contenidos registrados</h2><div id="mkt-sync-estado" style="font-size:11.5px;color:var(--muted);margin-top:2px"></div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input id="mkt-buscar" type="text" placeholder="Buscar título, campaña…" oninput="mktRenderLista()" style="border:1.5px solid var(--bmd);border-radius:999px;padding:8px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;min-width:180px">
           <select id="mkt-filtro-plataforma" onchange="mktRenderLista()" style="border:1.5px solid var(--bmd);border-radius:999px;padding:8px 12px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--surface);outline:none">
@@ -4426,9 +4426,14 @@ function exportarSegmentosCSV(){
 // Sin Leads. Sin atribución automática de resultados a un contenido.
 // ══════════════════════════════════════════════════════════════════
 var MKT_KEY = 'ngd_mkt_contenido_v1';
+var MKT_TOMB_KEY = 'ngd_mkt_tumbas_v1';
+var MKT_SYNC_IDS_KEY = 'ngd_mkt_sync_ids_v1';
 var _mktLista = [];
 var _mktEditandoId = null;
 var _mktResultadoCargando = false;
+var _mktSyncing = false;
+var _mktPushes = 0;
+var _mktSyncTimer = null;
 
 function mktCargarLocal(){
   try {
@@ -4443,11 +4448,170 @@ function mktGuardarLocal(){
 function mktUid(){
   return 'mkt_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
 }
+function mktGetTumbas(){ try { return JSON.parse(localStorage.getItem(MKT_TOMB_KEY) || '[]'); } catch(e) { return []; } }
+function mktAddTumba(id){
+  var t = mktGetTumbas();
+  if (t.indexOf(id) < 0) t.push(id);
+  try { localStorage.setItem(MKT_TOMB_KEY, JSON.stringify(t)); } catch(e) {}
+}
+function mktClearTumba(id){
+  var t = mktGetTumbas().filter(function(x){ return x !== id; });
+  try { localStorage.setItem(MKT_TOMB_KEY, JSON.stringify(t)); } catch(e) {}
+}
+function mktApplyTumbas(lista){
+  var t = mktGetTumbas();
+  if (!t.length) return lista;
+  return lista.filter(function(c){ return t.indexOf(c.id) < 0; });
+}
+function mktGetSyncIds(){
+  try { var a = JSON.parse(localStorage.getItem(MKT_SYNC_IDS_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+  catch(e) { return []; }
+}
+function mktSetSyncIds(ids){
+  try { localStorage.setItem(MKT_SYNC_IDS_KEY, JSON.stringify(ids || [])); } catch(e) {}
+}
+function mktSetSyncEstado(txt){
+  var el = document.getElementById('mkt-sync-estado');
+  if (el) el.textContent = txt || '';
+}
+function mktPushUpsert(rec, onDone){
+  if (!rec || !rec.id) { if (onDone) onDone(false); return; }
+  _mktPushes++;
+  gasCall({ method:'POST', body:{ action:'mktUpsert', data:rec } }, function(err, res){
+    _mktPushes = Math.max(0, _mktPushes - 1);
+    var ok = !err && res && res.ok;
+    if (ok) mktClearTumba(rec.id);
+    else if (res && res.borrado) {
+      // Server rechazó: el id está soft-deleted. Quitar de la caché local
+      // y marcar tumba para no reintentar el upsert.
+      mktAddTumba(rec.id);
+      _mktLista = _mktLista.filter(function(x){ return x.id !== rec.id; });
+      mktGuardarLocal();
+      mktRenderLista();
+    }
+    if (onDone) onDone(ok, res);
+  });
+}
+function mktPushDelete(id, onDone){
+  if (!id) { if (onDone) onDone(false); return; }
+  mktAddTumba(id);
+  _mktPushes++;
+  gasCall({ method:'POST', body:{ action:'mktDelete', id:id } }, function(err, res){
+    _mktPushes = Math.max(0, _mktPushes - 1);
+    var ok = !err && res && res.ok;
+    // Soft-delete confirmado: la tumba se MANTIENE (muerto permanente
+    // en este dispositivo). No se limpia para no perder la protección
+    // anti-resurrección si el server aún no emite `borrados` en un read.
+    if (onDone) onDone(ok, res);
+  });
+}
+// Merge por id: gana el mayor `actualizado`. Aplica tumbas al remoto
+// para que un borrado pendiente no "regrese" antes de confirmarse.
+function mktMergeListas(local, remote, tumbas){
+  var t = tumbas || [];
+  var map = {};
+  (remote || []).forEach(function(r){
+    if (!r || !r.id) return;
+    if (t.indexOf(r.id) >= 0) return;
+    map[r.id] = r;
+  });
+  (local || []).forEach(function(l){
+    if (!l || !l.id) return;
+    if (t.indexOf(l.id) >= 0) return;
+    var cur = map[l.id];
+    if (!cur) { map[l.id] = l; return; }
+    var lt = parseInt(l.actualizado, 10) || 0;
+    var ct = parseInt(cur.actualizado, 10) || 0;
+    // Solo el local gana si es estrictamente más nuevo; en empate manda el server
+    // (evita que un timestamp idéntico en ms mantenga la versión vieja local).
+    if (lt > ct) map[l.id] = l;
+  });
+  return Object.keys(map).map(function(k){ return map[k]; });
+}
+// Push de migración: items locales ausentes o más nuevos que el server.
+// `muertos` = ids con borrado server-side: jamás se re-empujan.
+function mktPushFaltantes(local, remote, muertos){
+  var dead = muertos || [];
+  var remoteById = {};
+  (remote || []).forEach(function(r){ if (r && r.id) remoteById[r.id] = r; });
+  var pend = (local || []).filter(function(l){
+    if (!l || !l.id) return false;
+    if (dead.indexOf(l.id) >= 0) return false;
+    if (mktGetTumbas().indexOf(l.id) >= 0) return false;
+    var r = remoteById[l.id];
+    if (!r) return true;
+    return (parseInt(l.actualizado, 10) || 0) > (parseInt(r.actualizado, 10) || 0);
+  });
+  pend.forEach(function(l, i){
+    setTimeout(function(){ mktPushUpsert(l); }, i * 80);
+  });
+  return pend.length;
+}
+function mktSyncRemoto(force){
+  if (_mktSyncing) {
+    if (force) mktSetSyncEstado('Sincronizando contenido…');
+    return;
+  }
+  _mktSyncing = true;
+  if (force) mktSetSyncEstado('Sincronizando contenido…');
+  if (_mktSyncTimer) clearTimeout(_mktSyncTimer);
+  _mktSyncTimer = setTimeout(function(){ _mktSyncing = false; }, 20000);
+  gasCall({ method:'GET', params:'action=mktRead' }, function(err, res){
+    _mktSyncing = false;
+    if (_mktSyncTimer) { clearTimeout(_mktSyncTimer); _mktSyncTimer = null; }
+    if (err || !res || !res.ok) {
+      mktSetSyncEstado('Sin conexión · mostrando caché local');
+      return;
+    }
+    var remote = Array.isArray(res.items) ? res.items : [];
+    // Ids soft-deleted en el server (leerMkt los excluye de items).
+    var borrados = Array.isArray(res.borrados) ? res.borrados.map(String) : [];
+    // Persistirlos como tumbas locales: protección adicional en este dispositivo.
+    borrados.forEach(function(id){ mktAddTumba(id); });
+    var tumbas = mktGetTumbas();
+    // Tumbas aún no confirmadas (siguen activas en server): reintentar delete.
+    tumbas.forEach(function(id, i){
+      var still = remote.some(function(r){ return r && String(r.id) === String(id); });
+      if (still) setTimeout(function(){ mktPushDelete(id); }, 100 + i * 80);
+    });
+    var remoteSinTumbas = mktApplyTumbas(remote);
+    // Ids que el server ya devolvía en el sync anterior: si desaparecieron,
+    // fue borrado en otro dispositivo → quitar del local (evita resucitar).
+    // Igual: si están en `borrados` del server, se eliminan del local aunque
+    // este dispositivo nunca haya hecho mktRead (prevIds vacío).
+    var prevIds = mktGetSyncIds();
+    var remoteIds = remoteSinTumbas.map(function(r){ return r.id; });
+    var localFiltrada = _mktLista.filter(function(l){
+      if (!l || !l.id) return false;
+      if (tumbas.indexOf(l.id) >= 0) return false;
+      if (borrados.indexOf(String(l.id)) >= 0) return false;
+      var conocido = prevIds.indexOf(l.id) >= 0;
+      var sigueEnServer = remoteIds.indexOf(l.id) >= 0;
+      if (conocido && !sigueEnServer) return false;
+      return true;
+    });
+    var deadIds = tumbas.concat(borrados.filter(function(id){ return tumbas.indexOf(id) < 0; }));
+    var merged = mktMergeListas(localFiltrada, remoteSinTumbas, deadIds);
+    var nPush = mktPushFaltantes(merged, remoteSinTumbas, deadIds);
+    _mktLista = merged;
+    mktGuardarLocal();
+    // sync ids = solo activos conocidos (los borrados viven en tumbas)
+    mktSetSyncIds(remoteIds);
+    mktRenderLista();
+    mktSetSyncEstado(nPush > 0 ? ('Enviando ' + nPush + ' contenido(s) al servidor…') : 'Contenido sincronizado');
+    if (nPush === 0 && !_mktPushes) {
+      setTimeout(function(){
+        if (!_mktPushes) mktSetSyncEstado('Contenido sincronizado');
+      }, 600);
+    }
+  });
+}
 
 function cargarMarketing(forceResultado){
   mktCargarLocal();
   mktRenderLista();
   mktCerrarFormulario();
+  mktSyncRemoto(true);
   cargarMarketingResultado(forceResultado === true);
 }
 
@@ -4519,6 +4683,9 @@ function mktGuardarContenido(){
   mktGuardarLocal();
   mktRenderLista();
   mktCerrarFormulario();
+  mktPushUpsert(rec, function(ok){
+    if (!ok) mktSetSyncEstado('Guardado local · pendiente de sincronizar con el servidor');
+  });
   showToast(fueEdicion ? 'Contenido actualizado' : 'Contenido registrado');
 }
 
@@ -4527,10 +4694,14 @@ function mktEliminarContenido(){
   var c = _mktLista.find(function(x){ return x.id === _mktEditandoId; });
   if (!c) return;
   if (!confirm('¿Eliminar el contenido «' + c.titulo + '»?')) return;
+  var idBorrado = c.id;
   _mktLista = _mktLista.filter(function(x){ return x.id !== _mktEditandoId; });
   mktGuardarLocal();
   mktRenderLista();
   mktCerrarFormulario();
+  mktPushDelete(idBorrado, function(ok){
+    if (!ok) mktSetSyncEstado('Borrado local · pendiente de sincronizar con el servidor');
+  });
   showToast('Contenido eliminado');
 }
 

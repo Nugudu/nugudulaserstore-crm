@@ -11,6 +11,7 @@ var HOJA_BORRADOS    = 'borrados_ts';
 var HOJA_CATALOGO    = 'Catalogo';
 var HOJA_EVENTOS     = 'eventos_usuario';
 var HOJA_SOLICITUDES = 'solicitudes';
+var HOJA_MKT         = 'mkt_contenido';
 var NOTIFY_EMAIL     = 'nugudulasersv@gmail.com';
 // Token compartido: index.html y pedido.html deben mandarlo en cada llamada.
 // Cierra el acceso publico anonimo al endpoint (antes cualquiera con la URL
@@ -131,6 +132,8 @@ function doGet(e) {
     // Solicitudes de transferencia: el CRM las lee para la seccion
     // "Pagos pendientes" (ref SOL-..., ver guardarSolicitudWeb).
     if (action === 'solicitudes') return respond(leerSolicitudes());
+    // Marketing Contenido: lista central (fuente de verdad multi-dispositivo).
+    if (action === 'mktRead') return respond(leerMkt());
     return respond({ error: 'Accion desconocida: ' + action });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -168,6 +171,8 @@ function doPost(e) {
     if (action === 'obtenerCodigosLote') return respond(obtenerCodigosLote(payload));
     if (action === 'buscarClienteSeguro') return respond(buscarClienteSeguro(payload.tel, payload.codigo));
     if (action === 'buscarClienteOrdenSeguro') return respond(buscarClienteOrdenSeguro(payload.orden, payload.codigo));
+    if (action === 'mktUpsert') return respond(conLock(function(){ return upsertMkt(payload.data); }));
+    if (action === 'mktDelete') return respond(conLock(function(){ return deleteMkt(payload.id); }));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -366,6 +371,144 @@ function getHojaBorrados() {
 function leerBorrados() {
   var raw = getHojaBorrados().getRange('A1').getValue();
   try { var d = JSON.parse(raw || '[]'); return Array.isArray(d) ? d : []; } catch(e) { return []; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MARKETING CONTENIDO — hoja mkt_contenido (una fila = un JSON)
+// Fuente de verdad multi-dispositivo. localStorage en crm.html solo
+// es caché. El id mkt_xxx es inmutable y es el content_id futuro
+// para atribución (?c=) — NO se implementa aquí.
+// Soft-delete: mktDelete escribe borrado=ts; la fila SE CONSERVA.
+// leerMkt excluye borrados del CRM; upsertMkt no resucita ids borrados.
+// ═══════════════════════════════════════════════════════════════
+function getHojaMkt() {
+  var ss    = abrirSS(SHEET_ORDENES);
+  var sheet = ss.getSheetByName(HOJA_MKT);
+  if (!sheet) sheet = ss.insertSheet(HOJA_MKT);
+  return sheet;
+}
+
+// Lectura cruda de la hoja (incluye borrados). Dedupe por id: gana la
+// fila más nueva con borrado o la primera activa válida.
+function leerMktTodas() {
+  var sheet   = getHojaMkt();
+  var lastRow = sheet.getLastRow();
+  var byId    = {};
+  var orden   = [];
+  if (lastRow < 1) return [];
+  var values  = sheet.getRange(1, 1, lastRow, 1).getValues();
+  for (var i = 0; i < values.length; i++) {
+    var raw = values[i][0];
+    if (!raw) continue;
+    try {
+      var rec = JSON.parse(raw);
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec) || !rec.id) continue;
+      var id = String(rec.id);
+      if (!byId[id]) {
+        byId[id] = rec;
+        orden.push(id);
+      } else {
+        // Si hay duplicado accidental: preferir el marcado borrado o el más nuevo
+        var prev = byId[id];
+        var prevB = prev.borrado ? 1 : 0;
+        var nextB = rec.borrado ? 1 : 0;
+        var prevTs = parseInt(prev.actualizado, 10) || 0;
+        var nextTs = parseInt(rec.actualizado, 10) || 0;
+        if (nextB > prevB || (nextB === prevB && nextTs >= prevTs)) byId[id] = rec;
+      }
+    } catch (e) { /* fila invalida - se ignora */ }
+  }
+  return orden.map(function(id) { return byId[id]; });
+}
+
+// Respuesta para el CRM: solo activos + lista de ids borrados
+// (los borrados viajan aparte para que el front filtre sin resucitar).
+function leerMkt() {
+  try {
+    var todas = leerMktTodas();
+    var items = [];
+    var borrados = [];
+    for (var i = 0; i < todas.length; i++) {
+      var r = todas[i];
+      if (r.borrado) borrados.push(String(r.id));
+      else items.push(r);
+    }
+    return { ok: true, items: items, borrados: borrados };
+  } catch (err) {
+    return { ok: false, error: err.message, items: [], borrados: [] };
+  }
+}
+
+// Reescribe la hoja completa desde el array en memoria (mismo patrón
+// que guardarOrdenes: clear + setValues). Llamar SIEMPRE bajo conLock.
+// Debe recibir TODOS los registros (activos + borrados) para no perder
+// el soft-delete.
+function guardarMktLista(items) {
+  var sheet = getHojaMkt();
+  sheet.clearContents();
+  if (!items || !items.length) return;
+  var filas = items.map(function(r) { return [JSON.stringify(r)]; });
+  sheet.getRange(1, 1, filas.length, 1).setValues(filas);
+}
+
+// Upsert por id. Si ya existe, gana el registro con mayor `actualizado`
+// (o el entrante si no hay timestamps). Conserva id mkt_xxx tal cual.
+// NUNCA resucita un id con borrado: devuelve ok:false + borrado:true.
+function upsertMkt(rec) {
+  if (!rec || typeof rec !== 'object' || !rec.id) {
+    return { ok: false, error: 'Registro sin id' };
+  }
+  var todas = leerMktTodas();
+  var idx = -1;
+  for (var i = 0; i < todas.length; i++) {
+    if (String(todas[i].id) === String(rec.id)) { idx = i; break; }
+  }
+  if (idx >= 0 && todas[idx].borrado) {
+    // Soft-deleted: no se puede reanimar vía upsert (solo restore explícito).
+    return { ok: false, error: 'Registro borrado', borrado: true, id: String(rec.id) };
+  }
+  // El cliente no debe inyectar borrado por su cuenta
+  var entrante = JSON.parse(JSON.stringify(rec));
+  delete entrante.borrado;
+  if (idx < 0) {
+    todas.unshift(entrante);
+  } else {
+    var prev = todas[idx] || {};
+    var prevTs = parseInt(prev.actualizado, 10) || 0;
+    var nextTs = parseInt(entrante.actualizado, 10) || 0;
+    if (nextTs >= prevTs) {
+      entrante.borrado = prev.borrado; // por si acaso (no debería existir aquí)
+      if (!entrante.borrado) delete entrante.borrado;
+      todas[idx] = entrante;
+    }
+    // si el entrante es más viejo, se conserva el del servidor
+  }
+  guardarMktLista(todas);
+  var activos = todas.filter(function(r) { return !r.borrado; });
+  var idsBorrados = todas.filter(function(r) { return r.borrado; }).map(function(r) { return String(r.id); });
+  return { ok: true, id: String(rec.id), items: activos, borrados: idsBorrados };
+}
+
+// Soft-delete: marca borrado=timestamp y CONServa la fila + el mkt_xxx.
+function deleteMkt(id) {
+  if (!id) return { ok: false, error: 'Sin id' };
+  var todas = leerMktTodas();
+  var idx = -1;
+  for (var i = 0; i < todas.length; i++) {
+    if (String(todas[i].id) === String(id)) { idx = i; break; }
+  }
+  if (idx < 0) {
+    var vacio = todas.filter(function(r) { return !r.borrado; }).map(function(r) { return r; });
+    return { ok: true, id: String(id), notFound: true, items: vacio, borrados: todas.filter(function(r){ return r.borrado; }).map(function(r){ return String(r.id); }) };
+  }
+  if (!todas[idx].borrado) {
+    todas[idx].borrado = Date.now();
+    todas[idx].actualizado = Date.now();
+    guardarMktLista(todas);
+  }
+  var activos = todas.filter(function(r) { return !r.borrado; });
+  var idsBorrados = todas.filter(function(r) { return r.borrado; }).map(function(r) { return String(r.id); });
+  return { ok: true, id: String(id), items: activos, borrados: idsBorrados };
 }
 function guardarBorrados(lista) { getHojaBorrados().getRange('A1').setValue(JSON.stringify(lista)); }
 function registrarBorrado(ts) {

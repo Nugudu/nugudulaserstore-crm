@@ -165,23 +165,21 @@ tbody tr:last-child td{border-bottom:none}
 .empty{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
 .empty i{font-size:32px;display:block;margin-bottom:.75rem;opacity:.3}
 .empty p{font-size:13px}
-/* Marketing — Contenido */
-.mkt-card{background:var(--surface);border:1px solid #e8e5f0;border-radius:var(--r);padding:16px;box-shadow:0 2px 8px rgba(45,36,96,.05);position:relative}
-.mkt-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
-.mkt-ig::before{background:#E1306C}.mkt-fb::before{background:#1877F2}.mkt-tt::before{background:#111}.mkt-ot::before{background:var(--navy)}
-.mkt-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
-.mkt-meta{font-size:12px;color:var(--muted);margin-bottom:10px}
-.mkt-kv{font-size:12.5px;color:var(--text);margin-bottom:3px}
-.mkt-kv span{color:var(--muted)}
-.mkt-estado{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:20px}
-.mkt-estado.pub{background:var(--green-pale);color:var(--green)}
-.mkt-estado.borr{background:var(--gold-pale);color:var(--amber)}
-.mkt-estado.arch{background:var(--surface2);color:var(--muted)}
+/* Marketing — Resumen del período, Termómetro y Origen identificable */
 .mkt-res-note{font-size:11.5px;color:var(--muted);background:var(--navy-pale);border:1px solid #d9d4f0;border-radius:var(--rs);padding:8px 12px;margin-bottom:12px;line-height:1.45}
-.mkt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px}
-.mkt-grid .mc{text-align:center}
-.mkt-grid .mv{font-size:22px}
-@media(max-width:768px){.mkt-grid{grid-template-columns:1fr 1fr}}
+.mkt-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.mkt-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+.mkt-tbl td{padding:9px 10px;border-bottom:1px solid var(--border)}
+.mkt-tbl tr:last-child td{border-bottom:none}
+.mkt-tbl .num{text-align:right;font-weight:700}
+.mkt-tbl .prev{text-align:right;color:var(--muted);font-weight:500}
+#mkt-termometro{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+#mkt-termometro .tg{border:1px solid var(--border);border-radius:var(--rs);padding:12px 10px;text-align:center;background:var(--surface2)}
+#mkt-termometro .tg-ico{font-size:18px}
+#mkt-termometro .tg-name{font-size:12px;font-weight:700;color:var(--navy);margin-top:2px}
+#mkt-termometro .tg-sub{font-size:11px;color:var(--muted);margin-top:1px}
+#mkt-termometro .tg-val{font-size:16px;font-weight:700;margin-top:5px}
+@media(max-width:768px){#mkt-termometro{grid-template-columns:1fr 1fr}}
 .chart-full{margin-bottom:1.4rem}
 @media(max-width:768px){
   .sidebar{width:100%;height:58px;flex-direction:row;top:auto;bottom:0;overflow-x:auto;overflow-y:hidden;padding:0;-webkit-overflow-scrolling:touch}
@@ -743,99 +741,48 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
-    <!-- MARKETING → CONTENIDO -->
+    <!-- MARKETING → Resumen del período + Termómetro + Origen identificable -->
     <div id="panel-marketing" class="panel">
       <div class="ph-row">
-        <div><h2>Marketing · Contenido</h2><p>Registra publicaciones en redes y revisa el resultado global de Nugudú Store.</p></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-outline btn-sm" onclick="mktAbrirFormulario()"><i class="fa-solid fa-plus"></i> Nuevo contenido</button>
-          <button class="btn btn-outline btn-sm" onclick="cargarMarketing(true)"><i class="fa-solid fa-rotate"></i> Actualizar</button>
-        </div>
+        <div><h2>Marketing</h2><p>Resumen automático con los datos que ya genera Nugudú Store. Sin registros manuales.</p></div>
       </div>
 
-      <!-- RESULTADO NUGUDÚ (global, sin atribución por contenido) -->
+      <!-- RESUMEN DEL PERÍODO -->
       <div class="card" style="margin-bottom:1.25rem">
-        <div class="card-ttl"><i class="fa-solid fa-chart-line" style="color:var(--navy)"></i> RESULTADO NUGUDÚ</div>
-        <div class="mkt-res-note">
-          <strong>Resultado global de la tienda</strong> (no atribuido a un contenido individual).
-          Sesiones, productos vistos, checkouts y compras provienen del tracking de Nugudú Store;
-          ingresos se calculan sobre las órdenes existentes. Atribuir estos números a un reel/post
-          concreto requiere una fuente de atribución confiable que aún no existe.
+        <div class="card-ttl"><i class="fa-solid fa-chart-simple" style="color:var(--navy)"></i> RESUMEN DEL PERÍODO</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="mkt-periodos">
+          <button class="btn btn-primary btn-sm" id="mkt-per-hoy" onclick="mktSetPeriodo('hoy')">Hoy</button>
+          <button class="btn btn-outline btn-sm" id="mkt-per-semana" onclick="mktSetPeriodo('semana')">Esta semana</button>
+          <button class="btn btn-outline btn-sm" id="mkt-per-mes" onclick="mktSetPeriodo('mes')">Este mes</button>
         </div>
-        <div class="fg" style="max-width:180px;margin-bottom:12px">
-          <label>Período</label>
-          <select id="mkt-periodo" onchange="cargarMarketingResultado();mktRenderLista()">
-            <option value="hoy" selected>Hoy</option>
-            <option value="semana">Esta semana</option>
-            <option value="mes">Este mes</option>
-          </select>
-        </div>
-        <div class="mkt-grid" id="mkt-resultado">
-          <div class="mc"><div class="ml">Sesiones</div><div class="mv" style="color:var(--navy)">—</div></div>
-          <div class="mc"><div class="ml">Productos vistos</div><div class="mv" style="color:#6366f1">—</div></div>
-          <div class="mc"><div class="ml">Checkouts</div><div class="mv" style="color:#f97316">—</div></div>
-          <div class="mc"><div class="ml">Compras</div><div class="mv" style="color:var(--green)">—</div></div>
-          <div class="mc"><div class="ml">Ingresos</div><div class="mv" style="color:var(--gold)">—</div></div>
-        </div>
-        <div id="mkt-resultado-estado" style="font-size:11.5px;color:var(--muted)"></div>
+        <table class="mkt-tbl">
+          <thead>
+            <tr>
+              <th>Métrica</th>
+              <th style="text-align:right">Resultado</th>
+              <th style="text-align:right">vs. período anterior</th>
+            </tr>
+          </thead>
+          <tbody id="mkt-resumen-body"></tbody>
+        </table>
+        <div id="mkt-resultado-estado" style="font-size:11.5px;color:var(--muted);margin-top:8px"></div>
       </div>
 
-      <!-- Formulario registro contenido -->
-      <div class="card" id="mkt-form-card" style="display:none;margin-bottom:1.25rem">
-        <div class="card-ttl"><i class="fa-solid fa-pen-to-square" style="color:var(--navy)"></i> <span id="mkt-form-ttl">Registrar contenido</span></div>
-        <div class="form-grid" style="grid-template-columns:1fr 1fr">
-          <div class="fg full"><label>Nombre / título *</label><input id="mkt-titulo" type="text" placeholder="Reel — Raíces SV" maxlength="120"></div>
-          <div class="fg"><label>Plataforma *</label>
-            <select id="mkt-plataforma">
-              <option value="Instagram">Instagram</option>
-              <option value="Facebook">Facebook</option>
-              <option value="TikTok">TikTok</option>
-              <option value="Otra">Otra</option>
-            </select>
-          </div>
-          <div class="fg"><label>Tipo de contenido *</label>
-            <select id="mkt-tipo">
-              <option value="Reel">Reel</option>
-              <option value="Post">Post</option>
-              <option value="Story">Story</option>
-              <option value="Video">Video</option>
-              <option value="Carrusel">Carrusel</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-          <div class="fg"><label>Fecha de publicación *</label><input id="mkt-fecha" type="date"></div>
-          <div class="fg"><label>Estado</label>
-            <select id="mkt-estado">
-              <option value="publicado">Publicado</option>
-              <option value="borrador">Borrador</option>
-              <option value="archivado">Archivado</option>
-            </select>
-          </div>
-          <div class="fg full"><label>Campaña</label><input id="mkt-campana" type="text" placeholder="Raíces SV" maxlength="80"></div>
-          <div class="fg full"><label>URL de la publicación</label><input id="mkt-url" type="url" placeholder="https://instagram.com/reel/xxxxx" maxlength="500"></div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" onclick="mktGuardarContenido()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
-          <button class="btn btn-outline btn-sm" onclick="mktCerrarFormulario()">Cancelar</button>
-          <button class="btn btn-outline btn-sm" id="mkt-btn-eliminar" style="display:none;color:#a32d2d;border-color:#f7c1c1" onclick="mktEliminarContenido()"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+      <!-- TERMÓMETRO DE MARKETING -->
+      <div class="card" style="margin-bottom:1.25rem">
+        <div class="card-ttl"><i class="fa-solid fa-temperature-half" style="color:var(--navy)"></i> TERMÓMETRO DE MARKETING</div>
+        <div id="mkt-termometro"></div>
+        <div class="mkt-res-note" style="margin-top:12px;margin-bottom:0">
+          Compara el período seleccionado contra el inmediato anterior: 📈 Tráfico (sesiones) · 👀 Interés (productos vistos) · 🛒 Intención (checkouts) · 💰 Resultado (compras).
         </div>
       </div>
 
-      <!-- Lista de contenidos -->
-      <div class="ph-row" style="margin-bottom:.75rem">
-        <div><h2 style="font-size:15px">Contenidos registrados</h2><div id="mkt-sync-estado" style="font-size:11.5px;color:var(--muted);margin-top:2px"></div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input id="mkt-buscar" type="text" placeholder="Buscar título, campaña…" oninput="mktRenderLista()" style="border:1.5px solid var(--bmd);border-radius:999px;padding:8px 14px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;min-width:180px">
-          <select id="mkt-filtro-plataforma" onchange="mktRenderLista()" style="border:1.5px solid var(--bmd);border-radius:999px;padding:8px 12px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--surface);outline:none">
-            <option value="">Todas</option>
-            <option value="Instagram">Instagram</option>
-            <option value="Facebook">Facebook</option>
-            <option value="TikTok">TikTok</option>
-            <option value="Otra">Otra</option>
-          </select>
-        </div>
+      <!-- ORIGEN IDENTIFICABLE -->
+      <div class="card">
+        <div class="card-ttl"><i class="fa-solid fa-crosshairs" style="color:var(--navy)"></i> ORIGEN IDENTIFICABLE</div>
+        <div class="mkt-res-note">Red social → sesión → comportamiento → compra. Sólo se muestra cuando existe información confiable: la sesión llegó con una red social detectada automáticamente. Sin API, sin UTM, sin registros manuales y sin atribución inventada.</div>
+        <div id="mkt-origen"></div>
       </div>
-      <div id="mkt-lista"><div class="card"><div class="empty"><i class="fa-solid fa-bullhorn"></i><p>Sin contenidos registrados. Usa «Nuevo contenido».</p></div></div></div>
     </div>
 
     <!-- REGISTRO DE VENTA -->
@@ -1106,7 +1053,7 @@ var PANELS  = {
   analytics:    ['Analytics','Productos más vendidos y canales'],
   reportes:     ['Reportes','Análisis por rango de fechas'],
   cdp:          ['CDP','Customer Data Platform — comportamiento y segmentos'],
-  marketing:    ['Marketing','Contenido publicado y resultado de la tienda'],
+  marketing:    ['Marketing','Resumen del período, termómetro y origen identificable'],
   registroventa:['Registro de venta','Genera y comparte con tus clientes'],
   openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes'],
   wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
@@ -4422,514 +4369,249 @@ function exportarSegmentosCSV(){
 }
 
 // ══════════════════════════════════════════════════════════════════
-// MARKETING — Contenido + RESULTADO NUGUDÚ (aislado en crm.html)
-// Sin Leads. Fase 1B: métricas por contenido (last-touch) desde _cdpEventos + _ordenes,
-// sin peticiones nuevas a GAS. Los eventos previos a Fase 1A no traen content_id.
 // ══════════════════════════════════════════════════════════════════
-var MKT_KEY = 'ngd_mkt_contenido_v1';
-var MKT_TOMB_KEY = 'ngd_mkt_tumbas_v1';
-var MKT_SYNC_IDS_KEY = 'ngd_mkt_sync_ids_v1';
-var _mktLista = [];
-var _mktEditandoId = null;
+// MARKETING — Resumen del período + Termómetro + Origen identificable
+// Sin registros de contenido (sin títulos, URLs, campañas ni IDs).
+// Fuentes existentes, sin peticiones nuevas ni hojas nuevas:
+// - Sesiones: leerVisitantes() → stats.hoy/semana/mes (misma petición de siempre).
+// - Productos vistos / Checkouts: leerEventos() → _cdpEventos (ventana del CDP).
+// - Compras / Ingresos: órdenes existentes (_ordenes), misma fórmula de siempre
+//   (precio × cantidad, excluir consumoInterno).
+// - Origen identificable: data.redSocial de los eventos (detección automática
+//   en tienda.html por referrer/UA). Sólo se muestra si existe: sin atribución inventada.
+// ══════════════════════════════════════════════════════════════════
+var _mktPeriodo = 'hoy';
+var _mktVisitantesRes = null;   // null = sin intentar · false = error · objeto = ok
 var _mktResultadoCargando = false;
-var _mktSyncing = false;
-var _mktPushes = 0;
-var _mktSyncTimer = null;
+var _mktEventosIntentado = false;
 
-function mktCargarLocal(){
-  try {
-    var r = localStorage.getItem(MKT_KEY);
-    _mktLista = r ? JSON.parse(r) : [];
-    if (!Array.isArray(_mktLista)) _mktLista = [];
-  } catch(e) { _mktLista = []; }
+function mktSetPeriodo(p){
+  if (p !== 'hoy' && p !== 'semana' && p !== 'mes') return;
+  _mktPeriodo = p;
+  mktRenderResumen();
 }
-function mktGuardarLocal(){
-  try { localStorage.setItem(MKT_KEY, JSON.stringify(_mktLista)); } catch(e) {}
+
+function mktPintarTabs(){
+  ['hoy', 'semana', 'mes'].forEach(function(k){
+    var b = document.getElementById('mkt-per-' + k);
+    if (b) b.className = 'btn btn-sm ' + (k === _mktPeriodo ? 'btn-primary' : 'btn-outline');
+  });
 }
-function mktUid(){
-  return 'mkt_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+
+// Ventanas [inicio, fin) del período actual y del inmediato anterior.
+// Mismas definiciones que leerVisitantes: hoy = medianoche local;
+// semana = últimos 7 días; mes = último mes (rolling).
+// Ventanas CALENDARIO: Hoy = medianoche local→ahora · Semana = lunes→ahora · Mes = día 1→ahora.
+// Anteriores: día anterior · semana calendario previa (lunes a lunes) · mes calendario previo.
+function mktVentanas(p){
+  var now = new Date();
+  var d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (p === 'hoy') {
+    return { act: [d0, now], ant: [new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() - 1), d0] };
+  }
+  if (p === 'semana') {
+    var dow = (now.getDay() + 6) % 7; // lunes = 0
+    var lun = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow);
+    return { act: [lun, now], ant: [new Date(lun.getFullYear(), lun.getMonth(), lun.getDate() - 7), lun] };
+  }
+  var d1 = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { act: [d1, now], ant: [new Date(now.getFullYear(), now.getMonth() - 1, 1), d1] };
 }
-function mktGetTumbas(){ try { return JSON.parse(localStorage.getItem(MKT_TOMB_KEY) || '[]'); } catch(e) { return []; } }
-function mktAddTumba(id){
-  var t = mktGetTumbas();
-  if (t.indexOf(id) < 0) t.push(id);
-  try { localStorage.setItem(MKT_TOMB_KEY, JSON.stringify(t)); } catch(e) {}
-}
-function mktClearTumba(id){
-  var t = mktGetTumbas().filter(function(x){ return x !== id; });
-  try { localStorage.setItem(MKT_TOMB_KEY, JSON.stringify(t)); } catch(e) {}
-}
-function mktApplyTumbas(lista){
-  var t = mktGetTumbas();
-  if (!t.length) return lista;
-  return lista.filter(function(c){ return t.indexOf(c.id) < 0; });
-}
-function mktGetSyncIds(){
-  try { var a = JSON.parse(localStorage.getItem(MKT_SYNC_IDS_KEY) || '[]'); return Array.isArray(a) ? a : []; }
-  catch(e) { return []; }
-}
-function mktSetSyncIds(ids){
-  try { localStorage.setItem(MKT_SYNC_IDS_KEY, JSON.stringify(ids || [])); } catch(e) {}
-}
-function mktSetSyncEstado(txt){
-  var el = document.getElementById('mkt-sync-estado');
-  if (el) el.textContent = txt || '';
-}
-function mktPushUpsert(rec, onDone){
-  if (!rec || !rec.id) { if (onDone) onDone(false); return; }
-  _mktPushes++;
-  gasCall({ method:'POST', body:{ action:'mktUpsert', data:rec } }, function(err, res){
-    _mktPushes = Math.max(0, _mktPushes - 1);
-    var ok = !err && res && res.ok;
-    if (ok) mktClearTumba(rec.id);
-    else if (res && res.borrado) {
-      // Server rechazó: el id está soft-deleted. Quitar de la caché local
-      // y marcar tumba para no reintentar el upsert.
-      mktAddTumba(rec.id);
-      _mktLista = _mktLista.filter(function(x){ return x.id !== rec.id; });
-      mktGuardarLocal();
-      mktRenderLista();
+
+// Métricas de una ventana desde los datos existentes (eventos + órdenes).
+// sesiones/productos/checkouts = de eventos (null si no hay eventos cargados).
+function mktMetricasVentana(v){
+  var res = { sesiones: null, productos: null, checkouts: null, compras: 0, ingresos: 0 };
+  if (_cdpEventosTieneDatos) {
+    var d = v[0].toISOString(), h = v[1].toISOString();
+    var ses = {};
+    res.productos = 0;
+    res.checkouts = 0;
+    var evs = _cdpEventos || [];
+    for (var i = 0; i < evs.length; i++){
+      var e = evs[i];
+      if (!e || !e.ts || e.ts < d || e.ts >= h) continue;
+      if (e.session_id) ses[e.session_id] = true;
+      if (e.evento === 'product_click') res.productos++;
+      else if (e.evento === 'checkout_start') res.checkouts++;
     }
-    if (onDone) onDone(ok, res);
-  });
-}
-function mktPushDelete(id, onDone){
-  if (!id) { if (onDone) onDone(false); return; }
-  mktAddTumba(id);
-  _mktPushes++;
-  gasCall({ method:'POST', body:{ action:'mktDelete', id:id } }, function(err, res){
-    _mktPushes = Math.max(0, _mktPushes - 1);
-    var ok = !err && res && res.ok;
-    // Soft-delete confirmado: la tumba se MANTIENE (muerto permanente
-    // en este dispositivo). No se limpia para no perder la protección
-    // anti-resurrección si el server aún no emite `borrados` en un read.
-    if (onDone) onDone(ok, res);
-  });
-}
-// Merge por id: gana el mayor `actualizado`. Aplica tumbas al remoto
-// para que un borrado pendiente no "regrese" antes de confirmarse.
-function mktMergeListas(local, remote, tumbas){
-  var t = tumbas || [];
-  var map = {};
-  (remote || []).forEach(function(r){
-    if (!r || !r.id) return;
-    if (t.indexOf(r.id) >= 0) return;
-    map[r.id] = r;
-  });
-  (local || []).forEach(function(l){
-    if (!l || !l.id) return;
-    if (t.indexOf(l.id) >= 0) return;
-    var cur = map[l.id];
-    if (!cur) { map[l.id] = l; return; }
-    var lt = parseInt(l.actualizado, 10) || 0;
-    var ct = parseInt(cur.actualizado, 10) || 0;
-    // Solo el local gana si es estrictamente más nuevo; en empate manda el server
-    // (evita que un timestamp idéntico en ms mantenga la versión vieja local).
-    if (lt > ct) map[l.id] = l;
-  });
-  return Object.keys(map).map(function(k){ return map[k]; });
-}
-// Push de migración: items locales ausentes o más nuevos que el server.
-// `muertos` = ids con borrado server-side: jamás se re-empujan.
-function mktPushFaltantes(local, remote, muertos){
-  var dead = muertos || [];
-  var remoteById = {};
-  (remote || []).forEach(function(r){ if (r && r.id) remoteById[r.id] = r; });
-  var pend = (local || []).filter(function(l){
-    if (!l || !l.id) return false;
-    if (dead.indexOf(l.id) >= 0) return false;
-    if (mktGetTumbas().indexOf(l.id) >= 0) return false;
-    var r = remoteById[l.id];
-    if (!r) return true;
-    return (parseInt(l.actualizado, 10) || 0) > (parseInt(r.actualizado, 10) || 0);
-  });
-  pend.forEach(function(l, i){
-    setTimeout(function(){ mktPushUpsert(l); }, i * 80);
-  });
-  return pend.length;
-}
-function mktSyncRemoto(force){
-  if (_mktSyncing) {
-    if (force) mktSetSyncEstado('Sincronizando contenido…');
-    return;
+    res.sesiones = Object.keys(ses).length;
   }
-  _mktSyncing = true;
-  if (force) mktSetSyncEstado('Sincronizando contenido…');
-  if (_mktSyncTimer) clearTimeout(_mktSyncTimer);
-  _mktSyncTimer = setTimeout(function(){ _mktSyncing = false; }, 20000);
-  gasCall({ method:'GET', params:'action=mktRead' }, function(err, res){
-    _mktSyncing = false;
-    if (_mktSyncTimer) { clearTimeout(_mktSyncTimer); _mktSyncTimer = null; }
-    if (err || !res || !res.ok) {
-      mktSetSyncEstado('Sin conexión · mostrando caché local');
-      return;
-    }
-    var remote = Array.isArray(res.items) ? res.items : [];
-    // Ids soft-deleted en el server (leerMkt los excluye de items).
-    var borrados = Array.isArray(res.borrados) ? res.borrados.map(String) : [];
-    // Persistirlos como tumbas locales: protección adicional en este dispositivo.
-    borrados.forEach(function(id){ mktAddTumba(id); });
-    var tumbas = mktGetTumbas();
-    // Tumbas aún no confirmadas (siguen activas en server): reintentar delete.
-    tumbas.forEach(function(id, i){
-      var still = remote.some(function(r){ return r && String(r.id) === String(id); });
-      if (still) setTimeout(function(){ mktPushDelete(id); }, 100 + i * 80);
-    });
-    var remoteSinTumbas = mktApplyTumbas(remote);
-    // Ids que el server ya devolvía en el sync anterior: si desaparecieron,
-    // fue borrado en otro dispositivo → quitar del local (evita resucitar).
-    // Igual: si están en `borrados` del server, se eliminan del local aunque
-    // este dispositivo nunca haya hecho mktRead (prevIds vacío).
-    var prevIds = mktGetSyncIds();
-    var remoteIds = remoteSinTumbas.map(function(r){ return r.id; });
-    var localFiltrada = _mktLista.filter(function(l){
-      if (!l || !l.id) return false;
-      if (tumbas.indexOf(l.id) >= 0) return false;
-      if (borrados.indexOf(String(l.id)) >= 0) return false;
-      var conocido = prevIds.indexOf(l.id) >= 0;
-      var sigueEnServer = remoteIds.indexOf(l.id) >= 0;
-      if (conocido && !sigueEnServer) return false;
-      return true;
-    });
-    var deadIds = tumbas.concat(borrados.filter(function(id){ return tumbas.indexOf(id) < 0; }));
-    var merged = mktMergeListas(localFiltrada, remoteSinTumbas, deadIds);
-    var nPush = mktPushFaltantes(merged, remoteSinTumbas, deadIds);
-    _mktLista = merged;
-    mktGuardarLocal();
-    // sync ids = solo activos conocidos (los borrados viven en tumbas)
-    mktSetSyncIds(remoteIds);
-    mktRenderLista();
-    mktSetSyncEstado(nPush > 0 ? ('Enviando ' + nPush + ' contenido(s) al servidor…') : 'Contenido sincronizado');
-    if (nPush === 0 && !_mktPushes) {
-      setTimeout(function(){
-        if (!_mktPushes) mktSetSyncEstado('Contenido sincronizado');
-      }, 600);
-    }
-  });
-}
-
-function cargarMarketing(forceResultado){
-  mktCargarLocal();
-  mktRenderLista();
-  mktCerrarFormulario();
-  mktSyncRemoto(true);
-  cargarMarketingResultado(forceResultado === true);
-  if(!_cdpEventosTieneDatos){
-    cdpRefrescarEventos(function(){ mktRenderLista(); });
-  }
-}
-
-function mktAbrirFormulario(id){
-  _mktEditandoId = id || null;
-  var card = document.getElementById('mkt-form-card');
-  if (!card) return;
-  card.style.display = 'block';
-  document.getElementById('mkt-form-ttl').textContent = id ? 'Editar contenido' : 'Registrar contenido';
-  document.getElementById('mkt-btn-eliminar').style.display = id ? 'inline-flex' : 'none';
-  if (id) {
-    var c = _mktLista.find(function(x){ return x.id === id; });
-    if (c) {
-      document.getElementById('mkt-titulo').value = c.titulo || '';
-      document.getElementById('mkt-plataforma').value = c.plataforma || 'Instagram';
-      document.getElementById('mkt-tipo').value = c.tipo || 'Reel';
-      document.getElementById('mkt-fecha').value = (c.fecha || '').slice(0, 10);
-      document.getElementById('mkt-campana').value = c.campana || '';
-      document.getElementById('mkt-url').value = c.url || '';
-      document.getElementById('mkt-estado').value = c.estado || 'publicado';
-    }
-  } else {
-    document.getElementById('mkt-titulo').value = '';
-    document.getElementById('mkt-plataforma').value = 'Instagram';
-    document.getElementById('mkt-tipo').value = 'Reel';
-    document.getElementById('mkt-fecha').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('mkt-campana').value = '';
-    document.getElementById('mkt-url').value = '';
-    document.getElementById('mkt-estado').value = 'publicado';
-  }
-  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  setTimeout(function(){ var t = document.getElementById('mkt-titulo'); if (t) t.focus(); }, 80);
-}
-
-function mktCerrarFormulario(){
-  var card = document.getElementById('mkt-form-card');
-  if (card) card.style.display = 'none';
-  _mktEditandoId = null;
-}
-
-function mktGuardarContenido(){
-  var titulo = (document.getElementById('mkt-titulo').value || '').trim();
-  var fecha = document.getElementById('mkt-fecha').value || '';
-  if (!titulo) { showToast('Indica un nombre o título para el contenido'); return; }
-  if (!fecha) { showToast('Indica la fecha de publicación'); return; }
-  var url = (document.getElementById('mkt-url').value || '').trim();
-  if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
-  var rec = {
-    id: _mktEditandoId || mktUid(),
-    titulo: titulo,
-    plataforma: document.getElementById('mkt-plataforma').value || 'Instagram',
-    tipo: document.getElementById('mkt-tipo').value || 'Reel',
-    fecha: fecha,
-    campana: (document.getElementById('mkt-campana').value || '').trim(),
-    url: url,
-    estado: document.getElementById('mkt-estado').value || 'publicado',
-    actualizado: Date.now()
-  };
-  if (_mktEditandoId) {
-    var i = _mktLista.findIndex(function(x){ return x.id === _mktEditandoId; });
-    if (i >= 0) rec.creado = _mktLista[i].creado || Date.now();
-    else rec.creado = Date.now();
-    if (i >= 0) _mktLista[i] = rec; else _mktLista.unshift(rec);
-  } else {
-    rec.creado = Date.now();
-    _mktLista.unshift(rec);
-  }
-  var fueEdicion = !!_mktEditandoId;
-  mktGuardarLocal();
-  mktRenderLista();
-  mktCerrarFormulario();
-  mktPushUpsert(rec, function(ok){
-    if (!ok) mktSetSyncEstado('Guardado local · pendiente de sincronizar con el servidor');
-  });
-  showToast(fueEdicion ? 'Contenido actualizado' : 'Contenido registrado');
-}
-
-function mktEliminarContenido(){
-  if (!_mktEditandoId) return;
-  var c = _mktLista.find(function(x){ return x.id === _mktEditandoId; });
-  if (!c) return;
-  if (!confirm('¿Eliminar el contenido «' + c.titulo + '»?')) return;
-  var idBorrado = c.id;
-  _mktLista = _mktLista.filter(function(x){ return x.id !== _mktEditandoId; });
-  mktGuardarLocal();
-  mktRenderLista();
-  mktCerrarFormulario();
-  mktPushDelete(idBorrado, function(ok){
-    if (!ok) mktSetSyncEstado('Borrado local · pendiente de sincronizar con el servidor');
-  });
-  showToast('Contenido eliminado');
-}
-
-function mktFechaCorta(iso){
-  if (!iso) return '—';
-  try {
-    var p = String(iso).slice(0, 10).split('-');
-    if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
-  } catch(e) {}
-  return String(iso).slice(0, 10);
-}
-
-function mktClasePlataforma(p){
-  if (p === 'Instagram') return 'mkt-ig';
-  if (p === 'Facebook') return 'mkt-fb';
-  if (p === 'TikTok') return 'mkt-tt';
-  return 'mkt-ot';
-}
-
-function mktEstadoLabel(e){
-  if (e === 'borrador') return { cls: 'borr', txt: 'Borrador' };
-  if (e === 'archivado') return { cls: 'arch', txt: 'Archivado' };
-  return { cls: 'pub', txt: 'Publicado' };
-}
-
-function mktNormalizarUrl(u){
-  if (!u) return '';
-  if (/^https?:\/\//i.test(u)) return u;
-  return 'https://' + u;
-}
-
-function mktRenderLista(){
-  var el = document.getElementById('mkt-lista');
-  if (!el) return;
-  var q = (document.getElementById('mkt-buscar') ? document.getElementById('mkt-buscar').value : '').toLowerCase().trim();
-  var pl = document.getElementById('mkt-filtro-plataforma') ? document.getElementById('mkt-filtro-plataforma').value : '';
-  var lista = _mktLista.slice().sort(function(a, b){ return (b.fecha || '').localeCompare(a.fecha || '') || (b.creado || 0) - (a.creado || 0); });
-  if (pl) lista = lista.filter(function(c){ return c.plataforma === pl; });
-  if (q) {
-    lista = lista.filter(function(c){
-      return [c.titulo, c.campana, c.plataforma, c.tipo, c.url].join(' ').toLowerCase().indexOf(q) >= 0;
-    });
-  }
-  if (!lista.length) {
-    el.innerHTML = '<div class="card"><div class="empty"><i class="fa-solid fa-bullhorn"></i><p>' +
-      (q || pl ? 'Sin resultados con ese filtro.' : 'Sin contenidos registrados. Usa «Nuevo contenido».') + '</p></div></div>';
-    return;
-  }
-  var html = '';
-  var periodoCard = document.getElementById('mkt-periodo') ? document.getElementById('mkt-periodo').value : 'hoy';
-  lista.forEach(function(c){
-    var est = mktEstadoLabel(c.estado);
-    var url = mktNormalizarUrl(c.url);
-    var meta = escHtml(c.plataforma || '') + ' · ' + mktFechaCorta(c.fecha);
-    html += '<div class="mkt-card ' + mktClasePlataforma(c.plataforma) + '" style="margin-bottom:10px" data-mkt-id="' + escHtml(c.id) + '">';
-    html += '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">';
-    html += '<div style="flex:1;min-width:200px">';
-    html += '<div class="mkt-title">' + escHtml(c.titulo || '') + '</div>';
-    html += '<div class="mkt-meta">' + meta + '</div>';
-    if (c.campana) html += '<div class="mkt-kv"><span>Campaña:</span> ' + escHtml(c.campana) + '</div>';
-    if (c.tipo) html += '<div class="mkt-kv"><span>Tipo:</span> ' + escHtml(c.tipo) + '</div>';
-    if (c.url) html += '<div class="mkt-kv" style="word-break:break-all"><span>URL:</span> ' + escHtml(c.url.replace(/^https?:\/\//i, '')) + '</div>';
-    html += '</div>';
-    html += '<div style="text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end">';
-    html += '<span class="mkt-estado ' + est.cls + '">' + escHtml(est.txt) + '</span>';
-    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">';
-    if (c.url) {
-      html += '<a class="btn btn-outline btn-xs" href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver publicación</a>';
-    }
-    html += '<button class="btn btn-outline btn-xs" onclick="mktAbrirFormulario(\'' + escHtml(c.id) + '\')"><i class="fa-solid fa-pen"></i> Editar</button>';
-    html += '</div></div></div>';
-    // Fase 1B: métricas individuales del contenido (atribución last-touch por
-    // content_id; los eventos sin content_id no se atribuyen a esta tarjeta).
-    var met = mktMetricasContenido(c.id, periodoCard);
-    html += '<div class="mkt-res-note" style="margin-top:12px;margin-bottom:0">';
-    html += '<strong>RESULTADO DEL CONTENIDO</strong>';
-    html += '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:5px">';
-    html += '<span><span style="color:var(--muted)">Sesiones:</span> <b>' + met.sesiones + '</b></span>';
-    html += '<span><span style="color:var(--muted)">Productos vistos:</span> <b>' + met.productos + '</b></span>';
-    html += '<span><span style="color:var(--muted)">Checkouts:</span> <b>' + met.checkouts + '</b></span>';
-    html += '<span><span style="color:var(--muted)">Compras:</span> <b>' + met.compras + '</b></span>';
-    html += '<span><span style="color:var(--muted)">Ingresos:</span> <b>$' + met.ingresos.toFixed(2) + '</b></span>';
-    html += '</div></div>';
-    html += '</div>';
-  });
-  el.innerHTML = html;
-}
-
-function mktPeriodoCorte(periodo){
-  var d = new Date();
-  if (periodo === 'hoy') {
-    d.setHours(0, 0, 0, 0);
-    return d.toISOString();
-  }
-  if (periodo === 'semana') return new Date(Date.now() - 7 * 86400000).toISOString();
-  if (periodo === 'mes') return new Date(Date.now() - 30 * 86400000).toISOString();
-  return d.toISOString();
-}
-
-function mktIngresosPeriodo(periodo){
-  var corte = mktPeriodoCorte(periodo);
-  var suma = 0;
+  var d2 = v[0].toISOString(), h2 = v[1].toISOString();
   (_ordenes || []).forEach(function(o){
-    if (!o.fecha || o.fecha < corte) return;
+    if (!o.fecha || o.fecha < d2 || o.fecha >= h2) return;
     if (o.consumoInterno) return;
-    // Misma fórmula que Reportes/Inventario/Clientes: precio × cantidad
+    res.compras++;
     var t = (parseFloat(o.precio) || 0) * (parseInt(o.cantidad) || 0);
-    if (isFinite(t)) suma += t;
-  });
-  return suma;
-}
-
-// Fase 1B: métricas individuales por contenido registrado (atribución last-touch).
-// Fuente única: _cdpEventos (ventana ya cargada por el CDP) + _ordenes.
-// Sin peticiones nuevas a GAS. Reglas aprobadas:
-// - Sesiones: session_id únicos de eventos con este content_id en el periodo.
-// - Productos vistos: eventos product_click (misma definición del CDP).
-// - Checkouts: eventos checkout_start.
-// - Compras: eventos purchase deduplicados por data.orden (sin sintéticos:
-//   sólo purchase reales de _cdpEventos; jamás se derivan de _ordenes).
-// - Ingresos: MISMA fórmula que mktIngresosPeriodo (precio × cantidad,
-//   fecha >= corte, excluir consumoInterno) restringida a órdenes atribuidas.
-// - Eventos sin content_id (previos a Fase 1A) no se atribuyen a nadie.
-function mktMetricasContenido(cid, periodo){
-  var res = { sesiones: 0, productos: 0, checkouts: 0, compras: 0, ingresos: 0 };
-  if (!cid) return res;
-  var corte = mktPeriodoCorte(periodo);
-  var eventos = _cdpEventos || [];
-  var sesiones = {}, ordenes = {}, n = 0;
-  for (var i = 0; i < eventos.length; i++){
-    var e = eventos[i];
-    if (!e || !e.data || e.data.content_id !== cid) continue;
-    if (!e.ts || e.ts < corte) continue;
-    if (e.session_id) sesiones[e.session_id] = true;
-    if (e.evento === 'product_click') res.productos++;
-    else if (e.evento === 'checkout_start') res.checkouts++;
-    else if (e.evento === 'purchase'){
-      ordenes[e.data.orden ? String(e.data.orden) : '@' + n] = true;
-      n++;
-    }
-  }
-  res.sesiones = Object.keys(sesiones).length;
-  res.compras = Object.keys(ordenes).length;
-  Object.keys(ordenes).forEach(function(numOrden){
-    if (numOrden.charAt(0) === '@') return; // purchase sin orden: cuenta en compras, no en ingresos
-    for (var j = 0; j < (_ordenes || []).length; j++){
-      var o = _ordenes[j];
-      if (String(o.orden || o.ref || '') !== numOrden) continue;
-      if (!o.fecha || o.fecha < corte) continue;
-      if (o.consumoInterno) continue;
-      var t = (parseFloat(o.precio) || 0) * (parseInt(o.cantidad) || 0);
-      if (isFinite(t)) res.ingresos += t;
-      break;
-    }
+    if (isFinite(t)) res.ingresos += t;
   });
   return res;
 }
 
-function mktSetResultado(vals, nota){
-  var el = document.getElementById('mkt-resultado');
-  if (!el) return;
-  var items = [
-    { label: 'Sesiones', value: vals.sesiones, color: 'var(--navy)' },
-    { label: 'Productos vistos', value: vals.productos, color: '#6366f1' },
-    { label: 'Checkouts', value: vals.checkouts, color: '#f97316' },
-    { label: 'Compras', value: vals.compras, color: 'var(--green)' },
-    { label: 'Ingresos', value: '$' + (vals.ingresos || 0).toFixed(2), color: 'var(--gold)' }
+// % de variación contra el período anterior: aumentó ▲ / disminuyó ▼ / se mantuvo ═.
+function mktPctTxt(act, ant){
+  if (act === null || act === undefined || ant === null || ant === undefined)
+    return { txt: '—', ico: '', color: 'var(--muted)' };
+  if (ant === 0 && act === 0) return { txt: '0% (sin cambio)', ico: '═', color: 'var(--muted)' };
+  if (ant === 0) return { txt: 'nuevo', ico: '▲', color: 'var(--green)' };
+  var p = Math.round((act - ant) / ant * 100);
+  if (p > 0) return { txt: '+' + p + '%', ico: '▲', color: 'var(--green)' };
+  if (p < 0) return { txt: p + '%', ico: '▼', color: 'var(--coral)' };
+  return { txt: '0% (sin cambio)', ico: '═', color: 'var(--muted)' };
+}
+
+// Origen identificable por ventana: agrupa eventos con data.redSocial confiable.
+// null = eventos aún no cargados.
+function mktOrigenVentana(v){
+  if (!_cdpEventosTieneDatos) return null;
+  var d = v[0].toISOString(), h = v[1].toISOString();
+  var g = {};
+  var evs = _cdpEventos || [];
+  for (var i = 0; i < evs.length; i++){
+    var e = evs[i];
+    if (!e || !e.ts || e.ts < d || e.ts >= h) continue;
+    var red = e.data && e.data.redSocial ? String(e.data.redSocial) : '';
+    if (!red) continue;
+    if (!g[red]) g[red] = { sesiones: {}, productos: 0, checkouts: 0, compras: {}, n: 0 };
+    var x = g[red];
+    if (e.session_id) x.sesiones[e.session_id] = true;
+    if (e.evento === 'product_click') x.productos++;
+    else if (e.evento === 'checkout_start') x.checkouts++;
+    else if (e.evento === 'purchase') {
+      var k = e.data.orden ? String(e.data.orden) : '@' + (x.n++);
+      x.compras[k] = true;
+    }
+  }
+  return g;
+}
+
+function mktRenderResumen(){
+  mktPintarTabs();
+  var cargandoVisitantes = _mktResultadoCargando;
+  var cargandoEventos = !_mktEventosIntentado || _cdpEventosReq;
+  var cargando = cargandoVisitantes || cargandoEventos;
+  var w = mktVentanas(_mktPeriodo);
+  var act = mktMetricasVentana(w.act);
+  var ant = mktMetricasVentana(w.ant);
+  // Sesiones del período actual:
+  // · Hoy → leerVisitantes stats.hoy (corte calendario: medianoche, idéntico a esta ventana).
+  // · Semana/Mes calendario → sesiones únicas de eventos en la ventana
+  //   (stats del backend sólo expone cortes móviles 7d/1mes, no calendario; no se toca Código.js).
+  var sesAct = null;
+  if (_mktPeriodo === 'hoy') {
+    if (!cargandoVisitantes && _mktVisitantesRes && _mktVisitantesRes.stats) {
+      var st = _mktVisitantesRes.stats.hoy;
+      sesAct = (st === null || st === undefined) ? null : st;
+    }
+  } else {
+    sesAct = act.sesiones;
+  }
+  var cel = function(val){
+    if (val === null || val === undefined) return cargando ? '…' : '—';
+    return val;
+  };
+  // ── Tabla: Resumen del período ──
+  var filas = [
+    { l: 'Sesiones', c: 'var(--navy)', a: sesAct, p: ant.sesiones },
+    { l: 'Productos vistos', c: '#6366f1', a: act.productos, p: ant.productos },
+    { l: 'Checkouts', c: '#f97316', a: act.checkouts, p: ant.checkouts },
+    { l: 'Compras', c: 'var(--green)', a: act.compras, p: ant.compras },
+    { l: 'Ingresos', c: 'var(--gold)', a: '$' + act.ingresos.toFixed(2), p: '$' + ant.ingresos.toFixed(2) }
   ];
-  var html = '';
-  items.forEach(function(it){
-    html += '<div class="mc"><div class="ml">' + it.label + '</div><div class="mv" style="color:' + it.color + '">' +
-      (it.value === null || it.value === undefined ? '—' : it.value) + '</div></div>';
-  });
-  el.innerHTML = html;
+  var tbody = document.getElementById('mkt-resumen-body');
+  if (tbody) {
+    var html = '';
+    filas.forEach(function(f){
+      html += '<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + f.c + ';margin-right:7px"></span>' + f.l + '</td>';
+      html += '<td class="num" style="color:' + f.c + '">' + cel(f.a) + '</td>';
+      html += '<td class="prev">' + cel(f.p) + '</td></tr>';
+    });
+    tbody.innerHTML = html;
+  }
+  // ── Estado / fuentes ──
   var est = document.getElementById('mkt-resultado-estado');
-  if (est) est.textContent = nota || '';
+  if (est) {
+    if (cargando) est.textContent = 'Cargando comportamiento de la tienda…';
+    else if (_mktPeriodo === 'hoy' && _mktVisitantesRes === false) est.textContent = 'Sin conexión con leerVisitantes · Sesiones no disponibles. Productos, checkouts, compras e ingresos se calculan con datos locales.';
+    else if (_mktPeriodo === 'hoy') est.textContent = 'Actualizado · Sesiones: leerVisitantes · Productos y checkouts: eventos de Nugudú Store · Compras e ingresos: órdenes existentes.';
+    else est.textContent = 'Actualizado · Sesiones, productos y checkouts: eventos de Nugudú Store · Compras e ingresos: órdenes existentes. Período calendario (lunes a hoy / día 1 a hoy).';
+  }
+  // ── Termómetro de Marketing ──
+  var gauges = [
+    { ico: '📈', name: 'Tráfico', sub: 'Sesiones', a: sesAct, p: ant.sesiones },
+    { ico: '👀', name: 'Interés', sub: 'Productos vistos', a: act.productos, p: ant.productos },
+    { ico: '🛒', name: 'Intención', sub: 'Checkouts', a: act.checkouts, p: ant.checkouts },
+    { ico: '💰', name: 'Resultado', sub: 'Compras', a: act.compras, p: ant.compras }
+  ];
+  var tg = document.getElementById('mkt-termometro');
+  if (tg) {
+    var hg = '';
+    gauges.forEach(function(g){
+      var pc = mktPctTxt(g.a, g.p);
+      hg += '<div class="tg"><div class="tg-ico">' + g.ico + '</div><div class="tg-name">' + g.name + '</div>' +
+            '<div class="tg-sub">' + g.sub + '</div><div class="tg-val" style="color:' + pc.color + '">' + pc.txt + (pc.ico ? ' ' + pc.ico : '') + '</div></div>';
+    });
+    tg.innerHTML = hg;
+  }
+  // ── Origen identificable (red social → sesión → comportamiento → compra) ──
+  var org = mktOrigenVentana(w.act);
+  var el = document.getElementById('mkt-origen');
+  if (el) {
+    if (org === null) {
+      el.innerHTML = (cargandoEventos || cargandoVisitantes)
+        ? '<div class="empty"><i class="fa-solid fa-circle-notch fa-spin"></i><p>Cargando eventos…</p></div>'
+        : '<div class="empty"><i class="fa-solid fa-triangle-exclamation"></i><p>No se pudieron cargar los eventos. Entra de nuevo a Marketing para reintentar.</p></div>';
+    } else {
+      var keys = Object.keys(org);
+      if (!keys.length) {
+        el.innerHTML = '<div class="empty"><i class="fa-solid fa-satellite-dish"></i><p>Sin origen identificable en este período. Sólo se muestra cuando la sesión llegó con una red social detectada automáticamente (sin atribución inventada).</p></div>';
+      } else {
+        keys.sort(function(a, b){ return Object.keys(org[b].sesiones).length - Object.keys(org[a].sesiones).length; });
+        var ho = '<table class="mkt-tbl"><thead><tr><th>Red social</th><th style="text-align:right">Sesiones</th><th style="text-align:right">Productos vistos</th><th style="text-align:right">Checkouts</th><th style="text-align:right">Compras</th></tr></thead><tbody>';
+        keys.forEach(function(k){
+          var x = org[k];
+          ho += '<tr><td style="font-weight:600">' + escHtml(k) + '</td>' +
+                '<td class="num">' + Object.keys(x.sesiones).length + '</td>' +
+                '<td class="num">' + x.productos + '</td>' +
+                '<td class="num">' + x.checkouts + '</td>' +
+                '<td class="num">' + Object.keys(x.compras).length + '</td></tr>';
+        });
+        ho += '</tbody></table>';
+        el.innerHTML = ho;
+      }
+    }
+  }
 }
 
 function mktRefrescarIngresosLocales(){
-  // Sync de órdenes: solo recalcular ingresos locales, sin nueva petición a leerVisitantes.
-  var periodo = document.getElementById('mkt-periodo') ? document.getElementById('mkt-periodo').value : 'hoy';
-  var grid = document.getElementById('mkt-resultado');
-  if (!grid) return;
-  var mcs = grid.querySelectorAll('.mc');
-  if (mcs.length < 5) return;
-  var ing = mktIngresosPeriodo(periodo);
-  var mv = mcs[4].querySelector('.mv');
-  if (mv) mv.textContent = '$' + ing.toFixed(2);
+  // Tras el sync global de órdenes: recalcular el resumen desde _ordenes
+  // locales, sin ninguna petición nueva a leerVisitantes.
+  if (!document.getElementById('mkt-resumen-body')) return;
+  mktRenderResumen();
 }
 
-function cargarMarketingResultado(force){
-  if (_mktResultadoCargando) return;
-  var periodo = document.getElementById('mkt-periodo') ? document.getElementById('mkt-periodo').value : 'hoy';
-  // Ingresos siempre desde órdenes locales (datos existentes)
-  var ingresos = mktIngresosPeriodo(periodo);
-  // Sesiones / productos / checkouts / compras: leerVisitantes (embudo) — misma fuente que CDP, sin modificarla
-  _mktResultadoCargando = true;
-  mktSetResultado({ sesiones: '…', productos: '…', checkouts: '…', compras: '…', ingresos: ingresos }, 'Cargando comportamiento de la tienda…');
-  var url = GAS + '?action=leerVisitantes&periodo=' + encodeURIComponent(periodo) +
-    (force ? '&refresh=1' : '') + '&_t=' + Date.now() + '&token=' + encodeURIComponent(API_TOKEN);
-  cdpFetchJSON(url, CDP_TIMEOUT_MS).then(function(res){
-    _mktResultadoCargando = false;
-    var embudo = {};
-    var ok = res && res.ok && res.data && res.data.ok;
-    if (ok) embudo = (res.data.analytics && res.data.analytics.embudo) || {};
-    var vals = {
-      sesiones: ok ? (res.data.stats && (res.data.stats[periodo] || res.data.stats.hoy) || (res.data.visitantes || []).length) : null,
-      productos: ok ? (embudo.product_click || 0) : null,
-      checkouts: ok ? (embudo.checkout_start || 0) : null,
-      compras: ok ? (embudo.purchase || 0) : null,
-      ingresos: ingresos
-    };
-    // stats keys are activos/hoy/semana/mes
-    if (ok) {
-      var st = res.data.stats || {};
-      if (periodo === 'hoy') vals.sesiones = st.hoy != null ? st.hoy : vals.sesiones;
-      else if (periodo === 'semana') vals.sesiones = st.semana != null ? st.semana : vals.sesiones;
-      else if (periodo === 'mes') vals.sesiones = st.mes != null ? st.mes : vals.sesiones;
-    }
-    var nota = ok
-      ? 'Actualizado · resultado global de Nugudú Store · no atribuido a un contenido individual.'
-      : 'No se pudo cargar el comportamiento de la tienda. Ingresos muestran órdenes locales. Intenta «Actualizar».';
-    mktSetResultado(vals, nota);
-  });
+function cargarMarketing(force){
+  mktPintarTabs();
+  mktRenderResumen();
+  if (!_mktResultadoCargando) {
+    _mktResultadoCargando = true;
+    mktRenderResumen();
+    var url = GAS + '?action=leerVisitantes&periodo=' + encodeURIComponent(_mktPeriodo) +
+      (force ? '&refresh=1' : '') + '&_t=' + Date.now() + '&token=' + encodeURIComponent(API_TOKEN);
+    cdpFetchJSON(url, CDP_TIMEOUT_MS).then(function(res){
+      _mktResultadoCargando = false;
+      _mktVisitantesRes = (res && res.ok && res.data && res.data.ok) ? res.data : false;
+      mktRenderResumen();
+    });
+  }
+  if (!_cdpEventosTieneDatos) {
+    cdpRefrescarEventos(function(){
+      _mktEventosIntentado = true;
+      mktRenderResumen();
+    });
+  } else {
+    _mktEventosIntentado = true;
+  }
 }
 </script>
 <div id="modal-direccion-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,16,40,.45);z-index:999;align-items:center;justify-content:center;padding:1rem"></div>

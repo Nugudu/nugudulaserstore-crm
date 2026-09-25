@@ -4614,6 +4614,9 @@ function cargarMarketing(forceResultado){
   mktCerrarFormulario();
   mktSyncRemoto(true);
   cargarMarketingResultado(forceResultado === true);
+  if(!_cdpEventosTieneDatos){
+    cdpRefrescarEventos(function(){ mktRenderLista(); });
+  }
 }
 
 function mktAbrirFormulario(id){

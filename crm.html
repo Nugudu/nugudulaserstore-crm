@@ -1812,6 +1812,32 @@ var _mapTimer = null;
 function onDireccionInput(){
   clearTimeout(_mapTimer);
   var texto = (document.getElementById('f-direccion').value || '').trim();
+  if (!texto) {
+    document.getElementById('map-wrap').style.display = 'none';
+    return;
+  }
+  // Link o coordenadas pegados directamente en el campo de dirección:
+  // se resuelven casi al instante, se pone el pin en Google Maps y el
+  // contenido del campo se REEMPLAZA por la transcripción legible —
+  // un link nunca debe quedar guardado como dirección.
+  if (esLinkOCoordsTexto(texto)) {
+    var zSelPegado = document.getElementById('f-zona').value || '';
+    var capturado = texto;
+    _mapTimer = setTimeout(function(){
+      // No se valida contra el valor actual del campo: si el usuario sigue
+      // escribiendo, este timer ya fue cancelado y reprogramado por el
+      // siguiente input; lo único que puede cambiar el campo sin input es
+      // una transcripción tardía nuestra, y en ese caso el pegado nuevo
+      // manda (repara el campo con su propia transcripción).
+      aplicarGPS(capturado, {
+        desdeDireccion: true,
+        alTranscribir: function(){
+          if (zSelPegado === '__especial__') sugerirZonaEspecial();
+        }
+      });
+    }, 350);
+    return;
+  }
   if (texto.length < 5) {
     document.getElementById('map-wrap').style.display = 'none';
     return;
@@ -1829,14 +1855,15 @@ function onDireccionInput(){
     }
   }, 700); // espera a que termine de escribir
 }
-function osmLinkURL(lat,lng){
+// Google Maps SIN clave: el endpoint público output=embed sirve el mapa
+// (y geocodifica texto dentro del link) sin necesidad de API key.
+function gmapsPinURL(lat,lng){
   lat=parseFloat(lat);lng=parseFloat(lng);
-  return 'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lng+'#map=15/'+lat+'/'+lng;
+  return 'https://www.google.com/maps?q='+lat+','+lng;
 }
-function osmEmbedURL(lat,lng){
+function gmapsEmbedURL(lat,lng){
   lat=parseFloat(lat);lng=parseFloat(lng);
-  var o=0.01;
-  return 'https://www.openstreetmap.org/export/embed.html?bbox='+(lng-o)+','+(lat-o)+','+(lng+o)+','+(lat+o)+'&layer=mapnik&marker='+lat+','+lng;
+  return 'https://maps.google.com/maps?q='+lat+','+lng+'&z=15&hl=es&output=embed';
 }
 // Geocodifica con LocationIQ (via Code_1.gs) para centrar el mapa en un
 // punto preciso -- si no hay resultado (o la llave de LocationIQ no esta
@@ -1855,32 +1882,32 @@ function actualizarMapa(direccionTexto, zona){
   gasCall({method:'POST', body:{action:'geocodificar', direccion:direccionTexto, zona:zona}}, function(err, res){
     if (!err && res && res.ok && res.lat && res.lng && res.dentro_zona !== false) {
       var q = res.lat + ',' + res.lng;
-      frame.src = osmEmbedURL(res.lat, res.lng);
-      abrir.href = osmLinkURL(res.lat, res.lng);
-      status.textContent = 'Ubicación precisa (LocationIQ).';
+      frame.src = gmapsEmbedURL(res.lat, res.lng);
+      abrir.href = gmapsPinURL(res.lat, res.lng);
+      status.textContent = 'Ubicación precisa (Google Maps).';
       // Autocompleta la caja "pega coordenadas" SOLO si esta vacia, para no
       // pisar una coordenada que la persona ya haya pegado a mano -- sigue
       // siendo 100% editable despues, esto solo la completa por defecto.
       var gpsBoxAuto = document.getElementById('f-gps');
       if (gpsBoxAuto && !(gpsBoxAuto.value||'').trim()) {
         gpsBoxAuto.value = res.lat + ', ' + res.lng;
-        window._mapaLinkGPS = osmLinkURL(res.lat, res.lng);
+        window._mapaLinkGPS = gmapsPinURL(res.lat, res.lng);
       }
     } else if (!err && res && res.zona_lat && res.zona_lng) {
       // La direccion cayo lejos de la zona o no se ubico: centrar en la zona.
       var zq = res.zona_lat + ',' + res.zona_lng;
-      frame.src = osmEmbedURL(res.zona_lat, res.zona_lng);
-      abrir.href = osmLinkURL(res.zona_lat, res.zona_lng);
+      frame.src = gmapsEmbedURL(res.zona_lat, res.zona_lng);
+      abrir.href = gmapsPinURL(res.zona_lat, res.zona_lng);
       status.innerHTML = _svgPushpin + ' La dirección no se encontró con precisión — el mapa se centró en la zona de envío (' + escHtml(direccionTexto) + ').';
       var gpsBoxZona = document.getElementById('f-gps');
       if (gpsBoxZona && !(gpsBoxZona.value||'').trim()) {
         gpsBoxZona.value = res.zona_lat + ', ' + res.zona_lng;
-        window._mapaLinkGPS = osmLinkURL(res.zona_lat, res.zona_lng);
+        window._mapaLinkGPS = gmapsPinURL(res.zona_lat, res.zona_lng);
       }
     } else {
       var query = encodeURIComponent(direccionTexto + ', El Salvador');
       frame.src = '';
-      abrir.href = 'https://www.openstreetmap.org/search?query=' + query;
+      abrir.href = 'https://www.google.com/maps/search/?api=1&query=' + query;
       status.textContent = 'Ubicación aproximada según la dirección escrita.';
     }
     wrap.style.display = 'block';
@@ -1889,8 +1916,8 @@ function actualizarMapa(direccionTexto, zona){
 
 // Extrae coordenadas lat,lng de formatos de link conocidos:
 // https://maps.google.com/?q=13.667,-89.247
-// https://www.openstreetmap.org/?mlat=13.667&mlon=-89.247
-// https://maps.app.goo.gl/... (links acortados — no se pueden resolver sin API, se informa)
+// https://www.openstreetmap.org/?mlat=13.667&mlon=-89.247 (links viejos siguen funcionando)
+// https://maps.app.goo.gl/... (links acortados — se resuelven via GAS)
 // Extrae coordenadas de cualquier formato conocido directamente en el cliente.
 function extraerCoordenadas(link){
   var m;
@@ -1906,6 +1933,15 @@ function extraerCoordenadas(link){
 function esLinkAcortado(link){
   return /maps\.app\.goo\.gl|goo\.gl\/maps|bit\.ly|tinyurl|ow\.ly/i.test(link);
 }
+// Detecta si el contenido de un campo parece un link de mapa o coordenadas
+// pegadas (en vez de una dirección escrita a mano).
+function esLinkOCoordsTexto(txt){
+  if (!txt) return false;
+  if (extraerCoordenadas(txt)) return true;
+  if (/^https?:\/\//i.test(txt)) return true;
+  if (esLinkAcortado(txt)) return true;
+  return false;
+}
 var _gpsDebounce = null;
 function onGPSInput(){
   clearTimeout(_gpsDebounce);
@@ -1913,13 +1949,14 @@ function onGPSInput(){
   if (!link) return;
   _gpsDebounce = setTimeout(function(){ aplicarGPS(link); }, 600);
 }
-function aplicarGPS(link){
+function aplicarGPS(link, opciones){
   if (!link) return;
+  opciones = opciones || {};
   var status = document.getElementById('map-status');
   var wrap   = document.getElementById('map-wrap');
   // 1. Extracción directa client-side (formatos completos conocidos)
   var coords = extraerCoordenadas(link);
-  if (coords) { mostrarCoordsMapa(coords); return; }
+  if (coords) { mostrarCoordsMapa(coords, opciones); return; }
   // 2. Links acortados o URLs http: los resuelve GAS
   if (link.indexOf('http') === 0) {
     // Si es maps.app.goo.gl — avisa de inmediato con instrucción clara mientras intenta GAS
@@ -1934,47 +1971,68 @@ function aplicarGPS(link){
     document.getElementById('map-frame').src = '';
     gasCall({method:'POST', body:{action:'resolverLink', url:link}}, function(err, res){
       if (!err && res && res.ok && res.lat && res.lng) {
-        mostrarCoordsMapa({lat:res.lat, lng:res.lng});
+        mostrarCoordsMapa({lat:res.lat, lng:res.lng}, opciones);
       } else {
         // GAS no pudo resolver — da instrucción práctica al usuario
         status.innerHTML = _svgWarning + ' No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, ' +
           'copia la URL completa de la barra de direcciones del navegador y pégala aquí. ' +
-          '<a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>';
+          '<a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>' +
+          (opciones.desdeDireccion ? ' <b>Y revisa el campo Dirección: borra el enlace y escribe la dirección a mano.</b>' : '');
         document.getElementById('map-abrir').href = link;
       }
     });
     return;
   }
-  status.textContent = 'Formato no reconocido — pega coordenadas (13.68,-89.24), un link de OpenStreetMap, Google Maps, Waze o WhatsApp.';
+  status.textContent = 'Formato no reconocido — pega coordenadas (13.68,-89.24), un link de Google Maps, Waze, OpenStreetMap o WhatsApp.';
   wrap.style.display = 'block';
   document.getElementById('map-frame').src = '';
 }
-function mostrarCoordsMapa(coords){
-  document.getElementById('map-frame').src = osmEmbedURL(coords.lat, coords.lng);
-  document.getElementById('map-abrir').href = osmLinkURL(coords.lat, coords.lng);
+// Escribe las coordenadas como texto en el campo de dirección y, si
+// Nominatim responde (reverse geocoding, gratis y sin clave), las
+// reemplaza por una dirección legible. Si el reverse falla, quedan las
+// coordenadas como texto — lo importante es que nunca quede un link.
+// El token invalida transcripciones viejas: si el usuario pega otro link
+// mientras una respuesta de Nominatim sigue en vuelo, la respuesta tardía
+// no puede pisar la ubicación más nueva.
+var _transcribirToken = 0;
+function transcribirCoordsATexto(coords, campo, alTerminar){
+  if (!campo) { if (alTerminar) alTerminar(); return; }
+  var miToken = ++_transcribirToken;
+  campo.value = coords.lat + ', ' + coords.lng;
+  var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + coords.lat + '&lon=' + coords.lng + '&accept-language=es';
+  fetch(url, {headers:{'Accept-Language':'es'}})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (miToken === _transcribirToken && data && data.display_name) {
+        // Usa solo las primeras 2-3 partes (calle, colonia, ciudad) — no el país completo
+        var partes = data.display_name.split(',').map(function(p){ return p.trim(); });
+        partes = partes.filter(function(p){ return p && p !== 'El Salvador'; });
+        campo.value = partes.slice(0, 3).join(', ');
+      }
+      if (alTerminar) alTerminar();
+    })
+    .catch(function(){ if (alTerminar) alTerminar(); });
+}
+function mostrarCoordsMapa(coords, opciones){
+  opciones = opciones || {};
+  document.getElementById('map-frame').src = gmapsEmbedURL(coords.lat, coords.lng);
+  document.getElementById('map-abrir').href = gmapsPinURL(coords.lat, coords.lng);
   document.getElementById('map-status').innerHTML = _svgPushpin + ' ' + coords.lat + ', ' + coords.lng + ' — Ubicación GPS fijada.';
   document.getElementById('map-wrap').style.display = 'block';
-  window._mapaLinkGPS = osmLinkURL(coords.lat, coords.lng);
+  window._mapaLinkGPS = gmapsPinURL(coords.lat, coords.lng);
   var gpsBoxSync = document.getElementById('f-gps');
   if (gpsBoxSync) gpsBoxSync.value = coords.lat + ', ' + coords.lng;
-  // Auto-llenar el campo de dirección con las coordenadas si está vacío,
-  // y luego intentar reverse geocoding con Nominatim para obtener una dirección legible.
+  // Transcripción de la ubicación a texto en el campo de dirección:
+  //  • pegado en el campo Dirección (desdeDireccion) → SIEMPRE se reemplaza
+  //    con la transcripción, para que nunca quede un link como dirección;
+  //  • pegado en f-gps → sólo se completa si el campo está vacío o contiene
+  //    link/coordenadas; una dirección ya escrita a mano se conserva tal cual.
   var campoDir = document.getElementById('f-direccion');
-  if (!(campoDir.value || '').trim()) {
-    campoDir.value = coords.lat + ', ' + coords.lng;
-    // Reverse geocode silencioso — si funciona, reemplaza las coordenadas por la dirección real
-    var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + coords.lat + '&lon=' + coords.lng + '&accept-language=es';
-    fetch(url, {headers:{'Accept-Language':'es'}})
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        if (data && data.display_name) {
-          // Usa solo las primeras 2-3 partes (calle, colonia, ciudad) — no el país completo
-          var partes = data.display_name.split(',').map(function(p){ return p.trim(); });
-          partes = partes.filter(function(p){ return p && p !== 'El Salvador'; });
-          campoDir.value = partes.slice(0, 3).join(', ');
-        }
-      })
-      .catch(function(){ /* si falla, deja las coordenadas — no es crítico */ });
+  var dirActual = (campoDir.value || '').trim();
+  if (opciones.desdeDireccion || !dirActual || esLinkOCoordsTexto(dirActual)) {
+    transcribirCoordsATexto(coords, campoDir, opciones.alTranscribir);
+  } else if (opciones.alTranscribir) {
+    opciones.alTranscribir();
   }
 }
 function quitarMapaGPS(){
@@ -1986,11 +2044,12 @@ function quitarMapa(){
   document.getElementById('map-frame').src = '';
   window._mapaLinkGPS = null;
 }
-// Construye el link de OpenStreetMap para guardarlo con la orden (compartir con repartidor).
+// Construye un link de Google Maps (búsqueda por texto, sin clave) para
+// guardarlo con la orden cuando no hay coordenadas precisas.
 function linkMapaDesdeDireccion(direccionTexto, zona){
   if (!direccionTexto) return '';
   var query = encodeURIComponent(direccionTexto + (zona ? ', ' + zona : '') + ', El Salvador');
-  return 'https://www.openstreetmap.org/search?query=' + query;
+  return 'https://www.google.com/maps/search/?api=1&query=' + query;
 }
 // Link de TEXTO para el QR de la ficha de entrega (solo lo escanea el repartidor):
 // abre Google Maps con la direccion escrita por el cliente. Sin coordenadas ni
@@ -2384,7 +2443,7 @@ function abrirEditarOrden(id){
     '<p style="font-size:12px;color:var(--muted);margin-bottom:14px">Los cambios se guardan también en Google Sheets.</p>'+
     '<div class="fg" style="margin-bottom:10px"><label>Nombre</label><input id="ed-nombre" type="text" value="'+esc(o.nombre||'')+'"></div>'+
     '<div class="fg" style="margin-bottom:10px"><label>Contacto</label><input id="ed-contacto" type="text" value="'+esc(o.contacto||'')+'"></div>'+
-    '<div class="fg" style="margin-bottom:10px"><label>Dirección</label><input id="ed-direccion" type="text" value="'+esc(o.direccion||'')+'"></div>'+
+    '<div class="fg" style="margin-bottom:10px"><label>Dirección</label><input id="ed-direccion" type="text" value="'+esc(o.direccion||'')+'" oninput="onDireccionInputEdit()"></div>'+
     '<div class="fg" style="margin-bottom:10px"><label>Zona</label><input id="ed-zona" type="text" value="'+esc(o.zona||'')+'"></div>'+
     '<div class="fg" style="margin-bottom:10px"><label>Cantidad</label><input id="ed-cantidad" type="number" min="1" value="'+(o.cantidad||1)+'"></div>'+
     '<div class="fg" style="margin-bottom:10px"><label>Notas</label><input id="ed-notas" type="text" value="'+esc(o.notas||'')+'"></div>'+
@@ -2464,18 +2523,36 @@ function guardarEdicionOrden(id){
 // se usan en Nueva Venta), con sus propios ids (ed-gps, ed-map-*) y su propia
 // variable (_edMapaLink) para no pisarse con el formulario de Nueva Venta.
 var _edGpsDebounce=null;
+// Sólo intercepta links/coordenadas pegados en el campo de dirección de
+// edición (sin geocoding en vivo del texto, como siempre): al detectarlos
+// resuelve la ubicación y REEMPLAZA el contenido con la transcripción
+// legible, para que nunca quede un link como dirección.
+var _edDirDebounce=null;
+function onDireccionInputEdit(){
+  clearTimeout(_edDirDebounce);
+  var campo=document.getElementById('ed-direccion');
+  if(!campo) return;
+  var texto=(campo.value||'').trim();
+  if(!texto || !esLinkOCoordsTexto(texto)) return;
+  var capturado=texto;
+  _edDirDebounce=setTimeout(function(){
+    // Sin validación contra el valor actual: ver comentario de onDireccionInput.
+    aplicarGPSEdit(capturado, {desdeDireccion:true});
+  }, 350);
+}
 function onGPSInputEdit(){
   clearTimeout(_edGpsDebounce);
   var link=(document.getElementById('ed-gps').value||'').trim();
   if(!link) return;
   _edGpsDebounce=setTimeout(function(){ aplicarGPSEdit(link); },600);
 }
-function aplicarGPSEdit(link){
+function aplicarGPSEdit(link, opciones){
   if(!link) return;
+  opciones=opciones||{};
   var status=document.getElementById('ed-map-status');
   var wrap=document.getElementById('ed-map-wrap');
   var coords=extraerCoordenadas(link);
-  if(coords){ mostrarCoordsMapaEdit(coords); return; }
+  if(coords){ mostrarCoordsMapaEdit(coords, opciones); return; }
   if(link.indexOf('http')===0){
     if(esLinkAcortado(link)){
       wrap.style.display='block';
@@ -2488,27 +2565,39 @@ function aplicarGPSEdit(link){
     document.getElementById('ed-map-frame').src='';
     gasCall({method:'POST', body:{action:'resolverLink', url:link}}, function(err,res){
       if(!err && res && res.ok && res.lat && res.lng){
-        mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng});
+        mostrarCoordsMapaEdit({lat:res.lat, lng:res.lng}, opciones);
       }else{
-        status.innerHTML=_svgWarning+' No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, copia la URL completa de la barra de direcciones y pégala aquí. <a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>';
+        status.innerHTML=_svgWarning+' No se pudo resolver automáticamente. <b>Abre este link en Chrome o Safari</b>, copia la URL completa de la barra de direcciones y pégala aquí. <a href="'+link+'" target="_blank" style="color:var(--navy);font-weight:600">Abrir link</a>'+
+          (opciones.desdeDireccion ? ' <b>Y revisa el campo Dirección: borra el enlace y escribe la dirección a mano.</b>' : '');
         document.getElementById('ed-map-abrir').href=link;
       }
     });
     return;
   }
-  status.textContent='Formato no reconocido — pega coordenadas (13.68,-89.24), un link de OpenStreetMap, Google Maps, Waze o WhatsApp.';
+  status.textContent='Formato no reconocido — pega coordenadas (13.68,-89.24), un link de Google Maps, Waze, OpenStreetMap o WhatsApp.';
   wrap.style.display='block';
   document.getElementById('ed-map-frame').src='';
 }
-function mostrarCoordsMapaEdit(coords){
+function mostrarCoordsMapaEdit(coords, opciones){
+  opciones=opciones||{};
   var edGpsFrame=document.getElementById('ed-map-frame'); if(!edGpsFrame) return;
-  edGpsFrame.src=osmEmbedURL(coords.lat, coords.lng);
-  document.getElementById('ed-map-abrir').href=osmLinkURL(coords.lat, coords.lng);
+  edGpsFrame.src=gmapsEmbedURL(coords.lat, coords.lng);
+  document.getElementById('ed-map-abrir').href=gmapsPinURL(coords.lat, coords.lng);
   document.getElementById('ed-map-status').innerHTML=_svgPushpin+' '+coords.lat+', '+coords.lng+' — Ubicación GPS fijada.';
   document.getElementById('ed-map-wrap').style.display='block';
-  window._edMapaLink=osmLinkURL(coords.lat, coords.lng);
+  window._edMapaLink=gmapsPinURL(coords.lat, coords.lng);
   var edGpsBox=document.getElementById('ed-gps');
   if(edGpsBox) edGpsBox.value = coords.lat + ', ' + coords.lng;
+  // Misma regla que en Nueva Venta: el campo de dirección sólo se toca si
+  // estaba vacío, contiene link/coordenadas (nunca debe quedar un link como
+  // dirección) o el cambio vino pegado directo en ese campo.
+  var campoDir=document.getElementById('ed-direccion');
+  if(campoDir){
+    var dirActual=(campoDir.value||'').trim();
+    if(opciones.desdeDireccion || !dirActual || esLinkOCoordsTexto(dirActual)){
+      transcribirCoordsATexto(coords, campoDir);
+    }
+  }
 }
 function quitarMapaEdit(){
   window._edMapaLink=null;

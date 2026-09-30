@@ -1810,6 +1810,9 @@ function descartarSolicitud(ref){
 // igual al de cualquier "Compartir ubicación" desde la app de Maps.
 var _mapTimer = null;
 function onDireccionInput(){
+  // El usuario tecleó: cualquier transcripción Nominatim aún en vuelo queda
+  // obsoleta — su respuesta tardía no tiene derecho a pisar este texto.
+  _transcribirToken++;
   clearTimeout(_mapTimer);
   var texto = (document.getElementById('f-direccion').value || '').trim();
   if (!texto) {
@@ -1944,6 +1947,7 @@ function esLinkOCoordsTexto(txt){
 }
 var _gpsDebounce = null;
 function onGPSInput(){
+  _transcribirToken++; // input del usuario → invalida transcripciones en vuelo
   clearTimeout(_gpsDebounce);
   var link = (document.getElementById('f-gps').value || '').trim();
   if (!link) return;
@@ -2529,6 +2533,7 @@ var _edGpsDebounce=null;
 // legible, para que nunca quede un link como dirección.
 var _edDirDebounce=null;
 function onDireccionInputEdit(){
+  _transcribirToken++; // input del usuario → invalida transcripciones en vuelo
   clearTimeout(_edDirDebounce);
   var campo=document.getElementById('ed-direccion');
   if(!campo) return;
@@ -2541,6 +2546,7 @@ function onDireccionInputEdit(){
   }, 350);
 }
 function onGPSInputEdit(){
+  _transcribirToken++; // input del usuario → invalida transcripciones en vuelo
   clearTimeout(_edGpsDebounce);
   var link=(document.getElementById('ed-gps').value||'').trim();
   if(!link) return;

@@ -2825,7 +2825,7 @@ function renderRepDash(){
 // el formulario de entrega después de cada parada.
 function imprimirListaDia(){
   if (!_repCodigo) return;
-  var ords = getOrd().filter(function(o){ return parseInt(o.estado)===3 || parseInt(o.estado)===4; });
+  var ords = getOrd().filter(function(o){ return parseInt(o.estado)===2 || parseInt(o.estado)===3 || parseInt(o.estado)===4; });
   if (!ords.length) { alert('No hay pedidos asignados para mostrar.'); return; }
   var hoy = new Date().toLocaleDateString('es-SV', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 

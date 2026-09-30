@@ -2786,7 +2786,7 @@ function logoutRep(){ _repCodigo=null; try{sessionStorage.removeItem(REP_SESSION
 function renderRepDash(){
   if(!_repCodigo)return;
   var hoy=new Date().toISOString().slice(0,10);
-  var ords=getOrd().filter(function(o){return parseInt(o.estado)===3||parseInt(o.estado)===4;});
+  var ords=getOrd().filter(function(o){return parseInt(o.estado)===2||parseInt(o.estado)===3||parseInt(o.estado)===4;});
   var entHoy=ords.filter(function(o){return parseInt(o.estado)===4&&(o.historial||[]).some(function(h){return parseInt(h.estado)===4&&h.fecha&&h.fecha.slice(0,10)===hoy;});});
   var pend=ords.filter(function(o){return parseInt(o.estado)===3;});
   document.getElementById('rs-asig').textContent=ords.length;
@@ -2808,7 +2808,7 @@ function renderRepDash(){
     var yaEnt=parseInt(o.estado)===4;
     var waLink='https://wa.me/'+o.contacto.replace(/\D/g,'')+'?text='+encodeURIComponent('Hola '+o.nombre+', soy el repartidor de Nugudú, estoy en camino con tu pedido '+o.orden+'.');
     var mapLink=o.mapaLink || linkMapaDesdeDireccion(o.direccion, o.zona);
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;margin-bottom:10px;box-shadow:var(--sh)"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem"><div><div style="font-family:\'DM Mono\',monospace;font-size:13px">'+esc(o.orden)+'</div><div style="font-weight:600;font-size:15px;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>'+esc(o.direccion||'')+' · '+esc(o.zona)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-brands fa-whatsapp" style="color:#25D366;margin-right:4px"></i>'+esc(o.contacto)+'</div></div><span class="status '+SCLS[parseInt(o.estado)]+'">'+ESTADOS[parseInt(o.estado)]+'</span></div>'+(o.notas?'<div style="font-size:12px;background:var(--gold-pale);border:1px solid #f5d88a;border-radius:6px;padding:6px 10px;margin-top:.5rem">'+esc(o.notas)+'</div>':'')+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">'+(!yaEnt?'<button class="btn btn-green btn-sm" onclick="repEntregar('+o.id+')"><i class="fa-solid fa-circle-check"></i> Marcar entregado</button>':'<span style="font-size:13px;color:var(--green);font-weight:500"><i class="fa-solid fa-circle-check"></i> Entregado</span>')+'<a class="btn btn-wa btn-sm" href="'+waLink+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Avisar</a><a class="btn btn-outline btn-sm" href="'+mapLink+'" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Mapa</a><button class="btn btn-outline btn-sm" onclick="imprimirFichaQR('+o.id+')"><i class="fa-solid fa-print"></i> Imprimir ficha</button></div></div>';
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;margin-bottom:10px;box-shadow:var(--sh)"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem"><div><div style="font-family:\'DM Mono\',monospace;font-size:13px">'+esc(o.orden)+'</div><div style="font-weight:600;font-size:15px;margin-top:2px">'+esc(o.nombre)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-solid fa-location-dot" style="color:var(--coral);margin-right:4px"></i>'+esc(o.direccion||'')+' · '+esc(o.zona)+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px"><i class="fa-brands fa-whatsapp" style="color:#25D366;margin-right:4px"></i>'+esc(o.contacto)+'</div></div><span class="status '+SCLS[parseInt(o.estado)]+'">'+ESTADOS[parseInt(o.estado)]+'</span></div>'+(o.notas?'<div style="font-size:12px;background:var(--gold-pale);border:1px solid #f5d88a;border-radius:6px;padding:6px 10px;margin-top:.5rem">'+esc(o.notas)+'</div>':'')+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">'+(parseInt(o.estado)===2?'<button class="btn btn-primary btn-sm" onclick="repTransito('+o.id+')"><i class="fa-solid fa-truck-fast"></i> Marcar En Tránsito</button>':'')+(!yaEnt?'<button class="btn btn-green btn-sm" onclick="repEntregar('+o.id+')"><i class="fa-solid fa-circle-check"></i> Marcar entregado</button>':'<span style="font-size:13px;color:var(--green);font-weight:500"><i class="fa-solid fa-circle-check"></i> Entregado</span>')+'<a class="btn btn-wa btn-sm" href="'+waLink+'" target="_blank"><i class="fa-brands fa-whatsapp"></i> Avisar</a><a class="btn btn-outline btn-sm" href="'+mapLink+'" target="_blank"><i class="fa-solid fa-map-location-dot"></i> Mapa</a><button class="btn btn-outline btn-sm" onclick="imprimirFichaQR('+o.id+')"><i class="fa-solid fa-print"></i> Imprimir ficha</button></div></div>';
   }).join('');
 }
 
@@ -3025,6 +3025,21 @@ function repEntregar(id){
   _ordenes[idx].historial.push(h);
   saveLocal(); updateOverview(); renderRepDash();
   updateGASField(id, {estado:'4', historial:_ordenes[idx].historial});
+}
+// Repartidor marca "En Tránsito": disponible sólo desde En empaque, con el
+// mismo guardado y sync hacia el panel administrativo que "Marcar entregado".
+function repTransito(id){
+  if(!confirm('¿Marcar como En Tránsito?'))return;
+  var idx=-1;
+  for(var i=0;i<_ordenes.length;i++){if(_ordenes[i].id===id){idx=i;break;}}
+  if(idx<0)return;
+  if(parseInt(_ordenes[idx].estado)!==2)return;
+  _ordenes[idx].estado='3';
+  if(!_ordenes[idx].historial)_ordenes[idx].historial=[];
+  var h={estado:'3',fecha:new Date().toISOString(),rep:_repCodigo};
+  _ordenes[idx].historial.push(h);
+  saveLocal(); updateOverview(); renderRepDash();
+  updateGASField(id, {estado:'3', historial:_ordenes[idx].historial});
 }
 
 // INVENTARIO

@@ -12,6 +12,7 @@ var HOJA_CATALOGO    = 'Catalogo';
 var HOJA_EVENTOS     = 'eventos_usuario';
 var HOJA_SOLICITUDES = 'solicitudes';
 var HOJA_MKT         = 'mkt_contenido';
+var HOJA_RESENAS     = 'resenas';
 var NOTIFY_EMAIL     = 'nugudulasersv@gmail.com';
 // Token compartido: index.html y pedido.html deben mandarlo en cada llamada.
 // Cierra el acceso publico anonimo al endpoint (antes cualquiera con la URL
@@ -132,6 +133,8 @@ function doGet(e) {
     // Solicitudes de transferencia: el CRM las lee para la seccion
     // "Pagos pendientes" (ref SOL-..., ver guardarSolicitudWeb).
     if (action === 'solicitudes') return respond(leerSolicitudes());
+    // Resenas por producto: resumen {productoId:{suma,cantidad}} para la tienda.
+    if (action === 'resenas')     return respond(resumenResenas());
     // Marketing Contenido: lista central (fuente de verdad multi-dispositivo).
     if (action === 'mktRead') return respond(leerMkt());
     return respond({ error: 'Accion desconocida: ' + action });
@@ -173,6 +176,10 @@ function doPost(e) {
     if (action === 'buscarClienteOrdenSeguro') return respond(buscarClienteOrdenSeguro(payload.orden, payload.codigo));
     if (action === 'mktUpsert') return respond(conLock(function(){ return upsertMkt(payload.data); }));
     if (action === 'mktDelete') return respond(conLock(function(){ return deleteMkt(payload.id); }));
+    // Guarda una calificacion (1-5) de un dispositivo anonimo. Sin validacion
+    // de compra: cualquier persona puede calificar. La barrera es 1 voto por
+    // dispositivo y producto (deviceId aleatorio generado en localStorage).
+    if (action === 'guardarResena') return respond(conLock(function(){ return guardarResena(payload); }));
     return respond({ error: 'Accion desconocida' });
   } catch (err) {
     return respond({ ok: false, error: err.message });
@@ -1121,6 +1128,114 @@ function guardarSolicitudes(lista) {
     props.deleteProperty('SOLICITUDES_CACHE');
     props.deleteProperty('SOLICITUDES_CACHE_EXP');
   } catch(e) {}
+}
+
+// ── RESEÑAS POR PRODUCTO ─────────────────────────────────────────
+// Hoja nueva 'resenas' en el MISMO spreadsheet de ordenes. 1 fila = 1
+// calificacion en JSON: {reviewId, productoId, calificacion, fecha,
+// deviceId, estado}. No escribe en ninguna hoja existente. El promedio
+// NUNCA se guarda: se deriva siempre de las filas (suma/cantidad).
+
+function getHojaResenas() {
+  var ss    = abrirSS(SHEET_ORDENES);
+  var sheet = ss.getSheetByName(HOJA_RESENAS);
+  if (!sheet) { sheet = ss.insertSheet(HOJA_RESENAS); }
+  return sheet;
+}
+
+function leerResenas() {
+  var props = PropertiesService.getScriptProperties();
+  var cached = props.getProperty('RESENAS_CACHE');
+  var cacheExp = parseInt(props.getProperty('RESENAS_CACHE_EXP') || '0');
+  if (cached && Date.now() < cacheExp) {
+    try { return JSON.parse(cached); } catch(e) {}
+  }
+  var sheet   = getHojaResenas();
+  var lastRow = sheet.getLastRow();
+  var lista   = [];
+  if (lastRow >= 1) {
+    var values = sheet.getRange(1, 1, lastRow, 1).getValues();
+    for (var i = 0; i < values.length; i++) {
+      var raw = values[i][0];
+      if (!raw) continue;
+      try {
+        var r = JSON.parse(raw);
+        if (r && typeof r === 'object' && !Array.isArray(r)) lista.push(r);
+      } catch(e) { /* fila invalida - se ignora, no rompe el resto */ }
+    }
+  }
+  try { props.setProperty('RESENAS_CACHE', JSON.stringify(lista)); props.setProperty('RESENAS_CACHE_EXP', String(Date.now() + 30000)); } catch(e) {}
+  return lista;
+}
+
+function calcularResumenResenas(lista) {
+  var out = {};
+  for (var i = 0; i < lista.length; i++) {
+    var r = lista[i];
+    if (!r || !r.productoId) continue;
+    if (r.estado && r.estado !== 'activa') continue;
+    var c = parseInt(r.calificacion);
+    if (!(c >= 1 && c <= 5)) continue;
+    if (!out[r.productoId]) out[r.productoId] = { suma: 0, cantidad: 0 };
+    out[r.productoId].suma += c;
+    out[r.productoId].cantidad += 1;
+  }
+  return out;
+}
+
+function resumenResenas() {
+  var props = PropertiesService.getScriptProperties();
+  var cached = props.getProperty('RESENAS_RESUMEN_CACHE');
+  var cacheExp = parseInt(props.getProperty('RESENAS_RESUMEN_CACHE_EXP') || '0');
+  if (cached && Date.now() < cacheExp) {
+    try { return { ok: true, resumen: JSON.parse(cached) }; } catch(e) {}
+  }
+  var res = calcularResumenResenas(leerResenas());
+  try { props.setProperty('RESENAS_RESUMEN_CACHE', JSON.stringify(res)); props.setProperty('RESENAS_RESUMEN_CACHE_EXP', String(Date.now() + 30000)); } catch(e) {}
+  return { ok: true, resumen: res };
+}
+
+function guardarResena(payload) {
+  try {
+    var pid = String(payload.productoId || '').trim();
+    if (!/^[A-Za-z0-9.]{1,20}$/.test(pid)) return { ok: false, error: 'Producto no valido.' };
+    var cal = String(payload.calificacion || '').trim();
+    if (!/^[1-5]$/.test(cal)) return { ok: false, error: 'La calificacion debe ser de 1 a 5.' };
+    var deviceId = String(payload.deviceId || '').trim().slice(0, 64);
+    if (!deviceId || deviceId.length < 4) return { ok: false, error: 'No se pudo registrar el dispositivo.' };
+
+    // Barrera invisible: 1 voto por dispositivo y producto (deviceId anonimo).
+    var lista = leerResenas();
+    for (var i = 0; i < lista.length; i++) {
+      var r = lista[i];
+      if (r && r.productoId === pid && r.deviceId === deviceId) {
+        return { ok: false, error: 'Ya calificaste este producto.' };
+      }
+    }
+
+    var fila = {
+      reviewId:    'rv-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
+      productoId:  pid,
+      calificacion: parseInt(cal),
+      fecha:       new Date().toISOString(),
+      deviceId:    deviceId,
+      estado:      'activa'
+    };
+    getHojaResenas().appendRow([JSON.stringify(fila)]);
+
+    // Invalidar caches y devolver el resumen ya actualizado (actualizacion
+    // inmediata del promedio en la tarjeta, sin esperar el proximo GET).
+    var props = PropertiesService.getScriptProperties();
+    props.deleteProperty('RESENAS_CACHE');
+    props.deleteProperty('RESENAS_CACHE_EXP');
+    props.deleteProperty('RESENAS_RESUMEN_CACHE');
+    props.deleteProperty('RESENAS_RESUMEN_CACHE_EXP');
+    var res = calcularResumenResenas(leerResenas());
+    try { props.setProperty('RESENAS_RESUMEN_CACHE', JSON.stringify(res)); props.setProperty('RESENAS_RESUMEN_CACHE_EXP', String(Date.now() + 30000)); } catch(e) {}
+    return { ok: true, resumen: res };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
 }
 
 // Registra una solicitud de transferencia desde pedido.html. Valida los

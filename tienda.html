@@ -224,6 +224,30 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
 .p-size.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 .p-talla-tag{font-size:10px;color:var(--muted);margin-top:2px;text-align:center;font-weight:500}
+/* ── RESEÑAS POR PRODUCTO (bloque en tarjeta) ── */
+.p-resenas{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;padding:7px 10px 0;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.p-resenas[hidden]{display:none}
+.p-resenas:hover .rv-meta{color:var(--navy)}
+.rv-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.rv-stars{display:inline-flex;gap:1px;align-items:center}
+.rv-stars svg{width:12px;height:12px;display:block}
+.rv-meta{font-size:11px;font-weight:600;color:var(--muted);width:100%;margin-top:1px;transition:color .15s}
+.rv-empty{color:var(--hint);font-style:italic;font-weight:500}
+/* Modal mínimo de calificación: solo estrellas + Enviar */
+.rv-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1250;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;padding:24px}
+.rv-overlay.open{display:flex;opacity:1}
+.rv-modal{position:relative;background:#fff;width:100%;max-width:330px;border-radius:16px;padding:24px 18px 18px;text-align:center;box-shadow:0 14px 44px rgba(0,0,0,.28);transform:translateY(10px);transition:transform .2s}
+.rv-overlay.open .rv-modal{transform:translateY(0)}
+.rv-close{position:absolute;top:8px;right:8px;width:30px;height:30px;border:none;background:var(--bg);border-radius:50%;font-size:17px;line-height:1;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.rv-close:hover{background:var(--border)}
+.rv-title{font-size:15px;font-weight:700;color:var(--navy);margin:0 26px 2px}
+.rv-pname{font-size:12px;color:var(--muted);margin-bottom:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-pick{display:flex;justify-content:center;gap:7px;margin-bottom:16px}
+.rv-pick svg{width:34px;height:34px;cursor:pointer;transition:transform .12s}
+.rv-pick svg:hover{transform:scale(1.14)}
+.rv-send{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.rv-send:hover{opacity:.9}
+.rv-send:disabled{opacity:.4;cursor:not-allowed}
 .pm-sizes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .pm-size{display:flex;align-items:center;justify-content:center;min-width:40px;height:36px;padding:0 12px;border:2px solid var(--border);border-radius:20px;cursor:pointer;background:#fff;font-size:13px;font-weight:500;transition:all .15s}
 .pm-size.sel{border-color:var(--navy);background:var(--navy);color:#fff}
@@ -544,6 +568,17 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 <div class="zoom-overlay" id="zoom-overlay" onclick="if(event.target===this)closeZoom()">
   <button class="zoom-close" onclick="closeZoom()">✕</button>
   <img id="zoom-img" src="" alt="" onclick="event.stopPropagation()">
+</div>
+
+<!-- RESEÑA RÁPIDA — solo estrellas + Enviar, sin ningún dato del usuario -->
+<div class="rv-overlay" id="rv-overlay" onclick="if(event.target===this)cerrarResena()">
+  <div class="rv-modal">
+    <button class="rv-close" onclick="cerrarResena()">✕</button>
+    <div class="rv-title">¿Qué te pareció tu producto?</div>
+    <div class="rv-pname" id="rv-pname"></div>
+    <div class="rv-pick" id="rv-pick"></div>
+    <button class="rv-send" id="rv-send" onclick="enviarResena()">Enviar</button>
+  </div>
 </div>
 
 <!-- PHONE CHECK — bienvenida -->
@@ -1259,6 +1294,13 @@ window.addEventListener('DOMContentLoaded',function(){
       }
       abrirSkuPendiente();
     }).catch(function(){});
+  // Resumen de reseñas por producto (paralelo al fetch del catálogo). Si
+  // falla, los bloques .p-resenas quedan ocultos: jamás se muestran
+  // cifras inventadas.
+  fetch(GAS+'?action=resenas&token='+encodeURIComponent(API_TOKEN))
+    .then(function(r){return r.json();})
+    .then(function(d){if(d&&d.ok&&d.resumen){_rvResumen=d.resumen;pintarResenas();}})
+    .catch(function(){});
   if(window._wompiReturn) return;
   if(!restaurarSesion()){
     showScreen('s-catalogo');
@@ -1536,6 +1578,7 @@ function renderCat(){
   aplicarVerMas();
   observeCards();
   if(_carrito.length>0){renderCarrito();renderCiCarrito();}
+  pintarResenas();
 }
 // ── FILTROS + BUSCADOR (Fase 2) ──
 // Todo corre en memoria sobre _cat (cero llamadas a GAS al filtrar). Las
@@ -1906,6 +1949,8 @@ function gridCat(){
       html+='<div class="p-precio">$'+vs[0].precio.toFixed(2)+'</div>';
       var _tec=vs[0].tecnica||'';
       html+='<span class="p-fecha">'+_svgCal+(_tec?ceFechaDiseno():ceFechaEstandar())+'</span>';
+      var _pidRv=(vs[0].sku||'').split('-')[1]||'';
+      if(_pidRv)html+='<div class="p-resenas" data-pid="'+_pidRv+'" hidden onclick="event.stopPropagation();abrirResena(\''+_pidRv+'\')"><span class="rv-label">Reseñas</span><span class="rv-stars"></span><span class="rv-meta"></span></div>';
       html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
       if(!agot)html+='<button class="p-btn-add" onclick="event.stopPropagation();agregarRapido(\''+vs[0].sku+'\')">Agregar</button>';
       if(!agot)html+='<div class="p-envio-detalle" onclick="event.stopPropagation();this.classList.toggle(\'open\')">Envío detalle<div class="p-envio-detalle-text">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div></div>';
@@ -1917,6 +1962,105 @@ function gridCat(){
   return html;
 }
 function encodeId(s){return s.replace(/[^a-zA-Z0-9]/g,'_');}
+// ── RESEÑAS POR PRODUCTO ─────────────────────────────────────────
+// Calificación 1-5 sin ningún dato del usuario (sin orden, código, nombre,
+// teléfono, correo ni login). Barrera invisible: 1 voto por dispositivo y
+// producto vía localStorage (uid anónimo aleatorio, nada de datos personales).
+var _rvResumen=null;   // {IKA:{suma,cantidad}} calculado en el backend
+var _rvActual='';      // productoId abierto en el modal
+var _rvSel=0;          // estrellas seleccionadas (0-5)
+var _rvEnviando=false;
+var _rvUid=(function(){try{var u=localStorage.getItem('ngud_rv_uid');if(!u){u='d-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,11);localStorage.setItem('ngud_rv_uid',u);}return u;}catch(e){return 'd-sinuid';}})();
+function rvVotados(){try{return JSON.parse(localStorage.getItem('ngud_rv_votados')||'{}');}catch(e){return {};}}
+function rvYaVoto(pid){return !!rvVotados()[pid];}
+function rvMarcarVoto(pid){try{var v=rvVotados();v[pid]=1;localStorage.setItem('ngud_rv_votados',JSON.stringify(v));}catch(e){}}
+var _rvStarPath='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z';
+var _rvSvgN=0;
+// Estrella SVG (sin emojis ni caracteres ★). pct=0-100 de llenado; si pct es
+// fraccionario se usa un linearGradient para la media estrella.
+function rvStarSvg(pct,onClick){
+  var gold='#f5a623',empty='#e4e1ee',attr=onClick?' onclick="'+onClick+'"':'';
+  if(pct>=100)return '<svg viewBox="0 0 24 24" fill="'+gold+'"'+attr+'><path d="'+_rvStarPath+'"/></svg>';
+  if(pct<=0)return '<svg viewBox="0 0 24 24" fill="'+empty+'"'+attr+'><path d="'+_rvStarPath+'"/></svg>';
+  var id='rvg'+(++_rvSvgN);
+  return '<svg viewBox="0 0 24 24"><defs><linearGradient id="'+id+'"><stop offset="'+pct+'%" stop-color="'+gold+'"/><stop offset="'+pct+'%" stop-color="'+empty+'"/></linearGradient></defs><path d="'+_rvStarPath+'" fill="url(#'+id+')"'+attr+'/></svg>';
+}
+function rvStarsPromedio(prom){var out='';for(var i=0;i<5;i++){out+=rvStarSvg(Math.max(0,Math.min(100,(prom-i)*100)));}return out;}
+function rvStarsPick(n){var out='';for(var i=1;i<=5;i++){out+=rvStarSvg(i<=n?100:0,'rvSel('+i+')');}return out;}
+// Rellena (o vacía) el bloque de cada tarjeta según el resumen del backend.
+// Sin re-render: conserva color/talla/selección actuales de la tarjeta.
+function pintarResenas(){
+  if(!_rvResumen)return;
+  var bloques=document.querySelectorAll('.p-resenas');
+  for(var i=0;i<bloques.length;i++){
+    var b=bloques[i],pid=b.getAttribute('data-pid');
+    if(!pid)continue;
+    var r=_rvResumen[pid]||{suma:0,cantidad:0};
+    var stars=b.querySelector('.rv-stars'),meta=b.querySelector('.rv-meta');
+    if(!r.cantidad){
+      if(stars)stars.innerHTML='';
+      if(meta)meta.innerHTML='<span class="rv-empty">Sé el primero en calificar</span>';
+    }else{
+      var prom=r.suma/r.cantidad;
+      if(stars)stars.innerHTML=rvStarsPromedio(prom);
+      if(meta)meta.textContent=prom.toFixed(1)+' / 5 · '+r.cantidad+(r.cantidad===1?' reseña':' reseñas');
+    }
+    b.hidden=false;
+  }
+}
+function rvNombreProducto(pid){
+  for(var i=0;i<_cat.length;i++){if((_cat[i].sku||'').split('-')[1]===pid)return _cat[i].nombre||'';}
+  return '';
+}
+function abrirResena(pid){
+  if(!pid)return;
+  if(rvYaVoto(pid)){mostrarAvisoLink('Ya calificaste este producto.');return;}
+  _rvActual=pid;_rvSel=0;_rvEnviando=false;
+  var ov=document.getElementById('rv-overlay');if(!ov)return;
+  document.getElementById('rv-pname').textContent=rvNombreProducto(pid)||pid;
+  document.getElementById('rv-pick').innerHTML=rvStarsPick(0);
+  var btn=document.getElementById('rv-send');
+  if(btn){btn.disabled=true;btn.textContent='Enviar';}
+  ov.classList.add('open');
+}
+function cerrarResena(){
+  var ov=document.getElementById('rv-overlay');if(ov)ov.classList.remove('open');
+  _rvActual='';_rvSel=0;
+}
+function rvSel(n){
+  if(_rvEnviando)return;
+  _rvSel=n;
+  document.getElementById('rv-pick').innerHTML=rvStarsPick(n);
+  var btn=document.getElementById('rv-send');
+  if(btn){btn.disabled=false;btn.textContent='Enviar';}
+}
+function enviarResena(){
+  if(_rvEnviando||!_rvActual||_rvSel<1||_rvSel>5)return;
+  if(rvYaVoto(_rvActual)){mostrarAvisoLink('Ya calificaste este producto.');cerrarResena();return;}
+  _rvEnviando=true;
+  var btn=document.getElementById('rv-send');
+  if(btn){btn.disabled=true;btn.textContent='Enviando…';}
+  fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'guardarResena',token:API_TOKEN,productoId:_rvActual,calificacion:_rvSel,deviceId:_rvUid})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      _rvEnviando=false;
+      if(d&&d.ok){
+        rvMarcarVoto(_rvActual);
+        if(d.resumen)_rvResumen=d.resumen;
+        pintarResenas();
+        cerrarResena();
+        mostrarAvisoLink('¡Gracias por tu reseña!');
+      }else{
+        if(btn){btn.disabled=false;btn.textContent='Enviar';}
+        mostrarAvisoLink((d&&d.error)||'No se pudo enviar tu reseña.');
+      }
+    })
+    .catch(function(){
+      _rvEnviando=false;
+      if(btn){btn.disabled=false;btn.textContent='Enviar';}
+      mostrarAvisoLink('Error de conexión, intenta de nuevo.');
+    });
+}
 // Devuelve el stock de una talla especifica. prod.stock es un array paralelo a prod.tallas.
 function stockPorTalla(prod,talla){
   var tallas=prod.tallas||['M'];

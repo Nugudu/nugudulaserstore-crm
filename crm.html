@@ -3822,7 +3822,7 @@ function cargarCDP(){
     _cdpTabActual = 'visitantes';
   }
   if(_cdpTabActual==='visitantes'){
-    cdpCargarVisitantes(!_cdpVisitantesTieneDatos);
+    cdpCargarVisitantes(false);
     cdpIniciarTimerVisitantes();
     return;
   }
@@ -3831,6 +3831,11 @@ function cargarCDP(){
     return;
   }
   cdpTab(_cdpTabActual);
+  if(_cdpTabActual==='funnel' && _cdpEventosTieneDatos){
+    // Datos ya en memoria: cdpTab() acabó de renderizar el Embudo al instante,
+    // sin nueva petición a leerEventos. Actualizar sigue forzando consulta fresca.
+    return;
+  }
   cdpRefrescarEventos(function(){
     if(_cdpTabActual==='funnel') cdpRenderFunnel();
     else if(_cdpTabActual==='segmentos') cdpRenderSegmentos();

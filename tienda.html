@@ -149,6 +149,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .cdot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12);cursor:pointer;transition:all .15s;position:relative;flex-shrink:0}
 .cdot::after{content:'';position:absolute;inset:-10px;border-radius:50%}
 .cdot.sel{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
+.cdot.agotado{opacity:.35;cursor:not-allowed;pointer-events:none}
 .p-precio{font-size:15px;font-weight:700;color:var(--navy)}
 .p-stock{font-size:10px;margin-top:2px}
 .p-share{position:absolute;right:8px;bottom:9px;width:22px;height:22px;color:var(--hint);background:#fff;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:3;transition:color .15s,border-color .15s}
@@ -156,6 +157,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
 .p-btn-add{width:calc(100% - 20px);margin:8px 10px 0;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s ease;box-shadow:0 4px 12px rgba(45,36,96,.22)}
 .p-btn-add:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(45,36,96,.28)}
 .p-btn-add:active{transform:scale(.97)}
+.p-btn-add:disabled{background:#b7b2c6;box-shadow:none;cursor:not-allowed;transform:none}
+.p-btn-add:disabled:hover{transform:none;box-shadow:none}
 .p-specs{display:flex;gap:6px;font-size:10px;margin:4px 0;flex-wrap:wrap;justify-content:flex-start}
 .prod-card{padding-bottom:56px}
 .prod-card .p-nombre,.prod-card .p-specs,.prod-card .p-color-size,.prod-card .p-talla-tag,.prod-card .p-precio,.prod-card .p-btn-add,.prod-card .p-envio-detalle,.prod-card .p-stock,.prod-card .p-fecha,.prod-card .p-separator{padding-left:10px;padding-right:10px}
@@ -1294,9 +1297,11 @@ window.addEventListener('DOMContentLoaded',function(){
       }
       abrirSkuPendiente();
     }).catch(function(){});
-  // Resumen de reseñas por producto (paralelo al fetch del catálogo). Si
-  // falla, los bloques .p-resenas quedan ocultos: jamás se muestran
-  // cifras inventadas.
+  // Resumen de reseñas por producto (paralelo al fetch del catálogo). Los
+  // bloques .p-resenas ya se muestran desde el render con "Sé el primero en
+  // calificar" (como todo lo demás); si el fetch falla o tarda, el bloque
+  // sigue visible con ese estado y sin cifras inventadas. Al llegar el
+  // resumen, pintarResenas() actualiza en sitio con las cifras reales.
   fetch(GAS+'?action=resenas&token='+encodeURIComponent(API_TOKEN))
     .then(function(r){return r.json();})
     .then(function(d){if(d&&d.ok&&d.resumen){_rvResumen=d.resumen;pintarResenas();}})
@@ -1920,11 +1925,19 @@ function gridCat(){
         var stk=Array.isArray(v.stock)?v.stock:[v.stock||0];
         return stk.every(function(s){return s<=0;});
       });
-      var dots=vs.map(function(v,i){return '<div class="cdot'+(i===0?' sel':'')+'" style="background:'+v.hex+'" title="'+v.color+'" data-sku="'+v.sku+'" onclick="event.stopPropagation();elColorCard(\''+v.sku+'\',this)"></div>';}).join('');
+      // Color sin stock en el Sheet → punto "agotado": no se puede seleccionar
+      // (mismo criterio que los colores del modal). Preselecciona el primer
+      // color CON stock; si ninguno lo tiene, el producto ya es "agotado total".
+      var colorSel=vs.find(function(v){var stk=Array.isArray(v.stock)?v.stock:[v.stock||0];return stk.some(function(s){return s>0;});})||vs[0];
+      var dots=vs.map(function(v){
+        var stkV=Array.isArray(v.stock)?v.stock:[v.stock||0];
+        var agotV=stkV.every(function(s){return s<=0;});
+        return '<div class="cdot'+(v===colorSel?' sel':'')+(agotV?' agotado':'')+'" style="background:'+v.hex+'" title="'+(agotV?'Agotado':v.color)+'" data-sku="'+v.sku+'" onclick="event.stopPropagation();elColorCard(\''+v.sku+'\',this)"></div>';
+      }).join('');
       var candidatos=candidatosFoto(vs[0].sku,nom);
       var candAttr=JSON.stringify(candidatos).replace(/'/g,'&#39;');
       var attrs=' data-col="'+esc((vs[0].coleccion||'').toLowerCase())+'" data-cat="'+esc((vs[0].categoria||'').toLowerCase())+'" data-tec="'+esc((vs[0].tecnica||'').toLowerCase())+'" data-nom="'+esc(nom.toLowerCase())+'"';
-      html+='<div class="prod-card'+(agot?' agotado':'')+'"'+attrs+' id="pc-'+encodeId(nom)+'" data-selected-sku="'+vs[0].sku+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
+      html+='<div class="prod-card'+(agot?' agotado':'')+'"'+attrs+' id="pc-'+encodeId(nom)+'" data-selected-sku="'+colorSel.sku+'" onclick="'+(agot?'':'elDis(\''+encodeId(nom)+'\')')+'">';
       html+='<div class="pcheck">✓</div>';
       html+='<img class="p-foto" loading="lazy" decoding="async" src="imagenes/'+candidatos[0]+'" alt="'+esc(nom)+'" data-idx="0" data-candidatos=\''+candAttr+'\' onerror="imgFallback(this)">';
       html+='<div class="p-nombre">'+esc(nom)+'</div>';
@@ -1935,11 +1948,12 @@ function gridCat(){
       if(tec)html+='<span class="p-spec">'+_svgLaser+'Grabado a Láser</span>';
       html+='</div>';
       var allTallas=getAllTallas();
-      var prodTallas=vs[0].tallas||['M'];
+      var prodTallas=colorSel.tallas||['M'];
+      var tallaSelInicial=allTallas.find(function(t){return prodTallas.indexOf(t)>=0&&stockPorTalla(colorSel,t)>0;})||'';
       var tallasHtml=allTallas.map(function(t){
         var disp=prodTallas.indexOf(t)>=0;
-        var sinStock=disp?stockPorTalla(vs[0],t)<=0:false;
-        var cls=disp?(sinStock?'p-size disabled':'p-size sel'):'p-size disabled';
+        var sinStock=disp?stockPorTalla(colorSel,t)<=0:false;
+        var cls=disp?(sinStock?'p-size disabled':(t===tallaSelInicial?'p-size sel':'p-size')):'p-size disabled';
         return '<div class="'+cls+'" data-talla="'+t+'" onclick="event.stopPropagation();elTallaCard(\''+t+'\',this)">'+t+'</div>';
       }).join('');
       html+='<div class="p-color-size"><div class="p-sizes">'+tallasHtml+'</div><div class="p-dots">'+dots+'</div></div>';
@@ -1950,7 +1964,7 @@ function gridCat(){
       var _tec=vs[0].tecnica||'';
       html+='<span class="p-fecha">'+_svgCal+(_tec?ceFechaDiseno():ceFechaEstandar())+'</span>';
       var _pidRv=(vs[0].sku||'').split('-')[1]||'';
-      if(_pidRv)html+='<div class="p-resenas" data-pid="'+_pidRv+'" hidden onclick="event.stopPropagation();abrirResena(\''+_pidRv+'\')"><span class="rv-label">Reseñas</span><span class="rv-stars"></span><span class="rv-meta"></span></div>';
+      if(_pidRv)html+='<div class="p-resenas" data-pid="'+_pidRv+'" onclick="event.stopPropagation();abrirResena(\''+_pidRv+'\')"><span class="rv-label">Reseñas</span><span class="rv-stars"></span><span class="rv-meta"><span class="rv-empty">Sé el primero en calificar</span></span></div>';
       html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
       if(!agot)html+='<button class="p-btn-add" onclick="event.stopPropagation();agregarRapido(\''+vs[0].sku+'\')">Agregar</button>';
       if(!agot)html+='<div class="p-envio-detalle" onclick="event.stopPropagation();this.classList.toggle(\'open\')">Envío detalle<div class="p-envio-detalle-text">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div></div>';
@@ -2230,10 +2244,13 @@ function elTallaCard(t,el){
   _tallaSel=t;
   var card=el.closest('.prod-card');
   if(card) card.querySelectorAll('.p-size').forEach(function(s){s.classList.remove('sel');if(s.dataset.talla===t)s.classList.add('sel');});
+  actualizarBtnAgregarCard(card);
 }
 function elColorCard(sku,el){
   var prod=_cat.find(function(p){return p.sku===sku;});
   if(!prod) return;
+  var stkCol=Array.isArray(prod.stock)?prod.stock:[prod.stock||0];
+  if(stkCol.every(function(s){return s<=0;})) return; // color agotado: no se selecciona
   var card=el.closest('.prod-card');
   if(!card) return;
   card.querySelectorAll('.cdot').forEach(function(d){d.classList.remove('sel');});
@@ -2258,6 +2275,22 @@ function elColorCard(sku,el){
   });
   var firstAvail=card.querySelector('.p-size:not(.disabled)');
   if(firstAvail) firstAvail.classList.add('sel');
+  actualizarBtnAgregarCard(card);
+}
+// Estado del botón "Agregar" de la tarjeta según la combinación
+// color+talla seleccionada: con stock 0 el botón dice "Agotado" y queda
+// deshabilitado (la gente no puede agregarlo al carrito desde la tarjeta).
+function actualizarBtnAgregarCard(card){
+  if(!card)return;
+  var btn=card.querySelector('.p-btn-add');
+  if(!btn)return;
+  var prod=_cat.find(function(p){return p.sku===card.dataset.selectedSku;});
+  if(!prod)return;
+  var tallaEl=card.querySelector('.p-size.sel');
+  var talla=tallaEl?tallaEl.dataset.talla:'';
+  var sinStock=!talla||stockPorTalla(prod,talla)<=0;
+  btn.disabled=sinStock;
+  btn.textContent=sinStock?'Agotado':'Agregar';
 }
 // ── CARRITO (varios productos por pedido) ──
 // Antes solo se podia pedir un producto a la vez. Ahora se puede agregar mas
@@ -2308,6 +2341,8 @@ function agregarRapido(sku){
   var allTallas=getAllTallas();
   var tallaSel=card?card.querySelector('.p-size.sel'):null;
   var tallaDefault=tallaSel?tallaSel.dataset.talla:allTallas.find(function(t){return tallasProd.indexOf(t)>=0&&stockPorTalla(realProd,t)>0;})||'M';
+  // Barrera: sin stock en la combinación seleccionada → no se agrega al carrito
+  if(stockPorTalla(realProd,tallaDefault)<=0){mostrarAvisoLink('Agotado: sin stock disponible');return;}
   _carrito.push({sku:realProd.sku,diseno:realProd.nombre,color:realProd.color,hex:realProd.hex,precio:realProd.precio,cantidad:1,talla:tallaDefault});
   track('add_to_cart',{sku:realProd.sku,diseno:realProd.nombre,color:realProd.color,cantidad:1,from:'rapido'});
   guardarSesion('s-catalogo');

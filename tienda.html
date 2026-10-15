@@ -527,7 +527,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
     <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
       Contacta con nuestro equipo al: <a href="https://wa.me/c/50376837604" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">+503 7683 7604</a>
       <div style="margin-top:4px;font-size:11px;color:var(--hint)">Horario de atención: Lunes a Viernes, 8:00 AM – 5:00 PM</div>
-      <div style="margin-top:8px;font-size:11px;color:var(--hint)">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--hint)">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad. $8.15 en departamentos, envío con C807Xpress.</div>
       <div style="margin-top:8px;font-size:12px;color:var(--navy);font-weight:500">Hecho en El Salvador <svg viewBox="0 0 36 36" width="14" height="14" style="vertical-align:-2px"><rect width="36" height="12" fill="#0047AB"/><rect y="12" width="36" height="12" fill="#FFFFFF"/><rect y="24" width="36" height="12" fill="#0047AB"/><circle cx="18" cy="18" r="4" fill="#0047AB" stroke="#FFFFFF" stroke-width="0.5"/></svg></div>
       <div style="margin-top:10px;display:flex;justify-content:center;gap:12px">
         <a href="https://www.instagram.com/nugudustore?stkn=MTdwYmswejQ0eWpsZg%3D%3D&utm_source=qr" target="_blank" style="color:var(--muted);transition:color .15s" onmouseover="this.style.color='#E1306C'" onmouseout="this.style.color='var(--muted)'" title="Instagram"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
@@ -561,7 +561,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
         </div>
         <button class="pm-btn" id="pm-btn-continue" onclick="pmContinuar()">Agregar al carrito</button>
         <div class="pm-hint">Selecciona un color para continuar</div>
-        <div style="font-size:11px;color:#166534;text-align:center;margin-top:4px;line-height:1.3">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div>
+        <div style="font-size:11px;color:#166534;text-align:center;margin-top:4px;line-height:1.3">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad. $8.15 en departamentos, envío con C807Xpress.</div>
       </div>
     </div>
   </div>
@@ -729,9 +729,10 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
             <option value="">Seleccionar zona…</option>
             <option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option>
             <option value="otra">Otra zona…</option>
+            <option value="departamento">Departamento (envío con C807Xpress)</option>
           </select>
         </div>
-        <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…" list="md-zonas-sugeridas" oninput="onZonaOtraInput()"><datalist id="md-zonas-sugeridas"><option value="Zaragoza, La Libertad"><option value="San José Villa Nueva, La Libertad"><option value="Lourdes, Libertad Central"><option value="Mejicanos, San Salvador"><option value="Soyapango, San Salvador"><option value="Bernal, San Salvador"><option value="Constitución, San Salvador"><option value="San Marcos, San Salvador"></datalist></div>
+        <div class="fg" id="otra-zona" style="display:none"><label>Especifica la zona</label><input id="f-zonaot" type="text" placeholder="Ej. San Marcos, Soyapango…" list="md-zonas-sugeridas" oninput="onZonaOtraInput()"><datalist id="md-zonas-sugeridas"><option value="Zaragoza, La Libertad"><option value="San José Villa Nueva, La Libertad"><option value="Lourdes, Libertad Central"><option value="Mejicanos, San Salvador"><option value="Soyapango, San Salvador"><option value="Bernal, San Salvador"><option value="Constitución, San Salvador"><option value="San Marcos, San Salvador"></datalist><datalist id="md-departamentos"><option value="Ahuachapán"><option value="Cabañas"><option value="Chalatenango"><option value="Cuscatlán"><option value="La Paz"><option value="La Unión"><option value="Morazán"><option value="San Miguel"><option value="San Vicente"><option value="Santa Ana"><option value="Sonsonate"><option value="Usulután"></datalist><div id="dep-aviso" style="display:none;margin-top:6px;background:#eef6ff;border:1px solid #bcd7f5;color:#1d4f8b;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;line-height:1.4">Envío con <strong>C807Xpress</strong> · $8.15 — escribe el nombre del departamento.</div></div>
         <div class="fg">
           <div class="map-mini" id="map-mini"><iframe id="map-fr" src="" loading="lazy"></iframe><span class="hint-mapa">Puedes mover el mapa, hacer zoom y cambiar a vista Satelite tocando el icono dentro del mapa</span></div>
           <div id="map-aviso" style="display:none;background:#fff8e1;border:1px solid #f0d060;color:#6b5b00;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.4;margin-top:8px"></div>
@@ -1039,6 +1040,9 @@ var _productObs=null;
 // Catálogo embebido — datos frescos sin dependencia de API en la primera carga
 var _CAT_EMBED=[{"sku": "CL-BAR.3-GR", "nombre": "GORRA ¡VISCA BARCA!", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [9], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.3-NG", "nombre": "GORRA ¡VISCA BARCA!", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.2-NG", "nombre": "GORRA VISCA BARCA", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR.2-GR", "nombre": "GORRA VISCA BARCA", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-HM-NG", "nombre": "GORRA HALA MADRID", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-HM-GR", "nombre": "GORRA HALA MADRID", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-CHM-GR", "nombre": "GORRA ¡HALA MADRID!", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-CHM-NG", "nombre": "GORRA ¡HALA MADRID!", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-MDR-GR", "nombre": "GORRA REAL MADRID", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-MDR-NG", "nombre": "GORRA REAL MADRID", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR-GR", "nombre": "GORRA BARCELONA", "coleccion": "El Clásico", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "CL-BAR-NG", "nombre": "GORRA BARCELONA", "coleccion": "El Clásico", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "SN-GR", "nombre": "GORRA SNOOPY", "coleccion": "Snoopy", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "SN-NG", "nombre": "GORRA SNOOPY", "coleccion": "Snoopy", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "SN-AN", "nombre": "GORRA SNOOPY", "coleccion": "Snoopy", "color": "Azul Negro", "hex": "#292d38", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-M-AN", "nombre": "GORRA MOTO", "coleccion": "Moto", "color": "Azul Negro", "hex": "#292d38", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-M-GR", "nombre": "GORRA MOTO", "coleccion": "Moto", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-M-NG", "nombre": "GORRA MOTO", "coleccion": "Moto", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-B-AN", "nombre": "GORRA META", "coleccion": "Moto", "color": "Azul Negro", "hex": "#292d38", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-B-GR", "nombre": "GORRA META", "coleccion": "Moto", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-B-NG", "nombre": "GORRA META", "coleccion": "Moto", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-WH-AN", "nombre": "GORRA WHEEL", "coleccion": "Moto", "color": "Azul Negro", "hex": "#292d38", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-WH-GR", "nombre": "GORRA WHEEL", "coleccion": "Moto", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-WH-NG", "nombre": "GORRA WHEEL", "coleccion": "Moto", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-RC-AN", "nombre": "GORRA RACING", "coleccion": "Moto", "color": "Azul Negro", "hex": "#292d38", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-RC-GR", "nombre": "GORRA RACING", "coleccion": "Moto", "color": "Gris", "hex": "#6b7280", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "MV-RC-NG", "nombre": "GORRA RACING", "coleccion": "Moto", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-TRU-NG", "nombre": "GORRA TRUCKER", "coleccion": "Gorra", "color": "Negro", "hex": "#1a1a1a", "precio": 9.99, "stock": [9], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-TRU-GR", "nombre": "GORRA TRUCKER", "coleccion": "Gorra", "color": "Gris", "hex": "#6b7282", "precio": 9.99, "stock": [10], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-CACL", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Café Claro", "hex": "#a17345", "precio": 12.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-CAFE", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Café", "hex": "#3a2a20", "precio": 12.99, "stock": [1], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "GRR-COR-BEI", "nombre": "GORRA CORDUROY", "coleccion": "Gorra", "color": "Beage", "hex": "#cbab8d", "precio": 12.99, "stock": [0], "categoria": "GORRA", "tecnica": "", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-IKA-NG", "nombre": "GORRA IKAL", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [9], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-IKA-GR", "nombre": "GORRA IKAL", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7282", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-SA-NG", "nombre": "GORRA SAAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-SA-GR", "nombre": "GORRA SAAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7283", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KI-NG", "nombre": "GORRA KIN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KI-GR", "nombre": "GORRA KIN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7284", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-OX-NG", "nombre": "GORRA OXAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-OX-GR", "nombre": "GORRA OXAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-MU-GR", "nombre": "GORRA MUUK", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-MU-NG", "nombre": "GORRA MUUK", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KA-NG", "nombre": "GORRA KAAN", "coleccion": "Raíces SV", "color": "Negro", "hex": "#1a1a1a", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}, {"sku": "RSV-KA-GR", "nombre": "GORRA KAAN", "coleccion": "Raíces SV", "color": "Gris", "hex": "#6b7285", "precio": 19.99, "stock": [10], "categoria": "GORRA", "tecnica": "LÁSER", "disponibilidad": "", "tallas": ["M-XL"], "tallaTag": "Ajustable"}];
 var RECARGO_ENVIO=3;
+var RECARGO_DEPARTAMENTO=8.15;
+var DEPARTAMENTOS=['Ahuachapán','Cabañas','Chalatenango','Cuscatlán','La Paz','La Unión','Morazán','San Miguel','San Vicente','Santa Ana','Sonsonate','Usulután'];
+function esDepartamento(z){return DEPARTAMENTOS.some(function(d){return d.toLowerCase()===String(z||'').trim().toLowerCase();});}
 var ZONAS_ESPECIALES=['Zaragoza, La Libertad','San José Villa Nueva, La Libertad','Lourdes, Libertad Central','Mejicanos, San Salvador','Soyapango, San Salvador','Bernal, San Salvador','Constitución, San Salvador','San Marcos, San Salvador'];
 function esZonaEspecial(z){return ZONAS_ESPECIALES.some(function(ze){return ze.toLowerCase()===z.toLowerCase();});}
 
@@ -1967,7 +1971,7 @@ function gridCat(){
       if(_pidRv)html+='<div class="p-resenas" data-pid="'+_pidRv+'" onclick="event.stopPropagation();abrirResena(\''+_pidRv+'\')"><span class="rv-label">Reseñas</span><span class="rv-stars"></span><span class="rv-meta"><span class="rv-empty">Sé el primero en calificar</span></span></div>';
       html+='<span class="p-share" title="Compartir" role="button" aria-label="'+esc(nom)+'" onclick="event.stopPropagation();compartirProducto(\''+vs[0].sku+'\')">'+_svgShare+'</span>';
       if(!agot)html+='<button class="p-btn-add" onclick="event.stopPropagation();agregarRapido(\''+vs[0].sku+'\')">Agregar</button>';
-      if(!agot)html+='<div class="p-envio-detalle" onclick="event.stopPropagation();this.classList.toggle(\'open\')">Envío detalle<div class="p-envio-detalle-text">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.</div></div>';
+      if(!agot)html+='<div class="p-envio-detalle" onclick="event.stopPropagation();this.classList.toggle(\'open\')">Envío detalle<div class="p-envio-detalle-text">Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad. $8.15 en departamentos, envío con C807Xpress.</div></div>';
       if(agot)html+='<div class="p-stock sno">✗ Agotado</div>';
       html+='</div>';
     });
@@ -2765,6 +2769,10 @@ function elDir(i){
   if(zDir && zonasStd.indexOf(zDir)>=0){
     fZona.value=zDir;
     if(otraZonaDiv) otraZonaDiv.style.display='none';
+  }else if(esDepartamento(zDir)){
+    fZona.value='departamento';
+    if(fZonaOt) fZonaOt.value=zDir;
+    if(otraZonaDiv) otraZonaDiv.style.display='block';
   }else{
     fZona.value='otra';
     if(fZonaOt) fZonaOt.value=zDir||'Otra zona';
@@ -2806,7 +2814,11 @@ function limpiarDireccion(){
 // Así el orden (dirección→zona o zona→dirección) deja de importar.
 function onZonaChange(){
   var zSel=document.getElementById('f-zona').value;
-  document.getElementById('otra-zona').style.display=zSel==='otra'?'block':'none';
+  var esDep=zSel==='departamento';
+  document.getElementById('otra-zona').style.display=(zSel==='otra'||esDep)?'block':'none';
+  var inpZ=document.getElementById('f-zonaot');
+  if(inpZ){inpZ.placeholder=esDep?'Ej. Sonsonate, Ahuachapán…':'Ej. San Marcos, Soyapango…';inpZ.setAttribute('list',esDep?'md-departamentos':'md-zonas-sugeridas');}
+  var depAv=document.getElementById('dep-aviso');if(depAv)depAv.style.display=esDep?'block':'none';
   if(typeof ocultarAvisoPin==='function')ocultarAvisoPin();
   var v=(document.getElementById('f-dir').value||'').trim();
   if(v.length>=5){ clearTimeout(_dt); _dt=setTimeout(fijarDireccion,150); }
@@ -2821,8 +2833,9 @@ function actualizarTotalConEnvio(){
   if(!el)return;
   var sub=totalCarrito();
   var zSel=document.getElementById('f-zona').value;
-  var zona=zSel==='otra'?(document.getElementById('f-zonaot').value||'').trim():zSel;
-  var recargo=(esZonaEspecial(zona)||zSel==='otra')?RECARGO_ENVIO:0;
+  var esDep=zSel==='departamento';
+  var zona=(zSel==='otra'||esDep)?(document.getElementById('f-zonaot').value||'').trim():zSel;
+  var recargo=esDep?RECARGO_DEPARTAMENTO:(esZonaEspecial(zona)||zSel==='otra')?RECARGO_ENVIO:0;
   if(recargo>0){
     el.innerHTML='$'+sub.toFixed(2)+' <span style="font-size:12px;font-weight:400;color:var(--muted)">+ $'+recargo.toFixed(2)+' domicilio</span> = <strong style="color:var(--navy)">$'+(sub+recargo).toFixed(2)+'</strong>';
   }else{
@@ -2837,8 +2850,9 @@ function actualizarResumenP2(){
   if(clr&&dirInp)clr.style.display=(dirInp.value||'').trim().length>0?'block':'none';
   var sub=totalCarrito();
   var zSel=document.getElementById('f-zona').value;
-  var zona=zSel==='otra'?(document.getElementById('f-zonaot').value||'').trim():zSel;
-  var recargo=(esZonaEspecial(zona)||zSel==='otra')?RECARGO_ENVIO:0;
+  var esDep=zSel==='departamento';
+  var zona=(zSel==='otra'||esDep)?(document.getElementById('f-zonaot').value||'').trim():zSel;
+  var recargo=esDep?RECARGO_DEPARTAMENTO:(esZonaEspecial(zona)||zSel==='otra')?RECARGO_ENVIO:0;
   var total=(sub+recargo).toFixed(2);
   var html='<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>Subtotal</span><span>$'+sub.toFixed(2)+'</span></div>';
   if(recargo>0){
@@ -2874,7 +2888,7 @@ function fijarDireccion(){
   var v=(document.getElementById('f-dir').value||'').trim();
   if(v.length<5) return;
   var zSel=document.getElementById('f-zona').value;
-  var zona = zSel==='otra' ? (document.getElementById('f-zonaot').value||'').trim() : zSel;
+  var zona = (zSel==='otra'||zSel==='departamento') ? (document.getElementById('f-zonaot').value||'').trim() : zSel;
   fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'geocodificar',token:API_TOKEN,direccion:v,zona:zona})})
     .then(function(r){return r.json();})
     .then(function(d){
@@ -2986,7 +3000,7 @@ function goP3(){
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=document.getElementById('f-zona').value;
-  var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
+  var zona=zonaRaw==='otra'||zonaRaw==='departamento'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   if(!nom){showErr('form','Ingresa tu nombre completo.');return;}
   if(!tel){showErr('form','Ingresa tu número de WhatsApp.');return;}
   if(!dir){showErr('form','Ingresa tu dirección de entrega.');return;}
@@ -3001,9 +3015,9 @@ function renderResumen(){
   var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
   var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=document.getElementById('f-zona').value;
-  var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
+  var zona=zonaRaw==='otra'||zonaRaw==='departamento'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
-  var recargo=(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
+  var recargo=zonaRaw==='departamento'?RECARGO_DEPARTAMENTO:(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
   var prodsHtml=_carrito.map(function(it,i){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">'+
@@ -3016,7 +3030,7 @@ function renderResumen(){
   }).join('');
   document.getElementById('resumen').innerHTML=
     prodsHtml+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
-    (recargo?rf('Otra zona','+$'+recargo.toFixed(2)):'')+
+    (recargo?rf(zonaRaw==='departamento'?'Departamento (C807Xpress)':'Otra zona','+$'+recargo.toFixed(2)):'')+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
 }
@@ -3030,7 +3044,7 @@ var nom=(document.getElementById('f-nom').value||'').trim();
    var tel=(document.getElementById('f-tel').value||'').trim().replace(/\D/g,'');
    var dir=_dirSel?_dirSel.direccion:(document.getElementById('f-dir').value||'').trim();
   var zonaRaw=document.getElementById('f-zona').value;
-  var zona=zonaRaw==='otra'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
+  var zona=zonaRaw==='otra'||zonaRaw==='departamento'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
   var mapa=_mapa;
   if(_dirSel&&_dirSel.mapaLink){
@@ -3046,7 +3060,7 @@ var nom=(document.getElementById('f-nom').value||'').trim();
     if(o[c]){var pos=o[c].indexOf(k);if(pos>=0){o[c].splice(pos,1);guardarDirsOcultas(o);}}
   })();
   var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
-  var recargo=(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
+  var recargo=zonaRaw==='departamento'?RECARGO_DEPARTAMENTO:(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
 
   if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}
@@ -3194,7 +3208,7 @@ function mostrarExito(){
     o.items.map(function(it){
       return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
     }).join('')+
-    (o.recargoEnvio>0?'<div class="om-fila"><span>Otra zona</span><span>+$'+Number(o.recargoEnvio).toFixed(2)+'</span></div>':'')+
+    (o.recargoEnvio>0?'<div class="om-fila"><span>'+(Number(o.recargoEnvio)>=RECARGO_DEPARTAMENTO?'Departamento (C807Xpress)':'Otra zona')+'</span><span>+$'+Number(o.recargoEnvio).toFixed(2)+'</span></div>':'')+
     '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
     '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
     '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':'Transferencia bancaria')+'</span></div>';
@@ -3265,7 +3279,7 @@ function mostrarDetalleOrdenWompiExito(){
   el.innerHTML=o.items.map(function(it){
     return '<div class="om-fila"><span>'+esc(it.diseno+' · '+it.color)+'</span><span>x'+it.cantidad+' — $'+(it.precio*it.cantidad).toFixed(2)+'</span></div>';
   }).join('')+
-  (o.recargoEnvio>0?'<div class="om-fila"><span>Otra zona</span><span>+$'+Number(o.recargoEnvio).toFixed(2)+'</span></div>':'')+
+  (o.recargoEnvio>0?'<div class="om-fila"><span>'+(Number(o.recargoEnvio)>=RECARGO_DEPARTAMENTO?'Departamento (C807Xpress)':'Otra zona')+'</span><span>+$'+Number(o.recargoEnvio).toFixed(2)+'</span></div>':'')+
   '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
   '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
   '<div class="om-fila"><span>Método</span><span>Tarjeta (Wompi)</span></div>';
@@ -4097,7 +4111,7 @@ function cerrarCartDrawer(instant){
   }
 }
 function textoEnvioHtml(){
-  return '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M22 8V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2h-2v2a2 2 0 0 1-2 2h-2"/><polyline points="15 10 17 12 13 16"/></svg> Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad.';
+  return '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M22 8V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2h-2v2a2 2 0 0 1-2 2h-2"/><polyline points="15 10 17 12 13 16"/></svg> Envío sin costo adicional en Antiguo Cuscatlán, Escalón, Merliot y Santa Tecla. $3.00 en el resto de San Salvador y La Libertad. $8.15 en departamentos, envío con C807Xpress.';
 }
 function renderCartDrawer(){
   var items=document.getElementById('cart-drawer-items');

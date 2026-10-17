@@ -1288,19 +1288,35 @@ function actualizarOGTags(sku,nombre,precio,imagenUrl){
 window.addEventListener('DOMContentLoaded',function(){
   var q=window.__d1qs().match(/[?&]p=([^&]+)/);
   if(q) _pendienteSku=decodeURIComponent(q[1]);
-  var cache=cargarCatalogoCache();
-  _cat=(cache&&cache.length)?cache:_CAT_EMBED; _catCargado=true;
+  // Primer pintado desde _CAT_EMBED (sincronizado con la hoja en cada deploy
+  // de catálogo). La caché local ya no pinta: una caché vieja podía tapar un
+  // deploy nuevo (caso TikTok, 17 oct). GAS sigue refrescando en background.
+  _cat=_CAT_EMBED; _catCargado=true;
   var firmaInicial=firmaCatalogo(_cat);
-  fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.ok&&d.productos&&d.productos.length&&firmaCatalogo(d.productos)!==firmaInicial){
-        _cat=d.productos;
-        guardarCatalogoCache(d.productos);
-        renderCat();
-      }
-      abrirSkuPendiente();
-    }).catch(function(){});
+  // Refresco con reintentos: si falla la red, la respuesta HTTP no es
+  // exitosa o el payload es inválido, se reintenta a los 2 s y a los 4 s.
+  // Si los 3 intentos fallan, la tienda queda con el catálogo embebido
+  // (correcto) en lugar de quedarse con datos viejos.
+  function refrescarCatalogo(n){
+    fetch(GAS+'?action=catalogo&token='+encodeURIComponent(API_TOKEN))
+      .then(function(r){
+        if(!r.ok) throw new Error('http-'+r.status);
+        return r.json();
+      })
+      .then(function(d){
+        if(!(d&&d.ok&&d.productos&&d.productos.length)) throw new Error('payload');
+        if(firmaCatalogo(d.productos)!==firmaInicial){
+          _cat=d.productos;
+          guardarCatalogoCache(d.productos);
+          renderCat();
+        }
+        abrirSkuPendiente();
+      })
+      .catch(function(){
+        if(n<3) setTimeout(function(){refrescarCatalogo(n+1);},n===1?2000:4000);
+      });
+  }
+  refrescarCatalogo(1);
   // Resumen de reseñas por producto (paralelo al fetch del catálogo). Los
   // bloques .p-resenas ya se muestran desde el render con "Sé el primero en
   // calificar" (como todo lo demás); si el fetch falla o tarda, el bloque

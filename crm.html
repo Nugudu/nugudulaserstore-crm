@@ -376,6 +376,11 @@ tbody tr:last-child td{border-bottom:none}
             </div>
           </div>
           <div class="fg full">
+            <label>Punto de referencia *</label>
+            <input id="f-referencia" type="text" placeholder="Ej. Casa rosada frente a la iglesia, portón negro…">
+            <span class="hint">Detalle visible desde la calle para que el repartidor ubique la entrega (obligatorio).</span>
+          </div>
+          <div class="fg full">
             <label>Códigos de producto — SKU *</label>
             <div style="display:flex;gap:6px"><input id="sku-input" type="text" placeholder="Escribe el SKU y presiona Agregar…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addSKU();}"><button type="button" class="btn btn-primary btn-sm" onclick="addSKU()"><i class="fa-solid fa-plus"></i> Agregar</button></div>
             <div class="sku-tags" id="sku-tags"><span style="font-size:12px;color:var(--hint)">Sin productos</span></div>
@@ -2329,7 +2334,7 @@ function onConsumoInternoChange(){
 // SAVE ORDER
 function guardar(){
   var orden=vf('f-orden'), nombre=vf('f-nombre'), contacto=vf('f-contacto');
-  var dir=vf('f-direccion'), zonaSel=vf('f-zona'), vend=vf('f-vendedor'), canal=vf('f-canal');
+  var dir=vf('f-direccion'), zonaSel=vf('f-zona'), vend=vf('f-vendedor'), canal=vf('f-canal'), ref=vf('f-referencia');
   var esDepZ = zonaSel === '__departamento__';
   var zona = (zonaSel === '__especial__' || esDepZ) ? vf('f-zona-especial') : zonaSel;
   var recargo=esDepZ?RECARGO_DEPARTAMENTO:(esZonaEspecial(zona)||zonaSel==='__especial__')?RECARGO_ENVIO:0;
@@ -2337,6 +2342,7 @@ function guardar(){
   var ok=document.getElementById('alrt-ok'), er=document.getElementById('alrt-err');
   ok.style.display='none'; er.style.display='none';
   if(!nombre||!contacto||!dir||!zona||!vend){ showErr('Completa todos los campos obligatorios (*).'); return; }
+  if(!ref){ showErr('Escribe el punto de referencia de entrega.'); return; }
   if(!precio||isNaN(precio)){ showErr('Ingresa un precio unitario válido.'); return; }
   if(!canal){ showErr('Selecciona el canal de venta.'); return; }
   if(getOrd().filter(function(o){return o.orden===orden;}).length){ showErr('Nº de orden duplicado — presiona ' + _svgRefresh + ' para regenerar.'); return; }
@@ -2347,7 +2353,7 @@ function guardar(){
   var pendientePago = document.getElementById('f-pendiente-pago').checked;
   var consumoInterno = document.getElementById('f-consumo-interno').checked;
   _ordenes.unshift({
-    id:Date.now(), orden:orden, nombre:nombre, contacto:contacto, direccion:dir,
+    id:Date.now(), orden:orden, nombre:nombre, contacto:contacto, direccion:dir, referencia:ref,
     zona:zona, vendedor:vend, precio:precio, cantidad:cantidad, total:cantidad*precio+recargo, recargoEnvio:recargo, canal:canal,
     pago:vf('f-pago'), productos:skus.slice(), estado:vf('f-estado'), notas:vf('f-notas'),
     fecha:new Date().toISOString(), fechaEntrega:fechaEntrega, mapaLink:mapaLink,
@@ -2366,7 +2372,7 @@ function guardar(){
 }
 function showErr(msg){ document.getElementById('err-txt').textContent=msg; var e=document.getElementById('alrt-err'); e.style.display='flex'; setTimeout(function(){e.style.display='none';},4000); }
 function limpiar(){
-  ['f-nombre','f-contacto','f-direccion','f-vendedor','f-notas','f-zona-especial','f-gps'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['f-nombre','f-contacto','f-direccion','f-referencia','f-vendedor','f-notas','f-zona-especial','f-gps'].forEach(function(id){ document.getElementById(id).value=''; });
   document.getElementById('f-cantidad').value='1'; document.getElementById('f-precio').value='';
   document.getElementById('f-zona').value=''; document.getElementById('f-estado').value='0';
   document.getElementById('zona-especial-wrap').style.display='none';

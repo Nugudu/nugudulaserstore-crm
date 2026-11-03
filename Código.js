@@ -988,6 +988,7 @@ function guardarPedidoWeb(payload) {
       nombre:        String(payload.nombre    || '').trim(),
       contacto:      String(payload.contacto  || '').trim(),
       direccion:     String(payload.direccion || '').trim(),
+      referencia:    String(payload.referencia || '').trim(),
       zona:          String(payload.zona      || 'Canal Digital').trim(),
       recargoEnvio:  recargoEnvio,
       vendedor:      (function(){
@@ -1290,6 +1291,7 @@ function guardarSolicitudWeb(payload) {
       nombre:        String(payload.nombre    || '').trim(),
       contacto:      String(payload.contacto  || '').trim(),
       direccion:     String(payload.direccion || '').trim(),
+      referencia:    String(payload.referencia || '').trim(),
       zona:          String(payload.zona      || 'Canal Digital').trim(),
       recargoEnvio:  recargoEnvio,
       vendedor:      (function(){
@@ -1446,6 +1448,7 @@ function confirmarSolicitudWeb(payload) {
     nombre:        sol.nombre,
     contacto:      sol.contacto,
     direccion:     sol.direccion,
+    referencia:    sol.referencia || '',
     zona:          sol.zona,
     recargoEnvio:  recargo,
     vendedor:      sol.vendedor || 'WEB',

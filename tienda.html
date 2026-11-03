@@ -747,6 +747,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <button type="button" id="btn-mi-ubicacion" onclick="obtenerMiUbicacion()">Usar mi ubicacion actual</button>
         </div>
       </div>
+      <div class="fg"><label>Punto de referencia *</label><input id="f-referencia" type="text" placeholder="Ej. Casa rosada frente a la iglesia, portón negro…"><span class="hint">Detalle visible desde la calle para que el repartidor ubique tu entrega.</span></div>
       <div class="fg"><label>Notas adicionales</label><textarea id="f-notas" placeholder="Referencias, instrucciones especiales, horario disponible…"></textarea></div>
     </div>
     <div class="card" id="p2-resumen-card">
@@ -3021,6 +3022,8 @@ function goP3(){
   if(!tel){showErr('form','Ingresa tu número de WhatsApp.');return;}
   if(!dir){showErr('form','Ingresa tu dirección de entrega.');return;}
   if(!zona){showErr('form','Selecciona la zona de entrega.');return;}
+  var ref=(document.getElementById('f-referencia').value||'').trim();
+  if(!ref){showErr('form','Escribe un punto de referencia para ubicar tu entrega.');return;}
   hideErr('form');
   renderResumen();
   setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'auto'});
@@ -3033,6 +3036,7 @@ function renderResumen(){
   var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'||zonaRaw==='departamento'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
+  var ref=(document.getElementById('f-referencia').value||'').trim();
   var recargo=zonaRaw==='departamento'?RECARGO_DEPARTAMENTO:(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
   var prodsHtml=_carrito.map(function(it,i){
@@ -3046,6 +3050,7 @@ function renderResumen(){
   }).join('');
   document.getElementById('resumen').innerHTML=
     prodsHtml+rf('Nombre',nom)+rf('WhatsApp',tel)+rf('Dirección',dir)+rf('Zona',zona)+
+    (ref?rf('Punto de referencia',esc(ref)):'')+
     (recargo?rf(zonaRaw==='departamento'?'Departamento (C807Xpress)':'Otra zona','+$'+recargo.toFixed(2)):'')+
     (notas?rf('Notas',notas):'')+
     '<div class="res-total"><span>Total a pagar</span><span>$'+total+'</span></div>';
@@ -3062,6 +3067,7 @@ var nom=(document.getElementById('f-nom').value||'').trim();
   var zonaRaw=document.getElementById('f-zona').value;
   var zona=zonaRaw==='otra'||zonaRaw==='departamento'?(document.getElementById('f-zonaot').value||'').trim():zonaRaw;
   var notas=(document.getElementById('f-notas').value||'').trim();
+  var ref=(document.getElementById('f-referencia').value||'').trim();
   var mapa=_mapa;
   if(_dirSel&&_dirSel.mapaLink){
     var dirOk=_dirSel.direccion===dir&&(_dirSel.zona===zona||_dirSel.zona===zonaRaw);
@@ -3125,6 +3131,7 @@ var nom=(document.getElementById('f-nom').value||'').trim();
   var payload={
     action:_metodoPago==='tarjeta'?'pedidoWeb':'solicitudWeb',token:API_TOKEN,nombre:nom,contacto:tel,
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
+    referencia:ref,
     vendedorRef:_refV,email:email,metodoPago:_metodoPago,
     recargoEnvio:recargo
   };

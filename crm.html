@@ -1064,7 +1064,13 @@ function esZonaEspecial(z){return OTRA_ZONA.some(function(ze){return ze.toLowerC
 // Además de las 4 zonas de cobertura, la gráfica muestra dos cubetas más
 // ("Otra zona" y "Departamento") para que NINGUNA venta quede fuera del gráfico.
 var ZONAS_GRAF   = ZONAS.concat(['Otra zona','Departamento']);
-var ZCOLORS_GRAF = ZCOLORS.concat(['#B03A6E','#2D2460']);
+// Paleta elegante de SOLO 2 colores para las gráficas del Dashboard:
+//  · navy (color de la marca) para las 4 zonas de cobertura
+//  · azul acero sobrio para "Otra zona" y "Departamento"
+// (Estado de pedidos y Distribución por canal conservan sus colores).
+var COLOR_ZONA = '#2D2460';
+var COLOR_OTRA = '#8B93BF';
+var ZCOLORS_GRAF = ZONAS.map(function(){ return COLOR_ZONA; }).concat([COLOR_OTRA, COLOR_OTRA]);
 // Devuelve la cubeta a la que pertenece una orden.
 function zonaGrafica(x){
   var z=String((x&&x.zona)||'').trim().toLowerCase();
@@ -2472,12 +2478,12 @@ function renderOvDetalle(){
   ];
   o.forEach(function(x){
     var z=String((x&&x.zona)||'').trim()||'Sin zona';
-    var baja=z.toLowerCase(), gi=1, nombre=z, color=ZCOLORS_GRAF[4];
+    var baja=z.toLowerCase(), gi=1, nombre=z, color=COLOR_OTRA;
     for(var i=0;i<ZONAS.length;i++){
-      if(baja===ZONAS[i].toLowerCase()){ gi=0; nombre=ZONAS[i]; color=ZCOLORS[i]; break; }
+      if(baja===ZONAS[i].toLowerCase()){ gi=0; nombre=ZONAS[i]; color=COLOR_ZONA; break; }
     }
     if(gi===1 && (esDepartamento(baja)||(parseFloat(x&&x.recargoEnvio)||0)>=RECARGO_DEPARTAMENTO)){
-      gi=2; color=ZCOLORS_GRAF[5];
+      gi=2; color=COLOR_OTRA;
     }
     var it=grupos[gi].items;
     if(!it[nombre]) it[nombre]={n:0,c:color};

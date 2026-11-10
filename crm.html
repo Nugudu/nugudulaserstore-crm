@@ -1058,6 +1058,51 @@ var DEPARTAMENTOS=['Ahuachapán','Cabañas','Chalatenango','Cuscatlán','La Paz'
 function esDepartamento(z){return DEPARTAMENTOS.some(function(d){return d.toLowerCase()===String(z||'').trim().toLowerCase();});}
 var OTRA_ZONA=['Zaragoza, La Libertad','San José Villa Nueva, La Libertad','Lourdes, Libertad Central','Mejicanos, San Salvador','Soyapango, San Salvador','Bernal, San Salvador','Constitución, San Salvador','San Marcos, San Salvador'];
 function esZonaEspecial(z){return OTRA_ZONA.some(function(ze){return ze.toLowerCase()===z.toLowerCase();});}
+
+// ── Dashboard · Ventas por zona ───────────────────────────────────────────
+// Además de las 4 zonas de cobertura, la gráfica muestra dos cubetas más
+// ("Otra zona" y "Departamento") para que NINGUNA venta quede fuera del gráfico.
+var ZONAS_GRAF   = ZONAS.concat(['Otra zona','Departamento']);
+var ZCOLORS_GRAF = ZCOLORS.concat(['#B03A6E','#2D2460']);
+// Devuelve la cubeta a la que pertenece una orden.
+function zonaGrafica(x){
+  var z=String((x&&x.zona)||'').trim().toLowerCase();
+  for(var i=0;i<ZONAS.length;i++){ if(z===ZONAS[i].toLowerCase()) return ZONAS[i]; }
+  if(esDepartamento(z)||(parseFloat(x&&x.recargoEnvio)||0)>=RECARGO_DEPARTAMENTO) return 'Departamento';
+  return 'Otra zona';
+}
+
+// ── Reportes · conteos por fecha de registro O de entrega ────────────────
+// Último cambio a "Entregado" (estado 4) registrado en el historial.
+function fechaEntregaOrden(o){
+  var h=(o&&o.historial)||[]; var ult='';
+  for(var i=0;i<h.length;i++){ if(h[i]&&String(h[i].estado)==='4'&&h[i].fecha) ult=String(h[i].fecha); }
+  return ult;
+}
+// Normaliza cualquier fecha ('2026-11-06T08:00:00.000Z', '2026-11-06'…) a 'YYYY-MM-DD'.
+function diaISO(f){
+  if(!f) return '';
+  var s=String(f);
+  var m=s.match(/^(\d{4}-\d{2}-\d{2})/); if(m) return m[1];
+  var d=new Date(s); if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return s.slice(0,10);
+}
+function dentroRango(f,desde,hasta){
+  var d=diaISO(f); if(!d) return false;
+  if(desde&&d<desde) return false;
+  if(hasta&&d>hasta) return false;
+  return true;
+}
+// Entregadas dentro del rango: se cuenta por FECHA DE ENTREGA (historial).
+// Si la orden no tiene historial de entrega (datos antiguos) se toma el
+// estado actual, para no dejar de contar entregas reales.
+function entregadasEnRango(lista,desde,hasta){
+  return (lista||[]).filter(function(o){
+    var fe=fechaEntregaOrden(o);
+    if(fe) return dentroRango(fe,desde,hasta);
+    return parseInt(o.estado)===4;
+  }).length;
+}
 var PANELS  = {
   overview:     ['Dashboard','DO · CARE · tiempo real'],
   nueva:        ['Nueva Venta · DO','Registro de conversión'],
@@ -2400,7 +2445,10 @@ function renderOvCharts(){
   dc('chartEstado');
   CH.chartEstado=new Chart(document.getElementById('chartEstado'),{type:'doughnut',data:{labels:ESTADOS,datasets:[{data:ESTADOS.map(function(_,i){return o.filter(function(x){return parseInt(x.estado)===i;}).length;}),backgroundColor:ECOLORS,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:10,padding:10}}}}});
   dc('chartZona');
-  CH.chartZona=new Chart(document.getElementById('chartZona'),{type:'bar',data:{labels:ZONAS.map(function(z){return z.length>13?z.slice(0,13)+'…':z;}),datasets:[{label:'Ventas',data:ZONAS.map(function(z){return o.filter(function(x){return x.zona===z;}).length;}),backgroundColor:ZCOLORS,borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+  // 6 cubetas: 4 zonas de cobertura + "Otra zona" + "Departamento".
+  var zCnt={}; ZONAS_GRAF.forEach(function(z){ zCnt[z]=0; });
+  o.forEach(function(x){ var g=zonaGrafica(x); zCnt[g]=(zCnt[g]||0)+1; });
+  CH.chartZona=new Chart(document.getElementById('chartZona'),{type:'bar',data:{labels:ZONAS_GRAF.map(function(z){return z.length>13?z.slice(0,13)+'…':z;}),datasets:[{label:'Ventas',data:ZONAS_GRAF.map(function(z){return zCnt[z];}),backgroundColor:ZCOLORS_GRAF,borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
   dc('chartTiempo');
   var bd={};
   o.forEach(function(x){ var d=x.fecha?x.fecha.slice(0,10):'?'; bd[d]=(bd[d]||0)+1; });
@@ -3237,13 +3285,15 @@ function filtrarReporte(){
   var zona=document.getElementById('r-zona').value, est=document.getElementById('r-estado').value;
   var canal=document.getElementById('r-canal').value, vend=document.getElementById('r-vend').value.toLowerCase();
   var d=getOrd();
-  if(desde)d=d.filter(function(o){return o.fecha>=desde;});
-  if(hasta)d=d.filter(function(o){return o.fecha.slice(0,10)<=hasta;});
+  // Rango: cuenta la orden si se REGISTRÓ en el rango O si se ENTREGÓ en el
+  // rango (fecha del historial). Así las cifras reflejan lo que entra y lo
+  // que se entrega, no solo la fecha de creación.
+  if(desde||hasta)d=d.filter(function(o){return dentroRango(o.fecha,desde,hasta)||dentroRango(fechaEntregaOrden(o),desde,hasta);});
   if(zona)d=d.filter(function(o){return o.zona===zona;});
   if(est!=='')d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(canal)d=d.filter(function(o){return o.canal===canal;});
   if(vend)d=d.filter(function(o){return (o.vendedor||'').toLowerCase().indexOf(vend)>=0;});
-  var ent=d.filter(function(o){return parseInt(o.estado)===4;}).length;
+  var ent=entregadasEnRango(d,desde,hasta);
   var dPagado = d.filter(function(o){ return !o.consumoInterno; });
   var dPatrocinio = d.filter(function(o){ return o.consumoInterno; });
   var rev=dPagado.reduce(function(s,o){return s+(o.precio||0)*(o.cantidad||1);},0);
@@ -3255,7 +3305,9 @@ function filtrarReporte(){
   document.getElementById('rm-pat-n').textContent=dPatrocinio.length;
   document.getElementById('rm-pat-rev').textContent='$'+revPat.toFixed(2);
   dc('chartReporte');
-  var bd={};d.forEach(function(o){var dd=o.fecha?o.fecha.slice(0,10):'?';bd[dd]=(bd[dd]||0)+1;});
+  // Cada orden se grafica bajo la fecha que la hizo entrar al rango:
+  // su fecha de registro si cae dentro, o si no, su fecha de entrega.
+  var bd={};d.forEach(function(o){var dd=dentroRango(o.fecha,desde,hasta)?diaISO(o.fecha):(diaISO(fechaEntregaOrden(o))||diaISO(o.fecha)||'?');bd[dd]=(bd[dd]||0)+1;});
   var lb=Object.keys(bd).sort();
   CH.chartReporte=new Chart(document.getElementById('chartReporte'),{type:'bar',data:{labels:lb,datasets:[{label:'Órdenes',data:lb.map(function(l){return bd[l];}),backgroundColor:'#2D2460',borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{autoSkip:false,maxRotation:45,font:{size:10}},grid:{display:false}}}}});
   buildTable(d,'tbl-reporte',false);
@@ -3447,9 +3499,12 @@ function generarPdfReporte(o, data, fotos){
   doc.setFillColor(45,36,96);doc.rect(0,0,W,14,'F');
   doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255);doc.text('Nugudú Store — Reporte CRM',gm,9.5);
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(200,195,220);doc.text('Generado: '+new Date().toLocaleString('es-SV'),W-gm,9.5,{align:'right'});
-  var ent=o.filter(function(x){return parseInt(x.estado)===4;}).length;
-  var rev=o.reduce(function(s,x){return s+(x.precio||0)*(x.cantidad||1);},0);
-  doc.setTextColor(50);doc.setFontSize(9);doc.text('Órdenes: '+o.length+'   Entregadas: '+ent+'   Tasa: '+(o.length?Math.round(ent/o.length*100):0)+'%   Ingresos: $'+rev.toFixed(2),gm,22);
+  // Cifras del encabezado = MISMO set filtrado que la tabla de abajo y misma
+  // lógica que los contadores en pantalla (entregadas por fecha de entrega).
+  var rD=document.getElementById('r-desde'), rH=document.getElementById('r-hasta');
+  var ent=entregadasEnRango(data,_reporteData&&rD?rD.value:'',_reporteData&&rH?rH.value:'');
+  var rev=data.reduce(function(s,x){return s+(x.precio||0)*(x.cantidad||1);},0);
+  doc.setTextColor(50);doc.setFontSize(9);doc.text('Órdenes: '+data.length+'   Entregadas: '+ent+'   Tasa: '+(data.length?Math.round(ent/data.length*100):0)+'%   Ingresos: $'+rev.toFixed(2),gm,22);
   var y=30;
   // 'Nº Orden' se ensanchó de 26 a 32mm — con 26 el texto se recortaba a 13
   // caracteres y el número de orden (siempre 15, ej. ORD-260714-9282) salía

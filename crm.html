@@ -333,6 +333,7 @@ tbody tr:last-child td{border-bottom:none}
         <div class="card"><div class="card-ttl"><i class="fa-solid fa-chart-donut" style="color:var(--navy)"></i> Estado de pedidos</div><div style="position:relative;height:220px"><canvas id="chartEstado"></canvas></div></div>
         <div class="card"><div class="card-ttl"><i class="fa-solid fa-map-pin" style="color:var(--navy)"></i> Ventas por zona</div><div style="position:relative;height:220px"><canvas id="chartZona"></canvas></div></div>
       </div>
+      <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-layer-group" style="color:var(--navy)"></i> Detalle por zona y departamento</div><div style="font-size:11px;color:var(--muted);margin:-6px 0 10px">Número de pedidos en cada una · en departamentos: pedidos hechos desde ese departamento</div><div id="chart-detalle-wrap" style="position:relative;height:240px"><canvas id="chartDetalle"></canvas></div></div>
       <div class="card chart-full"><div class="card-ttl"><i class="fa-solid fa-chart-line" style="color:var(--navy)"></i> Evolución de ventas</div><div style="position:relative;height:210px"><canvas id="chartTiempo"></canvas></div></div>
     </div>
 
@@ -2454,6 +2455,70 @@ function renderOvCharts(){
   o.forEach(function(x){ var d=x.fecha?x.fecha.slice(0,10):'?'; bd[d]=(bd[d]||0)+1; });
   var tl=Object.keys(bd).sort();
   CH.chartTiempo=new Chart(document.getElementById('chartTiempo'),{type:'line',data:{labels:tl,datasets:[{label:'Ventas',data:tl.map(function(l){return bd[l];}),borderColor:'#2D2460',backgroundColor:'rgba(45,36,96,0.07)',fill:true,tension:0.45,pointRadius:4,pointBackgroundColor:'#2D2460',pointBorderColor:'#fff',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}});
+  renderOvDetalle();
+}
+
+// Dashboard · Detalle por zona y departamento (barras horizontales).
+// 3 grupos: zonas de cobertura, otras zonas y departamentos. Solo aparecen
+// las categorías con ventas, de mayor a menor, y SIN montos: únicamente el
+// nombre y el número de pedidos.
+function esTituloDetalle(l){ return typeof l==='string' && l.charAt(0)==='§'; }
+function renderOvDetalle(){
+  var o=getOrd();
+  var grupos=[
+    {t:'ZONAS DE COBERTURA', items:{}},
+    {t:'OTRAS ZONAS', items:{}},
+    {t:'DEPARTAMENTOS', items:{}}
+  ];
+  o.forEach(function(x){
+    var z=String((x&&x.zona)||'').trim()||'Sin zona';
+    var baja=z.toLowerCase(), gi=1, nombre=z, color=ZCOLORS_GRAF[4];
+    for(var i=0;i<ZONAS.length;i++){
+      if(baja===ZONAS[i].toLowerCase()){ gi=0; nombre=ZONAS[i]; color=ZCOLORS[i]; break; }
+    }
+    if(gi===1 && (esDepartamento(baja)||(parseFloat(x&&x.recargoEnvio)||0)>=RECARGO_DEPARTAMENTO)){
+      gi=2; color=ZCOLORS_GRAF[5];
+    }
+    var it=grupos[gi].items;
+    if(!it[nombre]) it[nombre]={n:0,c:color};
+    it[nombre].n++;
+  });
+  var labels=[],datos=[],colores=[],mostrar={};
+  grupos.forEach(function(g){
+    var keys=Object.keys(g.items);
+    if(!keys.length) return;
+    labels.push('§'+g.t); datos.push(null); colores.push('rgba(0,0,0,0)');
+    keys.sort(function(a,b){ return g.items[b].n-g.items[a].n || a.localeCompare(b); });
+    keys.forEach(function(k){ labels.push(k); datos.push(g.items[k].n); colores.push(g.items[k].c); });
+  });
+  labels.forEach(function(l){ mostrar[l]=esTituloDetalle(l)?l.slice(1):l; });
+  var wrap=document.getElementById('chart-detalle-wrap');
+  if(wrap) wrap.style.height=Math.max(170,30+labels.length*26)+'px';
+  dc('chartDetalle');
+  CH.chartDetalle=new Chart(document.getElementById('chartDetalle'),{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:datos,backgroundColor:colores,borderWidth:0,borderRadius:5,maxBarThickness:18}]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{filter:function(it){return datos[it.dataIndex]!==null;},
+                 callbacks:{label:function(c){ return ' '+c.parsed.x+' pedido(s)'; }}}
+      },
+      scales:{
+        x:{beginAtZero:true,ticks:{stepSize:1,font:{size:11},color:'#8a86a8'},grid:{color:'rgba(0,0,0,0.04)'}},
+        y:{
+          ticks:{
+            callback:function(v){ var l=(typeof v==='number')?labels[v]:v; return mostrar[l]!==undefined?mostrar[l]:l; },
+            font:function(ctx){ var t=ctx&&ctx.tick?ctx.tick.label:''; return {size:11,weight:esTituloDetalle(t)?'700':'500'}; },
+            color:function(ctx){ var t=ctx&&ctx.tick?ctx.tick.label:''; return esTituloDetalle(t)?'#2D2460':'#4b4763'; },
+            crossAlign:'far', padding:4
+          },
+          grid:{color:function(ctx){ var t=ctx&&ctx.tick?ctx.tick.label:''; return esTituloDetalle(t)?'rgba(0,0,0,0)':'rgba(0,0,0,0.05)'; }}
+        }
+      }
+    }
+  });
 }
 
 // ORDENES TABLE

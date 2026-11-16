@@ -3120,7 +3120,8 @@ function abrirVentanaFicha(o, mapLink){
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}' +
     'body{padding:24px;color:#18152e}' +
-    '.brand{font-size:13px;font-weight:700;letter-spacing:.5px;color:#2D2460;text-transform:uppercase;margin-bottom:8px}' +
+    '.brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.5px;color:#2D2460;text-transform:uppercase;margin-bottom:8px}' +
+    '.brand img{height:28px;width:auto;display:block}' +
     '.orden-box{background:#2D2460;border-radius:10px;padding:14px 16px;margin-bottom:16px}' +
     '.orden-box .lbl{font-size:11px;font-weight:600;letter-spacing:.6px;color:#b0a8e0;text-transform:uppercase;margin-bottom:2px}' +
     '.orden-box .num{font-family:monospace;font-size:34px;font-weight:700;color:#fff;letter-spacing:1px;line-height:1.1;word-break:break-all}' +
@@ -3140,11 +3141,11 @@ function abrirVentanaFicha(o, mapLink){
     '.fecha{display:inline-block;margin-top:10px;font-size:13px;background:#e8f5ee;color:#2e7d52;padding:4px 10px;border-radius:20px;font-weight:600}' +
     '@media print{body{padding:0}}' +
     '</style></head><body>' +
-    '<div class="brand">Nugudú Store</div>' +
+    '<div class="brand"><img src="' + fichaBase + 'imagenes/logo-nugudu.png" alt="Nugudú Store"><span>Nugudú Store</span></div>' +
     '<div class="orden-box"><div class="lbl">N° de orden</div><div class="num">' + esc(o.orden) + '</div></div>' +
     '<div class="nombre">' + esc(o.nombre) + '</div>' +
     '<div class="fila"><b>Dirección:</b><span>' + esc(o.direccion || '') + '</span></div>' +
-    '<div class="fila"><b>Zona:</b><span>' + esc(o.zona || '') + (o.recargoEnvio>0?' <span style="color:#993C1D;font-weight:600">+ $'+Number(o.recargoEnvio).toFixed(2)+' envío</span>':'') + '</span></div>' +
+    '<div class="fila"><b>Zona:</b><span>' + esc(o.zona || '') + '</span></div>' +
     '<div class="fila"><b>Contacto:</b><span>' + esc(o.contacto || '') + '</span></div>' +
     (fechaTxt ? '<div class="fecha">Entrega estimada: ' + fechaTxt + '</div>' : '') +
     (prodsHtml ? '<div class="prods"><div class="prods-lbl">Producto(s)</div>' + prodsHtml + '</div>' : '') +

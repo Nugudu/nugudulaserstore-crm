@@ -282,7 +282,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="nav" onclick="go('marketing')" id="nav-marketing"><i class="fa-solid fa-bullhorn"></i> Marketing</div>
   <div class="nav" onclick="go('registroventa')" id="nav-registroventa"><i class="fa-solid fa-file-invoice"></i> Registro de venta</div>
   <div class="sb-sec">Configuración</div>
-  <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> OpenWa / WhatsApp</div>
+  <div class="nav" onclick="go('openwa')" id="nav-openwa"><i class="fa-solid fa-gear"></i> EMPODEV / WhatsApp</div>
   <div class="nav" onclick="go('wompi')" id="nav-wompi"><i class="fa-solid fa-credit-card"></i> Wompi / Pagos</div>
   <div class="sb-pdf"><button class="btn btn-gold" style="width:100%;justify-content:center" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button></div>
   <div class="sb-foot">
@@ -817,10 +817,10 @@ tbody tr:last-child td{border-bottom:none}
       </div>
     </div>
 
-    <!-- OpenWa Config -->
+    <!-- EMPODEV Config -->
     <div id="panel-openwa" class="panel">
       <div class="ph-row">
-        <div><h2>OpenWa / WhatsApp</h2><p>Configuración del envío automático de comprobantes por WhatsApp.</p></div>
+        <div><h2>EMPODEV / WhatsApp</h2><p>Configuración del envío automático de comprobantes por WhatsApp.</p></div>
         <button class="btn btn-primary btn-sm" onclick="guardarConfigOpenWa()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
       </div>
 
@@ -840,25 +840,25 @@ tbody tr:last-child td{border-bottom:none}
 
       <div id="openwa-fields" style="opacity:.5;pointer-events:none">
         <div class="card">
-          <div class="card-ttl">API OpenWa</div>
-          <div class="fg"><label>URL de la API</label><input type="url" id="openwa-api-url" placeholder="https://tuservicio.com/api"></div>
-          <div class="fg"><label>API Key</label><input type="password" id="openwa-api-key" placeholder="••••••••"></div>
+          <div class="card-ttl">API EMPODEV</div>
+          <div class="fg"><label>URL base de la API</label><input type="url" id="openwa-api-url" placeholder="https://empo.dev/api/v1"></div>
+          <div class="fg"><label>API Key</label><input type="password" id="openwa-api-key" placeholder="awsk_••••••••"></div>
           <div class="fg"><label>Número de la tienda (receptor)</label><input type="text" id="openwa-numero" placeholder="503XXXXXXXXX"></div>
         </div>
 
         <div class="card">
           <div class="card-ttl">Información</div>
           <div style="font-size:13px;color:var(--muted);line-height:1.7">
-            <p>OpenWa permite enviar mensajes de WhatsApp automáticamente desde el servidor sin necesidad de que nadie abra WhatsApp. Cuando un cliente sube su comprobante de pago:</p>
+            <p>EMPODEV es el gateway de WhatsApp que envía los mensajes desde el servidor sin necesidad de que nadie abra WhatsApp. Cuando un cliente sube su comprobante de pago:</p>
             <ul style="padding-left:18px;margin-top:8px">
-              <li><strong>Si OpenWa está activo</strong> — el comprobante se envía automáticamente a tu WhatsApp vía API.</li>
+              <li><strong>Si EMPODEV está activo</strong> — el comprobante se envía automáticamente a tu WhatsApp vía API.</li>
               <li><strong>Si está inactivo</strong> — el cliente ve un botón manual <code>wa.me</code> para enviarlo él mismo.</li>
             </ul>
-            <p style="margin-top:10px">Plataformas gratuitas recomendadas (ver <code>CONTEXTO_NUGUDU_CRM.md</code>):</p>
+            <p style="margin-top:10px">Requisitos de la API (ver doc <code>EMPODEV-API-WhatsApp.md</code>):</p>
             <ul style="padding-left:18px;margin-top:4px">
-              <li><a href="https://whatsapp.com/business" target="_blank">WhatsApp Business API</a> (oficial)</li>
-              <li><a href="https://evolution-api.com" target="_blank">Evolution API</a> (self-hosted)</li>
-              <li><a href="https://whatsapp-chat-api.com" target="_blank">whatsapp-chat-api.com</a></li>
+              <li>URL base: <code>https://empo.dev/api/v1</code> y llave <code>awsk_…</code> creada en <em>Panel EMPODEV → WhatsApp → API</em>.</li>
+              <li>La sesión de WhatsApp debe estar <strong>conectada</strong> en el panel de EMPODEV (si no, la API responde <code>SESSION_NOT_READY</code>).</li>
+              <li>La llave viaja solo en el servidor (ScriptProperties), nunca queda en el HTML público.</li>
             </ul>
           </div>
         </div>
@@ -1126,7 +1126,7 @@ var PANELS  = {
   cdp:          ['CDP','Customer Data Platform — comportamiento y segmentos'],
   marketing:    ['Marketing','Resumen del período, termómetro y origen identificable'],
   registroventa:['Registro de venta','Genera y comparte con tus clientes'],
-  openwa:        ['OpenWa / WhatsApp','Configuración de envío automático de comprobantes'],
+  openwa:        ['EMPODEV / WhatsApp','Configuración de envío automático de comprobantes'],
   wompi:         ['Wompi / Pagos con Tarjeta','Configuración de credenciales Wompi']
 };
 var KEY  = 'ngd_crm_v10';

@@ -29,6 +29,10 @@ var LOCATIONIQ_KEY   = 'pk.566487b350cf28d6d4744b6bb40266aa';
 // se incluye por si alguna vez comparte su propio link tambien). Agregar
 // mas vendedoras aca es un solo cambio, en esta lista nada mas.
 var CODIGOS_VENDEDORAS_WEB = ['V1', 'V2', 'V3', 'AV@#1'];
+// Numero de WhatsApp de la tienda usado como respaldo (envio y wa.me) cuando
+// una orden no trae contacto. Antes el codigo usaba 'WA' sin definirla en
+// ningun lado: fallaba en silencio dentro del try/catch cuando faltaba dato.
+var WA                = '50376837604';
 
 // WOMPI — credenciales (obtenidas de panel.wompi.sv → tu negocio → App ID / API Secret)
 var WOMPPI_APP_ID     = '302497f6-ddc3-45bc-9fad-cd65b73bd937';
@@ -2111,7 +2115,17 @@ function verificarTransaccionWompi(idTransaccion) {
   }
 }
 
-// ── OPENWA ─────────────────────────────────────────────────────
+// ── EMPODEV / WhatsApp (antes "OpenWa") ─────────────────────────
+// Gateway de WhatsApp: ver EMPODEV-API-WhatsApp.md
+//   Base:   https://empo.dev/api/v1
+//   Auth:   cabecera X-API-Key (la llave awsk_... vive solo en
+//           ScriptProperties, nunca en el HTML ni en la URL)
+//   Envio:  POST {base}/sessions/{ref}/messages/send-text | send-image
+//   Exito:  HTTP 200 (enviado) o 202 {jobId} (encolado) = ok
+//   Errores:{ok:false,error:CODE,...} aunque el HTTP sea 4xx
+// El ref de sesion se descubre con GET /sessions y se cachea en
+// ScriptProperties (EMPODEV_SESSION_REF); si responde SESSION_NOT_FOUND
+// se limpia el cache y el proximo envio redisubre solo.
 
 function getConfigOpenWa() {
   try {
@@ -2136,6 +2150,82 @@ function saveConfigOpenWa(payload) {
     if (payload.apiKey) props.setProperty('OPENWA_API_KEY', payload.apiKey);
     if (payload.numeroTienda) props.setProperty('OPENWA_NUMERO', payload.numeroTienda);
     return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// Descubre (y cachea) el ref de la sesion de WhatsApp en EMPODEV.
+function obtenerRefSesionEMPODEV(base, apiKey) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var cacheado = props.getProperty('EMPODEV_SESSION_REF');
+    if (cacheado) return cacheado;
+    var resp = UrlFetchApp.fetch(base + '/sessions', {
+      headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+      muteHttpExceptions: true
+    });
+    if (resp.getResponseCode() >= 400) {
+      Logger.log('EMPODEV GET /sessions: HTTP ' + resp.getResponseCode() + ' ' + resp.getContentText());
+      return '';
+    }
+    var data = JSON.parse(resp.getContentText());
+    var lista = (data && data.data) || [];
+    if (Object.prototype.toString.call(lista) !== '[object Array]') lista = [];
+    var elegida = '';
+    for (var i = 0; i < lista.length; i++) {
+      var s = lista[i] || {};
+      var estado = String(s.status || s.state || '').toLowerCase();
+      var conectada = (estado === 'open' || estado === 'connected' || estado === 'ready' || s.connected === true);
+      if (conectada) { elegida = s.ref; break; }
+      if (!elegida && s.ref) elegida = s.ref;
+    }
+    if (elegida) props.setProperty('EMPODEV_SESSION_REF', String(elegida));
+    return elegida;
+  } catch (err) {
+    Logger.log('EMPODEV obtenerRefSesion: ' + err.message);
+    return '';
+  }
+}
+
+// Envia un mensaje (texto, o comprobante si hay imagen) a la tienda via EMPODEV.
+// Devuelve {ok:true, jobId} o {ok:false, error}. ante cualquier fallo el llamador
+// cae al respaldo wa.me, asi que un problema aqui nunca bloquea el flujo.
+function enviarWhatsAppEMPODEV(config, imagenB64, texto) {
+  try {
+    var base = String(config.apiUrl || '').replace(/\/+$/, '');
+    var ref = obtenerRefSesionEMPODEV(base, config.apiKey);
+    if (!ref) return { ok: false, error: 'Sin sesion EMPODEV (GET /sessions sin resultados)' };
+    var phone = String(config.numeroTienda || '').replace(/\D/g, '');
+    var url = base + '/sessions/' + ref + '/messages/send-text';
+    var body = { phone: phone, text: texto };
+    if (imagenB64) {
+      url = base + '/sessions/' + ref + '/messages/send-image';
+      body = {
+        phone: phone,
+        base64: imagenB64.split(',')[1] || imagenB64,
+        mimetype: 'image/png',
+        filename: 'comprobante.png',
+        caption: texto
+      };
+    }
+    var resp = UrlFetchApp.fetch(url, {
+      method: 'post',
+      headers: { 'X-API-Key': config.apiKey, 'Content-Type': 'application/json' },
+      payload: JSON.stringify(body),
+      muteHttpExceptions: true
+    });
+    var code = resp.getResponseCode();
+    var data = {};
+    try { data = JSON.parse(resp.getContentText()); } catch (e) {}
+    if (code >= 200 && code < 300 && data.ok !== false) {
+      return { ok: true, jobId: (data.jobId || (data.data && data.data.jobId) || '') };
+    }
+    // Sesion borrada o cambiada: limpiar cache para redisubrir en el proximo intento.
+    if (code === 404 || data.error === 'SESSION_NOT_FOUND') {
+      PropertiesService.getScriptProperties().deleteProperty('EMPODEV_SESSION_REF');
+    }
+    return { ok: false, error: 'HTTP ' + code + ' ' + (data.error || '') + ' ' + (data.message || resp.getContentText()) };
   } catch (err) {
     return { ok: false, error: err.message };
   }
@@ -2202,24 +2292,10 @@ function enviarComprobante(payload) {
 
     if (via === 'wa') {
       var config = getConfigOpenWa();
-      if (config.ok && config.activo && config.apiUrl && config.apiKey && imagenB64) {
-        var imgData = imagenB64.split(',')[1] || imagenB64;
-        var apiResp = UrlFetchApp.fetch(config.apiUrl + '/send-media', {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + config.apiKey
-          },
-          payload: JSON.stringify({
-            to: config.numeroTienda,
-            body: texto,
-            media: 'data:image/png;base64,' + imgData
-          }),
-          muteHttpExceptions: true
-        });
-        var apiData = JSON.parse(apiResp.getContentText());
-        if (apiResp.getResponseCode() < 400) return { ok: true, via: 'wa', openwa: true };
-        Logger.log('OpenWa error: ' + apiResp.getContentText());
+      if (config.ok && config.activo && config.apiUrl && config.apiKey && config.numeroTienda && imagenB64) {
+        var envio = enviarWhatsAppEMPODEV(config, imagenB64, texto);
+        if (envio.ok) return { ok: true, via: 'wa', openwa: true };
+        Logger.log('EMPODEV error: ' + envio.error);
       }
       // Fallback: link manual wa.me
       var num = String(orden.contacto || WA).replace(/\D/g, '');

@@ -1,7 +1,7 @@
 # CONTEXTO COMPLETO — Nugudú Láser Store CRM
 ## Documento maestro para cualquier IA que continúe este proyecto
 
-*Última actualización: **18 de noviembre de 2026**. Este archivo reemplaza cualquier versión anterior — está escrito para que otra IA (o vos misma en un chat nuevo) entienda el sistema completo sin tener que redescubrir nada por prueba y error. Refleja el sistema actual: **`crm.html`** (CRM) + **`tienda.html`** (tienda B2C) + **`Código.js`** (backend).*<br>*Versión anterior: 17 de julio de 2026 (describía `index.html` + `pedido.html` + `Code_1.gs` — ya no son los archivos vigentes).* 
+*Última actualización: **19 de noviembre de 2026**. Este archivo reemplaza cualquier versión anterior — está escrito para que otra IA (o vos misma en un chat nuevo) entienda el sistema completo sin tener que redescubrir nada por prueba y error. Refleja el sistema actual: **`crm.html`** (CRM) + **`tienda.html`** (tienda B2C) + **`Código.js`** (backend).*<br>*Versión anterior: 17 de julio de 2026 (describía `index.html` + `pedido.html` + `Code_1.gs` — ya no son los archivos vigentes).* 
 
 ---
 
@@ -187,7 +187,7 @@ A pedido explícito de Nuria (17 de julio), el mapa y el botón "📍 Fijar" en 
 ## FUNCIONALIDADES IMPLEMENTADAS
 
 ### CRM Dashboard (`crm.html`)
-- Paneles (17): Dashboard, Órdenes, Pagos pendientes, Nueva Venta, Tracking, Repartidor, Form. Vendedores, Form. Repartidor, Clientes (ranking de recurrentes), Inventario, Analytics, Reportes, CDP (base de datos filtrada), Marketing, Registro de venta, OpenWa / WhatsApp, Wompi / Pagos.
+- Paneles (17): Dashboard, Órdenes, Pagos pendientes, Nueva Venta, Tracking, Repartidor, Form. Vendedores, Form. Repartidor, Clientes (ranking de recurrentes), Inventario, Analytics, Reportes, CDP (base de datos filtrada), Marketing, Registro de venta, EMPODEV / WhatsApp, Wompi / Pagos.
 - Tabla de Órdenes con búsqueda (incluye búsqueda por SKU), filtro por estado/zona, color del SKU mostrado con punto de color, hora en zona `America/El_Salvador` formato 12h.
 - Badge rojo en "Órdenes" cuando llegan pedidos nuevos.
 - Switch de producción por orden (🟠 en producción / 🟢 listo).
@@ -252,7 +252,7 @@ Precio: $25 · Gorras trucker con parche de cuero grabado a láser.
 
 ## PASARELA DE PAGO WOMPI + OPENWA — ✅ IMPLEMENTADO
 
-**Estado (18 nov 2026): IMPLEMENTADO.** `crearEnlacePago` y `webhookWompi` están activos en `Código.js`; la tienda ofrece **Transferencia** y **Tarjeta (Wompi)** como métodos de pago (no hay "contra entrega"); el CRM tiene panel **Wompi / Pagos** y panel **OpenWa / WhatsApp** para configuración. La referencia técnica de abajo (OAuth, `/EnlacePago`, webhook) **sigue siendo la vigente**.
+**Estado (18 nov 2026): IMPLEMENTADO.** `crearEnlacePago` y `webhookWompi` están activos en `Código.js`; la tienda ofrece **Transferencia** y **Tarjeta (Wompi)** como métodos de pago (no hay "contra entrega"); el CRM tiene panel **Wompi / Pagos** y panel **EMPODEV / WhatsApp** (renombrado el **19 nov 2026** — antes "OpenWa / WhatsApp") para configuración. La referencia técnica de abajo (OAuth, `/EnlacePago`, webhook) **sigue siendo la vigente**.
 
 **Credenciales de sandbox (proporcionadas por Nuria):**
 - APP ID (client_id): `1548f01b4b-1ee8-4f98-8613-2acbd81d8021`
@@ -348,13 +348,14 @@ Paso 1: Producto   ─→   Paso 2: Datos de envío   ─→   Paso 3: Revisión
 Según el medio elegido:
 
 **WhatsApp:**
-- Si OpenWa está **activo y configurado** → `Código.js` envía el mensaje automáticamente vía API a `https://openwa.artywebsv.com`. Botón "Enviar comprobante" también disponible como link `wa.me` manual.
-- Si OpenWa está **inactivo** → solo se muestra el botón `wa.me` manual (flujo actual, sin cambios).
+- Si EMPODEV está **activo y configurado** → `Código.js` envía el mensaje vía API (`enviarWhatsAppEMPODEV` → `POST {base}/sessions/{ref}/messages/send-image`, cabecera `X-API-Key`, base `https://empo.dev/api/v1`). Botón "Enviar comprobante" también disponible como link `wa.me` manual.
+- Si EMPODEV está **inactivo** → solo se muestra el botón `wa.me` manual (flujo actual, sin cambios).
+- ⚠️ **Pendiente (19 nov 2026):** el camino `via:'wa'` de `enviarComprobante` **aún no tiene disparador en la UI** — `tienda.html` solo lo llama con `via:'email'` y el botón de WhatsApp es un link `wa.me` plano. Definir dónde se dispara el envío automático es una **decisión de negocio pendiente**; sin ese gatillo, aunque EMPODEV esté activo no se envía nada automáticamente.
 
 **Correo electrónico:**
 - `GmailApp` en `Código.js` envía un correo con los datos del pedido + botón de WhatsApp para enviar comprobante.
 
-En ambos casos, el botón "Enviar comprobante por WhatsApp" (link `wa.me`) está SIEMPRE presente como respaldo manual, independientemente del estado de OpenWa.
+En ambos casos, el botón "Enviar comprobante por WhatsApp" (link `wa.me`) está SIEMPRE presente como respaldo manual, independientemente del estado de EMPODEV.
 
 ```
 ┌─────────────────────────────────┐
@@ -374,34 +375,34 @@ En ambos casos, el botón "Enviar comprobante por WhatsApp" (link `wa.me`) está
 └─────────────────────────────────┘
 ```
 
-### Módulo OpenWa en el CRM (`crm.html`)
+### Módulo EMPODEV en el CRM (`crm.html`)
 
-Nuevo panel en la sección de administración del CRM. Guardado en Google Sheets (pestaña `config`) o `PropertiesService`:
+Panel en la sección de administración del CRM (renombrado **"EMPODEV / WhatsApp"** el 19 nov 2026). Guardado en `PropertiesService` (ScriptProperties, servidor — la llave nunca va en el HTML público):
 
 ```
 ┌─────────────────────────────────┐
-│ ⚙️ Configuración de WhatsApp    │
+│ ⚙️ EMPODEV / WhatsApp           │
 │                                 │
 │ Activar envío por WhatsApp      │
 │ [🟢 Activado]                   │
 │                                 │
-│ URL API:                        │
-│ [https://openwa.artywebsv.com]  │
+│ URL base de la API:             │
+│ [https://empo.dev/api/v1]       │
 │                                 │
 │ API Key:                        │
-│ [••••••••••••••••••]           │
+│ [awsk_••••••••••••]             │
 │                                 │
 │ Número remitente:               │
 │ [+50376837604]                  │
 │                                 │
-│ [Probar conexión]               │
 │ [Guardar configuración]         │
 └─────────────────────────────────┘
 ```
 
 - **Desactivado / campos vacíos** → el sistema opera 100% con el flujo manual (botón `wa.me`), no se llama a ninguna API externa.
-- **Activado** → al enviar comprobante por WhatsApp, se llama a OpenWa API ADEMÁS del botón `wa.me` de respaldo.
+- **Activado** → al enviar comprobante por WhatsApp, se llama a la API de EMPODEV ADEMÁS del botón `wa.me` de respaldo (el respaldo `wa.me` se activa solo ante cualquier fallo: 401, 429, sesión caída, etc.).
 - El estado se consulta desde `tienda.html` vía GAS en cada carga. Si está desactivado, la UI muestra el botón `wa.me` normal (sin cambios respecto al flujo actual).
+- El `ref` de la sesión de WhatsApp se descubre con `GET /sessions` y se cachea en ScriptProperties (`EMPODEV_SESSION_REF`); si la API responde `SESSION_NOT_FOUND` se limpia el cache y el próximo envío redisubre solo.
 
 ### Acciones en el backend (`Código.js`)
 
@@ -409,9 +410,9 @@ Nuevo panel en la sección de administración del CRM. Guardado en Google Sheets
 |--------|--------|-------------|
 | `crearEnlacePago` | POST | Autentica contra Wompi OAuth, crea el enlace de pago, devuelve `urlEnlace` |
 | `webhookWompi` | POST | Endpoint público que recibe POST de Wompi, valida hash HMAC-SHA256, actualiza la orden (`pendientePago: false`, guarda `pagoWompiId`) |
-| `enviarComprobante` | POST | Envía comprobante de pago: si OpenWa activo → API OpenWa; si no → solo registra. En ambos casos actualiza `comprobanteEnviado: true` en la orden |
-| `getConfigOpenWa` | GET | Devuelve si OpenWa está activo (bool) para que `tienda.html` adapte la UI |
-| `saveConfigOpenWa` | POST | Guarda URL, API Key y número remitente + activo/inactivo |
+| `enviarComprobante` | POST | Envía comprobante de pago: si EMPODEV activo → `enviarWhatsAppEMPODEV` (API); si no o si falla → respaldo `wa.me`. En ambos casos actualiza `comprobanteEnviado: true` en la orden |
+| `getConfigOpenWa` | GET | Devuelve config EMPODEV (activo, URL, key, número) para que el panel la cargue *(nombre de función heredado de "OpenWa", sin cambiar para no romper al front)* |
+| `saveConfigOpenWa` | POST | Guarda URL base, API Key y número receptor + activo/inactivo en ScriptProperties |
 
 ### Autenticación OAuth 2.0 (Client Credentials) — Wompi
 ```
@@ -484,22 +485,21 @@ Wompi redirige a `urlRedirect` con:
 3. `EsProductiva === true` (saltar si es prueba)
 4. Actualizar orden: `pendientePago = false`, guardar `pagoWompiId`
 
-### Integración OpenWa
+### Integración EMPODEV (antes "OpenWa")
 
-API REST en `https://openwa.artywebsv.com`:
+API REST con base **`https://empo.dev/api/v1`** (doc: `EMPODEV-API-WhatsApp.md`), autenticación por cabecera **`X-API-Key`**:
 
-```
-POST /send-message
+```http
+POST /sessions/{ref}/messages/send-text
+X-API-Key: awsk_tu_llave
 Content-Type: application/json
 
-{
-  "apiKey": "KEY_DEL_CRM",
-  "number": "+503XXXXXXXX",
-  "message": "Texto del comprobante..."
-}
+{ "phone": "50376837604", "text": "Texto del comprobante..." }
 ```
 
-`Código.js` llama con `UrlFetchApp.fetch()`. Si falla (timeout, error HTTP), se ignora silenciosamente — el botón `wa.me` manual sigue siendo el respaldo principal.
+Con imagen (comprobantes) se usa `/sessions/{ref}/messages/send-image` con `{phone, base64, mimetype, filename, caption}`. El `ref` (`s1`, …) de la sesión se descubre con `GET /sessions`. **Éxito = HTTP `200` o `202 {jobId}`** (202 = mensaje encolado, no es error). Errores llegan como `{ok:false, error:CODE}` aunque el HTTP sea 4xx (`INVALID_KEY`, `SESSION_NOT_READY`, `RATE_LIMITED`, …).
+
+`Código.js` llama con `UrlFetchApp.fetch()` desde `enviarWhatsAppEMPODEV()`. Si falla (timeout, error HTTP, 429), se ignora — el botón `wa.me` manual sigue siendo el respaldo principal.
 
 ### Nuevos campos en el objeto de orden
 
@@ -525,7 +525,7 @@ Content-Type: application/json
 - ✅ Validación de precio y SKU contra el catálogo real al recibir pedidos desde `tienda.html` (nunca confía en lo que manda el navegador).
 - ✅ Descuento automático de stock al vender, por cada producto de la orden.
 - ✅ Notificación por correo al llegar pedido nuevo (`notificarPedidoNuevo`, incluye HTML con botón).
-- ✅ **Pasarela de pago Wompi + OpenWa** — implementada: `crearEnlacePago` + `webhookWompi` en `Código.js`, métodos Transferencia/Tarjeta en `tienda.html`, y paneles de configuración Wompi y OpenWa en `crm.html`. Ver sección "PASARELA DE PAGO WOMPI + OPENWA" arriba.
+- ✅ **Pasarela de pago Wompi + WhatsApp (EMPODEV)** — implementada: `crearEnlacePago` + `webhookWompi` en `Código.js`, métodos Transferencia/Tarjeta en `tienda.html`, y paneles de configuración Wompi y EMPODEV en `crm.html` (este último renombrado de "OpenWa" a "EMPODEV" el 19 nov 2026). Ver sección "PASARELA DE PAGO WOMPI + OPENWA" arriba.
 
 **Genuinamente pendientes:**
 - 🔲 Mover los códigos de rol (`ADMIN_CODE='AV@#1'`, `VENDEDORAS` (`V@#1-3`), `PRODUCCION_CODE='P@#1'`, `REPARTIDOR_CODE='R@#1'`) fuera del HTML público de `crm.html` hacia validación del lado servidor. Riesgo bajo hoy, crece si el equipo crece.

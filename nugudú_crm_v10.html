@@ -346,7 +346,7 @@ tbody tr:last-child td{border-bottom:none}
             </div>
             <span class="hint">Déjalo sin marcar si ya recibiste el comprobante · el patrocinio se cuenta aparte, no afecta tus ingresos reales.</span>
           </div>
-          <div class="fg"><label>Método de pago</label><select id="f-pago"><option value="Transferencia">Transferencia bancaria</option><option value="Efectivo">Efectivo contra entrega</option><option value="Tarjeta">Tarjeta</option></select></div>
+          <div class="fg"><label>Método de pago</label><select id="f-pago"><option value="Transferencia">Transferencia bancaria</option><option value="Efectivo">Pago contra entrega</option><option value="Tarjeta">Tarjeta</option></select></div>
           <div class="fg">
             <label>Zona de envío *</label>
             <select id="f-zona" onchange="onZonaChange()">
@@ -386,6 +386,8 @@ tbody tr:last-child td{border-bottom:none}
         <div class="fg" style="min-width:160px"><label>Buscar</label><input id="o-buscar" type="text" placeholder="Orden, nombre, contacto, SKU…" oninput="renderOrdenes()"></div>
         <div class="fg"><label>Estado</label><select id="o-estado" onchange="renderOrdenes()"><option value="">Todos</option><option value="0">Nueva orden</option><option value="1">En proceso</option><option value="2">En empaque</option><option value="3">Paquete en tránsito</option><option value="4">Entregado</option></select></div>
         <div class="fg"><label>Zona</label><select id="o-zona" onchange="renderOrdenes()"><option value="">Todas</option><option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option></select></div>
+        <div class="fg"><label>Cobro</label><select id="o-cobro" onchange="renderOrdenes()"><option value="">Todos</option><option value="ce">Contra entrega por cobrar</option></select></div>
+        <span id="cobro-total" style="display:none;align-self:center;font-size:13px;font-weight:600;color:var(--coral);background:#fff5f2;border:1px solid #ffd9cc;border-radius:999px;padding:6px 12px"></span>
         <button class="btn btn-outline btn-sm" onclick="resetOrd()"><i class="fa-solid fa-rotate-left"></i></button>
       </div>
       <div class="card"><div class="tw" id="tbl-ordenes"><div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin órdenes aún.</p></div></div></div>
@@ -1955,9 +1957,19 @@ function renderOvCharts(){
 
 // ORDENES TABLE
 var _ultimaFirmaOrdenes=null;
+// ¿Esta orden entra al filtro "Contra entrega por cobrar"?
+// Cubre las ventas manuales con método "Pago contra entrega" (value Efectivo)
+// que quedaron pendientes de pago. Trabaja sobre getOrd(), así que las
+// órdenes borradas (tumba/sync) quedan fuera automáticamente.
+function esCEporCobrar(o){
+  if(!o||o.pagoConfirmado)return false;
+  if(o.pendientePago!==true)return false;
+  return (o.contraEntrega===true||o.pago==='Efectivo'||o.pago==='Contra entrega');
+}
 function renderOrdenes(){
   var q=(document.getElementById('o-buscar').value||'').toLowerCase();
   var est=document.getElementById('o-estado').value, zona=document.getElementById('o-zona').value;
+  var cobro=(document.getElementById('o-cobro')||{}).value||'';
   var d=getOrd();
   // Las órdenes Entregadas (estado 4) se "evacuan" a Reportes y no aparecen
   // aquí salvo que el usuario las busque explícitamente por estado o texto.
@@ -1965,6 +1977,19 @@ function renderOrdenes(){
   if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
   if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(zona) d=d.filter(function(o){return o.zona===zona;});
+  if(cobro==='ce') d=d.filter(esCEporCobrar);
+  // Resumen en vivo del monto por cobrar (antes del chequeo de firma).
+  var cobroEl=document.getElementById('cobro-total');
+  if(cobroEl){
+    if(cobro==='ce'){
+      var totCobrar=d.reduce(function(s,o){return s+(Number(o.total)||0);},0);
+      cobroEl.style.display='inline-block';
+      cobroEl.textContent='Por cobrar: $'+totCobrar.toFixed(2)+' · '+d.length+' orden(es)';
+    }else{
+      cobroEl.style.display='none';
+      cobroEl.textContent='';
+    }
+  }
   // El auto-sync corre cada 30s y llamaba a renderOrdenes() sin condición,
   // reconstruyendo la tabla completa (y recreando cada miniatura de foto de
   // cero) aunque no hubiera ningún cambio real — eso causaba el parpadeo.
@@ -1974,7 +1999,7 @@ function renderOrdenes(){
   _ultimaFirmaOrdenes=firma;
   buildTable(d,'tbl-ordenes',true);
 }
-function resetOrd(){ document.getElementById('o-buscar').value=''; document.getElementById('o-estado').value=''; document.getElementById('o-zona').value=''; renderOrdenes(); }
+function resetOrd(){ document.getElementById('o-buscar').value=''; document.getElementById('o-estado').value=''; document.getElementById('o-zona').value=''; var oc=document.getElementById('o-cobro'); if(oc)oc.value=''; var ct=document.getElementById('cobro-total'); if(ct){ct.style.display='none';ct.textContent='';} renderOrdenes(); }
 // Convierte fecha ISO (UTC) a hora de El Salvador (UTC-6) en formato 12h
 function horaLocal(iso){
   try{
@@ -1991,7 +2016,7 @@ function buildTable(data,cid,deletable){
     var pendBadge = badgePago(o, true);
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
-    var pagoMetodo = o.pago || 'Transferencia';
+    var pagoMetodo = o.pago === 'Efectivo' ? 'Contra entrega' : (o.pago || 'Transferencia');
     var pagoBadge = o.pagoConfirmado ? '<span class="bdg-pago verde" style="font-size:9px">'+pagoMetodo+'</span>' : '<span style="font-size:11px;font-weight:500">'+pagoMetodo+'</span>';
     return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-size:11px">'+pagoBadge+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button> <button class="btn btn-outline btn-xs" onclick="abrirEditarOrden('+o.id+')" title="Editar orden"><i class="fa-solid fa-pen" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
@@ -2924,11 +2949,13 @@ function generarPdfReporte(o, data, fotos){
 function ordenesFiltradasActuales(){
   var q=(document.getElementById('o-buscar').value||'').toLowerCase();
   var est=document.getElementById('o-estado').value, zona=document.getElementById('o-zona').value;
+  var cobro=(document.getElementById('o-cobro')||{}).value||'';
   var d=getOrd();
   if(est===''){ d=d.filter(function(o){ return parseInt(o.estado)!==4; }); }
   if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
   if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(zona) d=d.filter(function(o){return o.zona===zona;});
+  if(cobro==='ce') d=d.filter(esCEporCobrar);
   return d;
 }
 function exportPDFOrdenes(){

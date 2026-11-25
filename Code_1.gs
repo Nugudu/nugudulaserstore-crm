@@ -582,6 +582,7 @@ function notificarPedidoNuevo(orden) {
       'Cantidad: '   + (orden.cantidad || 1) + '\n' +
       'Total: $'     + Number(total).toFixed(2) + '\n' +
       'Canal: '      + (orden.canal    || '-') + '\n' +
+      (orden.contraEntrega === true ? 'Pago: CONTRA ENTREGA — cobrar después de entregar (transferencia)\n' : '') +
       (orden.notas ? ('Notas: ' + orden.notas + '\n') : '') +
       '\nRevisa el CRM para mas detalles.';
     var linkBoton = ScriptApp.getService().getUrl() + '?action=irWhatsAppBancario&token=' + encodeURIComponent(API_TOKEN) + '&id=' + encodeURIComponent(orden.id);
@@ -598,9 +599,12 @@ function notificarPedidoNuevo(orden) {
         '<b>Cantidad:</b> ' + (orden.cantidad || 1) + '<br>' +
         '<b>Total:</b> $' + Number(total).toFixed(2) + '<br>' +
         '<b>Canal:</b> ' + escHtml(orden.canal || '-') +
+        (orden.contraEntrega === true ? '<br><b>Pago:</b> CONTRA ENTREGA — cobrar después de entregar (transferencia)' : '') +
         (orden.notas ? ('<br><b>Notas:</b> ' + escHtml(orden.notas)) : '') +
       '</p>' +
-      '<p><a href="' + linkBoton + '" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:bold">📲 Enviar datos bancarios por WhatsApp</a></p>' +
+      (orden.contraEntrega === true
+        ? '<p style="color:#78350f;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:13px">Pago contra entrega: el cliente recibe primero y transfiere después. No enviar datos bancarios todavía.</p>'
+        : '<p><a href="' + linkBoton + '" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:11px 20px;border-radius:6px;font-weight:bold">📲 Enviar datos bancarios por WhatsApp</a></p>') +
       '<p style="color:#666;font-size:12px">Revisa el CRM para mas detalles.</p>' +
       '</div>';
     MailApp.sendEmail(NOTIFY_EMAIL, asunto, cuerpo, { htmlBody: cuerpoHtml });

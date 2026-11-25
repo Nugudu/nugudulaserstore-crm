@@ -403,7 +403,7 @@ tbody tr:last-child td{border-bottom:none}
             </div>
             <span class="hint">Déjalo sin marcar si ya recibiste el comprobante · el patrocinio se cuenta aparte, no afecta tus ingresos reales.</span>
           </div>
-          <div class="fg"><label>Método de pago</label><select id="f-pago"><option value="Transferencia">Transferencia bancaria</option><option value="Efectivo">Efectivo contra entrega</option><option value="Tarjeta">Tarjeta</option></select></div>
+          <div class="fg"><label>Método de pago</label><select id="f-pago"><option value="Transferencia">Transferencia bancaria</option><option value="Efectivo">Pago contra entrega</option><option value="Tarjeta">Tarjeta</option></select></div>
           <div class="fg">
             <label>Zona de envío *</label>
             <select id="f-zona" onchange="onZonaChange()">
@@ -444,6 +444,8 @@ tbody tr:last-child td{border-bottom:none}
         <div class="fg" style="min-width:160px"><label>Buscar</label><input id="o-buscar" type="text" placeholder="Orden, nombre, contacto, SKU…" oninput="renderOrdenes()"></div>
         <div class="fg"><label>Estado</label><select id="o-estado" onchange="renderOrdenes()"><option value="">Todos</option><option value="0">Nueva orden</option><option value="1">En proceso</option><option value="2">En empaque</option><option value="3">Paquete en tránsito</option><option value="4">Entregado</option></select></div>
         <div class="fg"><label>Zona</label><select id="o-zona" onchange="renderOrdenes()"><option value="">Todas</option><option>Antiguo Cuscatlán</option><option>Colonia Escalón</option><option>Merliot</option><option>Santa Tecla</option></select></div>
+        <div class="fg"><label>Cobro</label><select id="o-cobro" onchange="renderOrdenes()"><option value="">Todos</option><option value="ce">Contra entrega por cobrar</option></select></div>
+        <span id="cobro-total" style="display:none;align-self:center;font-size:13px;font-weight:600;color:var(--coral);background:#fff5f2;border:1px solid #ffd9cc;border-radius:999px;padding:6px 12px"></span>
         <button class="btn btn-outline btn-sm" onclick="resetOrd()"><i class="fa-solid fa-rotate-left"></i></button>
       </div>
       <div class="card"><div class="tw" id="tbl-ordenes"><div class="empty"><i class="fa-regular fa-folder-open"></i><p>Sin órdenes aún.</p></div></div></div>
@@ -1815,19 +1817,22 @@ function solCard(s, pendiente){
   var total = Number(s.total || 0);
   var fecha = (s.fecha || '').slice(0, 10);
   var prods = (s.productos || []).join(', ') || '–';
+  var esCE = s.contraEntrega === true;
   var waNum = String(s.contacto || '').replace(/\D/g, '');
-  var waLinkPend = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + (s.nombre || '') + ', te contactamos de Nugudú Store sobre tu solicitud ' + s.ref + ' (pago por verificar).') : '#';
-  var waLinkConf = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + (s.nombre || '') + ', confirmamos tu pago de la solicitud ' + s.ref + '. Tu número de orden es ' + (s.orden || '') + '. ¡Gracias!') : '#';
+  var waLinkPend = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent('Hola ' + (s.nombre || '') + ', te contactamos de Nugudú Store sobre tu solicitud ' + s.ref + (esCE ? ' (pago contra entrega).' : ' (pago por verificar).')) : '#';
+  var waLinkConf = waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(esCE
+    ? ('Hola ' + (s.nombre || '') + ', tu solicitud ' + s.ref + ' pasó a producción como orden ' + (s.orden || '') + '. ¡Gracias!')
+    : ('Hola ' + (s.nombre || '') + ', confirmamos tu pago de la solicitud ' + s.ref + '. Tu número de orden es ' + (s.orden || '') + '. ¡Gracias!')) : '#';
   var accion;
   if (pendiente) {
     accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">' +
-      '<button class="btn btn-green btn-sm" onclick="confirmarSolicitud(\'' + s.ref + '\')"><i class="fa-solid fa-circle-check"></i> Confirmar pago</button>' +
+      '<button class="btn btn-green btn-sm" onclick="confirmarSolicitud(\'' + s.ref + '\')"><i class="fa-solid fa-circle-check"></i> ' + (esCE ? 'Convertir a orden' : 'Confirmar pago') + '</button>' +
       '<button class="btn btn-outline btn-sm" onclick="descartarSolicitud(\'' + s.ref + '\')"><i class="fa-solid fa-xmark"></i> Descartar</button>' +
       '<a class="btn btn-wa btn-sm" href="' + waLinkPend + '" target="_blank"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>' +
     '</div>';
   } else if (s.estadoSolicitud === 'confirmada') {
     accion = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.75rem">' +
-      '<span class="bdg-pago verde">' + _svgCheck + ' Confirmada → ' + escHtml(s.orden || '') + '</span>' +
+      '<span class="bdg-pago verde">' + _svgCheck + ' ' + (esCE ? 'Orden creada → ' : 'Confirmada → ') + escHtml(s.orden || '') + '</span>' +
       '<a class="btn btn-wa btn-sm" href="' + waLinkConf + '" target="_blank" onclick="marcarNotificado(\'' + s.ref + '\')"><i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp</a>' +
     '</div>';
   } else {
@@ -1844,15 +1849,24 @@ function solCard(s, pendiente){
       '</div>' +
       '<div style="text-align:right">' +
         '<div style="font-size:20px;font-weight:700;color:var(--green)">$' + total.toFixed(2) + '</div>' +
-        '<span class="bdg-pago ' + (pendiente ? 'ambar' : '') + '">' + _svgClock + ' ' + (pendiente ? 'Pago por verificar' : (s.estadoSolicitud === 'confirmada' ? 'Confirmada' : 'Descartada')) + '</span>' +
+        '<span class="bdg-pago ' + (pendiente ? 'ambar' : '') + '">' + _svgClock + ' ' + (pendiente ? (esCE ? 'Contra entrega' : 'Pago por verificar') : (s.estadoSolicitud === 'confirmada' ? 'Confirmada' : 'Descartada')) + '</span>' +
       '</div>' +
     '</div>' + accion + '</div>';
 }
 function confirmarSolicitud(ref){
-  if (!confirm('¿Confirmar el pago de la solicitud ' + ref + '?\n\nSe generará la orden real (ORD-…), se descontará stock y se notificará al cliente.')) return;
+  var _sol = null;
+  for (var i = 0; i < (_solicitudes || []).length; i++) {
+    if (String(_solicitudes[i].ref) === String(ref)) { _sol = _solicitudes[i]; break; }
+  }
+  var _esCE = !!_sol && _sol.contraEntrega === true;
+  if (_esCE) {
+    if (!confirm('¿Convertir la solicitud ' + ref + ' en orden?\n\nPago contra entrega: se generará la orden (ORD-…), se descontará stock y pasará a producción. Quedará PENDIENTE DE PAGO hasta que el cliente transfiera después de recibir su producto.')) return;
+  } else {
+    if (!confirm('¿Confirmar el pago de la solicitud ' + ref + '?\n\nSe generará la orden real (ORD-…), se descontará stock y se notificará al cliente.')) return;
+  }
   gasCall({method:'POST', body:{action:'confirmarSolicitud', ref:ref}}, function(err, res){
     if (err || !res || !res.ok) { showToast('Error: ' + ((res && res.error) || (err && err.message) || 'Intenta de nuevo')); return; }
-    showToast('Solicitud confirmada · Orden ' + res.orden);
+    showToast(_esCE ? ('Orden creada · pendiente de pago ' + res.orden) : ('Solicitud confirmada · Orden ' + res.orden));
     cargarSolicitudes();
     setTimeout(function(){ syncFromGAS(true); }, 400);
   });
@@ -2529,9 +2543,20 @@ function renderOvDetalle(){
 
 // ORDENES TABLE
 var _ultimaFirmaOrdenes=null;
+// ¿Esta orden entra al filtro "Contra entrega por cobrar"?
+// Cubre las órdenes de la web con marca contra entrega Y las ventas manuales
+// de Nueva Venta con método "Pago contra entrega" (value Efectivo) que quedaron
+// pendientes de pago. Trabaja sobre getOrd(), así que las órdenes borradas
+// (tumba/sync) quedan fuera automáticamente.
+function esCEporCobrar(o){
+  if(!o||o.pagoConfirmado)return false;
+  if(o.pendientePago!==true)return false;
+  return (o.contraEntrega===true||o.pago==='Efectivo'||o.pago==='Contra entrega');
+}
 function renderOrdenes(){
   var q=(document.getElementById('o-buscar').value||'').toLowerCase();
   var est=document.getElementById('o-estado').value, zona=document.getElementById('o-zona').value;
+  var cobro=(document.getElementById('o-cobro')||{}).value||'';
   var d=getOrd();
   // Las órdenes Entregadas (estado 4) se "evacuan" a Reportes y no aparecen
   // aquí salvo que el usuario las busque explícitamente por estado o texto.
@@ -2539,6 +2564,20 @@ function renderOrdenes(){
   if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
   if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(zona) d=d.filter(function(o){return o.zona===zona;});
+  if(cobro==='ce') d=d.filter(esCEporCobrar);
+  // Resumen en vivo del monto por cobrar (se actualiza antes del chequeo de
+  // firma para que nunca quede desfasado del filtro visible).
+  var cobroEl=document.getElementById('cobro-total');
+  if(cobroEl){
+    if(cobro==='ce'){
+      var totCobrar=d.reduce(function(s,o){return s+(Number(o.total)||0);},0);
+      cobroEl.style.display='inline-block';
+      cobroEl.textContent='Por cobrar: $'+totCobrar.toFixed(2)+' · '+d.length+' orden(es)';
+    }else{
+      cobroEl.style.display='none';
+      cobroEl.textContent='';
+    }
+  }
   d.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
   // El auto-sync corre cada 30s y llamaba a renderOrdenes() sin condición,
   // reconstruyendo la tabla completa (y recreando cada miniatura de foto de
@@ -2549,7 +2588,7 @@ function renderOrdenes(){
   _ultimaFirmaOrdenes=firma;
   buildTable(d,'tbl-ordenes',true);
 }
-function resetOrd(){ document.getElementById('o-buscar').value=''; document.getElementById('o-estado').value=''; document.getElementById('o-zona').value=''; renderOrdenes(); }
+function resetOrd(){ document.getElementById('o-buscar').value=''; document.getElementById('o-estado').value=''; document.getElementById('o-zona').value=''; var oc=document.getElementById('o-cobro'); if(oc)oc.value=''; var ct=document.getElementById('cobro-total'); if(ct){ct.style.display='none';ct.textContent='';} renderOrdenes(); }
 // Convierte fecha ISO (UTC) a hora de El Salvador (UTC-6) en formato 12h
 function horaLocal(iso){
   try{
@@ -2566,7 +2605,7 @@ function buildTable(data,cid,deletable){
     var pendBadge = badgePago(o, true);
     var ciBadge = badgeConsumoInterno(o);
     var prodSwitch = renderProdSwitch(o);
-    var pagoMetodo = o.pago || 'Transferencia';
+    var pagoMetodo = o.pago === 'Efectivo' ? 'Contra entrega' : (o.pago || 'Transferencia');
     var pagoBadge = o.pagoConfirmado ? '<span class="bdg-pago verde" style="font-size:9px">'+pagoMetodo+'</span>' : '<span style="font-size:11px;font-weight:500">'+pagoMetodo+'</span>';
     return '<tr><td class="mono">'+esc(o.orden)+'</td><td style="font-size:12px;color:var(--muted)">'+(o.fecha?o.fecha.slice(0,10):'')+(o.fecha&&o.fecha.length>10?'<div style="font-size:10px;color:var(--hint)">'+horaLocal(o.fecha)+'</div>':'')+'</td><td style="font-size:12px">'+fe+'</td><td><div style="font-weight:500">'+esc(o.nombre)+'</div><div style="font-size:11px;color:var(--muted)">'+esc(o.direccion||'')+'</div></td><td style="font-size:12px">'+esc(o.contacto)+'</td><td><span class="zona-pill">'+esc(o.zona)+'</span></td><td style="font-size:12px">'+esc(o.canal||'–')+'</td><td style="text-align:center;font-size:11px">'+pagoBadge+'</td><td style="text-align:center;font-weight:600">'+(o.cantidad||1)+'</td><td style="text-align:right">$'+(o.precio||0).toFixed(2)+'</td><td style="text-align:right;font-weight:600;color:var(--navy)">$'+tot+'</td><td style="font-size:11px">'+renderSkuColor(o.productos||[], deletable)+'</td><td><span class="status '+SCLS[parseInt(o.estado)||0]+'">'+ESTADOS[parseInt(o.estado)||0]+'</span>'+pendBadge+ciBadge+prodSwitch+'</td>'+(deletable?'<td style="text-align:center"><button class="btn btn-outline btn-xs" onclick="irATracking('+o.id+')" title="Tracking"><i class="fa-solid fa-truck-fast" style="color:var(--navy)"></i></button> <button class="btn btn-outline btn-xs" onclick="abrirEditarOrden('+o.id+')" title="Editar orden"><i class="fa-solid fa-pen" style="color:var(--navy)"></i></button></td><td><button class="del-btn" onclick="eliminar('+o.id+')"><i class="fa-solid fa-trash-can"></i></button></td>':'')+'</tr>';
   }).join('')+'</tbody></table>';
@@ -3617,11 +3656,13 @@ function generarPdfReporte(o, data, fotos){
 function ordenesFiltradasActuales(){
   var q=(document.getElementById('o-buscar').value||'').toLowerCase();
   var est=document.getElementById('o-estado').value, zona=document.getElementById('o-zona').value;
+  var cobro=(document.getElementById('o-cobro')||{}).value||'';
   var d=getOrd();
   if(est===''){ d=d.filter(function(o){ return parseInt(o.estado)!==4; }); }
   if(q) d=d.filter(function(o){return (o.orden+o.nombre+o.contacto+(o.productos||[]).join(',')).toLowerCase().indexOf(q)>=0;});
   if(est!=='') d=d.filter(function(o){return parseInt(o.estado)===parseInt(est);});
   if(zona) d=d.filter(function(o){return o.zona===zona;});
+  if(cobro==='ce') d=d.filter(esCEporCobrar);
   return d;
 }
 function exportPDFOrdenes(){

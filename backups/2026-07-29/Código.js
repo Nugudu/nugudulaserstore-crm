@@ -1049,6 +1049,7 @@ function guardarSolicitudWeb(payload) {
       email:         String(payload.email || '').trim(),
       fechaNac:      String(payload.fechaNac || '').trim(),
       metodoPago:    'transferencia',
+      contraEntrega: payload.contraEntrega === true,
       estadoSolicitud: 'pendiente',
       codigo_cliente: _codigoCliente || '',
       creadoDesde:   'pedidoWeb'
@@ -1073,9 +1074,14 @@ function notificarSolicitudNueva(sol) {
     var productos = (sol.productos || []).join(', ');
     var total     = sol.total != null ? sol.total : 0;
     var codCli    = obtenerCodigoCliente(sol.contacto) || sol.codigo_cliente || '-';
-    var asunto = 'Nueva solicitud para verificación de pago (transferencia) - ' + sol.ref;
+    var esCE      = sol.contraEntrega === true;
+    var asunto = esCE
+      ? 'Nueva solicitud CONTRA ENTREGA (pago despues de entrega) - ' + sol.ref
+      : 'Nueva solicitud para verificación de pago (transferencia) - ' + sol.ref;
     var cuerpo =
-      'Se registro una solicitud de transferencia en Nugudu Store (pago pendiente de verificar).\n\n' +
+      (esCE
+        ? 'Se registro una solicitud CONTRA ENTREGA en Nugudu Store: el cliente recibe el producto primero y transfiere despues. No hay pago que verificar ahora.\n\n'
+        : 'Se registro una solicitud de transferencia en Nugudu Store (pago pendiente de verificar).\n\n') +
       'Referencia: ' + sol.ref + '\n' +
       'Cliente: '    + (sol.nombre    || '-') + '\n' +
       'Contacto: '   + (sol.contacto  || '-') + '\n' +
@@ -1085,8 +1091,11 @@ function notificarSolicitudNueva(sol) {
       'Producto(s): '+ (productos     || '-') + '\n' +
       'Cantidad: '   + (sol.cantidad  || 1) + '\n' +
       'Total: $'     + Number(total).toFixed(2) + '\n' +
+      (esCE ? 'Pago: CONTRA ENTREGA (transferencia despues de recibir el pedido)\n' : '') +
       (sol.notas ? ('Notas: ' + sol.notas + '\n') : '') +
-      '\nVe a CRM > Pagos pendientes para confirmar o descartar la solicitud.';
+      (esCE
+        ? '\nVe a CRM > Pagos pendientes y usa "Convertir a orden": la orden quedara PENDIENTE DE PAGO hasta que el cliente transfiera.'
+        : '\nVe a CRM > Pagos pendientes para confirmar o descartar la solicitud.');
     MailApp.sendEmail(NOTIFY_EMAIL, asunto, cuerpo);
   } catch (err) {
     Logger.log('notificarSolicitudNueva: ' + err.message);
@@ -1183,6 +1192,9 @@ function confirmarSolicitudWeb(payload) {
   var precioPromedio = cantidadTotal > 0 ? (total - recargo) / cantidadTotal : 0;
   // Generar/obtener código personal del cliente para esta orden
   var _codigoCliente = generarCodigoCliente(sol.contacto);
+  // Contra entrega: el cliente recibe primero y transfiere después, así que la
+  // orden nace SIN pago confirmado (queda con el badge "Pendiente de pago").
+  var esCE = sol.contraEntrega === true;
   var nuevaOrden = {
     id: id, orden: orden,
     nombre:        sol.nombre,
@@ -1195,7 +1207,7 @@ function confirmarSolicitudWeb(payload) {
     cantidad:      cantidadTotal,
     total:         total,
     canal:         'Canal Digital',
-    pago:          'Transferencia',
+    pago:          esCE ? 'Contra entrega' : 'Transferencia',
     productos:     sol.productos || [],
     estado:        '0',
     notas:         sol.notas || '',
@@ -1204,13 +1216,15 @@ function confirmarSolicitudWeb(payload) {
     mapaLink:      sol.mapaLink || '',
     email:         sol.email || '',
     fechaNac:      sol.fechaNac || '',
-    metodoPago:    'transferencia',
-    pagoConfirmado: true,
-    pendientePago:  false,
-    pagoFecha:      fecha,
+    metodoPago:    esCE ? 'contra entrega' : 'transferencia',
+    contraEntrega: esCE,
+    pagoConfirmado: !esCE,
+    pendientePago:  esCE,
+    pendienteDesde: esCE ? fecha : null,
+    pagoFecha:      esCE ? null : fecha,
     consumoInterno: false,
     codigo_cliente: _codigoCliente || '',
-    historial: [{ estado: '0', fecha: fecha, fuente: 'Canal Digital Web · pago verificado' }]
+    historial: [{ estado: '0', fecha: fecha, fuente: 'Canal Digital Web · ' + (esCE ? 'pago contra entrega (pendiente)' : 'pago verificado') }]
   };
   ordenes.unshift(nuevaOrden);
   guardarOrdenes(ordenes);
@@ -1335,6 +1349,7 @@ function notificarPedidoNuevo(orden) {
       'Cantidad: '   + (orden.cantidad || 1) + '\n' +
       'Total: $'     + Number(total).toFixed(2) + '\n' +
       'Canal: '      + (orden.canal    || '-') + '\n' +
+      (orden.contraEntrega === true ? 'Pago: CONTRA ENTREGA — cobrar después de entregar (transferencia)\n' : '') +
       (orden.notas ? ('Notas: ' + orden.notas + '\n') : '') +
       '\nRevisa el CRM para mas detalles.';
     var cuerpoHtml =
@@ -1351,6 +1366,7 @@ function notificarPedidoNuevo(orden) {
         '<b>Cantidad:</b> ' + (orden.cantidad || 1) + '<br>' +
         '<b>Total:</b> $' + Number(total).toFixed(2) + '<br>' +
         '<b>Canal:</b> ' + escHtml(orden.canal || '-') +
+        (orden.contraEntrega === true ? '<br><b>Pago:</b> CONTRA ENTREGA — cobrar después de entregar (transferencia)' : '') +
         (orden.notas ? ('<br><b>Notas:</b> ' + escHtml(orden.notas)) : '') +
       '</p>' +
       '<p style="color:#666;font-size:12px">Revisa el CRM para mas detalles.</p>' +

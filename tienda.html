@@ -796,8 +796,18 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif}
           <div class="bc-cuenta">3008410011</div>
           <div class="bc-titular">Nuria Guadalupe Durán Rodríguez</div>
         </div>
-        <div class="aviso-transferencia"><strong>⚠️ IMPORTANTE — Tu pedido no se confirma al momento:</strong> registramos tu solicitud y, al verificar tu pago en el banco, generamos tu número de orden. Por favor realiza la transferencia a nombre del titular de la cuenta.</div>
-        <div class="alert-info">Realiza la transferencia por el monto exacto y luego envía tu comprobante.</div>
+        <div class="aviso-transferencia" id="aviso-transferencia"><strong>⚠️ IMPORTANTE — Tu pedido no se confirma al momento:</strong> <span id="aviso-transferencia-txt">registramos tu solicitud y, al verificar tu pago en el banco, generamos tu número de orden. Por favor realiza la transferencia a nombre del titular de la cuenta.</span></div>
+        <div class="alert-info" id="alert-transferencia">Realiza la transferencia por el monto exacto y luego envía tu comprobante.</div>
+        <!-- Pago contra entrega (transferencia después de recibir) — solo 1 unidad -->
+        <div id="ce-opciones" style="display:none;margin-top:10px;border-top:1px dashed var(--border);padding-top:10px">
+          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">
+            <input type="checkbox" id="f-ce" style="margin-top:3px;width:18px;height:18px;accent-color:var(--navy)" onchange="onCEChange()">
+            <div>
+              <div style="font-weight:700;font-size:14px;color:var(--navy)">Pago contra entrega — (transferencia)</div>
+              <div style="font-size:13px;color:var(--muted);margin-top:2px">Recibís tu pedido primero y pagas <strong>(No se entrega efectivo al repartidor)</strong></div>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -1114,7 +1124,7 @@ function restaurarSesion(){
       setPaso(paso);
       var b=document.getElementById('btn-conf');if(b){b.disabled=false;b.textContent='Continuar →';}
       var ov=document.getElementById('overlay-enviando');if(ov)ov.style.display='none';
-      if(paso>=3&&_carrito.length>0){renderResumen();}
+      if(paso>=3&&_carrito.length>0){actualizarCE();renderResumen();}
       return true;
     }
     if(r.screen==='s-exito'&&r.ultimaOrden){
@@ -1127,7 +1137,7 @@ function restaurarSesion(){
   }catch(e){}
   return false;
 }
-function salir(){_yaSoyClienteMode=false;limpiarSesion();try{sessionStorage.removeItem('ngd_ultimaOrden_wompi');}catch(e){}_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];var ciCW=document.getElementById('ci-carrito-wrap');if(ciCW)ciCW.style.display='none';var ciCS=document.getElementById('ci-color-sel');if(ciCS)ciCS.classList.remove('show');var ciQ=document.getElementById('ci-qty-card');if(ciQ)ciQ.style.display='none';var ciBA=document.getElementById('ci-btn-agregar-otro');if(ciBA)ciBA.style.display='none';setContacto('');hideErr('phone');hideErr('form');var ccBtn=document.querySelector('#s-catalogo .btn-main');if(ccBtn)ccBtn.disabled=false;if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();actualizarBadgeCarrito();guardarSesion('s-catalogo');if(window.location.search.includes('idTransaccion')){try{window.history.replaceState({},'',window.location.pathname);}catch(e){}}showScreen('s-catalogo');}
+function salir(){ceReset();_yaSoyClienteMode=false;limpiarSesion();try{sessionStorage.removeItem('ngd_ultimaOrden_wompi');}catch(e){}_cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_cli_guardado=null;_dirs_guardados=[];_carrito=[];var ciCW=document.getElementById('ci-carrito-wrap');if(ciCW)ciCW.style.display='none';var ciCS=document.getElementById('ci-color-sel');if(ciCS)ciCS.classList.remove('show');var ciQ=document.getElementById('ci-qty-card');if(ciQ)ciQ.style.display='none';var ciBA=document.getElementById('ci-btn-agregar-otro');if(ciBA)ciBA.style.display='none';setContacto('');hideErr('phone');hideErr('form');var ccBtn=document.querySelector('#s-catalogo .btn-main');if(ccBtn)ccBtn.disabled=false;if(!_catCargado){_cat=fallback();_catCargado=true;}renderCat();actualizarBadgeCarrito();guardarSesion('s-catalogo');if(window.location.search.includes('idTransaccion')){try{window.history.replaceState({},'',window.location.pathname);}catch(e){}}showScreen('s-catalogo');}
 function volverDesdeForm(){
   if(document.getElementById('p2').style.display==='block'){setPaso(1);guardarSesion('s-form',1);return;}
   if(document.getElementById('p3').style.display==='block'){setPaso(2);guardarSesion('s-form',2);return;}
@@ -2376,6 +2386,41 @@ function agregarRapido(sku){
 function totalCarrito(){
   return _carrito.reduce(function(sum,it){return sum+it.precio*it.cantidad;},0);
 }
+// ── PAGO CONTRA ENTREGA (solo transferencia, carrito de 1 unidad) ──
+function cantCarrito(){
+  return _carrito.reduce(function(sum,it){return sum+(it.cantidad||0);},0);
+}
+function ceActivo(){
+  var cb=document.getElementById('f-ce');
+  return !!(cb&&cb.checked);
+}
+function actualizarCE(){
+  var box=document.getElementById('ce-opciones');
+  if(!box)return;
+  // La opción solo existe con transferencia y exactamente 1 unidad en el carrito.
+  var mostrar=(_metodoPago==='transferencia'&&cantCarrito()===1);
+  box.style.display=mostrar?'block':'none';
+  if(!mostrar)ceReset();
+}
+function onCEChange(){
+  var aviso=document.getElementById('aviso-transferencia-txt');
+  var alerta=document.getElementById('alert-transferencia');
+  if(ceActivo()){
+    if(aviso)aviso.textContent='lo registramos y te contactamos por WhatsApp para coordinar la entrega. Cuando recibas tu producto y estés conforme, realizás la transferencia.';
+    if(alerta)alerta.style.display='none';
+  }else{
+    if(aviso)aviso.textContent='registramos tu solicitud y, al verificar tu pago en el banco, generamos tu número de orden. Por favor realiza la transferencia a nombre del titular de la cuenta.';
+    if(alerta)alerta.style.display='block';
+  }
+}
+function ceReset(){
+  var cb=document.getElementById('f-ce');
+  if(cb&&cb.checked){cb.checked=false;}
+  var aviso=document.getElementById('aviso-transferencia-txt');
+  var alerta=document.getElementById('alert-transferencia');
+  if(aviso)aviso.textContent='registramos tu solicitud y, al verificar tu pago en el banco, generamos tu número de orden. Por favor realiza la transferencia a nombre del titular de la cuenta.';
+  if(alerta)alerta.style.display='block';
+}
 function renderCarrito(){
   var wrap=document.getElementById('carrito-wrap');
   if(_carrito.length===0){wrap.style.display='none';actualizarBadgeCarrito();return;}
@@ -2989,6 +3034,7 @@ function selMetodoPago(m){
   if(bcDiv) bcDiv.style.display=(m==='transferencia')?'block':'none';
   var ecDiv=document.getElementById('email-card-wrap');
   if(ecDiv) ecDiv.style.display=(m==='tarjeta')?'block':'none';
+  actualizarCE();
 }
 
 function selComprobanteVia(v){
@@ -3025,6 +3071,7 @@ function goP3(){
   var ref=(document.getElementById('f-referencia').value||'').trim();
   if(!ref){showErr('form','Escribe un punto de referencia para ubicar tu entrega.');return;}
   hideErr('form');
+  actualizarCE();
   renderResumen();
   setPaso(3);guardarSesion('s-form',3);window.scrollTo({top:0,behavior:'auto'});
   warmWompi();
@@ -3084,6 +3131,8 @@ var nom=(document.getElementById('f-nom').value||'').trim();
   var items=_carrito.map(function(it){return {sku:it.sku,cantidad:it.cantidad};});
   var recargo=zonaRaw==='departamento'?RECARGO_DEPARTAMENTO:(esZonaEspecial(zona)||zonaRaw==='otra')?RECARGO_ENVIO:0;
   var total=(totalCarrito()+recargo).toFixed(2);
+  // Contra entrega: solo aplica con transferencia y carrito de exactamente 1 unidad.
+  var esCE=(_metodoPago==='transferencia'&&ceActivo()&&cantCarrito()===1);
 
   if(!email&&_metodoPago==='tarjeta'){showErr('form','Ingresa tu correo electrónico para recibir el recibo de pago.');return;}
   hideErr('form');
@@ -3133,6 +3182,7 @@ var nom=(document.getElementById('f-nom').value||'').trim();
     direccion:dir,zona:zona,items:items,notas:notas,mapaLink:mapa,
     referencia:ref,
     vendedorRef:_refV,email:email,metodoPago:_metodoPago,
+    contraEntrega:esCE,
     recargoEnvio:recargo
   };
 
@@ -3151,6 +3201,7 @@ var nom=(document.getElementById('f-nom').value||'').trim();
         orden:_metodoPago==='tarjeta'?d.orden:(d.ref||''),nombre:nom,tel:tel,contacto:tel,email:email,
         items:_carrito.slice(),total:total,metodoPago:_metodoPago,
         _esSolicitud:_metodoPago==='transferencia',
+        _esCE:esCE,
         codigo_cliente:d.codigo_cliente||''
       };
       // Para el retorno de Wompi: el IIFE no expone _ultimaOrden (se pierde al
@@ -3222,10 +3273,16 @@ function notificarAdmin(orden){
 function mostrarExito(){
   var o=_ultimaOrden;
   var esSol=!!o._esSolicitud;
+  var esCE=!!o._esCE&&esSol;
   var h2=document.querySelector('#s-exito h2');
   var pEx=document.querySelector('#s-exito .success-wrap p');
-  if(h2)h2.textContent=esSol?'¡Solicitud registrada!':'¡Pedido registrado!';
-  if(pEx)pEx.textContent=esSol?'Tu referencia es:':'Tu número de orden es:';
+  if(esCE){
+    if(h2)h2.textContent='Tu pedido ha quedado registrado como contra entrega';
+    if(pEx)pEx.textContent='Te contactamos por WhatsApp para darte datos de transferencia y seguimiento de tu orden.';
+  }else{
+    if(h2)h2.textContent=esSol?'¡Solicitud registrada!':'¡Pedido registrado!';
+    if(pEx)pEx.textContent=esSol?'Tu referencia es:':'Tu número de orden es:';
+  }
   document.getElementById('ex-orden').textContent=o.orden;
   document.getElementById('om-contenido').innerHTML=
     o.items.map(function(it){
@@ -3234,7 +3291,7 @@ function mostrarExito(){
     (o.recargoEnvio>0?'<div class="om-fila"><span>'+(Number(o.recargoEnvio)>=RECARGO_DEPARTAMENTO?'Departamento':'Otra zona')+'</span><span>+$'+Number(o.recargoEnvio).toFixed(2)+'</span></div>':'')+
     '<div class="om-fila"><span>Total a pagar</span><span>$'+o.total+'</span></div>'+
     '<div class="om-fila"><span>Nombre</span><span>'+esc(o.nombre)+'</span></div>'+
-    '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':'Transferencia bancaria')+'</span></div>';
+    '<div class="om-fila"><span>Método</span><span>'+(o.metodoPago==='tarjeta'?'Tarjeta (Wompi)':(esCE?'Contra entrega (transferencia después)':'Transferencia bancaria'))+'</span></div>';
   document.getElementById('orden-mini').style.display='block';
 
   // Mostrar código personal si tiene código (ambos métodos de pago)
@@ -3250,6 +3307,9 @@ function mostrarExito(){
 
   if(o.metodoPago==='tarjeta'){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Pago procesado con exito. Orden <strong>'+esc(o.orden)+'</strong>.</div>';
+    document.getElementById('ex-accion-comprobante').style.display='none';
+  }else if(esSol&&esCE){
+    document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fffbeb;border-color:#fde68a;color:#78350f">Pago contra entrega — primero recibís tu pedido, después la transferencia. No se entrega efectivo al repartidor.<br><span style="font-size:12px">¿Dudas? <a href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola! Tengo una consulta sobre mi pedido contra entrega '+o.orden+'.')+'" target="_blank" style="color:#78350f;text-decoration:underline">Contáctanos directamente</a></span></div>';
     document.getElementById('ex-accion-comprobante').style.display='none';
   }else if(esSol){
     document.getElementById('ex-pago-info').innerHTML='<div class="snote" style="background:#fffbeb;border-color:#fde68a;color:#78350f">Solicitud registrada — pago pendiente de verificación. Recibirás tu número de orden cuando verifiquemos tu pago.<br><span style="font-size:12px">¿Dudas? <a href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola! Tengo una consulta sobre mi solicitud '+o.orden+'.')+'" target="_blank" style="color:#78350f;text-decoration:underline">Contáctanos directamente</a></span></div>';
@@ -3363,6 +3423,8 @@ function nuevoP(){
   try{sessionStorage.removeItem('ngd_ultimaOrden_wompi');}catch(e){}
   _cli=null;_dirs=[];_diseno=null;_color=null;_qty=1;_mapa='';_dirSel=null;_ultimaOrden=null;_carrito=[];
   _metodoPago='transferencia';_comprobanteVia='wa';
+  ceReset();
+  var ceBox=document.getElementById('ce-opciones');if(ceBox)ceBox.style.display='none';
   var pt=document.getElementById('p-tel');if(pt)pt.value='';
   document.getElementById('ce-box').style.display='none';
   document.getElementById('f-nom').value='';document.getElementById('f-tel').value='';document.getElementById('f-nac').value='';
